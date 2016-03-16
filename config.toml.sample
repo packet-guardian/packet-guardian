@@ -1,0 +1,9 @@
+[webserver]
+address = "127.0.0.1"
+port = 7000
+sessionsDir = "sessions"
+# This is the authentication key for web sessions
+# Make sure this is unique and protected
+sessionsAuthKey = ""
+# Optional. Should be 16, 24, or 32 characters long
+sessionsEncryptKey = ""
