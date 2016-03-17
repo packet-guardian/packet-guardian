@@ -1,14 +1,6 @@
 package main
 
-import (
-	"net/http"
-
-	"github.com/onesimus-systems/net-guardian/common"
-)
-
-func init() {
-	common.HTTPMux.HandleFunc("/overview", overviewHandler)
-}
+import "net/http"
 
 func overviewHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello"))

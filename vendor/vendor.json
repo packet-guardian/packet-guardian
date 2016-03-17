@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "+f4hrZaDSwgpxBOb5fCi8TlbbXI=",
-			"path": "github.com/mattn/go-sqlite3",
-			"revision": "76e335f60bbcee20755df9864f0153af1a80ad2d",
-			"revisionTime": "2016-03-15T13:08:43+09:00"
+			"checksumSHA1": "dnj6px0tS6k2tKIqK4wCW+4bXjk=",
+			"path": "github.com/codegangsta/negroni",
+			"revision": "c7477ad8e330bef55bf1ebe300cf8aa67c492d1b",
+			"revisionTime": "2015-03-19T10:13:04-07:00"
 		},
 		{
 			"path": "github.com/naoina/toml",
@@ -19,12 +19,12 @@
 			"revisionTime": "2015-07-09T11:12:19+09:00"
 		},
 		{
-			"path": "github.com/naoina/toml",
+			"path": "github.com/naoina/toml/ast",
 			"revision": "5811abcabb29d6af0fdf060f96d328962bd3cd5e",
 			"revisionTime": "2015-07-09T11:12:19+09:00"
 		},
 		{
-			"path": "github.com/naoina/toml",
+			"path": "github.com/naoina/toml/ast",
 			"revision": "5811abcabb29d6af0fdf060f96d328962bd3cd5e",
 			"revisionTime": "2015-07-09T11:12:19+09:00"
 		},
@@ -35,14 +35,31 @@
 			"revisionTime": "2015-07-09T11:12:19+09:00"
 		},
 		{
-			"path": "github.com/naoina/toml/ast",
-			"revision": "5811abcabb29d6af0fdf060f96d328962bd3cd5e",
-			"revisionTime": "2015-07-09T11:12:19+09:00"
+			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",
+			"path": "golang.org/x/crypto/bcrypt",
+			"revision": "632d287f9f3f54b09809eebbd3cacbcb00b9f2fc",
+			"revisionTime": "2014-12-23T01:14:23-08:00"
 		},
 		{
-			"path": "github.com/naoina/toml/ast",
-			"revision": "5811abcabb29d6af0fdf060f96d328962bd3cd5e",
-			"revisionTime": "2015-07-09T11:12:19+09:00"
+			"path": "golang.org/x/crypto/bcrypt",
+			"revision": "632d287f9f3f54b09809eebbd3cacbcb00b9f2fc",
+			"revisionTime": "2014-12-23T01:14:23-08:00"
+		},
+		{
+			"checksumSHA1": "udD2DzUPFZbMVXP0VNADhef4zKk=",
+			"path": "golang.org/x/crypto/blowfish",
+			"revision": "632d287f9f3f54b09809eebbd3cacbcb00b9f2fc",
+			"revisionTime": "2014-12-23T01:14:23-08:00"
+		},
+		{
+			"path": "golang.org/x/crypto/blowfish",
+			"revision": "632d287f9f3f54b09809eebbd3cacbcb00b9f2fc",
+			"revisionTime": "2014-12-23T01:14:23-08:00"
+		},
+		{
+			"path": "golang.org/x/crypto/blowfish",
+			"revision": "632d287f9f3f54b09809eebbd3cacbcb00b9f2fc",
+			"revisionTime": "2014-12-23T01:14:23-08:00"
 		}
 	]
 }

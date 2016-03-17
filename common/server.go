@@ -3,20 +3,23 @@ package common
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
-// HTTPMux is a gorilla/router object for packages to register their handlers
-var HTTPMux *mux.Router
-
-func init() {
-	HTTPMux = mux.NewRouter()
-}
-
 // StartServer starts and HTTP server using the given address and HTTPMux as the router
-func StartServer(address string) {
-	http.ListenAndServe(address, HTTPMux)
+func StartServer(router *mux.Router) {
+	bindAddr := ""
+	bindPort := "8000"
+	if Config.Webserver.Address != "" {
+		bindAddr = Config.Webserver.Address
+	}
+	if Config.Webserver.Port != 0 {
+		bindPort = strconv.Itoa(Config.Webserver.Port)
+	}
+	fmt.Printf("Now listening on %s:%s\n", bindAddr, bindPort)
+	http.ListenAndServe(bindAddr+":"+bindPort, router)
 }
 
 // NotImplementedHandler is a mock handler for paths that aren't implemented yet

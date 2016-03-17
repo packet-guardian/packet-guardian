@@ -1,14 +1,30 @@
 package auth
 
 import (
+	"net/http"
+
 	"github.com/onesimus-systems/net-guardian/common"
 )
 
-var authFunctions = make([]authFunc, 0)
+type authFunc func(username, password string) bool
 
-func init() {
-	common.HTTPMux.HandleFunc("/login", common.NotImplementedHandler).Methods("GET")
-	common.HTTPMux.HandleFunc("/login", common.NotImplementedHandler).Methods("POST")
+var authFunctions = make(map[string]authFunc)
+
+// CheckLogin will verify the username and password against several login methods
+// If one method succeeds, true will be returned. False otherwise.
+func CheckLogin(username, password string) bool {
+	// Check the user and pass against the defined auth functions
+	// For right now we're only doing local authentication
+	return authFunctions["local"](username, password)
 }
 
-type authFunc func(username, password string) bool
+// IsLoggedIn checks if the session associated with r is an authenticated session
+func IsLoggedIn(r *http.Request) bool {
+	session := common.GetSession(r, common.Config.Webserver.SessionName)
+	return session.GetBool("loggedin", false)
+}
+
+// LoginPageHandler is a net/http handler for the login page
+func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
+
+}

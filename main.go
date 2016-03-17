@@ -1,39 +1,37 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 
+	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 
-	_ "github.com/onesimus-systems/net-guardian/auth"
 	"github.com/onesimus-systems/net-guardian/common"
+	"github.com/onesimus-systems/net-guardian/devices"
 )
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	session := common.GetSession(r, "net-guardian")
-	if session.GetBool("loggedin", false) {
-		http.Redirect(w, r, "/overview", http.StatusTemporaryRedirect)
-	} else {
+	if devices.IsRegistered(r.RemoteAddr) {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+	} else {
+		http.Redirect(w, r, "/register", http.StatusTemporaryRedirect)
 	}
 }
 
 func main() {
+	common.LoadConfig("")
 	common.StartSessionStore()
-	common.HTTPMux.HandleFunc("/", rootHandler)
-	common.HTTPMux.PathPrefix("/static").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	common.ConnectDatabase()
 
-	bindAddr := ""
-	bindPort := "8000"
-	if common.Config.Webserver.Address != "" {
-		bindAddr = common.Config.Webserver.Address
-	}
-	if common.Config.Webserver.Port != 0 {
-		bindPort = strconv.Itoa(common.Config.Webserver.Port)
-	}
+	r := mux.NewRouter()
+	r.HandleFunc("/", rootHandler)
+	r.HandleFunc("/register", devices.RegisterHTTPHandler).Methods("GET")
+	r.HandleFunc("/register/auto", devices.AutoRegisterHandler).Methods("POST")
+	//r.PathPrefix("/static").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	// r.HandleFunc("/overview", overviewHandler)
+	//
+	// r.HandleFunc("/login", auth.LoginPageHandler).Methods("GET")
+	// r.HandleFunc("/login", common.NotImplementedHandler).Methods("POST")
 
-	fmt.Printf("Now listening on %s:%s\n", bindAddr, bindPort)
-	common.StartServer(bindAddr + ":" + bindPort)
+	common.StartServer(r)
 }
