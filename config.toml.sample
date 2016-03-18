@@ -1,9 +1,28 @@
+[core]
+databaseFile = "database.sqlite3"
+
 [webserver]
+# Leave address blank to bind to all addresses
 address = "127.0.0.1"
 port = 7000
+sessionName = "net-guardian"
 sessionsDir = "sessions"
 # This is the authentication key for web sessions
 # Make sure this is unique and protected
 sessionsAuthKey = ""
 # Optional. Should be 16, 24, or 32 characters long
 sessionsEncryptKey = ""
+
+[auth]
+# An array of auth types in order or precidence
+# Valid values: ldap, local
+authMethod = ["local"]
+
+[auth.ldap]
+useAD = true
+servers = ["127.0.0.1"]
+useTLS = true
+
+# If using Active Directory, ignore the remaining LDAP settings
+#useDN = ""
+#... other LDAPy things

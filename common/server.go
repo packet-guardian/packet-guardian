@@ -18,7 +18,11 @@ func StartServer(router *mux.Router) {
 	if Config.Webserver.Port != 0 {
 		bindPort = strconv.Itoa(Config.Webserver.Port)
 	}
-	fmt.Printf("Now listening on %s:%s\n", bindAddr, bindPort)
+	if bindAddr == "" {
+		fmt.Printf("Now listening on *:%s\n", bindPort)
+	} else {
+		fmt.Printf("Now listening on %s:%s\n", bindAddr, bindPort)
+	}
 	http.ListenAndServe(bindAddr+":"+bindPort, router)
 }
 

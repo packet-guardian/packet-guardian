@@ -1,4 +1,5 @@
-sessions/
+sessions /
 ng
 config.toml
-private/
+private /
+database.sqlite3
