@@ -1,4 +1,4 @@
-package common
+package main
 
 import (
 	"fmt"
@@ -6,56 +6,59 @@ import (
 	"os"
 
 	"github.com/gorilla/sessions"
+	"github.com/onesimus-systems/net-guardian/common"
 )
 
-// Store is the web session store
-var store *sessions.FilesystemStore
-
 // StartSessionStore opens the FilesystemStore for web sessions
-func StartSessionStore() {
-	if Config.Webserver.SessionsDir == "" {
-		Config.Webserver.SessionsDir = "sessions"
+func startSessionStore(config *common.Config) *sessions.FilesystemStore {
+	if config.Webserver.SessionsDir == "" {
+		config.Webserver.SessionsDir = "sessions"
 	}
-	if Config.Webserver.SessionsAuthKey == "" {
+	if config.Webserver.SessionsAuthKey == "" {
 		fmt.Println("No session authentication key given in configuration")
 		os.Exit(1)
 	}
 
-	err := os.MkdirAll(Config.Webserver.SessionsDir, 0700)
+	err := os.MkdirAll(config.Webserver.SessionsDir, 0700)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
-	sessDir := Config.Webserver.SessionsDir
+	sessDir := config.Webserver.SessionsDir
 	sessKeyPair := make([][]byte, 1)
-	sessKeyPair[0] = []byte(Config.Webserver.SessionsAuthKey)
-	if Config.Webserver.SessionsEncryptKey != "" {
-		sessKeyPair = append(sessKeyPair, []byte(Config.Webserver.SessionsEncryptKey))
+	sessKeyPair[0] = []byte(config.Webserver.SessionsAuthKey)
+	if config.Webserver.SessionsEncryptKey != "" {
+		sessKeyPair = append(sessKeyPair, []byte(config.Webserver.SessionsEncryptKey))
 	}
 
-	store = sessions.NewFilesystemStore(sessDir, sessKeyPair...)
+	store := sessions.NewFilesystemStore(sessDir, sessKeyPair...)
 
 	store.Options = &sessions.Options{
 		Path:   "/",
 		MaxAge: 3600 * 8, // 8 hours
 	}
+	return store
 }
 
-// Session is a wrapper around Gorilla sessions to provide access methods
-type Session struct {
-	*sessions.Session
+type sessionStore struct {
+	*sessions.FilesystemStore
 }
 
 // GetSession takes the same arguments as gorilla/sessions Get and returns a
 // Session object. Note this is the common.Session type NOT gorilla/sessions.Session
-func GetSession(r *http.Request, name string) *Session {
-	session, _ := store.Get(r, name)
-	return &Session{session}
+func (s *sessionStore) GetSession(r *http.Request, name string) common.Session {
+	sess, _ := s.Get(r, name)
+	return &session{sess}
+}
+
+// Session is a wrapper around Gorilla sessions to provide access methods
+type session struct {
+	*sessions.Session
 }
 
 // Get a value from the session object
-func (s *Session) Get(key interface{}, def ...interface{}) interface{} {
+func (s *session) Get(key interface{}, def ...interface{}) interface{} {
 	if val, ok := s.Values[key]; ok {
 		return val
 	}
@@ -66,12 +69,12 @@ func (s *Session) Get(key interface{}, def ...interface{}) interface{} {
 }
 
 // Set a value to the session object
-func (s *Session) Set(key, val interface{}) {
+func (s *session) Set(key, val interface{}) {
 	s.Values[key] = val
 }
 
 // GetBool takes the same arguments as Get but def must be a bool type.
-func (s *Session) GetBool(key interface{}, def ...bool) bool {
+func (s *session) GetBool(key interface{}, def ...bool) bool {
 	if v := s.Get(key); v != nil {
 		return v.(bool)
 	}
@@ -82,7 +85,7 @@ func (s *Session) GetBool(key interface{}, def ...bool) bool {
 }
 
 // GetString takes the same arguments as Get but def must be a string type.
-func (s *Session) GetString(key interface{}, def ...string) string {
+func (s *session) GetString(key interface{}, def ...string) string {
 	if v := s.Get(key); v != nil {
 		return v.(string)
 	}
@@ -93,7 +96,7 @@ func (s *Session) GetString(key interface{}, def ...string) string {
 }
 
 // GetInt takes the same arguments as Get but def must be an int type.
-func (s *Session) GetInt(key interface{}, def ...int) int {
+func (s *session) GetInt(key interface{}, def ...int) int {
 	if v := s.Get(key); v != nil {
 		return v.(int)
 	}

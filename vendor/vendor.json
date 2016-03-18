@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "dnj6px0tS6k2tKIqK4wCW+4bXjk=",
-			"path": "github.com/codegangsta/negroni",
-			"revision": "c7477ad8e330bef55bf1ebe300cf8aa67c492d1b",
-			"revisionTime": "2015-03-19T10:13:04-07:00"
+			"checksumSHA1": "HQzxIuj91V8M8yzoP2GiySK0ZsA=",
+			"path": "github.com/dragonrider23/go-logger",
+			"revision": "aa55ef3f9aa0935f64f77df0de421c5f6dcde5ea",
+			"revisionTime": "2015-01-18T21:47:30-06:00"
 		},
 		{
 			"path": "github.com/naoina/toml",
@@ -47,6 +47,11 @@
 		},
 		{
 			"checksumSHA1": "udD2DzUPFZbMVXP0VNADhef4zKk=",
+			"path": "golang.org/x/crypto/blowfish",
+			"revision": "632d287f9f3f54b09809eebbd3cacbcb00b9f2fc",
+			"revisionTime": "2014-12-23T01:14:23-08:00"
+		},
+		{
 			"path": "golang.org/x/crypto/blowfish",
 			"revision": "632d287f9f3f54b09809eebbd3cacbcb00b9f2fc",
 			"revisionTime": "2014-12-23T01:14:23-08:00"

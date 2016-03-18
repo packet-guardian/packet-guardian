@@ -26,3 +26,7 @@ useTLS = true
 # If using Active Directory, ignore the remaining LDAP settings
 #useDN = ""
 #... other LDAPy things
+
+[dhcp]
+leasesFile = "dhcpd.leases"
+hostsFile = ""
