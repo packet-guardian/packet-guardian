@@ -17,6 +17,7 @@ type Environment struct {
 	Templates *template.Template
 	Dev       bool
 	Log       *log.Logger
+	DHCP      DHCPHostWriter
 }
 
 // A SessionStore is a wrapper around gorilla's session store type
@@ -33,23 +34,7 @@ type Session interface {
 	GetInt(key interface{}, def ...int) int
 }
 
-// BuildEnvironment takes the needed types and returns an Environment
-func BuildEnvironment(l *log.Logger, s SessionStore, d *sql.DB, c *Config, t *template.Template, devel bool) *Environment {
-	e := &Environment{
-		Log:       l,
-		Sessions:  s,
-		DB:        d,
-		Config:    c,
-		Templates: t,
-		Dev:       devel,
-	}
-	return e
-}
-
-// BuildEmptyEnvironment returns an empty environment for testing purposes
-func BuildEmptyEnvironment() *Environment {
-	logger := log.New("null")
-	logger.NoFile()
-	logger.NoStdout()
-	return BuildEnvironment(logger, nil, nil, nil, nil, false)
+// A DHCPHostWriter can write a new DHCPd hosts file
+type DHCPHostWriter interface {
+	WriteHostFile()
 }

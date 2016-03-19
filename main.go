@@ -40,11 +40,13 @@ func rootHandler(e *common.Environment) http.HandlerFunc {
 }
 
 func main() {
+	// Parse CLI flags
 	flag.Parse()
 	if dev {
 		fmt.Println(log.Magenta + "WARNING:" + log.Reset + " Net Guardian is running in DEVELOPMENT mode")
 	}
 
+	// Get application-wide resources
 	config := loadConfig("")
 	sessStore := startSessionStore(config)
 	db := connectDatabase(config)
@@ -58,14 +60,29 @@ func main() {
 		logger.Verbose(3)
 	}
 
-	e := common.BuildEnvironment(logger, &sessionStore{sessStore}, db, config, templates, dev)
+	// Create an environment
+	c, q := dhcp.StartHostWriteService(db, config.DHCP.HostsFile)
+	e := &common.Environment{
+		Log:       logger,
+		Sessions:  &sessionStore{sessStore},
+		DB:        db,
+		Config:    config,
+		Templates: templates,
+		Dev:       dev,
+		DHCP: &dhcpHostFile{
+			write: c,
+			quit:  q,
+		},
+	}
 
+	// Register HTTP handlers
 	r := mux.NewRouter()
 	r.HandleFunc("/", rootHandler(e))
 	r.PathPrefix("/public").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public/"))))
 	r.HandleFunc("/register", dhcp.RegisterHTTPHandler(e)).Methods("GET")
 	r.HandleFunc("/register/auto", dhcp.AutoRegisterHandler(e)).Methods("POST")
 
+	// Let's begin!
 	startServer(r, config)
 }
 
@@ -78,7 +95,7 @@ func connectDatabase(config *common.Config) *sql.DB {
 	return db
 }
 
-func startServer(router *mux.Router, config *common.Config) {
+func startServer(router http.Handler, config *common.Config) {
 	bindAddr := ""
 	bindPort := "8000"
 	if config.Webserver.Address != "" {
@@ -93,4 +110,16 @@ func startServer(router *mux.Router, config *common.Config) {
 		fmt.Printf("Now listening on %s:%s\n", bindAddr, bindPort)
 	}
 	http.ListenAndServe(bindAddr+":"+bindPort, router)
+}
+
+type dhcpHostFile struct {
+	write chan bool
+	quit  chan bool
+}
+
+func (d *dhcpHostFile) WriteHostFile() {
+	select {
+	case d.write <- true:
+	default:
+	}
 }

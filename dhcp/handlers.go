@@ -55,6 +55,7 @@ func AutoRegisterHandler(e *common.Environment) http.HandlerFunc {
 			e.Templates.ExecuteTemplate(w, "error.tmpl", struct{ Message string }{"There was an error registering your device"})
 			return
 		}
+		e.DHCP.WriteHostFile()
 		e.Log.Infof("Successfully registered MAC %s to user %s", mac, username)
 		e.Templates.ExecuteTemplate(w, "success.tmpl", struct{ Message string }{"Device successfully registered"})
 	}
