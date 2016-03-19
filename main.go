@@ -31,7 +31,7 @@ func init() {
 func rootHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ip := strings.Split(r.RemoteAddr, ":")[0]
-		if dhcp.IsRegistered(e.DB, ip) {
+		if reg, _ := dhcp.IsRegistered(e.DB, ip); reg {
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		} else {
 			http.Redirect(w, r, "/register", http.StatusTemporaryRedirect)

@@ -15,20 +15,22 @@ var (
 	errAlreadyRegistered = errors.New("Device is already registered")
 	errBlacklisted       = errors.New("Device or username is blacklisted")
 	errMalformedMAC      = errors.New("Invalid MAC address")
+	errGenericRegister   = errors.New("Failed to register device")
+	errNoUsernameGiven   = errors.New("No username given")
 )
 
 // IsRegistered checks if a MAC address is registed in the database
-func IsRegistered(db *sql.DB, mac string) bool {
+func IsRegistered(db *sql.DB, mac string) (bool, error) {
 	stmt, err := db.Prepare("SELECT \"id\" FROM \"device\" WHERE \"mac\" = ?")
 	if err != nil {
-		return false
+		return false, err
 	}
 	var id int
 	err = stmt.QueryRow(mac).Scan(&id)
 	if err == nil {
-		return true
+		return true, nil
 	}
-	return false
+	return false, nil
 }
 
 // GetMacFromIP finds the mac address that has the lease ip
@@ -42,11 +44,18 @@ func GetMacFromIP(ip net.IP, leasesFile string) (string, error) {
 
 // Register a new device to a user
 func Register(db *sql.DB, mac, user, platform, ip, ua, subnet string) error {
+	if user == "" {
+		return errNoUsernameGiven
+	}
 	mac = strings.ToLower(mac)
 	if !isValidMac(mac) {
 		return errMalformedMAC
 	}
-	if IsRegistered(db, mac) {
+	r, err := IsRegistered(db, mac)
+	if err != nil {
+		return errGenericRegister
+	}
+	if r {
 		return errAlreadyRegistered
 	}
 	regTime := time.Now().Unix()

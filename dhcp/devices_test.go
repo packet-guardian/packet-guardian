@@ -25,7 +25,7 @@ func TestValidMacCheck(t *testing.T) {
 	}
 }
 
-func TestBlacklist(t *testing.T) {
+func TestIsBlacklisted(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("An error '%s' was encountered setting up mock database", err)
@@ -66,6 +66,73 @@ func TestBlacklist(t *testing.T) {
 	}
 	if b {
 		t.Error("Blacklist failed. Expected false, got true")
+	}
+
+	// Check all SQL statements were executed
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("Mock expectations not met: %s", err)
+	}
+}
+
+func TestIsRegistered(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("An error '%s' was encountered setting up mock database", err)
+	}
+	defer db.Close()
+
+	// Test registerd MAC
+	mock.ExpectPrepare("SELECT \"id\" FROM \"device\" WHERE \"mac\" = \\?").
+		ExpectQuery().
+		WithArgs("12:34:56:12:34:56").
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(2))
+
+	r, err := IsRegistered(db, "12:34:56:12:34:56")
+	if err != nil {
+		t.Fatalf("Error checking registrations: %s", err)
+	}
+	if !r {
+		t.Error("IsRegistered failed. Expected true, got false")
+	}
+
+	// Test non-registered MAC
+	mock.ExpectPrepare("SELECT \"id\" FROM \"device\" WHERE \"mac\" = \\?").
+		ExpectQuery().
+		WithArgs("12:34:56:12:34:57")
+
+	r, err = IsRegistered(db, "12:34:56:12:34:57")
+	if err != nil {
+		t.Fatalf("Error checking registrations: %s", err)
+	}
+	if r {
+		t.Error("IsRegistered failed. Expected false, got true")
+	}
+
+	// Check all SQL statements were executed
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("Mock expectations not met: %s", err)
+	}
+}
+
+func TestRegistration(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("An error '%s' was encountered setting up mock database", err)
+	}
+	defer db.Close()
+
+	mock.ExpectPrepare("SELECT \"id\" FROM \"device\" WHERE \"mac\" = \\?").
+		ExpectQuery().
+		WithArgs("12:34:56:12:34:56")
+
+	mock.ExpectPrepare("INSERT INTO \"device\" VALUES \\(null, \\?, \\?, \\?, \\?, \\?, \\?, \\?, \\?\\)").
+		ExpectExec().
+		WithArgs("12:34:56:12:34:56", "testuser", "127.0.0.1", "", "", 0, sqlmock.AnyArg(), "").
+		WillReturnResult(sqlmock.NewResult(3, 1))
+
+	err = Register(db, "12:34:56:12:34:56", "testuser", "", "127.0.0.1", "", "")
+	if err != nil {
+		t.Errorf("Error testing Register: %s", err)
 	}
 
 	// Check all SQL statements were executed

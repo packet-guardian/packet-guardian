@@ -1,5 +1,5 @@
 sessions/
-ng
+pg
 config.toml
 private /
 database.sqlite3

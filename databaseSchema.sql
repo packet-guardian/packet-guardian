@@ -2,7 +2,7 @@ CREATE TABLE "device" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "mac" TEXT NOT NULL,
     "username" TEXT NOT NULL,
-    "regIP" TEXT NOT NULL,
+    "regIP" TEXT DEFAULT '',
     "platform" TEXT DEFAULT '',
     "subnet" TEXT DEFAULT '',
     "expires" INTEGER DEFAULT (0),
