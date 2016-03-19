@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/gorilla/sessions"
-	"github.com/onesimus-systems/net-guardian/common"
+	"github.com/onesimus-systems/packet-guardian/common"
 )
 
 // StartSessionStore opens the FilesystemStore for web sessions

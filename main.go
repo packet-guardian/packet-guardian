@@ -14,8 +14,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	log "github.com/dragonrider23/go-logger"
-	"github.com/onesimus-systems/net-guardian/common"
-	"github.com/onesimus-systems/net-guardian/dhcp"
+	"github.com/onesimus-systems/packet-guardian/common"
+	"github.com/onesimus-systems/packet-guardian/dhcp"
 )
 
 var (

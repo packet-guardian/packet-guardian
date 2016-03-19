@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/naoina/toml"
-	"github.com/onesimus-systems/net-guardian/common"
+	"github.com/onesimus-systems/packet-guardian/common"
 )
 
 func loadConfig(configFile string) *common.Config {

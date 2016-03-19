@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/onesimus-systems/net-guardian/auth"
-	"github.com/onesimus-systems/net-guardian/common"
+	"github.com/onesimus-systems/packet-guardian/auth"
+	"github.com/onesimus-systems/packet-guardian/common"
 )
 
 // RegisterHTTPHandler serves and handles the registration page for an end user

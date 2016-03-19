@@ -1,4 +1,4 @@
-Network Guardian
-----------------
+Packet Guardian
+---------------
 
-The guardian and watcher of the network.
+The guardian and watcher of the packets.
