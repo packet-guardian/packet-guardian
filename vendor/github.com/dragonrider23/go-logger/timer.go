@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const timeReplacementString string = "{time}"
+
 // timer holds the start time for a log timer.
 // Each logger can only have one timer
 type timer struct {
@@ -26,9 +28,9 @@ func (l *Logger) StartTimer() {
 }
 
 // StopTimer determines the time elapsed since logger
-// l's timer started and issues an Info level log.
-// The string "{time}" will be replaced with the
-// elapsed time.
+// l's timer started and issues an Info level log using string s.
+// The string "{time}" will be replaced with the elapsed time in the log message.
+// If s is empty, no log will be written. Returns the elapsed time as a string.
 func (l *Logger) StopTimer(s string) string {
 	if !l.t.running {
 		return ""
@@ -36,8 +38,7 @@ func (l *Logger) StopTimer(s string) string {
 
 	elapsed := time.Since(l.t.start).String()
 	if s != "" {
-		dateTag := "{time}"
-		s = strings.Replace(s, dateTag, elapsed, -1)
+		s = strings.Replace(s, timeReplacementString, elapsed, -1)
 		l.Info(s)
 	}
 	l.t.running = false

@@ -2,11 +2,11 @@
 // Use of this source code is governed by the MIT
 // license that can be found in the LICENSE file.
 
-// The logger package allows for organized, simplified, custom
+// Package logger allows for organized, simplified, custom
 // logging for any application. Logger makes creating logs easy.
 // Create multiple loggers for specialized purposes each with their
 // own specific settings such as verbosity, log file location, and
-// whether it's show on stdout, written to file, or only one of them.
+// whether writes to stdout and/or a file.
 // Logger comes with 4 pre-made logging levels ready for use. There's
 // also a generic Log() function that allows for custom log types.
 //
@@ -23,6 +23,7 @@ package logger
 import (
 	"fmt"
 	"os"
+	"sync"
 )
 
 // Colors that can be used for Log().
@@ -38,15 +39,14 @@ const (
 	Grey    = "\x1B[90m"
 )
 
-var verbosity int = 2
+var verbosity = 2
 
-// Set global verbosity for stdout.
-func Verbose(v int) {
+// Verbosity sets the default verbose level for new logger.
+func Verbosity(v int) {
 	verbosity = checkVerboseLevel(v)
-	return
 }
 
-// Gets current global verbosity.
+// GetVerboseLevel returns the default verbose level for new Loggers.
 func GetVerboseLevel() int {
 	return verbosity
 }
@@ -61,9 +61,10 @@ func checkVerboseLevel(v int) int {
 	return v
 }
 
-// Type logger is the struct returned and used for logging.
+// Logger is the struct returned and used for logging.
 // The user can set its properties using the associated functions.
 type Logger struct {
+	mut                 sync.Mutex
 	name, path, tlayout string
 	stdout, file, raw   bool
 	verbosity           int
@@ -75,18 +76,20 @@ type Logger struct {
 // passing around a *Logger.
 var loggers map[string]*Logger
 
-// New returns a pointer to a new logger struct named n.
+// New returns a pointer to a new logger struct named n. If a Logger with the
+// same name already exists, it will return the existing Logger.
 func New(n string) *Logger {
 	// Initialize loggers
 	if loggers == nil {
 		loggers = make(map[string]*Logger)
 	}
 	// If logger with n name is already created, return it
-	if loggers[n] != nil {
-		return loggers[n]
+	if l, ok := loggers[n]; ok {
+		return l
 	}
 	// Create new logger
 	newLogger := &Logger{
+		mut:       sync.Mutex{},
 		name:      n,
 		stdout:    true,
 		file:      true,
@@ -100,17 +103,12 @@ func New(n string) *Logger {
 	return newLogger
 }
 
-// Get retrives the logger with name n.
+// Get does the same thing as New but can be used to make better sense contexually
 func Get(n string) *Logger {
-	log := loggers[n]
-	// If logger doesn't exist, create it
-	if loggers[n] == nil {
-		log = New(n)
-	}
-	return log
+	return New(n)
 }
 
-// Set verbose level of logger.
+// Verbose sets the verbose level of logger.
 func (l *Logger) Verbose(v int) *Logger {
 	l.verbosity = checkVerboseLevel(v)
 	return l
@@ -140,7 +138,7 @@ func (l *Logger) File() *Logger {
 	return l
 }
 
-// Raw tells the logger writer to not pre-include the date.
+// Raw tells the logger writer not to include the date.
 // Allows for completely custom log text.
 func (l *Logger) Raw() *Logger {
 	l.raw = true
@@ -156,55 +154,57 @@ func (l *Logger) Path(p string) *Logger {
 	return l
 }
 
-// TimeCode sets the time layout used in the logs.
-func (l *Logger) TimeCode(t string) *Logger {
+// TimeLayout sets the time layout used in the logs.
+func (l *Logger) TimeLayout(t string) *Logger {
 	l.tlayout = t
 	return l
 }
 
-// Remove logger l from the loggers map.
+// Close removes logger from the loggers registry.
 func (l *Logger) Close() {
 	delete(loggers, l.name)
 	return
 }
 
-// Wrapper for Log("Info", ...). Shows blue in stdout.
+// Error level functions
+
+// Info is a wrapper for Log("Info", ...). Shows blue in stdout.
 func (l *Logger) Info(format string) {
 	l.Log("Info", Cyan, format)
 	return
 }
 
-// Wrapper for formatted Log("Info", ...). Shows blue in stdout.
+// Infof is a wrapper for formatted Log("Info", ...). Shows blue in stdout.
 func (l *Logger) Infof(format string, v ...interface{}) {
 	l.Log("Info", Cyan, format, v...)
 	return
 }
 
-// Wrapper for Log("Warning", ...). Shows magenta in stdout.
+// Warning is a wrapper for Log("Warning", ...). Shows magenta in stdout.
 func (l *Logger) Warning(format string) {
 	l.Log("Warning", Magenta, format)
 	return
 }
 
-// Wrapper for formatted Log("Warning", ...). Shows magenta in stdout.
+// Warningf is a wrapper for formatted Log("Warning", ...). Shows magenta in stdout.
 func (l *Logger) Warningf(format string, v ...interface{}) {
 	l.Log("Warning", Magenta, format, v...)
 	return
 }
 
-// Wrapper for Log("Error", ...). Shows red in stdout.
+// Error is a wrapper for Log("Error", ...). Shows red in stdout.
 func (l *Logger) Error(format string) {
 	l.Log("Error", Red, format)
 	return
 }
 
-// Wrapper for formatted Log("Error", ...). Shows red in stdout.
+// Errorf is a wrapper for formatted Log("Error", ...). Shows red in stdout.
 func (l *Logger) Errorf(format string, v ...interface{}) {
 	l.Log("Error", Red, format, v...)
 	return
 }
 
-// Wrapper for Log("Fatal", ...). Shows red in stdout.
+// Fatal is a wrapper for Log("Fatal", ...). Shows red in stdout.
 // Exits application with os.Exit(1).
 func (l *Logger) Fatal(format string) {
 	l.Log("Fatal", Red, format)
@@ -212,16 +212,16 @@ func (l *Logger) Fatal(format string) {
 	return
 }
 
-// Wrapper for formatted Log("Fatal", ...). Shows red in stdout.
+// Fatalf is a wrapper for formatted Log("Fatal", ...). Shows red in stdout.
 // Exits application with os.Exit(1).
 func (l *Logger) Fatalf(format string, v ...interface{}) {
-	l.Log("Fatal", Red, format, v...)
+	l.Log("Fatl", Red, format, v...)
 	os.Exit(1)
 	return
 }
 
 // Log is the core function that will write a log text to file and stdout.
-// The log will be of eType type (used for the filename of the log). In
+// The log will be of type eType (used for the filename of the log). In
 // stdout it will be colored color (see const list). The text will use format
 // to Printf v interfaces.
 func (l *Logger) Log(eType, color, format string, v ...interface{}) {
@@ -230,4 +230,15 @@ func (l *Logger) Log(eType, color, format string, v ...interface{}) {
 	}
 	l.writeAll(eType, fmt.Sprintf(format, v...), color)
 	return
+}
+
+// CheckError logs e if non-nil and returns true if nil, false otherwise
+// along with the error object for furthur processing
+func (l *Logger) CheckError(e error) (bool, error) {
+	if e == nil {
+		return false, nil
+	}
+
+	l.Error(e.Error())
+	return true, e
 }

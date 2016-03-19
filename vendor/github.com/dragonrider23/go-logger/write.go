@@ -12,11 +12,18 @@ import (
 	"time"
 )
 
+var verboseLevels = map[string]int{
+	"Info":    3,
+	"Warning": 2,
+	"Error":   1,
+	"Fatal":   0,
+}
+
 // Wrapper function to call both writeToStdout and writeToFile
-func (l *Logger) writeAll(e, s, c string) (n int, err error) {
+func (l *Logger) writeAll(e, s, c string) error {
 	l.writeToStdout(e, s, c)
-	n, err = l.writeToFile(e, s)
-	return
+	err := l.writeToFile(e, s)
+	return err
 }
 
 // Write log text to stdout
@@ -27,18 +34,12 @@ func (l *Logger) writeToStdout(e, s, c string) {
 
 	// Check verbosity
 	log := false
-	if l.verbosity == 3 { // All levels including custom
-		log = true
+	if vlevel, ok := verboseLevels[e]; ok {
+		log = vlevel >= l.verbosity
+	} else {
+		log = l.verbosity > 3
 	}
-	if l.verbosity == 2 && e != "Info" { // Warning, Error, Fatal
-		log = true
-	}
-	if l.verbosity == 1 && (e != "Info" && e != "Warning") { // Error, Fatal
-		log = true
-	}
-	if l.verbosity == 0 && e == "Fatal" { // Fatal
-		log = true
-	}
+
 	if !log {
 		return
 	}
@@ -49,12 +50,12 @@ func (l *Logger) writeToStdout(e, s, c string) {
 }
 
 // Write log text specific path with filename [l.name]-[e].log and path l.path
-func (l *Logger) writeToFile(e, s string) (n int, err error) {
+func (l *Logger) writeToFile(e, s string) error {
 	if !l.file {
-		return 0, errors.New("Write to file is disabled for this logger")
+		return errors.New("Write to file is disabled for this logger")
 	}
-	if err = checkPath(l.path); err != nil {
-		return 0, err
+	if err := checkPath(l.path); err != nil {
+		return err
 	}
 
 	// Prepare time stamp
@@ -74,17 +75,21 @@ func (l *Logger) writeToFile(e, s string) (n int, err error) {
 	errorStr := t + s + "\n"
 
 	// Open and write to logfile
+	l.mut.Lock()
+	defer l.mut.Unlock()
 	saveFile, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Println(err.Error())
+		return err
 	}
 	defer saveFile.Close()
 
-	n, err = saveFile.WriteString(errorStr)
+	_, err = saveFile.WriteString(errorStr)
 	if err != nil {
 		fmt.Println(err.Error())
+		return err
 	}
-	return
+	return nil
 }
 
 // Checks file path to make sure it's available and if not creates it
