@@ -1,0 +1,62 @@
+html, body {
+    height: 100%;
+}
+
+body {
+    background-color: #BDBDBD;
+    color: black;
+    background: radial-gradient(circle, #E7E6E6, #8B8B8B);
+}
+
+#login-btn {
+    font-weight: bold;
+    padding: 5px 10px;
+    color: white;
+    border: 0;
+    background-color: #0083A8;
+    background: linear-gradient(to bottom, #0083A8, #007899);
+}
+
+.login-box input {
+    color: black;
+    font-size: 1.25em;
+}
+
+fieldset {
+    border: none;
+    margin: 10px auto;
+    width: 400px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+@media (min-width: 370px) {
+    .login-box input {
+        width: 350px;
+    }
+}
+
+@media (min-width: 600px) and (min-height: 430px) {
+    body {
+        background-color: white;
+        background: none;
+        color: white;
+    }
+
+    .login-box {
+        position: absolute;
+        width: 550px;
+        height: 230px;
+        top: 50%;
+        left: 50%;
+        margin-top: -100px;
+        margin-left: -290px;
+
+        border-radius: 15px;
+        background-color: #303030;
+        background: linear-gradient(to bottom, #454545, #303030);
+    }
+}
