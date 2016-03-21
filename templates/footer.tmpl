@@ -1,2 +1,15 @@
-</body>
+{{define "footer"}}
+    </div>
+    <footer>
+        <div class="copyright">
+            &copy;2016 Onesimus Systems
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="/public/assets/js/jLib.js"></script>
+    {{range .js}}
+    <script type="text/javascript" src="/public/assets/js/{{.}}.js"></script>
+    {{end}}
+    </body>
 </html>
+{{end}}

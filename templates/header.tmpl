@@ -1,6 +1,24 @@
+{{define "header"}}
+<!DOCTYPE html>
 <html>
     <head>
-        <title>Packet Guardian - University of Southern Indiana</title>
-    </head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Packet Guardian - Company Name</title>
 
+        <link rel="stylesheet" href="/public/assets/styles/normalize.css">
+        <link rel="stylesheet" href="/public/assets/styles/main.css">
+        {{range .css}}
+        <link rel="stylesheet" href="/public/assets/styles/{{.}}.css">
+        {{end}}
+    </head>
     <body>
+        <header>
+            <img src="/public/assets/images/logo.png">
+            <div class="header-title">
+                Packet Guardian
+            </div>
+        </header>
+        <div class="main">
+{{end}}

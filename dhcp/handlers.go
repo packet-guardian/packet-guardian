@@ -9,13 +9,6 @@ import (
 	"github.com/onesimus-systems/packet-guardian/common"
 )
 
-// RegisterHTTPHandler serves and handles the registration page for an end user
-func RegisterHTTPHandler(e *common.Environment) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		e.Templates.ExecuteTemplate(w, "register.tmpl", nil)
-	}
-}
-
 // AutoRegisterHandler handles the path /register/auto
 func AutoRegisterHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

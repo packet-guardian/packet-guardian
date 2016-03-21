@@ -1,3 +1,7 @@
+html, body {
+    min-height: 100%;
+}
+
 header {
     height: 150px;
     background-color: #303030;

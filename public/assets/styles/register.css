@@ -1,0 +1,47 @@
+body {
+    background-color: #BDBDBD;
+    color: black;
+    background: linear-gradient(to bottom, #E7E6E6, #8B8B8B);
+}
+
+#register-btn {
+    font-weight: bold;
+    padding: 5px 10px;
+    color: white;
+    border: 0;
+    background-color: #0083A8;
+    background: linear-gradient(to bottom, #0083A8, #007899);
+}
+
+.register-box input {
+    color: black;
+    font-size: 1.25em;
+    width: 100%;
+}
+
+fieldset {
+    border: none;
+    margin: 10px auto;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.reg-policy, .reg-btn {
+    padding-left: 30px;
+    padding-right: 30px;
+    margin: 0 auto;
+    max-width: 700px;
+}
+
+@media (min-width: 400px) {
+    .register-box input {
+        width: 380px;
+    }
+
+    fieldset {
+        width: 400px;
+    }
+}

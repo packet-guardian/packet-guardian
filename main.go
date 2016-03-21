@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"html/template"
@@ -14,6 +15,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	log "github.com/dragonrider23/go-logger"
+	"github.com/onesimus-systems/packet-guardian/auth"
 	"github.com/onesimus-systems/packet-guardian/common"
 	"github.com/onesimus-systems/packet-guardian/dhcp"
 )
@@ -39,6 +41,24 @@ func rootHandler(e *common.Environment) http.HandlerFunc {
 	}
 }
 
+func fileHandler(e *common.Environment, template string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		e.Templates.ExecuteTemplate(w, template, nil)
+	}
+}
+
+func reloadTemplates(e *common.Environment) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		templates, err := parseTemplates("templates/*.tmpl")
+		if err != nil {
+			w.Write([]byte("Error loading HTML templates: " + err.Error()))
+			return
+		}
+		e.Templates = templates
+		w.Write([]byte("Templates reloaded"))
+	}
+}
+
 func main() {
 	// Parse CLI flags
 	flag.Parse()
@@ -47,15 +67,15 @@ func main() {
 	}
 
 	// Get application-wide resources
+	logger := log.New("app").Path("logs")
 	config := loadConfig("")
 	sessStore := startSessionStore(config)
 	db := connectDatabase(config)
-	templates, err := template.ParseGlob("templates/*.tmpl")
+	templates, err := parseTemplates("templates/*.tmpl")
 	if err != nil {
-		fmt.Println("Error loading HTML templates")
+		fmt.Printf("Error loading HTML templates: %s", err.Error())
 		os.Exit(1)
 	}
-	logger := log.New("app").Path("logs")
 	if dev {
 		logger.Verbose(3)
 	}
@@ -79,11 +99,56 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", rootHandler(e))
 	r.PathPrefix("/public").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public/"))))
-	r.HandleFunc("/register", dhcp.RegisterHTTPHandler(e)).Methods("GET")
-	r.HandleFunc("/register/auto", dhcp.AutoRegisterHandler(e)).Methods("POST")
+
+	r.HandleFunc("/register", fileHandler(e, "register")).Methods("GET")
+	r.HandleFunc("/register", dhcp.AutoRegisterHandler(e)).Methods("POST")
+
+	r.HandleFunc("/login", fileHandler(e, "login")).Methods("GET")
+	r.HandleFunc("/login", auth.LoginHandler(e)).Methods("POST")
+
+	if dev {
+		r.HandleFunc("/dev/reload", reloadTemplates(e)).Methods("GET")
+	}
 
 	// Let's begin!
 	startServer(r, config)
+}
+
+func parseTemplates(pattern string) (tmpl *template.Template, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			switch x := r.(type) {
+			case string:
+				err = errors.New(x)
+			case error:
+				err = x
+			default:
+				err = errors.New("Unknown panic")
+			}
+			tmpl = nil
+		}
+	}()
+
+	tmpl = template.Must(template.New("").Funcs(template.FuncMap{
+		"dict": func(values ...interface{}) (map[string]interface{}, error) {
+			if len(values)%2 != 0 {
+				return nil, errors.New("invalid dict call")
+			}
+			dict := make(map[string]interface{}, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					return nil, errors.New("dict keys must be strings")
+				}
+				dict[key] = values[i+1]
+			}
+			return dict, nil
+		},
+		"list": func(values ...interface{}) ([]interface{}, error) {
+			return values, nil
+		},
+	}).ParseGlob(pattern))
+	return
 }
 
 func connectDatabase(config *common.Config) *sql.DB {
