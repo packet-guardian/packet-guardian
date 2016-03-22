@@ -1,7 +1,5 @@
-body {
-    background-color: #BDBDBD;
-    color: black;
-    background: radial-gradient(circle, #E7E6E6, #8B8B8B);
+html, body {
+    height: 100%;
 }
 
 #login-btn {
@@ -37,8 +35,8 @@ label {
 
 @media (min-width: 600px) and (min-height: 430px) {
     body {
-        background-color: white;
-        background: none;
+        background-color: #EDEDED;
+        background: radial-gradient(circle, #FFFFFF, #EDEDED);
         color: white;
     }
 

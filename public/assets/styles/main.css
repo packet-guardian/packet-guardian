@@ -2,6 +2,12 @@ html, body {
     min-height: 100%;
 }
 
+body {
+    color: black;
+    background-color: #EDEDED;
+    background: radial-gradient(circle, #FFFFFF, #EDEDED);
+}
+
 header {
     height: 150px;
     background-color: #303030;
@@ -24,6 +30,31 @@ header img {
     height: 80px;
     background-color: white;
     vertical-align: middle;
+}
+
+.flash {
+    height: 40px;
+    font-size: 25px;
+    /* display: block is for browsers that don't support flex */
+    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+}
+
+#flashText {
+    text-align: center;
+}
+
+.flashSuccess {
+    background-color: #72F786;
+    color: black;
+}
+
+.flashFailure {
+    background-color: #EC7A7A;
+    color: white;
 }
 
 .main {

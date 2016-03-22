@@ -1,10 +1,11 @@
 /*
  * The jLib library is a collection of commonly used functions to add quick functionality to a project.
- * This library is exremely light-weight and only adds what is necessary for convience.
+ * This library is extremely light-weight and only adds what is necessary for convience.
  *
  * Licensed under the MIT license. Text available online: https://opensource.org/licenses/MIT
 **/
-/*jslint browser:true */
+/* exported j */
+/* jshint -W083 */
 var j = {
     $: function (id, all) {
         'use strict';
@@ -43,24 +44,29 @@ var j = {
 
     On: function (el, eventName, handler) {
         'use strict';
-        el = j.$(el);
-        if (el.addEventListener) {
-            el.addEventListener(eventName, handler);
-        } else {
-            el.attachEvent('on' + eventName, function () {
-                handler.call(el);
-            });
+        var els = j.$(el, true),
+            i = 0;
+        for (i = 0; i < els.length; i++) {
+            if (els[i].addEventListener) {
+                els[i].addEventListener(eventName, handler);
+            } else {
+                els[i].attachEvent('on' + eventName, function () {
+                    handler.call(el[i]);
+                });
+            }
         }
     },
 
     Off: function (el, eventName, handler) {
         'use strict';
-        el = j.$(el);
-
-        if (el.removeEventListener) {
-            el.removeEventListener(eventName, handler);
-        } else {
-            el.detachEvent('on' + eventName, handler);
+        var els = j.$(el, true),
+            i = 0;
+        for (i = 0; i < els.length; i++) {
+            if (els[i].removeEventListener) {
+                els[i].removeEventListener(eventName, handler);
+            } else {
+                els[i].detachEvent('on' + eventName, handler);
+            }
         }
     },
 
@@ -72,6 +78,21 @@ var j = {
     Submit: function (el, handler) {
         'use strict';
         j.On(el, 'submit', handler);
+    },
+
+    Keyup: function (el, handler) {
+        'use strict';
+        j.On(el, 'keyup', handler);
+    },
+
+    Keydown: function (el, handler) {
+        'use strict';
+        j.On(el, 'keydown', handler);
+    },
+
+    Keypress: function (el, handler) {
+        'use strict';
+        j.On(el, 'keypress', handler);
     },
 
     // Class manipulation
@@ -188,5 +209,71 @@ var j = {
             return null;
         }
         return dataStr;
+    },
+
+    // Effects
+
+    FadeIn: function (el, speed, post) {
+        'use strict';
+        el = j.$(el);
+        post = (post !== undefined && post !== null) ? post : function () { return; };
+        var opacity = 0;
+
+        el.style.opacity = 0;
+        el.style.filter = '';
+
+        var last = +new Date();
+        var tick = function() {
+            opacity += (new Date() - last) / speed;
+            el.style.opacity = opacity;
+            el.style.filter = 'alpha(opacity=' + (100 * opacity)|0 + ')';
+
+            last = +new Date();
+
+            if (opacity < 1) {
+                (window.requestAnimationFrame && requestAnimationFrame(tick)) || setTimeout(tick, 16); //jshint ignore:line
+            } else {
+                post();
+            }
+        };
+
+        tick();
+    },
+
+    FadeOut: function (el, speed, post) {
+        'use strict';
+        el = j.$(el);
+        post = (post !== undefined && post !== null) ? post : function () { return; };
+        var opacity = 1;
+
+        el.style.opacity = 0;
+        el.style.filter = '';
+
+        var last = +new Date();
+        var tick = function() {
+            opacity -= (new Date() - last) / speed;
+            el.style.opacity = opacity;
+            el.style.filter = 'alpha(opacity=' + (100 * opacity)|0 + ')';
+
+            last = +new Date();
+
+            if (opacity > 0) {
+                (window.requestAnimationFrame && requestAnimationFrame(tick)) || setTimeout(tick, 16); //jshint ignore:line
+            } else {
+                post();
+            }
+        };
+
+        tick();
+    },
+
+    Show: function (el) {
+        'use strict';
+        j.$(el).style.display = '';
+    },
+
+    Hide: function (el) {
+        'use strict';
+        j.$(el).style.display = 'none';
     },
 };

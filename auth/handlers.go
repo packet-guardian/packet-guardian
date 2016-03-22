@@ -8,8 +8,12 @@ import (
 
 func LoginHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !IsValidLogin(e.DB, r.FormValue("username"), r.FormValue("password")) {
-			http.Error(w, "", http.StatusForbidden)
+		// Assume invalid until convinced otherwise
+		resp := common.NewApiResponse(common.ApiStatusInvalidAuth, "Invalid login", nil)
+		if IsValidLogin(e.DB, r.FormValue("username"), r.FormValue("password")) {
+			resp.Code = common.ApiStatusOK
+			resp.Message = ""
 		}
+		w.Write(resp.Encode())
 	}
 }
