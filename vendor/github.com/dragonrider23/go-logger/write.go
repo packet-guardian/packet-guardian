@@ -35,7 +35,7 @@ func (l *Logger) writeToStdout(e, s, c string) {
 	// Check verbosity
 	log := false
 	if vlevel, ok := verboseLevels[e]; ok {
-		log = vlevel >= l.verbosity
+		log = l.verbosity >= vlevel
 	} else {
 		log = l.verbosity > 3
 	}

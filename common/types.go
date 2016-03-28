@@ -5,7 +5,9 @@ import "encoding/json"
 // Config defines the configuration struct for the application
 type Config struct {
 	Core struct {
-		DatabaseFile string
+		DatabaseFile    string
+		SiteTitle       string
+		SiteCompanyName string
 	}
 	Webserver struct {
 		Address            string
@@ -30,30 +32,38 @@ type Config struct {
 	}
 }
 
-type ApiStatus int
+// APIStatus is an integer that states the success or failure of the request
+type APIStatus int
 
 const (
-	ApiStatusOK ApiStatus = iota
-	ApiStatusGenericError
-	ApiStatusInvalidAuth
-	ApiStatusAuthNeeded
+	// APIStatusOK everything went fine, no error
+	APIStatusOK APIStatus = iota
+	// APIStatusGenericError something went wrong but there's no specific error number for it
+	APIStatusGenericError
+	// APIStatusInvalidAuth failed login
+	APIStatusInvalidAuth
+	// APIStatusAuthNeeded no active login, but it's needed
+	APIStatusAuthNeeded
 )
 
-type ApiResponse struct {
-	Code    ApiStatus
+// A APIResponse is returned as a JSON struct to the client
+type APIResponse struct {
+	Code    APIStatus
 	Message string
 	Data    interface{}
 }
 
-func NewApiResponse(c ApiStatus, m string, d interface{}) *ApiResponse {
-	return &ApiResponse{
+// NewAPIResponse creates an APIResponse object with status c, message m, and data d
+func NewAPIResponse(c APIStatus, m string, d interface{}) *APIResponse {
+	return &APIResponse{
 		Code:    c,
 		Message: m,
 		Data:    d,
 	}
 }
 
-func (a *ApiResponse) Encode() []byte {
+// Encode the APIResponse into JSON
+func (a *APIResponse) Encode() []byte {
 	b, err := json.Marshal(a)
 	if err != nil {
 		// Do something

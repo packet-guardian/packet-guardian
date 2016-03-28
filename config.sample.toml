@@ -1,5 +1,7 @@
 [core]
 databaseFile = "database.sqlite3"
+siteTitle = "Packet Guardian"
+siteCompanyName = ""
 
 [webserver]
 # Leave address blank to bind to all addresses

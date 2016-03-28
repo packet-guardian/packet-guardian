@@ -40,6 +40,10 @@ var j = {
         }
     },
 
+    Noop: function() {
+        return;
+    },
+
     // Event handling
 
     On: function (el, eventName, handler) {
@@ -151,7 +155,6 @@ var j = {
         'use strict';
         var middleware = function (req) {
             req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-            return req;
         };
         j.Ajax('POST', url, data, successFn, errorFn, middleware);
     },
@@ -159,9 +162,9 @@ var j = {
     Ajax: function (method, url, data, successFn, errorFn, middleware) {
         'use strict';
         method = method.toUpperCase();
-        successFn = (successFn !== undefined && successFn !== null) ? successFn : function () { return; };
-        errorFn = (errorFn !== undefined && errorFn !== null) ? errorFn : function () { return; };
-        middleware = (middleware !== undefined && middleware !== null) ? middleware : function (r) { return r; };
+        successFn = (successFn !== undefined && successFn !== null) ? successFn : j.Noop;
+        errorFn = (errorFn !== undefined && errorFn !== null) ? errorFn : j.Noop;
+        middleware = (middleware !== undefined && middleware !== null) ? middleware : j.Noop;
         var dataStr = j.formatAJAXData(data),
             request = new XMLHttpRequest();
 
@@ -176,7 +179,7 @@ var j = {
         }
 
         request.open(method.toUpperCase(), url, true);
-        request = middleware(request);
+        middleware(request);
 
         request.onreadystatechange = function () {
             if (this.readyState === 4) {
@@ -215,50 +218,45 @@ var j = {
 
     FadeIn: function (el, speed, post) {
         'use strict';
-        el = j.$(el);
-        post = (post !== undefined && post !== null) ? post : function () { return; };
-        var opacity = 0;
-
-        el.style.opacity = 0;
-        el.style.filter = '';
-
-        var last = +new Date();
-        var tick = function() {
-            opacity += (new Date() - last) / speed;
-            el.style.opacity = opacity;
-            el.style.filter = 'alpha(opacity=' + (100 * opacity)|0 + ')';
-
-            last = +new Date();
-
-            if (opacity < 1) {
-                (window.requestAnimationFrame && requestAnimationFrame(tick)) || setTimeout(tick, 16); //jshint ignore:line
-            } else {
-                post();
-            }
-        };
-
-        tick();
+        j.fadeGeneric(el, speed, post, "in");
     },
 
     FadeOut: function (el, speed, post) {
         'use strict';
+        j.fadeGeneric(el, speed, post, "out");
+    },
+
+    fadeGeneric: function (el, speed, post, inOut) {
+        'use strict';
+        if (inOut !== "in" && inOut !== "out") {
+            console.error("Fade type must be either 'in' or 'out'");
+            return;
+        }
         el = j.$(el);
-        post = (post !== undefined && post !== null) ? post : function () { return; };
-        var opacity = 1;
+        post = (post !== undefined && post !== null) ? post : j.Noop;
+        var opacity = (inOut === "in") ? 0 : 1;
 
         el.style.opacity = 0;
         el.style.filter = '';
 
         var last = +new Date();
         var tick = function() {
-            opacity -= (new Date() - last) / speed;
+            if (inOut === "in") {
+                opacity += (new Date() - last) / speed;
+            } else {
+                opacity -= (new Date() - last) / speed;
+            }
             el.style.opacity = opacity;
             el.style.filter = 'alpha(opacity=' + (100 * opacity)|0 + ')';
 
             last = +new Date();
 
-            if (opacity > 0) {
-                (window.requestAnimationFrame && requestAnimationFrame(tick)) || setTimeout(tick, 16); //jshint ignore:line
+            if ((inOut === "out" && opacity > 0) || (inOut === "in" && opacity < 1)) {
+                if (window.requestAnimationFrame) {
+                    requestAnimationFrame(tick);
+                } else {
+                    setTimeout(tick, 16);
+                }
             } else {
                 post();
             }

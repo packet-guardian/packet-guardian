@@ -4,10 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"flag"
-	"fmt"
 	"html/template"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 
@@ -43,7 +41,14 @@ func rootHandler(e *common.Environment) http.HandlerFunc {
 
 func fileHandler(e *common.Environment, template string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		e.Templates.ExecuteTemplate(w, template, nil)
+		data := struct {
+			SiteTitle   string
+			CompanyName string
+		}{
+			SiteTitle:   e.Config.Core.SiteTitle,
+			CompanyName: e.Config.Core.SiteCompanyName,
+		}
+		e.Templates.ExecuteTemplate(w, template, data)
 	}
 }
 
@@ -59,25 +64,43 @@ func reloadTemplates(e *common.Environment) http.HandlerFunc {
 	}
 }
 
+func reloadConfiguration(e *common.Environment) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		config, err := loadConfig("")
+		if err != nil {
+			w.Write([]byte("Error loading config: " + err.Error()))
+			return
+		}
+		e.Config = config
+		w.Write([]byte("Configuration reloaded"))
+	}
+}
+
 func main() {
 	// Parse CLI flags
 	flag.Parse()
-	if dev {
-		fmt.Println(log.Magenta + "WARNING:" + log.Reset + " Net Guardian is running in DEVELOPMENT mode")
-	}
 
 	// Get application-wide resources
 	logger := log.New("app").Path("logs")
-	config := loadConfig("")
-	sessStore := startSessionStore(config)
-	db := connectDatabase(config)
-	templates, err := parseTemplates("templates/*.tmpl")
-	if err != nil {
-		fmt.Printf("Error loading HTML templates: %s", err.Error())
-		os.Exit(1)
-	}
 	if dev {
 		logger.Verbose(3)
+		logger.Info("Packet Guardian running in DEVELOPMENT mode")
+	}
+	config, err := loadConfig("")
+	if err != nil {
+		logger.Fatalf("Error loading configuration: %s", err.Error())
+	}
+	sessStore, err := startSessionStore(config)
+	if err != nil {
+		logger.Fatalf("Error loading session store: %s", err.Error())
+	}
+	db, err := connectDatabase(config)
+	if err != nil {
+		logger.Fatalf("Error loading database: %s", err.Error())
+	}
+	templates, err := parseTemplates("templates/*.tmpl")
+	if err != nil {
+		logger.Fatalf("Error loading HTML templates: %s", err.Error())
 	}
 
 	// Create an environment
@@ -107,11 +130,12 @@ func main() {
 	r.HandleFunc("/login", auth.LoginHandler(e)).Methods("POST")
 
 	if dev {
-		r.HandleFunc("/dev/reload", reloadTemplates(e)).Methods("GET")
+		r.HandleFunc("/dev/reloadtemp", reloadTemplates(e)).Methods("GET")
+		r.HandleFunc("/dev/reloadconf", reloadConfiguration(e)).Methods("GET")
 	}
 
 	// Let's begin!
-	startServer(r, config)
+	startServer(r, e)
 }
 
 func parseTemplates(pattern string) (tmpl *template.Template, err error) {
@@ -151,28 +175,27 @@ func parseTemplates(pattern string) (tmpl *template.Template, err error) {
 	return
 }
 
-func connectDatabase(config *common.Config) *sql.DB {
+func connectDatabase(config *common.Config) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", config.Core.DatabaseFile)
 	if err != nil {
-		fmt.Println("Error loading database file: ", config.Core.DatabaseFile)
-		os.Exit(1)
+		return nil, err
 	}
-	return db
+	return db, nil
 }
 
-func startServer(router http.Handler, config *common.Config) {
+func startServer(router http.Handler, e *common.Environment) {
 	bindAddr := ""
 	bindPort := "8000"
-	if config.Webserver.Address != "" {
-		bindAddr = config.Webserver.Address
+	if e.Config.Webserver.Address != "" {
+		bindAddr = e.Config.Webserver.Address
 	}
-	if config.Webserver.Port != 0 {
-		bindPort = strconv.Itoa(config.Webserver.Port)
+	if e.Config.Webserver.Port != 0 {
+		bindPort = strconv.Itoa(e.Config.Webserver.Port)
 	}
 	if bindAddr == "" {
-		fmt.Printf("Now listening on *:%s\n", bindPort)
+		e.Log.Infof("Now listening on *:%s", bindPort)
 	} else {
-		fmt.Printf("Now listening on %s:%s\n", bindAddr, bindPort)
+		e.Log.Infof("Now listening on %s:%s", bindAddr, bindPort)
 	}
 	http.ListenAndServe(bindAddr+":"+bindPort, router)
 }

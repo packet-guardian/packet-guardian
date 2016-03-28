@@ -1,19 +1,25 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
+	"errors"
 
 	"github.com/naoina/toml"
 	"github.com/onesimus-systems/packet-guardian/common"
 )
 
-func loadConfig(configFile string) *common.Config {
+func loadConfig(configFile string) (conf *common.Config, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("There was an error loading the configuration file: ", r)
-			os.Exit(1)
+			switch x := r.(type) {
+			case string:
+				err = errors.New(x)
+			case error:
+				err = x
+			default:
+				err = errors.New("Unknown panic")
+			}
 		}
 	}()
 
@@ -23,16 +29,16 @@ func loadConfig(configFile string) *common.Config {
 
 	f, err := os.Open(configFile)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer f.Close()
 	buf, err := ioutil.ReadAll(f)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	var conf common.Config
-	if err := toml.Unmarshal(buf, &conf); err != nil {
-		panic(err)
+	var con common.Config
+	if err := toml.Unmarshal(buf, &con); err != nil {
+		return nil, err
 	}
-	return &conf
+	return &con, nil
 }

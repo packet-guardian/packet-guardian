@@ -17,9 +17,9 @@ j.OnReady(function () {
             if (resp.Code === 0) {
                 console.log("Login successful");
                 // Redirect to management page
+            } else {
+                c.FlashMessage("Incorrect username or password");
             }
-
-            c.FlashMessage("Incorrect username or password");
 
         }, function (req) {
             console.log("an error was encountered");

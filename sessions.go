@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"os"
 
@@ -10,19 +10,17 @@ import (
 )
 
 // StartSessionStore opens the FilesystemStore for web sessions
-func startSessionStore(config *common.Config) *sessions.FilesystemStore {
+func startSessionStore(config *common.Config) (*sessions.FilesystemStore, error) {
 	if config.Webserver.SessionsDir == "" {
 		config.Webserver.SessionsDir = "sessions"
 	}
 	if config.Webserver.SessionsAuthKey == "" {
-		fmt.Println("No session authentication key given in configuration")
-		os.Exit(1)
+		return nil, errors.New("No session authentication key given in configuration")
 	}
 
 	err := os.MkdirAll(config.Webserver.SessionsDir, 0700)
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		return nil, err
 	}
 
 	sessDir := config.Webserver.SessionsDir
@@ -38,7 +36,7 @@ func startSessionStore(config *common.Config) *sessions.FilesystemStore {
 		Path:   "/",
 		MaxAge: 3600 * 8, // 8 hours
 	}
-	return store
+	return store, nil
 }
 
 type sessionStore struct {
