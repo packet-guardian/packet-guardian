@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"html/template"
 
 	"github.com/onesimus-systems/packet-guardian/auth"
 	"github.com/onesimus-systems/packet-guardian/common"
@@ -14,16 +15,10 @@ import (
 // RegistrationPageHandler handles GET requests to /register
 func RegistrationPageHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-		// if reg, _ := IsRegisteredByIP(e.DB, ip, e.Config.DHCP.LeasesFile); reg {
-		// 	http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
-		// 	return
-		// }
-
 		data := struct {
 			SiteTitle   string
 			CompanyName string
-			Policy      []string
+			Policy      []template.HTML
 		}{
 			SiteTitle:   e.Config.Core.SiteTitle,
 			CompanyName: e.Config.Core.SiteCompanyName,
@@ -144,32 +139,25 @@ func DeleteHandler(e *common.Environment) http.HandlerFunc {
 	}
 }
 
-// RegisterHandler handles the path /devices/register
-func RegisterHandler(e *common.Environment) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		return
-	}
-}
-
-func loadPolicyText(file string) []string {
+func loadPolicyText(file string) []template.HTML {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil
 	}
 	defer f.Close()
 
-	policy := make([]string, 0)
+	policy := make([]template.HTML, 0)
 	currentParagraph := ""
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		t := strings.TrimSpace(scanner.Text())
 		if t == "" {
-			policy = append(policy, currentParagraph)
+			policy = append(policy, template.HTML(currentParagraph))
 			currentParagraph = ""
 			continue
 		}
 		currentParagraph += " " + t
 	}
-	policy = append(policy, currentParagraph)
+	policy = append(policy, template.HTML(currentParagraph))
 	return policy
 }

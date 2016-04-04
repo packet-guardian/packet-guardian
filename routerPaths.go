@@ -29,7 +29,6 @@ func makeRoutes(e *common.Environment) http.Handler {
 
 	// Device actions
 	r.HandleFunc("/devices/delete", auth.CheckAuthAPI(e, dhcp.DeleteHandler(e))).Methods("POST")
-	r.HandleFunc("/devices/register", auth.CheckAuthAPI(e, dhcp.RegisterHandler(e))).Methods("POST")
 
 	// Development only routes
 	if dev {
@@ -39,6 +38,7 @@ func makeRoutes(e *common.Environment) http.Handler {
 	return r
 }
 
+// Dev mode route handlers
 func reloadTemplates(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		templates, err := parseTemplates("templates/*.tmpl")

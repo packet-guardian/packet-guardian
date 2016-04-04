@@ -20,7 +20,7 @@ sessionsAuthKey = ""
 sessionsEncryptKey = ""
 
 [auth]
-# An array of auth types in order or precidence
+# An array of auth types in order of precidence
 # Valid values: ldap, local
 authMethod = ["local"]
 
@@ -35,4 +35,4 @@ useTLS = true
 
 [dhcp]
 leasesFile = "dhcpd.leases"
-hostsFile = ""
+hostsFile = "allowed-hosts.conf"

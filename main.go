@@ -131,12 +131,17 @@ func startServer(router http.Handler, e *common.Environment) {
 		e.Log.Infof("Now listening on %s:%s", bindAddr, bindPort)
 	}
 
-	http.ListenAndServeTLS(
-		bindAddr+":"+bindPort,
-		e.Config.Webserver.TLSCertFile,
-		e.Config.Webserver.TLSKeyFile,
-		router,
-	)
+	if e.Config.Webserver.TLSCertFile != "" && e.Config.Webserver.TLSKeyFile != "" {
+		e.Log.Info("Starting server with TLS certificates")
+		http.ListenAndServeTLS(
+			bindAddr+":"+bindPort,
+			e.Config.Webserver.TLSCertFile,
+			e.Config.Webserver.TLSKeyFile,
+			router,
+		)
+	} else {
+		http.ListenAndServe(bindAddr+":"+bindPort, router)
+	}
 }
 
 type dhcpHostFile struct {
