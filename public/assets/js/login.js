@@ -15,8 +15,7 @@ j.OnReady(function () {
             }
             resp = JSON.parse(resp);
             if (resp.Code === 0) {
-                console.log("Login successful");
-                // Redirect to management page
+                location.href = "/manage";
             } else {
                 c.FlashMessage("Incorrect username or password");
             }

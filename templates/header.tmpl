@@ -5,8 +5,11 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=Edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        {{if eq .companyName ""}}
+        <title>{{.title}}</title>
+        {{else}}
         <title>{{.title}} - {{.companyName}}</title>
-
+        {{end}}
         <link rel="stylesheet" href="/public/assets/styles/normalize.css">
         <link rel="stylesheet" href="/public/assets/styles/main.css">
         {{range .css}}

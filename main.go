@@ -7,13 +7,10 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
-	"strings"
 
-	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 
 	log "github.com/dragonrider23/go-logger"
-	"github.com/onesimus-systems/packet-guardian/auth"
 	"github.com/onesimus-systems/packet-guardian/common"
 	"github.com/onesimus-systems/packet-guardian/dhcp"
 )
@@ -25,55 +22,7 @@ var (
 
 func init() {
 	flag.StringVar(&configFile, "config", "", "Configuration file path")
-	flag.BoolVar(&dev, "devel", false, "Run in development mode")
-}
-
-func rootHandler(e *common.Environment) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ip := strings.Split(r.RemoteAddr, ":")[0]
-		if reg, _ := dhcp.IsRegistered(e.DB, ip); reg {
-			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		} else {
-			http.Redirect(w, r, "/register", http.StatusTemporaryRedirect)
-		}
-	}
-}
-
-func fileHandler(e *common.Environment, template string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		data := struct {
-			SiteTitle   string
-			CompanyName string
-		}{
-			SiteTitle:   e.Config.Core.SiteTitle,
-			CompanyName: e.Config.Core.SiteCompanyName,
-		}
-		e.Templates.ExecuteTemplate(w, template, data)
-	}
-}
-
-func reloadTemplates(e *common.Environment) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		templates, err := parseTemplates("templates/*.tmpl")
-		if err != nil {
-			w.Write([]byte("Error loading HTML templates: " + err.Error()))
-			return
-		}
-		e.Templates = templates
-		w.Write([]byte("Templates reloaded"))
-	}
-}
-
-func reloadConfiguration(e *common.Environment) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		config, err := loadConfig("")
-		if err != nil {
-			w.Write([]byte("Error loading config: " + err.Error()))
-			return
-		}
-		e.Config = config
-		w.Write([]byte("Configuration reloaded"))
-	}
+	flag.BoolVar(&dev, "dev", false, "Run in development mode")
 }
 
 func main() {
@@ -118,24 +67,8 @@ func main() {
 		},
 	}
 
-	// Register HTTP handlers
-	r := mux.NewRouter()
-	r.HandleFunc("/", rootHandler(e))
-	r.PathPrefix("/public").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public/"))))
-
-	r.HandleFunc("/register", fileHandler(e, "register")).Methods("GET")
-	r.HandleFunc("/register", dhcp.AutoRegisterHandler(e)).Methods("POST")
-
-	r.HandleFunc("/login", fileHandler(e, "login")).Methods("GET")
-	r.HandleFunc("/login", auth.LoginHandler(e)).Methods("POST")
-
-	if dev {
-		r.HandleFunc("/dev/reloadtemp", reloadTemplates(e)).Methods("GET")
-		r.HandleFunc("/dev/reloadconf", reloadConfiguration(e)).Methods("GET")
-	}
-
 	// Let's begin!
-	startServer(r, e)
+	startServer(makeRoutes(e), e)
 }
 
 func parseTemplates(pattern string) (tmpl *template.Template, err error) {
@@ -197,7 +130,13 @@ func startServer(router http.Handler, e *common.Environment) {
 	} else {
 		e.Log.Infof("Now listening on %s:%s", bindAddr, bindPort)
 	}
-	http.ListenAndServe(bindAddr+":"+bindPort, router)
+
+	http.ListenAndServeTLS(
+		bindAddr+":"+bindPort,
+		e.Config.Webserver.TLSCertFile,
+		e.Config.Webserver.TLSKeyFile,
+		router,
+	)
 }
 
 type dhcpHostFile struct {

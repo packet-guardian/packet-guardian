@@ -1,17 +1,24 @@
 package common
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"io"
+)
 
 // Config defines the configuration struct for the application
 type Config struct {
 	Core struct {
-		DatabaseFile    string
-		SiteTitle       string
-		SiteCompanyName string
+		DatabaseFile             string
+		SiteTitle                string
+		SiteCompanyName          string
+		RegistrationPolicyFile   string
+		AllowManualRegistrations bool
 	}
 	Webserver struct {
 		Address            string
 		Port               int
+		TLSCertFile        string
+		TLSKeyFile         string
 		SessionName        string
 		SessionsDir        string
 		SessionsAuthKey    string
@@ -37,13 +44,13 @@ type APIStatus int
 
 const (
 	// APIStatusOK everything went fine, no error
-	APIStatusOK APIStatus = iota
+	APIStatusOK APIStatus = 0
 	// APIStatusGenericError something went wrong but there's no specific error number for it
-	APIStatusGenericError
+	APIStatusGenericError APIStatus = 1
 	// APIStatusInvalidAuth failed login
-	APIStatusInvalidAuth
+	APIStatusInvalidAuth APIStatus = 10
 	// APIStatusAuthNeeded no active login, but it's needed
-	APIStatusAuthNeeded
+	APIStatusAuthNeeded APIStatus = 11
 )
 
 // A APIResponse is returned as a JSON struct to the client
@@ -62,6 +69,14 @@ func NewAPIResponse(c APIStatus, m string, d interface{}) *APIResponse {
 	}
 }
 
+func NewAPIOK(m string, d interface{}) *APIResponse {
+	return &APIResponse{
+		Code:    APIStatusOK,
+		Message: m,
+		Data:    d,
+	}
+}
+
 // Encode the APIResponse into JSON
 func (a *APIResponse) Encode() []byte {
 	b, err := json.Marshal(a)
@@ -69,4 +84,11 @@ func (a *APIResponse) Encode() []byte {
 		// Do something
 	}
 	return b
+}
+
+func (a *APIResponse) WriteTo(w io.Writer) (int64, error) {
+	r := a.Encode()
+	l := len(r)
+	w.Write(r)
+	return int64(l), nil
 }

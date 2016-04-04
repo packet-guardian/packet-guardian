@@ -6,7 +6,7 @@ CREATE TABLE "device" (
     "platform" TEXT DEFAULT '',
     "subnet" TEXT DEFAULT '',
     "expires" INTEGER DEFAULT (0),
-    "registered" INTEGER NOT NULL,
+    "dateRegistered" INTEGER NOT NULL,
     "userAgent" TEXT DEFAULT ''
 );
 

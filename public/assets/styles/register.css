@@ -1,3 +1,7 @@
+html, body {
+    height: 100%;
+}
+
 #register-btn {
     font-weight: bold;
     padding: 5px 10px;
@@ -28,11 +32,15 @@ label {
     font-size: 1.2em;
 }
 
-.reg-policy, .reg-btn {
+.reg-policy, .reg-btn, .success-message {
     padding-left: 30px;
     padding-right: 30px;
     margin: 0 auto;
     max-width: 700px;
+}
+
+.success-message {
+    display: none;
 }
 
 @media (min-width: 400px) {

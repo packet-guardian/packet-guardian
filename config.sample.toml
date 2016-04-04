@@ -2,11 +2,15 @@
 databaseFile = "database.sqlite3"
 siteTitle = "Packet Guardian"
 siteCompanyName = ""
+registrationPolicyFile = "policy.txt"
+allowManualRegistrations = true
 
 [webserver]
 # Leave address blank to bind to all addresses
 address = "127.0.0.1"
 port = 7000
+TLSCertFile = ""
+TLSKeyFile = ""
 sessionName = "net-guardian"
 sessionsDir = "sessions"
 # This is the authentication key for web sessions

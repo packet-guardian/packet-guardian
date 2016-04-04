@@ -23,7 +23,8 @@ var (
 	hostMutex            = sync.Mutex{}
 )
 
-// IsRegistered checks if a MAC address is registed in the database
+// IsRegistered checks if a MAC address is registed in the database.
+// IsRegistered will return false if an error occurs as well as the error itself.
 func IsRegistered(db *sql.DB, mac string) (bool, error) {
 	stmt, err := db.Prepare("SELECT \"id\" FROM \"device\" WHERE \"mac\" = ?")
 	if err != nil {
@@ -37,6 +38,16 @@ func IsRegistered(db *sql.DB, mac string) (bool, error) {
 	return false, nil
 }
 
+// IsRegisteredByIP checks if an IP is leased to a registered MAC address.
+// IsRegisteredByIP will return false if an error occurs as well as the error itself.
+func IsRegisteredByIP(db *sql.DB, ip net.IP, leasesFile string) (bool, error) {
+	mac, err := GetMacFromIP(ip, leasesFile)
+	if err != nil {
+		return false, err
+	}
+	return IsRegistered(db, mac)
+}
+
 // GetMacFromIP finds the mac address that has the lease ip
 func GetMacFromIP(ip net.IP, leasesFile string) (string, error) {
 	l, err := getLeaseFromFile(ip, leasesFile)
@@ -46,7 +57,8 @@ func GetMacFromIP(ip net.IP, leasesFile string) (string, error) {
 	return l.mac, nil
 }
 
-// Register a new device to a user
+// Register a new device to a user. This function will check if the MAC address is valid
+// and if it is already registered. This function does not enforce the blacklist.
 func Register(db *sql.DB, mac, user, platform, ip, ua, subnet string) error {
 	if user == "" {
 		return errNoUsernameGiven
@@ -128,11 +140,14 @@ func hostWriteService(db *sql.DB, filepath string, c <-chan bool, quit <-chan bo
 }
 
 func writeHostFile(db *sql.DB, filepath string) error {
+	if filepath == "" {
+		return errors.New("No allowed host filename given")
+	}
 	hostMutex.Lock()
 	defer hostMutex.Unlock()
 
 	expired := time.Now().Unix()
-	sql := "SELECT \"mac\", \"username\", \"userAgent\", \"regIP\", \"registered\" FROM \"device\" WHERE \"expired\" = 0 OR \"expired\" > ? ORDER BY \"username\" ASC"
+	sql := "SELECT \"mac\", \"username\", \"userAgent\", \"regIP\", \"dateRegistered\" FROM \"device\" WHERE \"expired\" = 0 OR \"expired\" > ? ORDER BY \"username\" ASC"
 	rows, err := db.Query(sql, expired)
 	if err != nil {
 		return err

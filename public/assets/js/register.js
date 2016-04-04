@@ -2,34 +2,39 @@
 /*globals j*/
 j.OnReady(function () {
     'use strict';
+    var regBtnEnabled = true;
     var register = function () {
-        var data = {};
-        data.username = j.$('[name=username]').value;
-        data.password = j.$('[name=password]').value;
+        if (!regBtnEnabled) { return; }
+        var data = {
+            username: j.$('[name=username]').value,
+            password: j.$('[name=password]').value
+        };
 
         if (data.username === '' || data.password === '') {
             return;
         }
 
-        j.Post('/login', data, function (resp, req) {
+        j.Post('/register', data, function (resp, req) {
             if (resp === '') {
-                console.log("malformed response");
+                c.FlashMessage("Server error, please call the IT help desk");
+                return;
             }
             resp = JSON.parse(resp);
-            if (resp.Code === 0) {
-                console.log("Login successful");
-                // Redirect to success page
+            window.scrollTo(0, 0);
+            if (resp.Code !== 0) {
+                c.FlashMessage(resp.Message);
+                return;
             }
 
-            c.FlashMessage("Incorrect username or password");
-            window.scrollTo(0, 0);
-
+            c.FlashMessage(resp.Message, 'success');
+            regBtnEnabled = false;
+            j.Hide('.register-box');
+            j.$('.success-message').style.display = 'block';
         }, function (req) {
-            console.log("an error was encountered");
+            c.FlashMessage("Server error, please call the IT help desk");
+            return;
         });
     };
 
-    j.Click('#register-btn', function () {
-        register();
-    });
+    j.Click('#register-btn', register);
 });

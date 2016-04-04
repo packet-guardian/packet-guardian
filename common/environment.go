@@ -32,6 +32,7 @@ type Session interface {
 	GetBool(key interface{}, def ...bool) bool
 	GetString(key interface{}, def ...string) string
 	GetInt(key interface{}, def ...int) int
+	Save(r *http.Request, w http.ResponseWriter) error
 }
 
 // A DHCPHostWriter can write a new DHCPd hosts file
