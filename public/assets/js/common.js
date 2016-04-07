@@ -8,6 +8,7 @@ var c = {
 
         // Post is a callback which is called after the message has faded out
         var clear = function(post) {
+            post = (post !== undefined && post !== null) ? post : j.Noop;
             j.FadeOut(flash, 500, function() {
                 j.RemoveClass(flash, 'flashSuccess');
                 j.RemoveClass(flash, 'flashFailure');

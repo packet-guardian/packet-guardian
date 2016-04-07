@@ -15,7 +15,7 @@ import (
 type lease struct {
 	start time.Time
 	end   time.Time
-	mac   string
+	mac   net.HardwareAddr
 }
 
 const leaseTimeLayout = "2006/01/02 15:04:05"
@@ -73,11 +73,11 @@ func getLeaseInfo(s *bufio.Scanner) *lease {
 		case "ends":
 			l.end, _ = time.Parse(leaseTimeLayout, line[2])
 		case "hardware":
-			l.mac = line[2]
+			l.mac, _ = net.ParseMAC(line[2])
 		}
 	}
 
-	if l.start.IsZero() || l.end.IsZero() || l.mac == "" {
+	if l.start.IsZero() || l.end.IsZero() || l.mac.String() == "" {
 		return nil
 	}
 	return l

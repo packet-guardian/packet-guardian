@@ -6,12 +6,30 @@ j.OnReady(function () {
     var register = function () {
         if (!regBtnEnabled) { return; }
         var data = {
-            username: j.$('[name=username]').value,
-            password: j.$('[name=password]').value
+            "username": "",
+            "password": "",
+            "mac-address": ""
         };
 
-        if (data.username === '' || data.password === '') {
-            return;
+        // It's not guaranteed that all fields will be shown
+        // The username and password boxes will only show if the user isn't logged in
+        var username = j.$('[name=username]');
+        if (username !== null) {
+            data["username"] = username.value;
+            if (data["username"] === "") { return; }
+        }
+
+        var password = j.$('[name=password]');
+        if (password !== null) {
+            data["password"] = password.value;
+            if (data["password"] === "") { return; }
+        }
+
+        // The mac-address field will only show for a manual registration
+        var mac = j.$('[name=mac-address]');
+        if (mac !== null) {
+            data["mac-address"] = mac.value;
+            if (data["mac-address"] === "") { return; }
         }
 
         j.Post('/register', data, function (resp, req) {
@@ -29,7 +47,15 @@ j.OnReady(function () {
             c.FlashMessage(resp.Message, 'success');
             regBtnEnabled = false;
             j.Hide('.register-box');
-            j.$('.success-message').style.display = 'block';
+
+            if (data["mac-address"] === "") {
+                j.$('#suc-msg-auto').style.display = 'block';
+                return;
+            }
+
+            j.$('#suc-msg-manual').style.display = 'block';
+            setTimeout(function() { location.href = "/manage"; }, 5000);
+
         }, function (req) {
             c.FlashMessage("Server error, please call the IT help desk");
             return;

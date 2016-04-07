@@ -1,6 +1,7 @@
 package dhcp
 
 import (
+	"net"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -18,9 +19,9 @@ func TestValidMacCheck(t *testing.T) {
 	}
 
 	for mac, expected := range testCases {
-		tested := isValidMac(mac)
-		if tested != expected {
-			t.Errorf("MAC check failed for %s: Expected %t, got %t", mac, expected, tested)
+		_, err := formatMacAddress(mac)
+		if (err == nil) != expected {
+			t.Errorf("MAC check failed for %s: Expected %t, got %t", mac, expected, (err == nil))
 		}
 	}
 }
@@ -87,7 +88,7 @@ func TestIsRegistered(t *testing.T) {
 		WithArgs("12:34:56:12:34:56").
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(2))
 
-	r, err := IsRegistered(db, "12:34:56:12:34:56")
+	r, err := IsRegistered(db, net.HardwareAddr{0x12, 0x34, 0x56, 0x12, 0x34, 0x56})
 	if err != nil {
 		t.Fatalf("Error checking registrations: %s", err)
 	}
@@ -100,7 +101,7 @@ func TestIsRegistered(t *testing.T) {
 		ExpectQuery().
 		WithArgs("12:34:56:12:34:57")
 
-	r, err = IsRegistered(db, "12:34:56:12:34:57")
+	r, err = IsRegistered(db, net.HardwareAddr{0x12, 0x34, 0x56, 0x12, 0x34, 0x57})
 	if err != nil {
 		t.Fatalf("Error checking registrations: %s", err)
 	}
@@ -130,7 +131,7 @@ func TestRegistration(t *testing.T) {
 		WithArgs("12:34:56:12:34:56", "testuser", "127.0.0.1", "", "", 0, sqlmock.AnyArg(), "").
 		WillReturnResult(sqlmock.NewResult(3, 1))
 
-	err = Register(db, "12:34:56:12:34:56", "testuser", "", "127.0.0.1", "", "")
+	err = Register(db, net.HardwareAddr{0x12, 0x34, 0x56, 0x12, 0x34, 0x56}, "testuser", "", net.ParseIP("127.0.0.1"), "", "")
 	if err != nil {
 		t.Errorf("Error testing Register: %s", err)
 	}

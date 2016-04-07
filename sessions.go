@@ -55,6 +55,11 @@ type session struct {
 	*sessions.Session
 }
 
+func (s *session) Delete(r *http.Request, w http.ResponseWriter) error {
+	s.Options.MaxAge = -1
+	return s.Save(r, w)
+}
+
 // Get a value from the session object
 func (s *session) Get(key interface{}, def ...interface{}) interface{} {
 	if val, ok := s.Values[key]; ok {

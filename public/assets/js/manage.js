@@ -1,6 +1,11 @@
 j.OnReady(function() {
+    j.Click('[name=logout-btn]', function() {
+        location.href = "/logout";
+        return;
+    });
     j.Click('[name=add-device-btn]', function() {
-        // Redirect to manual registration page
+        location.href = "/register?manual=1";
+        return;
     });
     j.Click('[name=del-selected-btn]', function() {
         var checked = j.$('.device-select:checked', true);

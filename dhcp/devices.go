@@ -6,13 +6,9 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"regexp"
-	"strings"
 	"sync"
 	"time"
 )
-
-const macRegex = "^(?:[a-fA-F0-9]{2}\\:){6}$"
 
 var (
 	errAlreadyRegistered = errors.New("Device is already registered")
@@ -25,13 +21,13 @@ var (
 
 // IsRegistered checks if a MAC address is registed in the database.
 // IsRegistered will return false if an error occurs as well as the error itself.
-func IsRegistered(db *sql.DB, mac string) (bool, error) {
+func IsRegistered(db *sql.DB, mac net.HardwareAddr) (bool, error) {
 	stmt, err := db.Prepare("SELECT \"id\" FROM \"device\" WHERE \"mac\" = ?")
 	if err != nil {
 		return false, err
 	}
 	var id int
-	err = stmt.QueryRow(mac).Scan(&id)
+	err = stmt.QueryRow(mac.String()).Scan(&id)
 	if err == nil {
 		return true, nil
 	}
@@ -49,22 +45,21 @@ func IsRegisteredByIP(db *sql.DB, ip net.IP, leasesFile string) (bool, error) {
 }
 
 // GetMacFromIP finds the mac address that has the lease ip
-func GetMacFromIP(ip net.IP, leasesFile string) (string, error) {
+func GetMacFromIP(ip net.IP, leasesFile string) (net.HardwareAddr, error) {
 	l, err := getLeaseFromFile(ip, leasesFile)
 	if err != nil {
-		return "", err
+		return net.HardwareAddr{}, err
 	}
 	return l.mac, nil
 }
 
 // Register a new device to a user. This function will check if the MAC address is valid
 // and if it is already registered. This function does not enforce the blacklist.
-func Register(db *sql.DB, mac, user, platform, ip, ua, subnet string) error {
+func Register(db *sql.DB, mac net.HardwareAddr, user, platform string, ip net.IP, ua, subnet string) error {
 	if user == "" {
 		return errNoUsernameGiven
 	}
-	mac = strings.ToLower(mac)
-	if !isValidMac(mac) {
+	if mac.String() == "" {
 		return errMalformedMAC
 	}
 	r, err := IsRegistered(db, mac)
@@ -80,16 +75,15 @@ func Register(db *sql.DB, mac, user, platform, ip, ua, subnet string) error {
 	if err != nil {
 		return err
 	}
-	_, err = stmt.Exec(mac, user, ip, platform, subnet, expires, regTime, ua)
+	_, err = stmt.Exec(mac.String(), user, ip.String(), platform, subnet, expires, regTime, ua)
 	return err
 }
 
-func isValidMac(mac string) bool {
-	matched, err := regexp.MatchString(macRegex, mac+":")
-	if err != nil {
-		return false
+func formatMacAddress(mac string) (net.HardwareAddr, error) {
+	if len(mac) == 12 {
+		mac = mac[0:4] + "." + mac[4:8] + "." + mac[8:12]
 	}
-	return matched
+	return net.ParseMAC(mac)
 }
 
 // IsBlacklisted checks if a username or MAC is in the blacklist

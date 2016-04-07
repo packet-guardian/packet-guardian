@@ -23,12 +23,13 @@ func makeRoutes(e *common.Environment) http.Handler {
 	// Login page
 	r.HandleFunc("/login", auth.LoginPageHandler(e)).Methods("GET")
 	r.HandleFunc("/login", auth.LoginHandler(e)).Methods("POST")
+	r.HandleFunc("/logout", auth.LogoutHandler(e)).Methods("GET")
 
 	// User management page
-	r.HandleFunc("/manage", auth.CheckAuth(e, manageHandler(e))).Methods("GET")
+	r.HandleFunc("/manage", auth.CheckAuthMid(e, manageHandler(e))).Methods("GET")
 
 	// Device actions
-	r.HandleFunc("/devices/delete", auth.CheckAuthAPI(e, dhcp.DeleteHandler(e))).Methods("POST")
+	r.HandleFunc("/devices/delete", auth.CheckAuthAPIMid(e, dhcp.DeleteHandler(e))).Methods("POST")
 
 	// Development only routes
 	if dev {

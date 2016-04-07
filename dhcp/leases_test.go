@@ -25,7 +25,7 @@ var leaseTests = []testCase{
           hardware ethernet 4c:aa:16:87:b5:88;
         }`,
 		expected: &lease{
-			mac:   "4c:aa:16:87:b5:88",
+			mac:   net.HardwareAddr{0x4c, 0xaa, 0x16, 0x87, 0xb5, 0x88},
 			start: time.Date(2016, 1, 12, 19, 45, 47, 0, time.UTC),
 			end:   time.Date(2016, 1, 12, 19, 51, 47, 0, time.UTC),
 		}},
@@ -103,7 +103,7 @@ func TestMultipleLeases(t *testing.T) {
 	expected := &lease{
 		start: time.Date(2016, 3, 18, 13, 28, 47, 0, time.UTC),
 		end:   time.Date(2016, 3, 20, 13, 28, 47, 0, time.UTC),
-		mac:   "4c:aa:16:87:b5:88",
+		mac:   net.HardwareAddr{0x4c, 0xaa, 0x16, 0x87, 0xb5, 0x88},
 	}
 
 	l, err := getLeaseReader(net.ParseIP("192.168.4.2"), strings.NewReader(text))
@@ -125,7 +125,7 @@ func sameLease(l1, l2 *lease) bool {
 	if !l1.end.Equal(l2.end) {
 		return false
 	}
-	if l1.mac != l2.mac {
+	if l1.mac.String() != l2.mac.String() {
 		return false
 	}
 	return true

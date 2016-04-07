@@ -11,15 +11,28 @@ func LoginHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Assume invalid until convinced otherwise
 		resp := common.NewAPIResponse(common.APIStatusInvalidAuth, "Invalid login", nil)
-		if IsValidLogin(e.DB, r.FormValue("username"), r.FormValue("password")) {
+		username := r.FormValue("username")
+		if IsValidLogin(e.DB, username, r.FormValue("password")) {
 			resp.Code = common.APIStatusOK
 			resp.Message = ""
 			sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
 			sess.Set("loggedin", true)
-			sess.Set("username", r.FormValue("username"))
+			sess.Set("username", username)
 			sess.Save(r, w)
+			e.Log.Infof("Successful login by user %s", username)
+		} else {
+			e.Log.Errorf("Incorrect login from user %s", username)
 		}
 		resp.WriteTo(w)
+	}
+}
+
+func LogoutHandler(e *common.Environment) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
+		LogoutUser(e, w, r)
+		e.Log.Infof("Successful logout by user %s", sess.GetString("username", "[unknown]"))
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 	}
 }
 
@@ -41,10 +54,10 @@ func LoginPageHandler(e *common.Environment) http.HandlerFunc {
 	}
 }
 
-func Logout(e *common.Environment, w http.ResponseWriter, r *http.Request) {
+func LogoutUser(e *common.Environment, w http.ResponseWriter, r *http.Request) {
 	sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
 	sess.Set("loggedin", false)
-	sess.Save(r, w)
+	sess.Delete(r, w)
 }
 
 func IsLoggedIn(e *common.Environment, r *http.Request) bool {
@@ -52,7 +65,7 @@ func IsLoggedIn(e *common.Environment, r *http.Request) bool {
 	return sess.GetBool("loggedin", false)
 }
 
-func CheckAuth(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
+func CheckAuthMid(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !IsLoggedIn(e, r) {
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
@@ -62,7 +75,7 @@ func CheckAuth(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func CheckAuthAPI(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
+func CheckAuthAPIMid(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !IsLoggedIn(e, r) {
 			common.NewAPIResponse(common.APIStatusAuthNeeded, "Not logged in", nil).WriteTo(w)
