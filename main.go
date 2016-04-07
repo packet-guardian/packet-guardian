@@ -35,10 +35,11 @@ func main() {
 		logger.Verbose(3)
 		logger.Info("Packet Guardian running in DEVELOPMENT mode")
 	}
-	config, err := loadConfig("")
+	config, err := loadConfig(configFile)
 	if err != nil {
 		logger.Fatalf("Error loading configuration: %s", err.Error())
 	}
+	logger.Infof("Configuration loaded from %s", config.SourceFile)
 	sessStore, err := startSessionStore(config)
 	if err != nil {
 		logger.Fatalf("Error loading session store: %s", err.Error())

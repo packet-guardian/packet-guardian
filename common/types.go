@@ -7,7 +7,8 @@ import (
 
 // Config defines the configuration struct for the application
 type Config struct {
-	Core struct {
+	SourceFile string
+	Core       struct {
 		DatabaseFile             string
 		SiteTitle                string
 		SiteCompanyName          string

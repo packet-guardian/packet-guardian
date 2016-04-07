@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
-	"errors"
 
 	"github.com/naoina/toml"
 	"github.com/onesimus-systems/packet-guardian/common"
@@ -40,5 +40,6 @@ func loadConfig(configFile string) (conf *common.Config, err error) {
 	if err := toml.Unmarshal(buf, &con); err != nil {
 		return nil, err
 	}
+	con.SourceFile = configFile
 	return &con, nil
 }
