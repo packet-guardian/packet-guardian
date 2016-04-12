@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/onesimus-systems/packet-guardian/auth"
 	"github.com/onesimus-systems/packet-guardian/common"
 	"github.com/onesimus-systems/packet-guardian/dhcp"
 )
@@ -25,6 +26,12 @@ func rootHandler(e *common.Environment) http.HandlerFunc {
 		if err != nil {
 			e.Log.Errorf("Error checking auto registration IP: %s", err.Error())
 		}
+
+		if auth.IsLoggedIn(e, r) {
+			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
+			return
+		}
+
 		if reg {
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		} else {
@@ -45,11 +52,13 @@ func userDeviceListHandler(e *common.Environment) http.HandlerFunc {
 			SiteTitle   string
 			CompanyName string
 			Username    string
+			IsAdmin     bool
 			Devices     []dhcp.Result
 		}{
 			SiteTitle:   e.Config.Core.SiteTitle,
 			CompanyName: e.Config.Core.SiteCompanyName,
 			Username:    username,
+			IsAdmin:     auth.IsAdminUser(e, r),
 			Devices:     results,
 		}
 		e.Templates.ExecuteTemplate(w, "manage", data)
@@ -58,7 +67,14 @@ func userDeviceListHandler(e *common.Environment) http.HandlerFunc {
 
 func adminHomeHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/admin/search", http.StatusTemporaryRedirect)
+		data := struct {
+			SiteTitle   string
+			CompanyName string
+		}{
+			SiteTitle:   e.Config.Core.SiteTitle,
+			CompanyName: e.Config.Core.SiteCompanyName,
+		}
+		e.Templates.ExecuteTemplate(w, "admin-dash", data)
 	}
 }
 
@@ -72,7 +88,6 @@ func adminSearchHandler(e *common.Environment) http.HandlerFunc {
 			q.User = ""
 			results = q.Search(e)
 		} else if query != "" {
-			e.Log.Infof("Searching for %s", query)
 			q := dhcp.Query{}
 
 			if m, err := dhcp.FormatMacAddress(query); err == nil {

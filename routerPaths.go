@@ -44,7 +44,11 @@ func makeRoutes(e *common.Environment) http.Handler {
 
 	// Invalid rounds will redirect to the login page
 	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		if auth.IsAdminUser(e, r) {
+			http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
+		} else {
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		}
 	})
 	return r
 }
@@ -52,7 +56,7 @@ func makeRoutes(e *common.Environment) http.Handler {
 // Dev mode route handlers
 func reloadTemplates(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		templates, err := parseTemplates("templates/*.tmpl")
+		templates, err := parseTemplates()
 		if err != nil {
 			w.Write([]byte("Error loading HTML templates: " + err.Error()))
 			return

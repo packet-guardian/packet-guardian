@@ -3,8 +3,18 @@ j.OnReady(function() {
         location.href = "/logout";
         return;
     });
+    j.Click('[name=admin-btn]', function() {
+        location.href = "/admin";
+        return;
+    });
     j.Click('[name=add-device-btn]', function() {
-        location.href = "/register?manual=1";
+        isAdmin = this.getAttribute("data-admin");
+        user = j.$('[name=username]').value;
+        if (isAdmin !== null) {
+            location.href = "/register?manual=1&username="+user;
+        } else {
+            location.href = "/register?manual=1";
+        }
         return;
     });
     j.Click('[name=del-selected-btn]', function() {

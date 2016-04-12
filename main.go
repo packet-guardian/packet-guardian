@@ -6,7 +6,10 @@ import (
 	"flag"
 	"html/template"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -47,7 +50,7 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Error loading database: %s", err.Error())
 	}
-	templates, err := parseTemplates("templates/*.tmpl")
+	templates, err := parseTemplates()
 	if err != nil {
 		logger.Fatalf("Error loading HTML templates: %s", err.Error())
 	}
@@ -66,7 +69,7 @@ func main() {
 	startServer(makeRoutes(e), e)
 }
 
-func parseTemplates(pattern string) (tmpl *template.Template, err error) {
+func parseTemplates() (tmpl *template.Template, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch x := r.(type) {
@@ -81,7 +84,7 @@ func parseTemplates(pattern string) (tmpl *template.Template, err error) {
 		}
 	}()
 
-	tmpl = template.Must(template.New("").Funcs(template.FuncMap{
+	tmpl = template.New("").Funcs(template.FuncMap{
 		"dict": func(values ...interface{}) (map[string]interface{}, error) {
 			if len(values)%2 != 0 {
 				return nil, errors.New("invalid dict call")
@@ -99,7 +102,16 @@ func parseTemplates(pattern string) (tmpl *template.Template, err error) {
 		"list": func(values ...interface{}) ([]interface{}, error) {
 			return values, nil
 		},
-	}).ParseGlob(pattern))
+	})
+
+	filepath.Walk("templates", func(path string, info os.FileInfo, err1 error) error {
+		if strings.HasSuffix(path, ".tmpl") {
+			if _, err := tmpl.ParseFiles(path); err != nil {
+				panic(err)
+			}
+		}
+		return nil
+	})
 	return
 }
 

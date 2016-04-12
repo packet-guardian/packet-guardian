@@ -15,14 +15,14 @@ j.OnReady(function () {
         // The username and password boxes will only show if the user isn't logged in
         var username = j.$('[name=username]');
         if (username !== null) {
-            data["username"] = username.value;
-            if (data["username"] === "") { return; }
+            data.username = username.value;
+            if (data.username === "") { return; }
         }
 
         var password = j.$('[name=password]');
         if (password !== null) {
-            data["password"] = password.value;
-            if (data["password"] === "") { return; }
+            data.password = password.value;
+            if (data.password === "") { return; }
         }
 
         // The mac-address field will only show for a manual registration
@@ -54,8 +54,7 @@ j.OnReady(function () {
             }
 
             j.$('#suc-msg-manual').style.display = 'block';
-            setTimeout(function() { location.href = "/manage"; }, 5000);
-
+            setTimeout(function() { location.href = resp.Data.Location; }, 5000);
         }, function (req) {
             c.FlashMessage("Server error, please call the IT help desk");
             return;

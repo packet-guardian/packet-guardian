@@ -19,7 +19,11 @@ func LoginHandler(e *common.Environment) http.HandlerFunc {
 			sess.Set("loggedin", true)
 			sess.Set("username", username)
 			sess.Save(r, w)
-			e.Log.Infof("Successful login by user %s", username)
+			if common.StringInSlice(username, e.Config.Auth.AdminUsers) {
+				e.Log.Infof("Successful login by administrative user %s", username)
+			} else {
+				e.Log.Infof("Successful login by user %s", username)
+			}
 		} else {
 			e.Log.Errorf("Incorrect login from user %s", username)
 		}

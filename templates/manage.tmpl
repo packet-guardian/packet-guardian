@@ -12,12 +12,15 @@
             <span class="username">{{.Username}}</span>
         </div>
         <div class="controls">
-            <button type="button" name="add-device-btn">Add New Device</button>
+            <button type="button" name="add-device-btn" {{if .IsAdmin}}data-admin="1"{{end}}>Add New Device</button>
             {{if gt (len .Devices) 0}}
             <button type="button" name="del-selected-btn">Delete Selected</button>
             <button type="button" name="del-all-btn">Delete All</button>
-            <button type="button" name="logout-btn">Logout</button>
             {{end}}
+            {{if .IsAdmin}}
+            <button type="button" name="admin-btn">Admin Dashboard</button>
+            {{end}}
+            <button type="button" name="logout-btn">Logout</button>
         </div>
         {{if eq (len .Devices) 0}}
         <div class="no-devices">No devices registered</div>

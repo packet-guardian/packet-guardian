@@ -23,22 +23,33 @@ func RegistrationPageHandler(e *common.Environment) http.HandlerFunc {
 			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 			return
 		}
-		if !reg && !man {
-			loggedIn = false
+
+		formType := "na-auto"
+		if man {
+			formType = "na-man"
+			if loggedIn {
+				formType = "na-man-nologin"
+			}
+		}
+
+		username := e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetString("username")
+		if r.FormValue("username") != "" && auth.IsAdminUser(e, r) {
+			username = r.FormValue("username")
+			formType = "admin"
 		}
 
 		data := struct {
-			SiteTitle     string
-			CompanyName   string
-			Policy        []template.HTML
-			Manual        bool
-			ShowLoginForm bool
+			SiteTitle   string
+			CompanyName string
+			Policy      []template.HTML
+			Type        string
+			Username    string
 		}{
-			SiteTitle:     e.Config.Core.SiteTitle,
-			CompanyName:   e.Config.Core.SiteCompanyName,
-			Policy:        loadPolicyText(e.Config.Core.RegistrationPolicyFile),
-			Manual:        man,
-			ShowLoginForm: !loggedIn,
+			SiteTitle:   e.Config.Core.SiteTitle,
+			CompanyName: e.Config.Core.SiteCompanyName,
+			Policy:      loadPolicyText(e.Config.Core.RegistrationPolicyFile),
+			Type:        formType,
+			Username:    username,
 		}
 		e.Templates.ExecuteTemplate(w, "register", data)
 	}
@@ -58,10 +69,19 @@ func RegistrationHandler(e *common.Environment) http.HandlerFunc {
 				return
 			}
 		} else {
-			username = e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetString("username")
-			if username == "" {
+			formUsername := r.FormValue("username")
+			sessUsername := e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetString("username")
+			if formUsername == "" || sessUsername == "" {
 				common.NewAPIResponse(common.APIStatusInvalidAuth, "Incorrect username or password", nil).WriteTo(w)
+				return
 			}
+
+			if sessUsername != formUsername && !auth.IsAdminUser(e, r) {
+				e.Log.Errorf("Admin action attempted: Register device for %s attempted by user %s", formUsername, sessUsername)
+				w.Write(common.NewAPIResponse(common.APIStatusInvalidAuth, "Only admins can do that", nil).Encode())
+				return
+			}
+			username = formUsername
 		}
 
 		// Get MAC address
@@ -113,7 +133,13 @@ func RegistrationHandler(e *common.Environment) http.HandlerFunc {
 			return
 		}
 		e.Log.Infof("Successfully registered MAC %s to user %s", mac.String(), username)
-		common.NewAPIOK("Registration successful", nil).WriteTo(w)
+
+		resp := struct{ Location string }{Location: "/manage"}
+		if auth.IsAdminUser(e, r) {
+			resp.Location = "/admin/user/" + username
+		}
+
+		common.NewAPIOK("Registration successful", resp).WriteTo(w)
 	}
 }
 
