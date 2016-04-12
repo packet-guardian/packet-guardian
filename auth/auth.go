@@ -2,6 +2,9 @@ package auth
 
 import (
 	"database/sql"
+	"net/http"
+
+	"github.com/onesimus-systems/packet-guardian/common"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,6 +24,25 @@ func IsValidLogin(db *sql.DB, username, password string) bool {
 	// Check the user and pass against the defined auth functions
 	// For right now we're only doing local authentication
 	return authFunctions["local"](db, username, password)
+}
+
+// IsLoggedIn checks if a user is logged in
+func IsLoggedIn(e *common.Environment, r *http.Request) bool {
+	sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
+	return sess.GetBool("loggedin", false)
+}
+
+// IsAdminUser checks if a user is an administrator
+func IsAdminUser(e *common.Environment, r *http.Request) bool {
+	username := e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetString("username", "")
+	return common.StringInSlice(username, e.Config.Auth.AdminUsers)
+}
+
+// LogoutUser will set loggedin to false and delete the session
+func LogoutUser(e *common.Environment, w http.ResponseWriter, r *http.Request) {
+	sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
+	sess.Set("loggedin", false)
+	sess.Delete(r, w)
 }
 
 func normalAuth(db *sql.DB, username, password string) bool {

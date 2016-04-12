@@ -12,7 +12,6 @@ import (
 
 	log "github.com/dragonrider23/go-logger"
 	"github.com/onesimus-systems/packet-guardian/common"
-	"github.com/onesimus-systems/packet-guardian/dhcp"
 )
 
 var (
@@ -54,7 +53,6 @@ func main() {
 	}
 
 	// Create an environment
-	c, q := dhcp.StartHostWriteService(db, config.DHCP.HostsFile)
 	e := &common.Environment{
 		Log:       logger,
 		Sessions:  &sessionStore{sessStore},
@@ -62,10 +60,6 @@ func main() {
 		Config:    config,
 		Templates: templates,
 		Dev:       dev,
-		DHCP: &dhcpHostFile{
-			write: c,
-			quit:  q,
-		},
 	}
 
 	// Let's begin!
@@ -142,17 +136,5 @@ func startServer(router http.Handler, e *common.Environment) {
 		)
 	} else {
 		http.ListenAndServe(bindAddr+":"+bindPort, router)
-	}
-}
-
-type dhcpHostFile struct {
-	write chan bool
-	quit  chan bool
-}
-
-func (d *dhcpHostFile) WriteHostFile() {
-	select {
-	case d.write <- true:
-	default:
 	}
 }

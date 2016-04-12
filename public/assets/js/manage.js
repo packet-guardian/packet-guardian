@@ -9,11 +9,12 @@ j.OnReady(function() {
     });
     j.Click('[name=del-selected-btn]', function() {
         var checked = j.$('.device-select:checked', true);
+        var username = j.$('[name=username]').value;
         var devicesToRemove = [];
         for (var i = 0; i < checked.length; i++) {
             devicesToRemove.push(checked[i].value);
         }
-        j.Post('/devices/delete', {"devices": devicesToRemove}, function(resp) {
+        j.Post('/devices/delete', {"devices": devicesToRemove, "username": username}, function(resp) {
             resp = JSON.parse(resp);
             if (resp.Code === 0) {
                 location.reload();
@@ -23,7 +24,8 @@ j.OnReady(function() {
         });
     });
     j.Click('[name=del-all-btn]', function() {
-        j.Post('/devices/delete', {}, function(resp) {
+        var username = j.$('[name=username]').value;
+        j.Post('/devices/delete', {"username": username}, function(resp) {
             resp = JSON.parse(resp);
             if (resp.Code === 0) {
                 location.reload();

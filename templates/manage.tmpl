@@ -1,13 +1,16 @@
 {{define "manage"}}
-{{$css := list "manage"}}
-{{$js := list "manage"}}
-{{template "header" dict "css" $css "title" .SiteTitle "companyName" .CompanyName}}
+{{template "header" dict "css" (list "manage") "title" .SiteTitle "companyName" .CompanyName}}
 <div id="flashDiv" class="flash">
     <div id="flashText">
     </div>
 </div>
 <div class="manager">
     <form>
+        <input type="hidden" name="username" value="{{.Username}}">
+        <div class="info">
+            <span class="text-label">Username:</span>
+            <span class="username">{{.Username}}</span>
+        </div>
         <div class="controls">
             <button type="button" name="add-device-btn">Add New Device</button>
             {{if gt (len .Devices) 0}}
@@ -23,7 +26,7 @@
             <tr>
                 <th>&nbsp;</th>
                 <th>MAC Address</th>
-                <th>User Agent</th>
+                <th class="ua">User Agent</th>
                 <th>Platform</th>
                 <th>Date Registered</th>
                 <th>Registered From</th>
@@ -32,15 +35,15 @@
             <tr>
                 <td><input type="checkbox" value="{{.MAC}}" class="device-select"></td>
                 <td>{{.MAC}}</td>
-                <td>{{.UA}}</td>
+                <td class="ua">{{.UserAgent}}</td>
                 <td>{{.Platform}}</td>
                 <td>{{.DateRegistered}}</td>
-                <td>{{.IP}}</td>
+                <td>{{.RegIP}}</td>
             </tr>
             {{end}}
         </table>
         {{end}}
     </form>
 </div>
-{{template "footer" dict "js" $js}}
+{{template "footer" dict "js" (list "manage")}}
 {{end}}

@@ -1,14 +1,10 @@
-.manager {
+.admin-search {
     width: 60%;
     margin: 0 auto;
 }
 
-.text-label {
-    font-weight: bold;
-}
-
-.info {
-    font-size: 1.2em;
+h2 {
+    margin-top: 0;
 }
 
 .controls {
@@ -18,14 +14,6 @@
     margin-bottom: 10px;
 }
 
-.no-devices {
-    text-align: center;
-    width: 600px;
-    margin: 0 auto;
-    font-weight: bold;
-    font-size: 1.5em;
-}
-
 button {
     font-weight: bold;
     padding: 5px 10px;
@@ -33,6 +21,14 @@ button {
     border: 0;
     background-color: #0083A8;
     background: linear-gradient(to bottom, #0083A8, #007899);
+}
+
+.no-devices {
+    text-align: center;
+    width: 600px;
+    margin: 0 auto;
+    font-weight: bold;
+    font-size: 1.5em;
 }
 
 table {

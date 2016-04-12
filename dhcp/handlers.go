@@ -18,7 +18,7 @@ func RegistrationPageHandler(e *common.Environment) http.HandlerFunc {
 		man := (r.FormValue("manual") == "1")
 		loggedIn := auth.IsLoggedIn(e, r)
 		ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-		reg, _ := IsRegisteredByIP(e.DB, ip, e.Config.DHCP.LeasesFile)
+		reg, _ := IsRegisteredByIP(e.DB, ip)
 		if !man && reg {
 			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 			return
@@ -44,8 +44,8 @@ func RegistrationPageHandler(e *common.Environment) http.HandlerFunc {
 	}
 }
 
-// AutoRegisterHandler handles POST requests to /register
-func AutoRegisterHandler(e *common.Environment) http.HandlerFunc {
+// RegistrationHandler handles POST requests to /register
+func RegistrationHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check authentication
 		username := ""
@@ -71,7 +71,7 @@ func AutoRegisterHandler(e *common.Environment) http.HandlerFunc {
 		ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 		if macPost == "" {
 			// Automatic registration
-			mac, err = GetMacFromIP(ip, e.Config.DHCP.LeasesFile)
+			mac, err = GetMacFromIP(ip)
 			if err != nil {
 				e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
 				common.NewAPIResponse(common.APIStatusGenericError, "Error detecting MAC address.", nil).WriteTo(w)
@@ -84,7 +84,7 @@ func AutoRegisterHandler(e *common.Environment) http.HandlerFunc {
 				common.NewAPIResponse(common.APIStatusGenericError, "Manual registrations are not allowed.", nil).WriteTo(w)
 				return
 			}
-			mac, err = formatMacAddress(macPost)
+			mac, err = FormatMacAddress(macPost)
 			if err != nil {
 				e.Log.Errorf("Error formatting MAC %s", macPost)
 				common.NewAPIResponse(common.APIStatusGenericError, "Incorrect MAC address format.", nil).WriteTo(w)
@@ -112,7 +112,6 @@ func AutoRegisterHandler(e *common.Environment) http.HandlerFunc {
 			common.NewAPIResponse(common.APIStatusGenericError, "Error: "+err.Error(), nil).WriteTo(w)
 			return
 		}
-		e.DHCP.WriteHostFile()
 		e.Log.Infof("Successfully registered MAC %s to user %s", mac.String(), username)
 		common.NewAPIOK("Registration successful", nil).WriteTo(w)
 	}
@@ -121,38 +120,46 @@ func AutoRegisterHandler(e *common.Environment) http.HandlerFunc {
 // DeleteHandler handles the path /devices/delete
 func DeleteHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		username := e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetString("username")
+		sessUsername := e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetString("username")
+		formUsername := r.FormValue("username")
+
+		// If the two don't match, check if the user is an admin, if not return an error
+		if sessUsername != formUsername && !auth.IsAdminUser(e, r) {
+			e.Log.Errorf("Admin action attempted: Delete device for %s attempted by user %s", formUsername, sessUsername)
+			w.Write(common.NewAPIResponse(common.APIStatusInvalidAuth, "Only admins can do that", nil).Encode())
+			return
+		}
+
 		devices := strings.Split(r.FormValue("devices"), ",")
 		all := (len(devices) == 1 && devices[0] == "")
 		sql := ""
-		sqlParams := make([]interface{}, 0)
+		var sqlParams []interface{}
 		if all {
 			sql = "DELETE FROM \"device\" WHERE \"username\" = ?"
 		} else {
 			sql = "DELETE FROM \"device\" WHERE (0 = 1"
 
 			for _, device := range devices {
-				if mac, err := formatMacAddress(device); err == nil {
+				if mac, err := FormatMacAddress(device); err == nil {
 					sql += " OR \"mac\" = ?"
 					sqlParams = append(sqlParams, mac.String())
 				}
 			}
 			sql += ") AND \"username\" = ?"
 		}
-		sqlParams = append(sqlParams, username)
+		sqlParams = append(sqlParams, formUsername)
 		_, err := e.DB.Exec(sql, sqlParams...)
 		if err != nil {
 			e.Log.Error(err.Error())
-			w.Write(common.NewAPIResponse(common.APIStatusGenericError, "SQL statement failed", nil).Encode())
+			w.Write(common.NewAPIResponse(common.APIStatusGenericError, "Error deleting devices", nil).Encode())
 			return
 		}
 
-		e.DHCP.WriteHostFile()
 		if all {
-			e.Log.Infof("Successfully deleted all registrations for user %s", username)
+			e.Log.Infof("Successfully deleted all registrations for user %s by user %s", formUsername, sessUsername)
 		} else {
 			for _, mac := range devices {
-				e.Log.Infof("Successfully deleted MAC %s for user %s", mac, username)
+				e.Log.Infof("Successfully deleted MAC %s for user %s by user %s", mac, formUsername, sessUsername)
 			}
 		}
 		w.Write(common.NewAPIResponse(common.APIStatusOK, "Devices deleted successfully", nil).Encode())
@@ -166,7 +173,7 @@ func loadPolicyText(file string) []template.HTML {
 	}
 	defer f.Close()
 
-	policy := make([]template.HTML, 0)
+	var policy []template.HTML
 	currentParagraph := ""
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {

@@ -18,7 +18,7 @@ func makeRoutes(e *common.Environment) http.Handler {
 
 	// Automatic registration page
 	r.HandleFunc("/register", dhcp.RegistrationPageHandler(e)).Methods("GET")
-	r.HandleFunc("/register", dhcp.AutoRegisterHandler(e)).Methods("POST")
+	r.HandleFunc("/register", dhcp.RegistrationHandler(e)).Methods("POST")
 
 	// Login page
 	r.HandleFunc("/login", auth.LoginPageHandler(e)).Methods("GET")
@@ -26,16 +26,26 @@ func makeRoutes(e *common.Environment) http.Handler {
 	r.HandleFunc("/logout", auth.LogoutHandler(e)).Methods("GET")
 
 	// User management page
-	r.HandleFunc("/manage", auth.CheckAuthMid(e, manageHandler(e))).Methods("GET")
+	r.HandleFunc("/manage", auth.CheckAuthMid(e, userDeviceListHandler(e))).Methods("GET")
 
 	// Device actions
 	r.HandleFunc("/devices/delete", auth.CheckAuthAPIMid(e, dhcp.DeleteHandler(e))).Methods("POST")
+
+	// Admin pages
+	r.HandleFunc("/admin", auth.CheckAdminMid(e, adminHomeHandler(e))).Methods("GET")
+	r.HandleFunc("/admin/search", auth.CheckAdminMid(e, adminSearchHandler(e))).Methods("GET")
+	r.HandleFunc("/admin/user/{username}", auth.CheckAdminMid(e, userDeviceListHandler(e))).Methods("GET")
 
 	// Development only routes
 	if dev {
 		r.HandleFunc("/dev/reloadtemp", reloadTemplates(e)).Methods("GET")
 		r.HandleFunc("/dev/reloadconf", reloadConfiguration(e)).Methods("GET")
 	}
+
+	// Invalid rounds will redirect to the login page
+	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+	})
 	return r
 }
 
@@ -54,7 +64,7 @@ func reloadTemplates(e *common.Environment) http.HandlerFunc {
 
 func reloadConfiguration(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		config, err := loadConfig("")
+		config, err := loadConfig(configFile)
 		if err != nil {
 			w.Write([]byte("Error loading config: " + err.Error()))
 			return

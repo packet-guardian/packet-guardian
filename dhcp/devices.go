@@ -3,9 +3,7 @@ package dhcp
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net"
-	"os"
 	"sync"
 	"time"
 )
@@ -36,8 +34,8 @@ func IsRegistered(db *sql.DB, mac net.HardwareAddr) (bool, error) {
 
 // IsRegisteredByIP checks if an IP is leased to a registered MAC address.
 // IsRegisteredByIP will return false if an error occurs as well as the error itself.
-func IsRegisteredByIP(db *sql.DB, ip net.IP, leasesFile string) (bool, error) {
-	mac, err := GetMacFromIP(ip, leasesFile)
+func IsRegisteredByIP(db *sql.DB, ip net.IP) (bool, error) {
+	mac, err := GetMacFromIP(ip)
 	if err != nil {
 		return false, err
 	}
@@ -45,12 +43,14 @@ func IsRegisteredByIP(db *sql.DB, ip net.IP, leasesFile string) (bool, error) {
 }
 
 // GetMacFromIP finds the mac address that has the lease ip
-func GetMacFromIP(ip net.IP, leasesFile string) (net.HardwareAddr, error) {
-	l, err := getLeaseFromFile(ip, leasesFile)
-	if err != nil {
-		return net.HardwareAddr{}, err
-	}
-	return l.mac, nil
+func GetMacFromIP(ip net.IP) (net.HardwareAddr, error) {
+	// TODO: Replace with getting lease info from database
+	// l, err := getLeaseFromFile(ip, leasesFile)
+	// if err != nil {
+	// 	return net.HardwareAddr{}, err
+	// }
+	//return l.mac, nil
+	return net.HardwareAddr{}, nil
 }
 
 // Register a new device to a user. This function will check if the MAC address is valid
@@ -79,7 +79,9 @@ func Register(db *sql.DB, mac net.HardwareAddr, user, platform string, ip net.IP
 	return err
 }
 
-func formatMacAddress(mac string) (net.HardwareAddr, error) {
+// FormatMacAddress will attempt to format and parse a string as a MAC address
+func FormatMacAddress(mac string) (net.HardwareAddr, error) {
+	// If no punctuation was provided, use the format xxxx.xxxx.xxxx
 	if len(mac) == 12 {
 		mac = mac[0:4] + "." + mac[4:8] + "." + mac[8:12]
 	}
@@ -106,81 +108,4 @@ func IsBlacklisted(db *sql.DB, values ...interface{}) (bool, error) {
 		return true, nil
 	}
 	return false, nil
-}
-
-// StartHostWriteService spins off a goroutine and creates communication channels
-// to write out a new DHCPd host file from the database db to the file filepath.
-// The first returned channel is used to write a new file the second is to
-// signal a quit. Both channels are buffered to a single value as the design
-// is that no matter how many write requests are made while it's currently writting,
-// it will only rewrite it once. This prevents a case where multiple requests are
-// put in when it's not necassary.
-func StartHostWriteService(db *sql.DB, filepath string) (chan bool, chan bool) {
-	c := make(chan bool, 1)
-	e := make(chan bool, 1)
-	go hostWriteService(db, filepath, c, e)
-	return c, e
-}
-
-func hostWriteService(db *sql.DB, filepath string, c <-chan bool, quit <-chan bool) {
-	for {
-		select {
-		case <-quit:
-			return
-		case <-c:
-			writeHostFile(db, filepath)
-		}
-	}
-}
-
-func writeHostFile(db *sql.DB, filepath string) error {
-	if filepath == "" {
-		return errors.New("No allowed host filename given")
-	}
-	hostMutex.Lock()
-	defer hostMutex.Unlock()
-
-	expired := time.Now().Unix()
-	sql := "SELECT \"mac\", \"username\", \"userAgent\", \"regIP\", \"dateRegistered\" FROM \"device\" WHERE \"expired\" = 0 OR \"expired\" > ? ORDER BY \"username\" ASC"
-	rows, err := db.Query(sql, expired)
-	if err != nil {
-		return err
-	}
-
-	file, err := os.OpenFile(filepath+"~", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close() // In case something goes wrong
-
-	i := 1
-	currentUser := ""
-	for rows.Next() {
-		var mac string
-		var user string
-		var ua string
-		var regIP string
-		var registered int64
-		err := rows.Scan(&mac, &user, &ua, &regIP, &registered)
-		if err != nil {
-			return err
-		}
-		if user != currentUser {
-			i = 1
-			currentUser = user
-		}
-		regTime := time.Unix(registered, 0).Format(time.RFC1123)
-		line := fmt.Sprintf("host %s-%d { hardware ethernet %s; }#%s#%s#%s\n", user, i, mac, ua, regTime, regIP)
-		file.WriteString(line)
-		i++
-	}
-
-	// Close the hosts file and move temp file in place
-	file.Close()
-	os.Remove(filepath)
-	if err := os.Rename(filepath+"~", filepath); err != nil {
-		return err
-	}
-
-	return nil
 }

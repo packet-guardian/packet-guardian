@@ -17,7 +17,6 @@ type Environment struct {
 	Templates *template.Template
 	Dev       bool
 	Log       *log.Logger
-	DHCP      DHCPHostWriter
 }
 
 // A SessionStore is a wrapper around gorilla's session store type
@@ -34,9 +33,4 @@ type Session interface {
 	GetInt(key interface{}, def ...int) int
 	Save(r *http.Request, w http.ResponseWriter) error
 	Delete(r *http.Request, w http.ResponseWriter) error
-}
-
-// A DHCPHostWriter can write a new DHCPd hosts file
-type DHCPHostWriter interface {
-	WriteHostFile()
 }

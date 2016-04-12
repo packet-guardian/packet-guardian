@@ -15,7 +15,7 @@ sessionName = "net-guardian"
 sessionsDir = "sessions"
 # This is the authentication key for web sessions
 # Make sure this is unique and protected
-sessionsAuthKey = ""
+sessionsAuthKey = "change me please"
 # Optional. Should be 16, 24, or 32 characters long
 sessionsEncryptKey = ""
 
@@ -23,6 +23,7 @@ sessionsEncryptKey = ""
 # An array of auth types in order of precidence
 # Valid values: ldap, local
 authMethod = ["local"]
+adminUsers = [""]
 
 [auth.ldap]
 useAD = true
@@ -34,5 +35,4 @@ useTLS = true
 #... other LDAPy things
 
 [dhcp]
-leasesFile = "dhcpd.leases"
-hostsFile = "allowed-hosts.conf"
+configFile = "dhcp.conf"

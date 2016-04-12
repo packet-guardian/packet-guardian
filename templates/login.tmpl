@@ -1,7 +1,5 @@
 {{define "login"}}
-{{$css := list "login"}}
-{{$js := list "login"}}
-{{template "header" dict "css" $css "title" .SiteTitle "companyName" .CompanyName}}
+{{template "header" dict "css" (list "login") "title" .SiteTitle "companyName" .CompanyName}}
 <div id="flashDiv" class="flash">
     <div id="flashText">
     </div>
@@ -23,5 +21,5 @@
         </fieldset>
     </form>
 </div>
-{{template "footer" dict "js" $js}}
+{{template "footer" dict "js" (list "login")}}
 {{end}}

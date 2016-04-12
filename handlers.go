@@ -4,8 +4,8 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/onesimus-systems/packet-guardian/common"
 	"github.com/onesimus-systems/packet-guardian/dhcp"
 )
@@ -21,7 +21,7 @@ type device struct {
 func rootHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ip := strings.Split(r.RemoteAddr, ":")[0]
-		reg, err := dhcp.IsRegisteredByIP(e.DB, net.ParseIP(ip), e.Config.DHCP.LeasesFile)
+		reg, err := dhcp.IsRegisteredByIP(e.DB, net.ParseIP(ip))
 		if err != nil {
 			e.Log.Errorf("Error checking auto registration IP: %s", err.Error())
 		}
@@ -33,50 +33,68 @@ func rootHandler(e *common.Environment) http.HandlerFunc {
 	}
 }
 
-func manageHandler(e *common.Environment) http.HandlerFunc {
+func userDeviceListHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
-		username := sess.GetString("username")
-
-		sql := "SELECT \"mac\", \"userAgent\", \"platform\", \"regIP\", \"dateRegistered\""
-		sql += "FROM \"device\" WHERE \"username\" = ? ORDER BY \"dateRegistered\" ASC"
-		rows, err := e.DB.Query(sql, username)
-		if err != nil {
-			e.Log.Error(err.Error())
+		username, ok := mux.Vars(r)["username"]
+		if !ok {
+			username = e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetString("username")
 		}
-
-		devices := make([]device, 0)
-		for rows.Next() {
-			var mac string
-			var ua string
-			var platform string
-			var regIP string
-			var dateRegistered int64
-			err := rows.Scan(&mac, &ua, &platform, &regIP, &dateRegistered)
-			if err != nil {
-				e.Log.Error(err.Error())
-				continue
-			}
-
-			d := device{
-				MAC:            mac,
-				UA:             ua,
-				Platform:       platform,
-				IP:             regIP,
-				DateRegistered: time.Unix(dateRegistered, 0).Format("01/02/2006 15:04:05"),
-			}
-			devices = append(devices, d)
-		}
+		results := dhcp.Query{User: username}.Search(e)
 
 		data := struct {
 			SiteTitle   string
 			CompanyName string
-			Devices     []device
+			Username    string
+			Devices     []dhcp.Result
 		}{
 			SiteTitle:   e.Config.Core.SiteTitle,
 			CompanyName: e.Config.Core.SiteCompanyName,
-			Devices:     devices,
+			Username:    username,
+			Devices:     results,
 		}
 		e.Templates.ExecuteTemplate(w, "manage", data)
+	}
+}
+
+func adminHomeHandler(e *common.Environment) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/search", http.StatusTemporaryRedirect)
+	}
+}
+
+func adminSearchHandler(e *common.Environment) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Was a search query performed
+		query := r.FormValue("q")
+		var results []dhcp.Result
+		if query == "*" {
+			q := dhcp.Query{}
+			q.User = ""
+			results = q.Search(e)
+		} else if query != "" {
+			e.Log.Infof("Searching for %s", query)
+			q := dhcp.Query{}
+
+			if m, err := dhcp.FormatMacAddress(query); err == nil {
+				q.MAC = m
+			} else if ip := net.ParseIP(query); ip != nil {
+				q.IP = ip
+			}
+			q.User = query
+			results = q.Search(e)
+		}
+
+		data := struct {
+			SiteTitle     string
+			CompanyName   string
+			Query         string
+			SearchResults []dhcp.Result
+		}{
+			SiteTitle:     e.Config.Core.SiteTitle,
+			CompanyName:   e.Config.Core.SiteCompanyName,
+			Query:         query,
+			SearchResults: results,
+		}
+		e.Templates.ExecuteTemplate(w, "admin-search", data)
 	}
 }

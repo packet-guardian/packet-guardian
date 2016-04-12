@@ -27,6 +27,7 @@ type Config struct {
 	}
 	Auth struct {
 		AuthMethod []string
+		AdminUsers []string
 
 		LDAP struct {
 			UseAD   bool
@@ -35,8 +36,7 @@ type Config struct {
 		}
 	}
 	DHCP struct {
-		LeasesFile string
-		HostsFile  string
+		ConfigFile string
 	}
 }
 

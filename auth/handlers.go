@@ -27,6 +27,7 @@ func LoginHandler(e *common.Environment) http.HandlerFunc {
 	}
 }
 
+// LogoutHandler voids a user's session
 func LogoutHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
@@ -36,10 +37,10 @@ func LogoutHandler(e *common.Environment) http.HandlerFunc {
 	}
 }
 
+// LoginPageHandler will either redirect to the manage page if logged in or will show a login box
 func LoginPageHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
-		loggedin := sess.GetBool("loggedin", false)
+		loggedin := e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetBool("loggedin", false)
 		if loggedin {
 			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		}
@@ -54,17 +55,7 @@ func LoginPageHandler(e *common.Environment) http.HandlerFunc {
 	}
 }
 
-func LogoutUser(e *common.Environment, w http.ResponseWriter, r *http.Request) {
-	sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
-	sess.Set("loggedin", false)
-	sess.Delete(r, w)
-}
-
-func IsLoggedIn(e *common.Environment, r *http.Request) bool {
-	sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
-	return sess.GetBool("loggedin", false)
-}
-
+// CheckAuthMid is middleware to check if a user is logged in, if not it will redirect to the login page
 func CheckAuthMid(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !IsLoggedIn(e, r) {
@@ -75,6 +66,7 @@ func CheckAuthMid(e *common.Environment, next http.HandlerFunc) http.HandlerFunc
 	}
 }
 
+// CheckAuthAPIMid is middleware to check if a user is logged in, if not it will return an AuthNeeded api status
 func CheckAuthAPIMid(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !IsLoggedIn(e, r) {
@@ -82,5 +74,20 @@ func CheckAuthAPIMid(e *common.Environment, next http.HandlerFunc) http.HandlerF
 			return
 		}
 		next(w, r)
+	}
+}
+
+// CheckAdminMid is middleware that checks if a user is an administrator, it calls
+// the CheckAuthMid middleware before checking itself
+func CheckAdminMid(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		adminMid := func(w http.ResponseWriter, r *http.Request) {
+			if !IsAdminUser(e, r) {
+				http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+				return
+			}
+			next(w, r)
+		}
+		CheckAuthMid(e, adminMid)(w, r)
 	}
 }
