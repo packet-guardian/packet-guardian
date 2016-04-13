@@ -1,9 +1,5 @@
 {{define "manage"}}
-{{template "header" dict "css" (list "manage") "title" .SiteTitle "companyName" .CompanyName}}
-<div id="flashDiv" class="flash">
-    <div id="flashText">
-    </div>
-</div>
+{{template "header" dict "css" (list "manage") "main" .}}
 <div class="manager">
     <form>
         <input type="hidden" name="username" value="{{.Username}}">

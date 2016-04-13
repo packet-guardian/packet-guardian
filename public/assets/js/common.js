@@ -23,7 +23,7 @@ var c = {
             j.AddClass(flash, flashClass);
             j.FadeIn(flash, 500);
             c.flashTimeout = setTimeout(clear, 10000);
-        }
+        };
 
         if (c.flashTimeout) {
             clearTimeout(c.flashTimeout);
@@ -33,3 +33,10 @@ var c = {
         show(j.Noop);
     },
 };
+
+j.OnReady(function() {
+    var flashMsg = j.$('#flashText').innerHTML;
+    if (flashMsg !== '') {
+        c.FlashMessage(flashMsg);
+    }
+});

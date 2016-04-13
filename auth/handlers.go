@@ -49,13 +49,16 @@ func LoginPageHandler(e *common.Environment) http.HandlerFunc {
 			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		}
 		data := struct {
-			SiteTitle   string
-			CompanyName string
+			SiteTitle    string
+			CompanyName  string
+			FlashMessage string
 		}{
 			SiteTitle:   e.Config.Core.SiteTitle,
 			CompanyName: e.Config.Core.SiteCompanyName,
 		}
-		e.Templates.ExecuteTemplate(w, "login", data)
+		if err := e.Templates.ExecuteTemplate(w, "login", data); err != nil {
+			e.Log.Error(err.Error())
+		}
 	}
 }
 

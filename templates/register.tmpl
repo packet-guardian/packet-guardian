@@ -1,10 +1,5 @@
 {{define "register"}}
-{{template "header" dict "css" (list "register") "title" .SiteTitle "companyName" .CompanyName}}
-<div id="flashDiv" class="flash">
-    <div id="flashText">
-    </div>
-</div>
-
+{{template "header" dict "css" (list "register") "main" .}}
 <div id="suc-msg-auto" class="success-message">
     <p class="instructions">
         Please disconnect your computer from the network for 1 minute and then reconnect.

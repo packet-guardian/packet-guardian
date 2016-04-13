@@ -12,9 +12,17 @@ import (
 	"github.com/onesimus-systems/packet-guardian/common"
 )
 
+const (
+	nonAdminAutoReg       = "na-auto"
+	nonAdminManReg        = "na-man"
+	nonAdminManRegNologin = "na-man-nologin"
+	adminReg              = "admin"
+)
+
 // RegistrationPageHandler handles GET requests to /register
 func RegistrationPageHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		flash := ""
 		man := (r.FormValue("manual") == "1")
 		loggedIn := auth.IsLoggedIn(e, r)
 		ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
@@ -24,11 +32,15 @@ func RegistrationPageHandler(e *common.Environment) http.HandlerFunc {
 			return
 		}
 
-		formType := "na-auto"
+		formType := nonAdminAutoReg
 		if man {
-			formType = "na-man"
-			if loggedIn {
-				formType = "na-man-nologin"
+			if !e.Config.Core.AllowManualRegistrations {
+				flash = "Manual registrations are not allowed"
+			} else {
+				formType = nonAdminManReg
+				if loggedIn {
+					formType = nonAdminManRegNologin
+				}
 			}
 		}
 
@@ -36,22 +48,45 @@ func RegistrationPageHandler(e *common.Environment) http.HandlerFunc {
 		if r.FormValue("username") != "" && auth.IsAdminUser(e, r) {
 			username = r.FormValue("username")
 			formType = "admin"
+			flash = ""
+		}
+
+		// TODO: Don't show the registration page at all if blacklisted
+		if formType == nonAdminAutoReg {
+			ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
+			mac, err := GetMacFromIP(ip)
+			if err != nil {
+				e.Log.Errorf("Failed to get MAC from IP for %s", ip.String())
+			} else {
+				bl, err := IsBlacklisted(e.DB, mac.String())
+				if err != nil {
+					e.Log.Errorf("There was an error checking the blacklist for MAC %s", mac.String())
+				}
+				if bl {
+					flash = "The device appears to be blacklisted"
+				}
+			}
 		}
 
 		data := struct {
-			SiteTitle   string
-			CompanyName string
-			Policy      []template.HTML
-			Type        string
-			Username    string
+			SiteTitle    string
+			CompanyName  string
+			Policy       []template.HTML
+			Type         string
+			Username     string
+			FlashMessage string
 		}{
-			SiteTitle:   e.Config.Core.SiteTitle,
-			CompanyName: e.Config.Core.SiteCompanyName,
-			Policy:      loadPolicyText(e.Config.Core.RegistrationPolicyFile),
-			Type:        formType,
-			Username:    username,
+			SiteTitle:    e.Config.Core.SiteTitle,
+			CompanyName:  e.Config.Core.SiteCompanyName,
+			Policy:       loadPolicyText(e.Config.Core.RegistrationPolicyFile),
+			Type:         formType,
+			Username:     username,
+			FlashMessage: flash,
 		}
-		e.Templates.ExecuteTemplate(w, "register", data)
+
+		if err := e.Templates.ExecuteTemplate(w, "register", data); err != nil {
+			e.Log.Error(err.Error())
+		}
 	}
 }
 

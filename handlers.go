@@ -11,14 +11,6 @@ import (
 	"github.com/onesimus-systems/packet-guardian/dhcp"
 )
 
-type device struct {
-	MAC            string
-	UA             string
-	Platform       string
-	IP             string
-	DateRegistered string
-}
-
 func rootHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ip := strings.Split(r.RemoteAddr, ":")[0]
@@ -49,11 +41,12 @@ func userDeviceListHandler(e *common.Environment) http.HandlerFunc {
 		results := dhcp.Query{User: username}.Search(e)
 
 		data := struct {
-			SiteTitle   string
-			CompanyName string
-			Username    string
-			IsAdmin     bool
-			Devices     []dhcp.Result
+			SiteTitle    string
+			CompanyName  string
+			Username     string
+			IsAdmin      bool
+			Devices      []dhcp.Result
+			FlashMessage string
 		}{
 			SiteTitle:   e.Config.Core.SiteTitle,
 			CompanyName: e.Config.Core.SiteCompanyName,
@@ -61,20 +54,25 @@ func userDeviceListHandler(e *common.Environment) http.HandlerFunc {
 			IsAdmin:     auth.IsAdminUser(e, r),
 			Devices:     results,
 		}
-		e.Templates.ExecuteTemplate(w, "manage", data)
+		if err := e.Templates.ExecuteTemplate(w, "manage", data); err != nil {
+			e.Log.Error(err.Error())
+		}
 	}
 }
 
 func adminHomeHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := struct {
-			SiteTitle   string
-			CompanyName string
+			SiteTitle    string
+			CompanyName  string
+			FlashMessage string
 		}{
 			SiteTitle:   e.Config.Core.SiteTitle,
 			CompanyName: e.Config.Core.SiteCompanyName,
 		}
-		e.Templates.ExecuteTemplate(w, "admin-dash", data)
+		if err := e.Templates.ExecuteTemplate(w, "admin-dash", data); err != nil {
+			e.Log.Error(err.Error())
+		}
 	}
 }
 
@@ -104,12 +102,15 @@ func adminSearchHandler(e *common.Environment) http.HandlerFunc {
 			CompanyName   string
 			Query         string
 			SearchResults []dhcp.Result
+			FlashMessage  string
 		}{
 			SiteTitle:     e.Config.Core.SiteTitle,
 			CompanyName:   e.Config.Core.SiteCompanyName,
 			Query:         query,
 			SearchResults: results,
 		}
-		e.Templates.ExecuteTemplate(w, "admin-search", data)
+		if err := e.Templates.ExecuteTemplate(w, "admin-search", data); err != nil {
+			e.Log.Error(err.Error())
+		}
 	}
 }

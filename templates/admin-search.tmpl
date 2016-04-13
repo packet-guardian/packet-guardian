@@ -1,9 +1,5 @@
 {{define "admin-search"}}
-{{template "header" dict "css" (list "admin-search") "title" .SiteTitle "companyName" .CompanyName}}
-<div id="flashDiv" class="flash">
-    <div id="flashText">
-    </div>
-</div>
+{{template "header" dict "css" (list "admin-search") "main" .}}
 <div class="admin-search">
     <h2>Administration Search</h2>
     <form method="GET">
