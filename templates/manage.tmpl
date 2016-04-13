@@ -12,7 +12,7 @@
             {{if .ShowAddBtn}}
             <button type="button" name="add-device-btn" {{if .IsAdmin}}data-admin="1"{{end}}>Add New Device</button>
             {{end}}
-            {{if and (gt (len .Devices) 0) (not .IsBlacklisted)}}
+            {{if or (and (gt (len .Devices) 0) (not .IsBlacklisted)) .IsAdmin}}
             <button type="button" name="del-selected-btn">Delete Selected</button>
             <button type="button" name="del-all-btn">Delete All</button>
             {{end}}

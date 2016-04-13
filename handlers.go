@@ -20,7 +20,11 @@ func rootHandler(e *common.Environment) http.HandlerFunc {
 		}
 
 		if auth.IsLoggedIn(e, r) {
-			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
+			if auth.IsAdminUser(e, r) {
+				http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
+			} else {
+				http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
+			}
 			return
 		}
 
@@ -137,7 +141,7 @@ func adminSearchHandler(e *common.Environment) http.HandlerFunc {
 	}
 }
 
-func adminBlacklistHandler(e *common.Environment, all bool) http.HandlerFunc {
+func adminBlacklistHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var black []interface{}
 
@@ -185,6 +189,32 @@ func adminBlacklistHandler(e *common.Environment, all bool) http.HandlerFunc {
 				e.Log.Infof("Blacklisted user/MAC %s", d)
 			}
 			common.NewAPIOK("Blacklisting successful", nil).WriteTo(w)
+		}
+	}
+}
+
+func adminUserHandler(e *common.Environment) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data := struct {
+			SiteTitle    string
+			CompanyName  string
+			Query        string
+			Users        []auth.User
+			FlashMessage string
+		}{
+			SiteTitle:   e.Config.Core.SiteTitle,
+			CompanyName: e.Config.Core.SiteCompanyName,
+		}
+
+		users, err := auth.GetAllUsers(e.DB)
+		if err != nil {
+			e.Log.Errorf("Error getting users: %s", err.Error())
+			data.FlashMessage = "Error getting users"
+		}
+		data.Users = users
+
+		if err := e.Templates.ExecuteTemplate(w, "admin-users", data); err != nil {
+			e.Log.Error(err.Error())
 		}
 	}
 }

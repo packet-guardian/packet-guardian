@@ -1,0 +1,38 @@
+.admin-users {
+    width: 60%;
+    margin: 0 auto;
+}
+
+h2 {
+    margin-top: 0;
+}
+
+.controls {
+    text-align: right;
+    width: 600px;
+    margin: 0 auto;
+    margin-bottom: 10px;
+}
+
+button {
+    font-weight: bold;
+    padding: 5px 10px;
+    color: white;
+    border: 0;
+    background-color: #0083A8;
+    background: linear-gradient(to bottom, #0083A8, #007899);
+}
+
+table {
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+table td, table th {
+    border: 1px solid black;
+    padding: 10px;
+}
+
+table tr:nth-child(2n) {
+    background-color: #CACACA;
+}

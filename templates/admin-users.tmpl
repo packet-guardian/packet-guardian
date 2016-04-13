@@ -1,0 +1,33 @@
+{{define "admin-users"}}
+{{template "header" dict "css" (list "admin-users") "main" .}}
+<div class="admin-users">
+    <h2>Administration Users</h2>
+
+    <table>
+        <tr>
+            <th>Username</th>
+            <th>Device Limit</th>
+            <th>Valid</th>
+            <th>Default Expiration</th>
+        </tr>
+        {{range .Users}}
+        <tr>
+            <td><a href="/admin/user/{{.Username}}">{{.Username}}</a></td>
+            <td>{{.DeviceLimit}}</td>
+            {{if .UserNeverExpires}}
+            <td>Always</td>
+            {{else}}
+            <td>{{.ValidAfter}} to {{.ValidBefore}}</td>
+            {{end}}
+
+            {{if .NeverExpires}}
+            <td>Never</td>
+            {{else}}
+            <td>{{.DefaultExpiration}}</td>
+            {{end}}
+        </tr>
+        {{end}}
+    </table>
+</div>
+{{template "footer" dict "js" (list "")}}
+{{end}}

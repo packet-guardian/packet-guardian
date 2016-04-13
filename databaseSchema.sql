@@ -15,8 +15,10 @@ CREATE TABLE "user" (
     "username" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "deviceLimit" INTEGER DEFAULT (10),
-    "expires" INTEGER NOT NULL,
-    "canManage" INTEGER DEFAULT (1)
+    "expires" INTEGER DEFAULT (0),
+    "canManage" INTEGER DEFAULT (1),
+    "validAfter" INTEGER DEFAULT (0),
+    "validBefore" INTEGER DEFAULT (0)
 );
 
 CREATE TABLE "blacklist" (

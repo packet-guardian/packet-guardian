@@ -7,7 +7,7 @@ h2 {
     margin-top: 0;
 }
 
-.admin-dash a {
+.admin-dash a, button {
     text-decoration: none;
     font-weight: bold;
     padding: 5px 10px;
@@ -17,7 +17,12 @@ h2 {
     background: linear-gradient(to bottom, #0083A8, #007899);
 }
 
+.search-box {
+    float: right;
+}
+
 .dash-status {
+    margin-top: 20px;
     background-color: lightgray;
     min-height: 300px;
 }

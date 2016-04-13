@@ -2,11 +2,17 @@
 {{template "header" dict "css" (list "admin-dash") "main" .}}
 <div class="admin-dash">
     <h2>Administration Dashboard</h2>
-    <p>
-        <a href="/admin/search">Search</a>
+    <div class="controls">
         <a href="/admin/users">Manage Users</a>
-        <a href="/admin/blacklist">Manage Blacklist</a>
-    </p>
+        <a href="/logout">Logout</a>
+
+        <div class="search-box">
+            <form method="GET" action="/admin/search">
+                <input type="text" name="q" placeholder="Search" autofocus="autofocus">
+                <button type="submit">Search</button>
+            </form>
+        </div>
+    </div>
 
     <div class="dash-status">
         This is where some sort of status system is going

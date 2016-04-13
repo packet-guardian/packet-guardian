@@ -20,79 +20,82 @@ const (
 )
 
 // RegistrationPageHandler handles GET requests to /register
-func RegistrationPageHandler(e *common.Environment) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		flash := ""
-		man := (r.FormValue("manual") == "1")
-		loggedIn := auth.IsLoggedIn(e, r)
+func RegistrationPageHandler(e *common.Environment, w http.ResponseWriter, r *http.Request) {
+	flash := ""
+	man := (r.FormValue("manual") == "1")
+	loggedIn := auth.IsLoggedIn(e, r)
+	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
+	reg, _ := IsRegisteredByIP(e.DB, ip)
+	if !man && reg {
+		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
+		return
+	}
+
+	formType := nonAdminAutoReg
+	if man {
+		if !e.Config.Core.AllowManualRegistrations {
+			flash = "Manual registrations are not allowed"
+		} else {
+			formType = nonAdminManReg
+			if loggedIn {
+				formType = nonAdminManRegNologin
+			}
+		}
+	}
+
+	username := e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetString("username")
+	if r.FormValue("username") != "" && auth.IsAdminUser(e, r) {
+		username = r.FormValue("username")
+		formType = "admin"
+		flash = ""
+	}
+
+	// TODO: Don't show the registration page at all if blacklisted
+	if formType == nonAdminAutoReg {
 		ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-		reg, _ := IsRegisteredByIP(e.DB, ip)
-		if !man && reg {
-			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
-			return
-		}
-
-		formType := nonAdminAutoReg
-		if man {
-			if !e.Config.Core.AllowManualRegistrations {
-				flash = "Manual registrations are not allowed"
-			} else {
-				formType = nonAdminManReg
-				if loggedIn {
-					formType = nonAdminManRegNologin
-				}
-			}
-		}
-
-		username := e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetString("username")
-		if r.FormValue("username") != "" && auth.IsAdminUser(e, r) {
-			username = r.FormValue("username")
-			formType = "admin"
-			flash = ""
-		}
-
-		// TODO: Don't show the registration page at all if blacklisted
-		if formType == nonAdminAutoReg {
-			ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-			mac, err := GetMacFromIP(ip)
+		mac, err := GetMacFromIP(ip)
+		if err != nil {
+			e.Log.Errorf("Failed to get MAC from IP for %s", ip.String())
+		} else {
+			bl, err := IsBlacklisted(e.DB, mac.String())
 			if err != nil {
-				e.Log.Errorf("Failed to get MAC from IP for %s", ip.String())
-			} else {
-				bl, err := IsBlacklisted(e.DB, mac.String())
-				if err != nil {
-					e.Log.Errorf("There was an error checking the blacklist for MAC %s", mac.String())
-				}
-				if bl {
-					flash = "The device appears to be blacklisted"
-				}
+				e.Log.Errorf("There was an error checking the blacklist for MAC %s", mac.String())
+			}
+			if bl {
+				flash = "The device appears to be blacklisted"
 			}
 		}
+	}
 
-		data := struct {
-			SiteTitle    string
-			CompanyName  string
-			Policy       []template.HTML
-			Type         string
-			Username     string
-			FlashMessage string
-		}{
-			SiteTitle:    e.Config.Core.SiteTitle,
-			CompanyName:  e.Config.Core.SiteCompanyName,
-			Policy:       loadPolicyText(e.Config.Core.RegistrationPolicyFile),
-			Type:         formType,
-			Username:     username,
-			FlashMessage: flash,
-		}
+	data := struct {
+		SiteTitle    string
+		CompanyName  string
+		Policy       []template.HTML
+		Type         string
+		Username     string
+		FlashMessage string
+	}{
+		SiteTitle:    e.Config.Core.SiteTitle,
+		CompanyName:  e.Config.Core.SiteCompanyName,
+		Policy:       loadPolicyText(e.Config.Core.RegistrationPolicyFile),
+		Type:         formType,
+		Username:     username,
+		FlashMessage: flash,
+	}
 
-		if err := e.Templates.ExecuteTemplate(w, "register", data); err != nil {
-			e.Log.Error(err.Error())
-		}
+	if err := e.Templates.ExecuteTemplate(w, "register", data); err != nil {
+		e.Log.Error(err.Error())
 	}
 }
 
 // RegistrationHandler handles POST requests to /register
 func RegistrationHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			RegistrationPageHandler(e, w, r)
+			return
+		}
+
 		// Check authentication
 		username := ""
 		if !auth.IsLoggedIn(e, r) {
@@ -148,16 +151,19 @@ func RegistrationHandler(e *common.Environment) http.HandlerFunc {
 		}
 
 		// Check if the mac or username is blacklisted
-		bl, err := IsBlacklisted(e.DB, mac.String(), username)
-		if err != nil {
-			e.Log.Errorf("There was an error checking the blacklist for MAC %s and user %s", mac.String(), username)
-			common.NewAPIResponse(common.APIStatusGenericError, "There was an error registering your device.", nil).WriteTo(w)
-			return
-		}
-		if bl {
-			e.Log.Errorf("Attempted registration of blacklisted MAC or user %s - %s", mac.String(), username)
-			common.NewAPIResponse(common.APIStatusGenericError, "There was an error registering your device. Blacklisted username or MAC address", nil).WriteTo(w)
-			return
+		// Administrators bypass the blacklist check
+		if !auth.IsAdminUser(e, r) {
+			bl, err := IsBlacklisted(e.DB, mac.String(), username)
+			if err != nil {
+				e.Log.Errorf("There was an error checking the blacklist for MAC %s and user %s", mac.String(), username)
+				common.NewAPIResponse(common.APIStatusGenericError, "There was an error registering your device.", nil).WriteTo(w)
+				return
+			}
+			if bl {
+				e.Log.Errorf("Attempted registration of blacklisted MAC or user %s - %s", mac.String(), username)
+				common.NewAPIResponse(common.APIStatusGenericError, "There was an error registering your device. Blacklisted username or MAC address", nil).WriteTo(w)
+				return
+			}
 		}
 
 		// Register the MAC to the user

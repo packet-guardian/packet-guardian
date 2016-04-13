@@ -17,12 +17,10 @@ func makeRoutes(e *common.Environment) http.Handler {
 	r.PathPrefix("/public").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public/"))))
 
 	// Automatic registration page
-	r.HandleFunc("/register", dhcp.RegistrationPageHandler(e)).Methods("GET")
-	r.HandleFunc("/register", dhcp.RegistrationHandler(e)).Methods("POST")
+	r.HandleFunc("/register", dhcp.RegistrationHandler(e)).Methods("GET", "POST")
 
 	// Login page
-	r.HandleFunc("/login", auth.LoginPageHandler(e)).Methods("GET")
-	r.HandleFunc("/login", auth.LoginHandler(e)).Methods("POST")
+	r.HandleFunc("/login", auth.LoginHandler(e)).Methods("GET", "POST")
 	r.HandleFunc("/logout", auth.LogoutHandler(e)).Methods("GET")
 
 	// User management page
@@ -36,9 +34,11 @@ func makeRoutes(e *common.Environment) http.Handler {
 	r.HandleFunc("/admin/search", auth.CheckAdminMid(e, adminSearchHandler(e))).Methods("GET")
 	r.HandleFunc("/admin/user/{username}", auth.CheckAdminMid(e, userDeviceListHandler(e))).Methods("GET")
 
-	r.HandleFunc("/admin/blacklist", auth.CheckAdminAPIMid(e, adminBlacklistHandler(e, false))).Methods("POST", "DELETE")
-	r.HandleFunc("/admin/blacklist/{username}", auth.CheckAdminAPIMid(e, adminBlacklistHandler(e, false))).Methods("POST", "DELETE")
-	r.HandleFunc("/admin/blacklist/{username}/all", auth.CheckAdminAPIMid(e, adminBlacklistHandler(e, true))).Methods("POST", "DELETE")
+	r.HandleFunc("/admin/users", auth.CheckAdminMid(e, adminUserHandler(e))).Methods("GET")
+
+	r.HandleFunc("/admin/blacklist", auth.CheckAdminAPIMid(e, adminBlacklistHandler(e))).Methods("POST", "DELETE")
+	r.HandleFunc("/admin/blacklist/{username}", auth.CheckAdminAPIMid(e, adminBlacklistHandler(e))).Methods("POST", "DELETE")
+	r.HandleFunc("/admin/blacklist/{username}/all", auth.CheckAdminAPIMid(e, adminBlacklistHandler(e))).Methods("POST", "DELETE")
 
 	// Development only routes
 	if dev {

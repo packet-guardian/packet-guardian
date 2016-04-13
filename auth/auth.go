@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"net/http"
+	"time"
 
 	"github.com/onesimus-systems/packet-guardian/common"
 
@@ -67,5 +68,53 @@ func normalAuth(db *sql.DB, username, password string) bool {
 
 func ldapAuth(db *sql.DB, username, password string) bool {
 	// Check username and pass against an ldap server
-	return true
+	return false
+}
+
+// User it's a user
+type User struct {
+	ID                int
+	Username          string
+	DeviceLimit       int
+	DefaultExpiration time.Time
+	ValidAfter        time.Time
+	ValidBefore       time.Time
+	NeverExpires      bool
+	UserNeverExpires  bool
+}
+
+// GetAllUsers will return a slice of Users on success. Returns nil and an error on error.
+func GetAllUsers(db *sql.DB) ([]User, error) {
+	rows, err := db.Query("SELECT \"id\", \"username\", \"deviceLimit\", \"expires\", \"validAfter\", \"validBefore\" FROM \"user\"")
+	if err != nil {
+		return nil, err
+	}
+
+	var results []User
+	for rows.Next() {
+		var id int
+		var username string
+		var deviceLimit int
+		var expiration int64
+		var validAfter int64
+		var validBefore int64
+
+		err := rows.Scan(&id, &username, &deviceLimit, &expiration, &validAfter, &validBefore)
+		if err != nil {
+			continue
+		}
+
+		user := User{
+			ID:                id,
+			Username:          username,
+			DeviceLimit:       deviceLimit,
+			DefaultExpiration: time.Unix(expiration, 0),
+			ValidAfter:        time.Unix(validAfter, 0),
+			ValidBefore:       time.Unix(validBefore, 0),
+			NeverExpires:      (expiration == 0),
+			UserNeverExpires:  (validAfter == 0 && validBefore == 0),
+		}
+		results = append(results, user)
+	}
+	return results, nil
 }

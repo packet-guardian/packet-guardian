@@ -9,25 +9,43 @@ import (
 // LoginHandler handles a login POST request
 func LoginHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Assume invalid until convinced otherwise
-		resp := common.NewAPIResponse(common.APIStatusInvalidAuth, "Invalid login", nil)
-		username := r.FormValue("username")
-		if IsValidLogin(e.DB, username, r.FormValue("password")) {
-			resp.Code = common.APIStatusOK
-			resp.Message = ""
-			sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
-			sess.Set("loggedin", true)
-			sess.Set("username", username)
-			sess.Save(r, w)
-			if common.StringInSlice(username, e.Config.Auth.AdminUsers) {
-				e.Log.Infof("Successful login by administrative user %s", username)
-			} else {
-				e.Log.Infof("Successful login by user %s", username)
+		if r.Method == "GET" {
+			loggedin := e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetBool("loggedin", false)
+			if loggedin {
+				http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 			}
-		} else {
-			e.Log.Errorf("Incorrect login from user %s", username)
+			data := struct {
+				SiteTitle    string
+				CompanyName  string
+				FlashMessage string
+			}{
+				SiteTitle:   e.Config.Core.SiteTitle,
+				CompanyName: e.Config.Core.SiteCompanyName,
+			}
+			if err := e.Templates.ExecuteTemplate(w, "login", data); err != nil {
+				e.Log.Error(err.Error())
+			}
+		} else if r.Method == "POST" {
+			// Assume invalid until convinced otherwise
+			resp := common.NewAPIResponse(common.APIStatusInvalidAuth, "Invalid login", nil)
+			username := r.FormValue("username")
+			if IsValidLogin(e.DB, username, r.FormValue("password")) {
+				resp.Code = common.APIStatusOK
+				resp.Message = ""
+				sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
+				sess.Set("loggedin", true)
+				sess.Set("username", username)
+				sess.Save(r, w)
+				if common.StringInSlice(username, e.Config.Auth.AdminUsers) {
+					e.Log.Infof("Successful login by administrative user %s", username)
+				} else {
+					e.Log.Infof("Successful login by user %s", username)
+				}
+			} else {
+				e.Log.Errorf("Incorrect login from user %s", username)
+			}
+			resp.WriteTo(w)
 		}
-		resp.WriteTo(w)
 	}
 }
 
@@ -38,27 +56,6 @@ func LogoutHandler(e *common.Environment) http.HandlerFunc {
 		LogoutUser(e, w, r)
 		e.Log.Infof("Successful logout by user %s", sess.GetString("username", "[unknown]"))
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-	}
-}
-
-// LoginPageHandler will either redirect to the manage page if logged in or will show a login box
-func LoginPageHandler(e *common.Environment) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		loggedin := e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetBool("loggedin", false)
-		if loggedin {
-			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
-		}
-		data := struct {
-			SiteTitle    string
-			CompanyName  string
-			FlashMessage string
-		}{
-			SiteTitle:   e.Config.Core.SiteTitle,
-			CompanyName: e.Config.Core.SiteCompanyName,
-		}
-		if err := e.Templates.ExecuteTemplate(w, "login", data); err != nil {
-			e.Log.Error(err.Error())
-		}
 	}
 }
 

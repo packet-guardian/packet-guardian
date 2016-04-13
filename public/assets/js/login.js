@@ -15,7 +15,7 @@ j.OnReady(function () {
             }
             resp = JSON.parse(resp);
             if (resp.Code === 0) {
-                location.href = "/manage";
+                location.href = "/";
             } else {
                 c.FlashMessage("Incorrect username or password");
             }

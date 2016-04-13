@@ -7,42 +7,43 @@
             <input type="text" name="q" placeholder="Search" value="{{.Query}}" autofocus="autofocus">
             <button type="submit">Search</button>
         </div>
-        {{if eq (len .SearchResults) 0}}
-            {{if eq .NoResultType "ip"}}
-            <div class="no-devices">IP lease not found</div>
-            {{else if eq .NoResultType "mac"}}
-            <div class="no-devices">No devices found</div>
-            {{else if eq .NoResultType "username"}}
-            <div class="no-devices">No devices found for user <a href="/admin/user/{{.Query}}">{{.Query}}</a></div>
-            {{else}}
-            <div class="no-devices">Please enter a search query</div>
-            {{end}}
-        {{else}}
-        <p>
-            <span class="blacklist-icon">&cross;</span> = Blacklisted MAC address
-        </p>
-        <table>
-            <tr>
-                <th>MAC Address</th>
-                <th>User</th>
-                <th class="ua">User Agent</th>
-                <th>Platform</th>
-                <th>Date Registered</th>
-                <th>Registered From</th>
-            </tr>
-            {{range .SearchResults}}
-            <tr>
-                <td>{{if .Blacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
-                <td><a href="/admin/user/{{.Username}}">{{.Username}}</a></td>
-                <td class="ua">{{.UserAgent}}</td>
-                <td>{{.Platform}}</td>
-                <td>{{.DateRegistered}}</td>
-                <td>{{.RegIP}}</td>
-            </tr>
-            {{end}}
-        </table>
-        {{end}}
     </form>
+
+    {{if eq (len .SearchResults) 0}}
+        {{if eq .NoResultType "ip"}}
+        <div class="no-devices">IP lease not found</div>
+        {{else if eq .NoResultType "mac"}}
+        <div class="no-devices">No devices found</div>
+        {{else if eq .NoResultType "username"}}
+        <div class="no-devices">No devices found for user <a href="/admin/user/{{.Query}}">{{.Query}}</a></div>
+        {{else}}
+        <div class="no-devices">Please enter a search query</div>
+        {{end}}
+    {{else}}
+    <p>
+        <span class="blacklist-icon">&cross;</span> = Blacklisted MAC address
+    </p>
+    <table>
+        <tr>
+            <th>MAC Address</th>
+            <th>User</th>
+            <th class="ua">User Agent</th>
+            <th>Platform</th>
+            <th>Date Registered</th>
+            <th>Registered From</th>
+        </tr>
+        {{range .SearchResults}}
+        <tr>
+            <td>{{if .Blacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
+            <td><a href="/admin/user/{{.Username}}">{{.Username}}</a></td>
+            <td class="ua">{{.UserAgent}}</td>
+            <td>{{.Platform}}</td>
+            <td>{{.DateRegistered}}</td>
+            <td>{{.RegIP}}</td>
+        </tr>
+        {{end}}
+    </table>
+    {{end}}
 </div>
 {{template "footer" dict "js" (list "admin-search")}}
 {{end}}
