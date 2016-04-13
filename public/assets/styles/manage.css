@@ -17,6 +17,11 @@
     margin-bottom: 10px;
 }
 
+.admin-controls {
+    margin-top: 10px;
+    text-align: left;
+}
+
 .no-devices {
     text-align: center;
     width: 600px;
@@ -34,6 +39,11 @@ button {
     background: linear-gradient(to bottom, #0083A8, #007899);
 }
 
+.admin-btn {
+    background-color: #FF3131;
+    background: linear-gradient(to bottom, #FF3131, #EA2F2F);
+}
+
 table {
     border-collapse: collapse;
     margin: 0 auto;
@@ -46,4 +56,10 @@ table td, table th {
 
 table tr:nth-child(2n) {
     background-color: #CACACA;
+}
+
+.blacklist-icon {
+    margin-right: 2px;
+    color: red;
+    font-weight: bold;
 }

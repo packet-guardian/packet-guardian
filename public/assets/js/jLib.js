@@ -159,6 +159,11 @@ var j = {
         j.Ajax('POST', url, data, successFn, errorFn, middleware);
     },
 
+    Delete: function (url, data, successFn, errorFn) {
+        'use strict';
+        j.Ajax('DELETE', url, data, successFn, errorFn, null);
+    },
+
     Ajax: function (method, url, data, successFn, errorFn, middleware) {
         'use strict';
         method = method.toUpperCase();
@@ -173,7 +178,7 @@ var j = {
             return;
         }
 
-        if (method === 'GET') {
+        if (method === 'GET' || method === 'DELETE') {
             url += '?' + dataStr;
             dataStr = '';
         }

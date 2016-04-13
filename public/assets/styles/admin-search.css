@@ -31,6 +31,10 @@ button {
     font-size: 1.5em;
 }
 
+.text-label {
+    font-weight: bold;
+}
+
 table {
     border-collapse: collapse;
     margin: 0 auto;
@@ -43,4 +47,10 @@ table td, table th {
 
 table tr:nth-child(2n) {
     background-color: #CACACA;
+}
+
+.blacklist-icon {
+    margin-right: 2px;
+    color: red;
+    font-weight: bold;
 }

@@ -6,17 +6,36 @@
         <div class="info">
             <span class="text-label">Username:</span>
             <span class="username">{{.Username}}</span>
+            {{if .IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
         </div>
         <div class="controls">
+            {{if .ShowAddBtn}}
             <button type="button" name="add-device-btn" {{if .IsAdmin}}data-admin="1"{{end}}>Add New Device</button>
-            {{if gt (len .Devices) 0}}
+            {{end}}
+            {{if and (gt (len .Devices) 0) (not .IsBlacklisted)}}
             <button type="button" name="del-selected-btn">Delete Selected</button>
             <button type="button" name="del-all-btn">Delete All</button>
             {{end}}
             {{if .IsAdmin}}
-            <button type="button" name="admin-btn">Admin Dashboard</button>
+            <button type="button" name="admin-btn" class="admin-btn">Admin Dashboard</button>
             {{end}}
             <button type="button" name="logout-btn">Logout</button>
+
+            {{if .IsAdmin}}
+            <div class="admin-controls">
+                <button type="button" name="black-user-btn" data-blacklisted="{{.IsBlacklisted}}" class="admin-btn">Blacklist Username</button>
+            </div>
+            {{if gt (len .Devices) 0}}
+            <div class="admin-controls">
+                <button type="button" name="black-all-btn" class="admin-btn">Blacklist All</button>
+                <button type="button" name="unblack-all-btn" class="admin-btn">Unblacklist All</button>
+            </div>
+            <div class="admin-controls">
+                <button type="button" name="black-sel-btn" class="admin-btn">Blacklist Selected</button>
+                <button type="button" name="unblack-sel-btn" class="admin-btn">Unblacklist Selected</button>
+            </div>
+            {{end}}
+            {{end}}
         </div>
         {{if eq (len .Devices) 0}}
         <div class="no-devices">No devices registered</div>
@@ -33,7 +52,7 @@
             {{range .Devices}}
             <tr>
                 <td><input type="checkbox" value="{{.MAC}}" class="device-select"></td>
-                <td>{{.MAC}}</td>
+                <td>{{if .Blacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
                 <td class="ua">{{.UserAgent}}</td>
                 <td>{{.Platform}}</td>
                 <td>{{.DateRegistered}}</td>
@@ -43,6 +62,10 @@
         </table>
         {{end}}
     </form>
+
+    <p>
+        <span class="blacklist-icon">&cross;</span> = Blacklisted MAC address
+    </p>
 </div>
 {{template "footer" dict "js" (list "manage")}}
 {{end}}

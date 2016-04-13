@@ -4,12 +4,23 @@
     <h2>Administration Search</h2>
     <form method="GET">
         <div class="controls">
-            <input type="text" name="q" placeholder="Search" value="{{.Query}}">
+            <input type="text" name="q" placeholder="Search" value="{{.Query}}" autofocus="autofocus">
             <button type="submit">Search</button>
         </div>
         {{if eq (len .SearchResults) 0}}
-        <div class="no-devices">Please enter a search query</div>
+            {{if eq .NoResultType "ip"}}
+            <div class="no-devices">IP lease not found</div>
+            {{else if eq .NoResultType "mac"}}
+            <div class="no-devices">No devices found</div>
+            {{else if eq .NoResultType "username"}}
+            <div class="no-devices">No devices found for user <a href="/admin/user/{{.Query}}">{{.Query}}</a></div>
+            {{else}}
+            <div class="no-devices">Please enter a search query</div>
+            {{end}}
         {{else}}
+        <p>
+            <span class="blacklist-icon">&cross;</span> = Blacklisted MAC address
+        </p>
         <table>
             <tr>
                 <th>MAC Address</th>
@@ -21,7 +32,7 @@
             </tr>
             {{range .SearchResults}}
             <tr>
-                <td>{{.MAC}}</td>
+                <td>{{if .Blacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
                 <td><a href="/admin/user/{{.Username}}">{{.Username}}</a></td>
                 <td class="ua">{{.UserAgent}}</td>
                 <td>{{.Platform}}</td>

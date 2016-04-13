@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net"
+	"strings"
 	"sync"
 	"time"
 )
@@ -96,7 +97,7 @@ func IsBlacklisted(db *sql.DB, values ...interface{}) (bool, error) {
 
 	baseSQL := "SELECT \"id\" FROM \"blacklist\" WHERE 1=0"
 	for range values {
-		baseSQL = baseSQL + " OR \"value\"=?"
+		baseSQL += " OR \"value\"=?"
 	}
 	stmt, err := db.Prepare(baseSQL)
 	if err != nil {
@@ -108,4 +109,74 @@ func IsBlacklisted(db *sql.DB, values ...interface{}) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+// AddToBlacklist add values to the blacklist
+func AddToBlacklist(db *sql.DB, values ...interface{}) error {
+	if len(values) == 0 {
+		return nil
+	}
+
+	baseSQL := "INSERT INTO \"blacklist\" (\"value\") VALUES"
+	for range values {
+		baseSQL += " (?),"
+	}
+	baseSQL = strings.TrimRight(baseSQL, ",")
+	stmt, err := db.Prepare(baseSQL)
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(values...)
+	return err
+}
+
+// RemoveFromBlacklist removes values from the blacklist
+func RemoveFromBlacklist(db *sql.DB, values ...interface{}) error {
+	if len(values) == 0 {
+		return nil
+	}
+
+	baseSQL := "DELETE FROM \"blacklist\" WHERE 1=0"
+	for range values {
+		baseSQL += " OR \"value\" = ?"
+	}
+	stmt, err := db.Prepare(baseSQL)
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(values...)
+	return err
+}
+
+// GetBlacklist will retreive values from the blacklist if they exist.
+// Calling with no filter will return the fill blacklist.
+func GetBlacklist(db *sql.DB, filter ...interface{}) ([]string, error) {
+	baseSQL := "SELECT \"value\" FROM \"blacklist\""
+	var rows *sql.Rows
+	var err error
+
+	if len(filter) > 0 {
+		baseSQL += " WHERE 1=0"
+		for range filter {
+			baseSQL += " OR \"value\"=?"
+		}
+		rows, err = db.Query(baseSQL, filter...)
+	} else {
+		rows, err = db.Query(baseSQL)
+	}
+
+	if err != nil {
+		return []string{}, err
+	}
+
+	var results []string
+	for rows.Next() {
+		var val string
+		err := rows.Scan(&val)
+		if err != nil {
+			continue
+		}
+		results = append(results, val)
+	}
+	return results, nil
 }

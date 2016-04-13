@@ -36,6 +36,10 @@ func makeRoutes(e *common.Environment) http.Handler {
 	r.HandleFunc("/admin/search", auth.CheckAdminMid(e, adminSearchHandler(e))).Methods("GET")
 	r.HandleFunc("/admin/user/{username}", auth.CheckAdminMid(e, userDeviceListHandler(e))).Methods("GET")
 
+	r.HandleFunc("/admin/blacklist", auth.CheckAdminAPIMid(e, adminBlacklistHandler(e, false))).Methods("POST", "DELETE")
+	r.HandleFunc("/admin/blacklist/{username}", auth.CheckAdminAPIMid(e, adminBlacklistHandler(e, false))).Methods("POST", "DELETE")
+	r.HandleFunc("/admin/blacklist/{username}/all", auth.CheckAdminAPIMid(e, adminBlacklistHandler(e, true))).Methods("POST", "DELETE")
+
 	// Development only routes
 	if dev {
 		r.HandleFunc("/dev/reloadtemp", reloadTemplates(e)).Methods("GET")

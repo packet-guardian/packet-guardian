@@ -15,7 +15,7 @@ type Query struct {
 	User string
 }
 
-func (q Query) Search(e *common.Environment) []Result {
+func (q Query) Search(e *common.Environment) []Device {
 	sql := "SELECT \"mac\", \"userAgent\", \"platform\", \"regIP\", \"dateRegistered\", \"username\" FROM \"device\" "
 	param := ""
 
@@ -41,7 +41,12 @@ func (q Query) Search(e *common.Environment) []Result {
 		e.Log.Error(err.Error())
 	}
 
-	var results []Result
+	bl, err := GetBlacklist(e.DB)
+	if err != nil {
+		e.Log.Error(err.Error())
+	}
+
+	var results []Device
 	for rows.Next() {
 		var mac string
 		var ua string
@@ -55,24 +60,27 @@ func (q Query) Search(e *common.Environment) []Result {
 			continue
 		}
 
-		r := Result{
+		r := Device{
 			MAC:            mac,
 			UserAgent:      ua,
 			Platform:       platform,
 			RegIP:          regIP,
 			DateRegistered: time.Unix(dateRegistered, 0).Format("01/02/2006 15:04:05"),
 			Username:       username,
+			Blacklisted:    common.StringInSlice(mac, bl),
 		}
 		results = append(results, r)
 	}
 	return results
 }
 
-type Result struct {
+// Device represents a device in the system
+type Device struct {
 	MAC            string
 	Platform       string
 	RegIP          string
 	DateRegistered string
 	Username       string
 	UserAgent      string
+	Blacklisted    bool
 }

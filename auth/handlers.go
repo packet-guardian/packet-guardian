@@ -73,17 +73,6 @@ func CheckAuthMid(e *common.Environment, next http.HandlerFunc) http.HandlerFunc
 	}
 }
 
-// CheckAuthAPIMid is middleware to check if a user is logged in, if not it will return an AuthNeeded api status
-func CheckAuthAPIMid(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if !IsLoggedIn(e, r) {
-			common.NewAPIResponse(common.APIStatusAuthNeeded, "Not logged in", nil).WriteTo(w)
-			return
-		}
-		next(w, r)
-	}
-}
-
 // CheckAdminMid is middleware that checks if a user is an administrator, it calls
 // the CheckAuthMid middleware before checking itself
 func CheckAdminMid(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
@@ -96,5 +85,31 @@ func CheckAdminMid(e *common.Environment, next http.HandlerFunc) http.HandlerFun
 			next(w, r)
 		}
 		CheckAuthMid(e, adminMid)(w, r)
+	}
+}
+
+// CheckAuthAPIMid is middleware to check if a user is logged in, if not it will return an AuthNeeded api status
+func CheckAuthAPIMid(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !IsLoggedIn(e, r) {
+			common.NewAPIResponse(common.APIStatusAuthNeeded, "Not logged in", nil).WriteTo(w)
+			return
+		}
+		next(w, r)
+	}
+}
+
+// CheckAdminAPIMid is middleware that checks if a user is an administrator, it calls
+// the CheckAuthAPIMid middleware before checking itself
+func CheckAdminAPIMid(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		adminMid := func(w http.ResponseWriter, r *http.Request) {
+			if !IsAdminUser(e, r) {
+				common.NewAPIResponse(common.APIStatusNotAdmin, "Not an administrator", nil).WriteTo(w)
+				return
+			}
+			next(w, r)
+		}
+		CheckAuthAPIMid(e, adminMid)(w, r)
 	}
 }

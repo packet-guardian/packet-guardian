@@ -113,7 +113,7 @@ func RegistrationHandler(e *common.Environment) http.HandlerFunc {
 
 			if sessUsername != formUsername && !auth.IsAdminUser(e, r) {
 				e.Log.Errorf("Admin action attempted: Register device for %s attempted by user %s", formUsername, sessUsername)
-				w.Write(common.NewAPIResponse(common.APIStatusInvalidAuth, "Only admins can do that", nil).Encode())
+				common.NewAPIResponse(common.APIStatusInvalidAuth, "Only admins can do that", nil).WriteTo(w)
 				return
 			}
 			username = formUsername
@@ -164,6 +164,7 @@ func RegistrationHandler(e *common.Environment) http.HandlerFunc {
 		err = Register(e.DB, mac, username, r.FormValue("platform"), ip, r.UserAgent(), "")
 		if err != nil {
 			e.Log.Errorf("Failed to register MAC address %s to user %s: %s", mac.String(), username, err.Error())
+			// TODO: Look at what error messages are being returned from Register()
 			common.NewAPIResponse(common.APIStatusGenericError, "Error: "+err.Error(), nil).WriteTo(w)
 			return
 		}
@@ -187,7 +188,7 @@ func DeleteHandler(e *common.Environment) http.HandlerFunc {
 		// If the two don't match, check if the user is an admin, if not return an error
 		if sessUsername != formUsername && !auth.IsAdminUser(e, r) {
 			e.Log.Errorf("Admin action attempted: Delete device for %s attempted by user %s", formUsername, sessUsername)
-			w.Write(common.NewAPIResponse(common.APIStatusInvalidAuth, "Only admins can do that", nil).Encode())
+			common.NewAPIResponse(common.APIStatusInvalidAuth, "Only admins can do that", nil).WriteTo(w)
 			return
 		}
 
@@ -209,10 +210,17 @@ func DeleteHandler(e *common.Environment) http.HandlerFunc {
 			sql += ") AND \"username\" = ?"
 		}
 		sqlParams = append(sqlParams, formUsername)
+
+		if bl, _ := IsBlacklisted(e.DB, sqlParams...); bl && !auth.IsAdminUser(e, r) {
+			e.Log.Errorf("Admin action attempted: Delete blacklisted device by user %s", formUsername)
+			common.NewAPIResponse(common.APIStatusInvalidAuth, "Only admins can do that", nil).WriteTo(w)
+			return
+		}
+
 		_, err := e.DB.Exec(sql, sqlParams...)
 		if err != nil {
 			e.Log.Error(err.Error())
-			w.Write(common.NewAPIResponse(common.APIStatusGenericError, "Error deleting devices", nil).Encode())
+			common.NewAPIResponse(common.APIStatusGenericError, "Error deleting devices", nil).WriteTo(w)
 			return
 		}
 
@@ -223,7 +231,7 @@ func DeleteHandler(e *common.Environment) http.HandlerFunc {
 				e.Log.Infof("Successfully deleted MAC %s for user %s by user %s", mac, formUsername, sessUsername)
 			}
 		}
-		w.Write(common.NewAPIResponse(common.APIStatusOK, "Devices deleted successfully", nil).Encode())
+		common.NewAPIResponse(common.APIStatusOK, "Devices deleted successfully", nil).WriteTo(w)
 	}
 }
 

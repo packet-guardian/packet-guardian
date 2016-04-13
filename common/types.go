@@ -2,7 +2,7 @@ package common
 
 import (
 	"encoding/json"
-	"io"
+	"net/http"
 )
 
 // Config defines the configuration struct for the application
@@ -52,6 +52,8 @@ const (
 	APIStatusInvalidAuth APIStatus = 10
 	// APIStatusAuthNeeded no active login, but it's needed
 	APIStatusAuthNeeded APIStatus = 11
+	// APIStatusNotAdmin user is not an administrator
+	APIStatusNotAdmin APIStatus = 12
 )
 
 // A APIResponse is returned as a JSON struct to the client
@@ -87,9 +89,10 @@ func (a *APIResponse) Encode() []byte {
 	return b
 }
 
-func (a *APIResponse) WriteTo(w io.Writer) (int64, error) {
+func (a *APIResponse) WriteTo(w http.ResponseWriter) (int64, error) {
 	r := a.Encode()
 	l := len(r)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Write(r)
 	return int64(l), nil
 }
