@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/onesimus-systems/packet-guardian/common"
 )
 
 var (
@@ -177,6 +179,52 @@ func GetBlacklist(db *sql.DB, filter ...interface{}) ([]string, error) {
 			continue
 		}
 		results = append(results, val)
+	}
+	return results, nil
+}
+
+func getDeviceByID(db *sql.DB, ids ...interface{}) ([]Device, error) {
+	sql := "SELECT \"id\", \"mac\", \"userAgent\", \"platform\", \"regIP\", \"dateRegistered\", \"username\" FROM \"device\" WHERE 0=1"
+
+	for range ids {
+		sql += " OR \"id\" = ?"
+	}
+
+	rows, err := db.Query(sql, ids...)
+	if err != nil {
+		return nil, err
+	}
+
+	bl, err := GetBlacklist(db)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []Device
+	for rows.Next() {
+		var id int
+		var mac string
+		var ua string
+		var platform string
+		var regIP string
+		var dateRegistered int64
+		var username string
+		err := rows.Scan(&id, &mac, &ua, &platform, &regIP, &dateRegistered, &username)
+		if err != nil {
+			return nil, err
+		}
+
+		r := Device{
+			ID:             id,
+			MAC:            mac,
+			UserAgent:      ua,
+			Platform:       platform,
+			RegIP:          regIP,
+			DateRegistered: time.Unix(dateRegistered, 0).Format("01/02/2006 15:04:05"),
+			Username:       username,
+			Blacklisted:    common.StringInSlice(mac, bl),
+		}
+		results = append(results, r)
 	}
 	return results, nil
 }

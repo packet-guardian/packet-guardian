@@ -116,7 +116,7 @@ func RegistrationHandler(e *common.Environment) http.HandlerFunc {
 
 			if sessUsername != formUsername && !auth.IsAdminUser(e, r) {
 				e.Log.Errorf("Admin action attempted: Register device for %s attempted by user %s", formUsername, sessUsername)
-				common.NewAPIResponse(common.APIStatusInvalidAuth, "Only admins can do that", nil).WriteTo(w)
+				common.NewAPIResponse(common.APIStatusNotAdmin, "Only admins can do that", nil).WriteTo(w)
 				return
 			}
 			username = formUsername
@@ -194,12 +194,12 @@ func DeleteHandler(e *common.Environment) http.HandlerFunc {
 		// If the two don't match, check if the user is an admin, if not return an error
 		if sessUsername != formUsername && !auth.IsAdminUser(e, r) {
 			e.Log.Errorf("Admin action attempted: Delete device for %s attempted by user %s", formUsername, sessUsername)
-			common.NewAPIResponse(common.APIStatusInvalidAuth, "Only admins can do that", nil).WriteTo(w)
+			common.NewAPIResponse(common.APIStatusNotAdmin, "Only admins can do that", nil).WriteTo(w)
 			return
 		}
 
-		devices := strings.Split(r.FormValue("devices"), ",")
-		all := (len(devices) == 1 && devices[0] == "")
+		deviceIDs := strings.Split(r.FormValue("devices"), ",")
+		all := (len(deviceIDs) == 1 && deviceIDs[0] == "")
 		sql := ""
 		var sqlParams []interface{}
 		if all {
@@ -207,23 +207,27 @@ func DeleteHandler(e *common.Environment) http.HandlerFunc {
 		} else {
 			sql = "DELETE FROM \"device\" WHERE (0 = 1"
 
-			for _, device := range devices {
-				if mac, err := FormatMacAddress(device); err == nil {
-					sql += " OR \"mac\" = ?"
-					sqlParams = append(sqlParams, mac.String())
-				}
+			for _, deviceID := range deviceIDs {
+				sql += " OR \"id\" = ?"
+				sqlParams = append(sqlParams, deviceID)
 			}
 			sql += ") AND \"username\" = ?"
 		}
+		// Get the devices before the username is added to the sqlParams slice
+		devices, err := getDeviceByID(e.DB, sqlParams...)
+		if err != nil {
+			e.Log.Errorf("Error getting devices from DB: %s", err.Error())
+		}
+
 		sqlParams = append(sqlParams, formUsername)
 
 		if bl, _ := IsBlacklisted(e.DB, sqlParams...); bl && !auth.IsAdminUser(e, r) {
 			e.Log.Errorf("Admin action attempted: Delete blacklisted device by user %s", formUsername)
-			common.NewAPIResponse(common.APIStatusInvalidAuth, "Only admins can do that", nil).WriteTo(w)
+			common.NewAPIResponse(common.APIStatusNotAdmin, "Only admins can do that", nil).WriteTo(w)
 			return
 		}
 
-		_, err := e.DB.Exec(sql, sqlParams...)
+		_, err = e.DB.Exec(sql, sqlParams...)
 		if err != nil {
 			e.Log.Error(err.Error())
 			common.NewAPIResponse(common.APIStatusGenericError, "Error deleting devices", nil).WriteTo(w)
@@ -233,8 +237,12 @@ func DeleteHandler(e *common.Environment) http.HandlerFunc {
 		if all {
 			e.Log.Infof("Successfully deleted all registrations for user %s by user %s", formUsername, sessUsername)
 		} else {
-			for _, mac := range devices {
-				e.Log.Infof("Successfully deleted MAC %s for user %s by user %s", mac, formUsername, sessUsername)
+			if devices != nil {
+				for i := range devices {
+					e.Log.Infof("Successfully deleted MAC %s for user %s by user %s", devices[i].MAC, formUsername, sessUsername)
+				}
+			} else {
+				e.Log.Error("An error occured that prevents me from listing the deleted MAC addresses")
 			}
 		}
 		common.NewAPIResponse(common.APIStatusOK, "Devices deleted successfully", nil).WriteTo(w)

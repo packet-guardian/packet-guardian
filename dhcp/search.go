@@ -16,12 +16,12 @@ type Query struct {
 }
 
 func (q Query) Search(e *common.Environment) []Device {
-	sql := "SELECT \"mac\", \"userAgent\", \"platform\", \"regIP\", \"dateRegistered\", \"username\" FROM \"device\" "
+	sql := "SELECT \"id\", \"mac\", \"userAgent\", \"platform\", \"regIP\", \"dateRegistered\", \"username\" FROM \"device\" "
 	param := ""
 
 	if q.MAC != nil {
 		sql += "WHERE \"mac\" = ?"
-		param = q.MAC.String()
+		param = q.MAC.String() + "%"
 	} else if q.IP != nil {
 		// Search for a lease
 		// TODO: Finish when the lease system is added
@@ -48,19 +48,21 @@ func (q Query) Search(e *common.Environment) []Device {
 
 	var results []Device
 	for rows.Next() {
+		var id int
 		var mac string
 		var ua string
 		var platform string
 		var regIP string
 		var dateRegistered int64
 		var username string
-		err := rows.Scan(&mac, &ua, &platform, &regIP, &dateRegistered, &username)
+		err := rows.Scan(&id, &mac, &ua, &platform, &regIP, &dateRegistered, &username)
 		if err != nil {
 			e.Log.Error(err.Error())
 			continue
 		}
 
 		r := Device{
+			ID:             id,
 			MAC:            mac,
 			UserAgent:      ua,
 			Platform:       platform,
@@ -76,6 +78,7 @@ func (q Query) Search(e *common.Environment) []Device {
 
 // Device represents a device in the system
 type Device struct {
+	ID             int
 	MAC            string
 	Platform       string
 	RegIP          string
