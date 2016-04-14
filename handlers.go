@@ -3,6 +3,7 @@ package main
 import (
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -143,12 +144,21 @@ func adminSearchHandler(e *common.Environment) http.HandlerFunc {
 
 func adminBlacklistHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Slice of MAC addresses
 		var black []interface{}
 
 		if r.FormValue("devices") != "" {
-			devices := strings.Split(r.FormValue("devices"), ",")
-			for _, d := range devices {
-				black = append(black, d)
+			deviceIDs := strings.Split(r.FormValue("devices"), ",")
+			// Need to convert strings to int for database search
+			ids := make([]int, len(deviceIDs))
+			for i := range deviceIDs {
+				in, _ := strconv.Atoi(deviceIDs[i])
+				ids[i] = in
+			}
+
+			devices := dhcp.Query{ID: ids}.Search(e)
+			for i := range devices {
+				black = append(black, devices[i].MAC)
 			}
 		} else {
 			username, ok := mux.Vars(r)["username"]

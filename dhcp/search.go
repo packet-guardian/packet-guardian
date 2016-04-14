@@ -13,15 +13,16 @@ type Query struct {
 	IP   net.IP
 	MAC  net.HardwareAddr
 	User string
+	ID   []int
 }
 
 func (q Query) Search(e *common.Environment) []Device {
 	sql := "SELECT \"id\", \"mac\", \"userAgent\", \"platform\", \"regIP\", \"dateRegistered\", \"username\" FROM \"device\" "
-	param := ""
+	param := make([]interface{}, 1)
 
 	if q.MAC != nil {
 		sql += "WHERE \"mac\" = ?"
-		param = q.MAC.String() + "%"
+		param[0] = q.MAC.String() + "%"
 	} else if q.IP != nil {
 		// Search for a lease
 		// TODO: Finish when the lease system is added
@@ -29,14 +30,21 @@ func (q Query) Search(e *common.Environment) []Device {
 		return nil
 	} else if q.User != "" {
 		sql += "WHERE \"username\" LIKE ?"
-		param = q.User + "%"
+		param[0] = q.User + "%"
+	} else if q.ID != nil {
+		sql += "WHERE 0=1"
+		param = make([]interface{}, len(q.ID))
+		for i := range q.ID {
+			sql += " OR \"id\" = ?"
+			param[i] = q.ID[i]
+		}
 	} else {
 		sql += "WHERE 1 = 1 OR \"username\" = ?"
 	}
 
 	sql += " ORDER BY \"username\" ASC"
 
-	rows, err := e.DB.Query(sql, param)
+	rows, err := e.DB.Query(sql, param...)
 	if err != nil {
 		e.Log.Error(err.Error())
 	}

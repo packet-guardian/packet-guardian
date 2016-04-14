@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/onesimus-systems/packet-guardian/auth"
@@ -198,27 +199,34 @@ func DeleteHandler(e *common.Environment) http.HandlerFunc {
 			return
 		}
 
+		var devices []Device
+		var sqlParams []interface{}
+		var sql string
+		var err error
+
 		deviceIDs := strings.Split(r.FormValue("devices"), ",")
 		all := (len(deviceIDs) == 1 && deviceIDs[0] == "")
-		sql := ""
-		var sqlParams []interface{}
+
 		if all {
 			sql = "DELETE FROM \"device\" WHERE \"username\" = ?"
 		} else {
 			sql = "DELETE FROM \"device\" WHERE (0 = 1"
+			dIDs := make([]int, len(deviceIDs))
 
-			for _, deviceID := range deviceIDs {
+			for i, deviceID := range deviceIDs {
 				sql += " OR \"id\" = ?"
 				sqlParams = append(sqlParams, deviceID)
+				if in, err := strconv.Atoi(deviceID); err == nil {
+					dIDs[i] = in
+				} else {
+					e.Log.Error(err.Error())
+					common.NewAPIResponse(common.APIStatusGenericError, "Error deleting devices", nil).WriteTo(w)
+					return
+				}
 			}
 			sql += ") AND \"username\" = ?"
+			devices = Query{ID: dIDs}.Search(e)
 		}
-		// Get the devices before the username is added to the sqlParams slice
-		devices, err := getDeviceByID(e.DB, sqlParams...)
-		if err != nil {
-			e.Log.Errorf("Error getting devices from DB: %s", err.Error())
-		}
-
 		sqlParams = append(sqlParams, formUsername)
 
 		if bl, _ := IsBlacklisted(e.DB, sqlParams...); bl && !auth.IsAdminUser(e, r) {

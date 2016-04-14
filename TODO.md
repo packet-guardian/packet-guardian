@@ -3,6 +3,7 @@ Here's a list of TODO items:
 - [ ] User administration
 - [ ] Read-only help desk user
 - [ ] Enforce expiration times/dates
+- [ ] Enforce device limit
 - [ ] LDAP/AD Authentication
 - [ ] DHCP Server
     - [ ] Lease Management
