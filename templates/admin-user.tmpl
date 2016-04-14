@@ -1,0 +1,62 @@
+{{define "admin-user"}}
+{{template "header" dict "css" (list "admin-users") "main" .}}
+<div class="admin-user">
+    <h2>Administration Users</h2>
+
+    <form id="user-form">
+        {{with $user := index .Users 0}}
+        <input type="hidden" name="user-id" value="{{$user.ID}}">
+        <fieldset>
+            <p>
+                <label for="username">Username:</label>
+                <input type="text" name="username" value="{{$user.Username}}" disabled="disabled">
+            </p>
+            <p>
+                <label for="password">New Password:</label>
+                <input type="password" name="password">
+                <input type="checkbox" name="clear-pass"> Clear Password
+            </p>
+            <p>
+                <label for="device-limit">Device Limit:</label>
+                <select name="special-limit">
+                    <option value="global">Global</option>
+                    <option value="unlimited">Unlimited</option>
+                    <option value="specific">Other:</option>
+                </select>
+                <input type="text" name="device-limit" value="{{$user.DeviceLimit}}">
+            </p>
+            <p>
+                Time/date format:<br>YYYY-MM-DD HH:mm:ss
+            </p>
+            <p>
+                <label for="device-expiration"><span title="When the user's device will expire by default">Default Device Expiration:</span></label>
+                <select name="dev-exp-sel" data-expires="{{$user.RawExpiration}}">
+                    <option value="global">Global</option>
+                    <option value="never">Never</option>
+                    <option value="specific">Other:</option>
+                </select>
+                <input type="text" name="device-expiration" value="{{$user.DefaultExpiration.Format "2006-01-02 15:04:05"}}">
+            </p>
+            <p>
+                <label for="valid-after">Valid After:</label>
+                <input type="text" name="valid-after" value="{{$user.ValidAfter.Format "2006-01-02 15:04:05"}}">
+            </p>
+            <p>
+                <label for="valid-before">Valid Until:</label>
+                <select name="val-bef-sel" data-forever="{{eq $user.ValidBefore.Unix 0}}">
+                    <option value="forever">Forever</option>
+                    <option value="specific">Other:</option>
+                </select>
+                <input type="text" name="valid-before" value="{{$user.ValidBefore.Format "2006-01-02 15:04:05"}}">
+            </p>
+            <p>
+                <button type="submit">Save</button>
+                <button type="button" name="delete-btn">Delete</button>
+                <a href="/admin/users" class="btn">Cancel</a>
+            </p>
+        </fieldset>
+        {{end}}
+    </form>
+</div>
+{{template "footer" dict "js" (list "admin-user")}}
+{{end}}

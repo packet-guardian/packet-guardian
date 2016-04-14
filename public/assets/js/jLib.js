@@ -84,6 +84,11 @@ var j = {
         j.On(el, 'submit', handler);
     },
 
+    Change: function (el, handler) {
+        'use strict';
+        j.On(el, 'change', handler);
+    },
+
     Keyup: function (el, handler) {
         'use strict';
         j.On(el, 'keyup', handler);

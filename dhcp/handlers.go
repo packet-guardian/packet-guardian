@@ -123,8 +123,19 @@ func RegistrationHandler(e *common.Environment) http.HandlerFunc {
 			username = formUsername
 		}
 
-		// Get MAC address
 		var err error
+		limit := e.Config.Core.DefaultDeviceLimit
+		if user, _ := auth.GetUser(e.DB, username); user != nil && user.DeviceLimit != -1 {
+			limit = user.DeviceLimit
+		}
+
+		devices := Query{User: username}.Search(e)
+		if limit != 0 && len(devices) >= limit {
+			common.NewAPIResponse(common.APIStatusGenericError, "Device limit reached", nil).WriteTo(w)
+			return
+		}
+
+		// Get MAC address
 		var mac net.HardwareAddr
 		macPost := r.FormValue("mac-address")
 		ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])

@@ -37,6 +37,11 @@ header img {
     vertical-align: middle;
 }
 
+.clearfix {
+    display: inline-block;
+    width: 100%;
+}
+
 .flash {
     height: 40px;
     font-size: 25px;
@@ -60,6 +65,16 @@ header img {
 .flashFailure {
     background-color: #EC7A7A;
     color: white;
+}
+
+.btn {
+    text-decoration: none;
+    font-weight: bold;
+    padding: 5px 10px;
+    color: white;
+    border: 0;
+    background-color: #0083A8;
+    background: linear-gradient(to bottom, #0083A8, #007899);
 }
 
 .main {

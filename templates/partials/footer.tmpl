@@ -9,7 +9,9 @@
     <script type="text/javascript" src="/public/assets/js/jLib.js"></script>
     <script type="text/javascript" src="/public/assets/js/common.js"></script>
     {{range .js}}
+    {{if ne . ""}}
     <script type="text/javascript" src="/public/assets/js/{{.}}.js"></script>
+    {{end}}
     {{end}}
     </body>
 </html>

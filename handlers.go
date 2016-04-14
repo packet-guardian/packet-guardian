@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/onesimus-systems/packet-guardian/auth"
@@ -205,26 +206,129 @@ func adminBlacklistHandler(e *common.Environment) http.HandlerFunc {
 
 func adminUserHandler(e *common.Environment) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			saveUserHandler(e, w, r)
+			return
+		} else if r.Method == "DELETE" {
+			deleteUserHandler(e, w, r)
+			return
+		}
+
 		data := struct {
 			SiteTitle    string
 			CompanyName  string
 			Query        string
-			Users        []auth.User
+			Users        []*auth.User
 			FlashMessage string
 		}{
 			SiteTitle:   e.Config.Core.SiteTitle,
 			CompanyName: e.Config.Core.SiteCompanyName,
 		}
 
-		users, err := auth.GetAllUsers(e.DB)
-		if err != nil {
-			e.Log.Errorf("Error getting users: %s", err.Error())
-			data.FlashMessage = "Error getting users"
+		username := mux.Vars(r)["username"]
+		var template string
+		if username == "" {
+			users, err := auth.GetAllUsers(e.DB)
+			if err != nil {
+				e.Log.Errorf("Error getting users: %s", err.Error())
+				data.FlashMessage = "Error getting users"
+			}
+			data.Users = users
+			template = "admin-users"
+		} else {
+			user, _ := auth.GetUser(e.DB, username)
+			if user == nil {
+				user = auth.NewUser()
+				user.Username = username
+			}
+			data.Users = []*auth.User{user}
+			template = "admin-user"
 		}
-		data.Users = users
 
-		if err := e.Templates.ExecuteTemplate(w, "admin-users", data); err != nil {
+		if err := e.Templates.ExecuteTemplate(w, template, data); err != nil {
 			e.Log.Error(err.Error())
 		}
 	}
+}
+
+func saveUserHandler(e *common.Environment, w http.ResponseWriter, r *http.Request) {
+	username := r.FormValue("username")
+	// Get or create user
+	user, _ := auth.GetUser(e.DB, username)
+	if user == nil {
+		e.Log.Info("Creating user")
+		user = &auth.User{
+			ID:       common.ConvertToInt(r.FormValue("user-id")),
+			Username: username,
+		}
+	}
+
+	// Password
+	user.ClearPassword = (r.FormValue("clear-pass") == "true")
+	if r.FormValue("password") != "" {
+		user.NewPassword(r.FormValue("password"))
+	}
+
+	// Registered device limit
+	limitType := r.FormValue("special-limit")
+	if limitType == "global" {
+		user.DeviceLimit = -1
+	} else if limitType == "unlimited" {
+		user.DeviceLimit = 0
+	} else {
+		user.DeviceLimit = common.ConvertToInt(r.FormValue("device-limit"))
+	}
+
+	// Expiration times
+	loc, _ := time.LoadLocation("Local")
+	if r.FormValue("device-expiration") == "0" || r.FormValue("device-expiration") == "" {
+		user.DefaultExpiration = time.Unix(0, 0)
+	} else if r.FormValue("device-expiration") == "1" {
+		user.DefaultExpiration = time.Unix(1, 0)
+	} else {
+		user.DefaultExpiration, _ = time.ParseInLocation("2006-01-02 15:04:05", r.FormValue("device-expiration"), loc)
+	}
+
+	if r.FormValue("valid-after") == "0" || r.FormValue("valid-after") == "" {
+		user.ValidAfter = time.Unix(0, 0)
+	} else {
+		user.ValidAfter, _ = time.ParseInLocation("2006-01-02 15:04:05", r.FormValue("valid-after"), loc)
+	}
+
+	if r.FormValue("valid-before") == "0" || r.FormValue("valid-before") == "" {
+		user.ValidBefore = time.Unix(0, 0)
+	} else {
+		user.ValidBefore, _ = time.ParseInLocation("2006-01-02 15:04:05", r.FormValue("valid-before"), loc)
+	}
+
+	if err := user.Save(e.DB); err != nil {
+		e.Log.Errorf("Error saving user: %s", err.Error())
+		common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
+		return
+	}
+
+	e.Log.Infof("Created user augmentation: %s", user.Username)
+	common.NewAPIOK("User created", nil).WriteTo(w)
+}
+
+func deleteUserHandler(e *common.Environment, w http.ResponseWriter, r *http.Request) {
+	username := mux.Vars(r)["username"]
+
+	user, err := auth.GetUser(e.DB, username)
+	if user == nil {
+		e.Log.Errorf("Error deleting user: %s", err.Error())
+		common.NewAPIResponse(common.APIStatusGenericError, "Error deleting user", nil).WriteTo(w)
+		return
+	}
+
+	sql := "DELETE FROM \"user\" WHERE \"username\" = ?"
+	_, err = e.DB.Exec(sql, username)
+	if err != nil {
+		e.Log.Errorf("Error deleting user: %s", err.Error())
+		common.NewAPIResponse(common.APIStatusGenericError, "Error deleting user", nil).WriteTo(w)
+		return
+	}
+
+	e.Log.Infof("Deleted user: %s", username)
+	common.NewAPIOK("User deleted", nil).WriteTo(w)
 }

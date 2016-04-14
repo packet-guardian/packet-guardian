@@ -14,6 +14,7 @@ type Config struct {
 		SiteCompanyName          string
 		RegistrationPolicyFile   string
 		AllowManualRegistrations bool
+		DefaultDeviceLimit       int
 	}
 	Webserver struct {
 		Address            string

@@ -4,6 +4,7 @@ siteTitle = "Packet Guardian"
 siteCompanyName = ""
 registrationPolicyFile = "policy.txt"
 allowManualRegistrations = true
+defaultDeviceLimit = 10
 
 [webserver]
 # Leave address blank to bind to all addresses

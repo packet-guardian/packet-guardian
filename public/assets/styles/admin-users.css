@@ -1,4 +1,4 @@
-.admin-users {
+.admin-users, .admin-user {
     width: 60%;
     margin: 0 auto;
 }
@@ -7,11 +7,20 @@ h2 {
     margin-top: 0;
 }
 
+.userLimit {
+    color: blue;
+    font-size: 1.2em;
+}
+
 .controls {
+    display: inline-block;
+}
+
+.new-user {
     text-align: right;
-    width: 600px;
-    margin: 0 auto;
     margin-bottom: 10px;
+    display: inline-block;
+    float: right;
 }
 
 button {
@@ -35,4 +44,18 @@ table td, table th {
 
 table tr:nth-child(2n) {
     background-color: #CACACA;
+}
+
+fieldset {
+    border: none;
+    margin: 10px auto;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.admin-user input[type="text"], .admin-user input[type="password"] {
+    width: 300px;
 }
