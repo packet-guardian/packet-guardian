@@ -1,8 +1,8 @@
 [core]
-databaseFile = "database.sqlite3"
+databaseFile = "config/database.sqlite3"
 siteTitle = "Packet Guardian"
 siteCompanyName = ""
-registrationPolicyFile = "policy.txt"
+registrationPolicyFile = "config/policy.txt"
 allowManualRegistrations = true
 defaultDeviceLimit = 10
 
@@ -36,4 +36,4 @@ useTLS = true
 #... other LDAPy things
 
 [dhcp]
-configFile = "dhcp.conf"
+configFile = "config/dhcp.conf"

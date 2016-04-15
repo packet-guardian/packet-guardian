@@ -6,10 +6,10 @@
         <meta http-equiv="X-UA-Compatible" content="IE=Edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel='shortcut icon' type='image/png' href='/public/assets/images/favicon.png' />
-        {{if eq .main.CompanyName ""}}
-        <title>{{.main.SiteTitle}}</title>
+        {{if eq config.Core.SiteCompanyName ""}}
+        <title>{{config.Core.SiteTitle}}</title>
         {{else}}
-        <title>{{.main.SiteTitle}} - {{.main.CompanyName}}</title>
+        <title>{{config.Core.SiteTitle}} - {{config.Core.SiteCompanyName}}</title>
         {{end}}
         <link rel="stylesheet" href="/public/assets/styles/normalize.css">
         <link rel="stylesheet" href="/public/assets/styles/main.css">
@@ -21,7 +21,7 @@
         <header>
             <img src="/public/assets/images/logo.png">
             <div class="header-title">
-                <a href="/">{{.main.SiteTitle}}</a>
+                <a href="/">{{config.Core.SiteTitle}}</a>
             </div>
         </header>
         <div class="main">

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/common"
+	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 
 var (
@@ -22,7 +22,7 @@ var (
 
 // IsRegistered checks if a MAC address is registed in the database.
 // IsRegistered will return false if an error occurs as well as the error itself.
-func IsRegistered(db *sql.DB, mac net.HardwareAddr) (bool, error) {
+func IsRegistered(db *common.DatabaseAccessor, mac net.HardwareAddr) (bool, error) {
 	stmt, err := db.Prepare("SELECT \"id\" FROM \"device\" WHERE \"mac\" = ?")
 	if err != nil {
 		return false, err
@@ -37,7 +37,7 @@ func IsRegistered(db *sql.DB, mac net.HardwareAddr) (bool, error) {
 
 // IsRegisteredByIP checks if an IP is leased to a registered MAC address.
 // IsRegisteredByIP will return false if an error occurs as well as the error itself.
-func IsRegisteredByIP(db *sql.DB, ip net.IP) (bool, error) {
+func IsRegisteredByIP(db *common.DatabaseAccessor, ip net.IP) (bool, error) {
 	mac, err := GetMacFromIP(ip)
 	if err != nil {
 		return false, err
@@ -58,7 +58,7 @@ func GetMacFromIP(ip net.IP) (net.HardwareAddr, error) {
 
 // Register a new device to a user. This function will check if the MAC address is valid
 // and if it is already registered. This function does not enforce the blacklist.
-func Register(db *sql.DB, mac net.HardwareAddr, user, platform string, ip net.IP, ua, subnet string) error {
+func Register(db *common.DatabaseAccessor, mac net.HardwareAddr, user, platform string, ip net.IP, ua, subnet string) error {
 	if user == "" {
 		return errNoUsernameGiven
 	}
@@ -92,7 +92,7 @@ func FormatMacAddress(mac string) (net.HardwareAddr, error) {
 }
 
 // IsBlacklisted checks if a username or MAC is in the blacklist
-func IsBlacklisted(db *sql.DB, values ...interface{}) (bool, error) {
+func IsBlacklisted(db *common.DatabaseAccessor, values ...interface{}) (bool, error) {
 	if len(values) == 0 {
 		return false, nil
 	}
@@ -114,7 +114,7 @@ func IsBlacklisted(db *sql.DB, values ...interface{}) (bool, error) {
 }
 
 // AddToBlacklist add values to the blacklist
-func AddToBlacklist(db *sql.DB, values ...interface{}) error {
+func AddToBlacklist(db *common.DatabaseAccessor, values ...interface{}) error {
 	if len(values) == 0 {
 		return nil
 	}
@@ -133,7 +133,7 @@ func AddToBlacklist(db *sql.DB, values ...interface{}) error {
 }
 
 // RemoveFromBlacklist removes values from the blacklist
-func RemoveFromBlacklist(db *sql.DB, values ...interface{}) error {
+func RemoveFromBlacklist(db *common.DatabaseAccessor, values ...interface{}) error {
 	if len(values) == 0 {
 		return nil
 	}
@@ -152,7 +152,7 @@ func RemoveFromBlacklist(db *sql.DB, values ...interface{}) error {
 
 // GetBlacklist will retreive values from the blacklist if they exist.
 // Calling with no filter will return the fill blacklist.
-func GetBlacklist(db *sql.DB, filter ...interface{}) ([]string, error) {
+func GetBlacklist(db *common.DatabaseAccessor, filter ...interface{}) ([]string, error) {
 	baseSQL := "SELECT \"value\" FROM \"blacklist\""
 	var rows *sql.Rows
 	var err error
@@ -183,7 +183,7 @@ func GetBlacklist(db *sql.DB, filter ...interface{}) ([]string, error) {
 	return results, nil
 }
 
-func getDeviceByID(db *sql.DB, ids ...interface{}) ([]Device, error) {
+func getDeviceByID(db *common.DatabaseAccessor, ids ...interface{}) ([]Device, error) {
 	sql := "SELECT \"id\", \"mac\", \"userAgent\", \"platform\", \"regIP\", \"dateRegistered\", \"username\" FROM \"device\" WHERE 0=1"
 
 	for range ids {

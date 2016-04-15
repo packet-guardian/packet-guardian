@@ -1,81 +1,13 @@
-package auth
+package models
 
 import (
-	"database/sql"
 	"errors"
-	"net/http"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/common"
+	"github.com/onesimus-systems/packet-guardian/src/common"
 
 	"golang.org/x/crypto/bcrypt"
 )
-
-type authFunc func(db *sql.DB, username, password string) bool
-
-var authFunctions = make(map[string]authFunc)
-
-func init() {
-	authFunctions["local"] = normalAuth
-	authFunctions["ldap"] = ldapAuth
-}
-
-// IsValidLogin will verify the username and password against several login methods
-// If one method succeeds, true will be returned. False otherwise.
-func IsValidLogin(db *sql.DB, username, password string) bool {
-	// Check the user and pass against the defined auth functions
-	// For right now we're only doing local authentication
-	return authFunctions["local"](db, username, password)
-}
-
-// IsLoggedIn checks if a user is logged in
-func IsLoggedIn(e *common.Environment, r *http.Request) bool {
-	sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
-	return sess.GetBool("loggedin", false)
-}
-
-// IsAdminUser checks if a user is an administrator
-func IsAdminUser(e *common.Environment, r *http.Request) bool {
-	username := e.Sessions.GetSession(r, e.Config.Webserver.SessionName).GetString("username", "")
-	return common.StringInSlice(username, e.Config.Auth.AdminUsers)
-}
-
-// LogoutUser will set loggedin to false and delete the session
-func LogoutUser(e *common.Environment, w http.ResponseWriter, r *http.Request) {
-	sess := e.Sessions.GetSession(r, e.Config.Webserver.SessionName)
-	sess.Set("loggedin", false)
-	sess.Delete(r, w)
-}
-
-func normalAuth(db *sql.DB, username, password string) bool {
-	if password == "" || username == "" {
-		return false
-	}
-
-	stmt, err := db.Prepare("SELECT \"password\" FROM \"user\" WHERE \"username\" = ?")
-	if err != nil {
-		return false
-	}
-	user := stmt.QueryRow(username)
-
-	var storedPass string
-	err = user.Scan(&storedPass)
-	if err != nil {
-		return false
-	}
-
-	if storedPass == "" {
-		return false
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(storedPass), []byte(password))
-	return (err == nil)
-}
-
-func ldapAuth(db *sql.DB, username, password string) bool {
-	// Check username and pass against an ldap server
-	return false
-}
 
 // User it's a user
 type User struct {
@@ -113,7 +45,7 @@ func NewUser() *User {
 // TODO: Consildate the below two functions into one
 
 // GetUser by username
-func GetUser(db *sql.DB, username string) (*User, error) {
+func GetUser(db *common.DatabaseAccessor, username string) (*User, error) {
 	stmt, err := db.Prepare("SELECT \"id\", \"deviceLimit\", \"expires\", \"validAfter\", \"validBefore\" FROM \"user\" WHERE \"username\" = ?")
 	if err != nil {
 		return nil, err
@@ -148,7 +80,7 @@ func GetUser(db *sql.DB, username string) (*User, error) {
 }
 
 // GetAllUsers will return a slice of Users on success. Returns nil and an error on error.
-func GetAllUsers(db *sql.DB) ([]*User, error) {
+func GetAllUsers(db *common.DatabaseAccessor) ([]*User, error) {
 	rows, err := db.Query("SELECT \"id\", \"username\", \"deviceLimit\", \"expires\", \"validAfter\", \"validBefore\" FROM \"user\"")
 	if err != nil {
 		return nil, err
@@ -196,7 +128,7 @@ func (u *User) NewPassword(s string) error {
 }
 
 // Save the user to a database
-func (u *User) Save(db *sql.DB) error {
+func (u *User) Save(db *common.DatabaseAccessor) error {
 	if !u.Existed {
 		return u.saveNew(db)
 	}
@@ -237,7 +169,7 @@ func (u *User) Save(db *sql.DB) error {
 	return err
 }
 
-func (u *User) saveNew(db *sql.DB) error {
+func (u *User) saveNew(db *common.DatabaseAccessor) error {
 	if u.Username == "" {
 		return errors.New("Username cannot be empty")
 	}

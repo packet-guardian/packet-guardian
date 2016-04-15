@@ -5,42 +5,6 @@ import (
 	"net/http"
 )
 
-// Config defines the configuration struct for the application
-type Config struct {
-	SourceFile string
-	Core       struct {
-		DatabaseFile             string
-		SiteTitle                string
-		SiteCompanyName          string
-		RegistrationPolicyFile   string
-		AllowManualRegistrations bool
-		DefaultDeviceLimit       int
-	}
-	Webserver struct {
-		Address            string
-		Port               int
-		TLSCertFile        string
-		TLSKeyFile         string
-		SessionName        string
-		SessionsDir        string
-		SessionsAuthKey    string
-		SessionsEncryptKey string
-	}
-	Auth struct {
-		AuthMethod []string
-		AdminUsers []string
-
-		LDAP struct {
-			UseAD   bool
-			Servers []string
-			UseTLS  bool
-		}
-	}
-	DHCP struct {
-		ConfigFile string
-	}
-}
-
 // APIStatus is an integer that states the success or failure of the request
 type APIStatus int
 

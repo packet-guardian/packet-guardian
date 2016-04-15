@@ -3,4 +3,4 @@ config.toml
 private/
 database.sqlite3
 logs/
-pgbin
+bin/

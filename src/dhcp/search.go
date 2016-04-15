@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/common"
+	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 
 // Query represents a search query for a mac, ip, or username. Only one field
