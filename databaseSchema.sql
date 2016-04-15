@@ -21,6 +21,8 @@ CREATE TABLE "user" (
     "validBefore" INTEGER DEFAULT (0)
 );
 
+INSERT INTO "user" ("username", "password") VALUES ("admin", "$2a$10$qTSqBy7YI8YVMNT0Ozl99uImx4jEYgUKJrA4qJcnffMmpOB3mOcEq");
+
 CREATE TABLE "blacklist" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     "value" TEXT NOT NULL UNIQUE ON CONFLICT IGNORE

@@ -24,7 +24,7 @@ sessionsEncryptKey = ""
 # An array of auth types in order of precidence
 # Valid values: ldap, local
 authMethod = ["local"]
-adminUsers = [""]
+adminUsers = ["admin"]
 
 [auth.ldap]
 useAD = true
