@@ -4,84 +4,82 @@ import (
 	"errors"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
-
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/onesimus-systems/packet-guardian/src/common"
+)
+
+type UserExpiration int
+type UserDeviceLimit int
+
+const (
+	UserDeviceExpirationNever    UserExpiration = 0
+	UserDeviceExpirationGlobal   UserExpiration = 1
+	UserDeviceExpirationSpecific UserExpiration = 2
+	UserDeviceExpirationDuration UserExpiration = 3
+
+	UserDeviceLimitGlobal    UserDeviceLimit = -1
+	UserDeviceLimitUnlimited UserDeviceLimit = 0
 )
 
 // User it's a user
 type User struct {
-	ID                int
-	Username          string
-	Password          string
-	ClearPassword     bool
-	DeviceLimit       int
-	RawExpiration     int64
-	DefaultExpiration time.Time
-	ValidAfter        time.Time
-	ValidBefore       time.Time
-	NeverExpires      bool
-	UserNeverExpires  bool
-	Existed           bool
+	e                    *common.Environment
+	ID                   int
+	Username             string
+	Password             string
+	HasPassword          bool
+	ClearPassword        bool
+	DeviceLimit          UserDeviceLimit
+	DeviceExpirationType UserExpiration
+	DeviceExpiration     time.Time
+	ValidStart           time.Time
+	ValidEnd             time.Time
+	ValidForever         bool
+	CanManage            bool
 }
 
 // NewUser creates a new base user
-func NewUser() *User {
+func NewUser(e *common.Environment) *User {
 	// User with the following attributes:
 	// Device limit is global
-	// Expiration is global
+	// Device Expiration is global
 	// User never expires
+	// User can manage their devices
 	return &User{
-		Existed:           false,
-		DeviceLimit:       -1,
-		RawExpiration:     1,
-		DefaultExpiration: time.Unix(1, 0),
-		ValidAfter:        time.Unix(0, 0),
-		ValidBefore:       time.Unix(0, 0),
-		UserNeverExpires:  true,
+		e:                    e,
+		DeviceLimit:          UserDeviceLimitGlobal,
+		DeviceExpirationType: UserDeviceExpirationGlobal,
+		ValidForever:         true,
+		CanManage:            true,
 	}
 }
 
-// TODO: Consildate the below two functions into one
-
-// GetUser by username
-func GetUser(db *common.DatabaseAccessor, username string) (*User, error) {
-	stmt, err := db.Prepare("SELECT \"id\", \"deviceLimit\", \"expires\", \"validAfter\", \"validBefore\" FROM \"user\" WHERE \"username\" = ?")
+func GetUserByUsername(e *common.Environment, username string) (*User, error) {
+	sql := "WHERE \"username\" = ?"
+	users, err := getUsersFromDatabase(e, sql, username)
 	if err != nil {
-		return nil, err
+		return NewUser(e), err
 	}
-
-	row := stmt.QueryRow(username)
-	var result *User
-	var id int
-	var deviceLimit int
-	var expiration int64
-	var validAfter int64
-	var validBefore int64
-
-	err = row.Scan(&id, &deviceLimit, &expiration, &validAfter, &validBefore)
-	if err != nil {
-		return nil, err
-	}
-
-	result = &User{
-		ID:                id,
-		Username:          username,
-		DeviceLimit:       deviceLimit,
-		RawExpiration:     expiration,
-		DefaultExpiration: time.Unix(expiration, 0),
-		ValidAfter:        time.Unix(validAfter, 0),
-		ValidBefore:       time.Unix(validBefore, 0),
-		NeverExpires:      (expiration == 0),
-		UserNeverExpires:  (validAfter == 0 && validBefore == 0),
-		Existed:           true,
-	}
-	return result, nil
+	return users[0], nil
 }
 
-// GetAllUsers will return a slice of Users on success. Returns nil and an error on error.
-func GetAllUsers(db *common.DatabaseAccessor) ([]*User, error) {
-	rows, err := db.Query("SELECT \"id\", \"username\", \"deviceLimit\", \"expires\", \"validAfter\", \"validBefore\" FROM \"user\"")
+func GetUserByID(e *common.Environment, id int) (*User, error) {
+	sql := "WHERE \"id\" = ?"
+	users, err := getUsersFromDatabase(e, sql, id)
+	if err != nil {
+		return NewUser(e), err
+	}
+	return users[0], nil
+}
+
+func GetAllUsers(e *common.Environment) ([]*User, error) {
+	return getUsersFromDatabase(e, "")
+}
+
+func getUsersFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*User, error) {
+	sql := "SELECT \"id\", \"username\", \"password\", \"device_limit\", \"default_expiration\", \"expiration_type\", \"can_manage\", \"valid_forever\", \"valid_start\", \"valid_end\" FROM \"user\" " + where
+	rows, err := e.DB.Query(sql, values)
 	if err != nil {
 		return nil, err
 	}
@@ -90,27 +88,43 @@ func GetAllUsers(db *common.DatabaseAccessor) ([]*User, error) {
 	for rows.Next() {
 		var id int
 		var username string
-		var deviceLimit int
-		var expiration int64
-		var validAfter int64
-		var validBefore int64
+		var password string
+		var deviceLimit UserDeviceLimit
+		var defaultExpiration int64
+		var expirationType UserExpiration
+		var canManage bool
+		var validForever bool
+		var validStart int64
+		var validEnd int64
 
-		err := rows.Scan(&id, &username, &deviceLimit, &expiration, &validAfter, &validBefore)
+		err := rows.Scan(
+			&id,
+			&username,
+			&password,
+			&deviceLimit,
+			&defaultExpiration,
+			&expirationType,
+			&canManage,
+			&validForever,
+			&validStart,
+			&validEnd,
+		)
 		if err != nil {
 			continue
 		}
 
 		user := &User{
-			ID:                id,
-			Username:          username,
-			DeviceLimit:       deviceLimit,
-			RawExpiration:     expiration,
-			DefaultExpiration: time.Unix(expiration, 0),
-			ValidAfter:        time.Unix(validAfter, 0),
-			ValidBefore:       time.Unix(validBefore, 0),
-			NeverExpires:      (expiration == 0),
-			UserNeverExpires:  (validAfter == 0 && validBefore == 0),
-			Existed:           true,
+			e:                    e,
+			ID:                   id,
+			Username:             username,
+			HasPassword:          (password != ""),
+			DeviceLimit:          deviceLimit,
+			DeviceExpirationType: expirationType,
+			DeviceExpiration:     time.Unix(defaultExpiration, 0),
+			ValidStart:           time.Unix(validStart, 0),
+			ValidEnd:             time.Unix(validEnd, 0),
+			ValidForever:         validForever,
+			CanManage:            canManage,
 		}
 		results = append(results, user)
 	}
@@ -124,66 +138,78 @@ func (u *User) NewPassword(s string) error {
 		return err
 	}
 	u.Password = string(pass)
+	u.HasPassword = true
 	return nil
 }
 
-// Save the user to a database
-func (u *User) Save(db *common.DatabaseAccessor) error {
-	if !u.Existed {
-		return u.saveNew(db)
+func (u *User) RemovePassword() {
+	u.Password = ""
+	u.HasPassword = false
+}
+
+func (u *User) Save() error {
+	if u.ID == 0 {
+		return u.saveNew()
+	}
+	return u.updateExisting()
+}
+
+func (u *User) updateExisting() error {
+	sql := "UPDATE \"user\" SET \"device_limit\" = ?, \"default_expiration\" = ?, \"expiration_type\" = ?, \"can_manage\" = ?, \"valid_forever\" = ?, \"valid_start\" = ?, \"valid_end\" = ?"
+
+	if u.HasPassword && u.Password != "" {
+		sql += ", \"password = ?"
 	}
 
-	baseSQL := "UPDATE \"user\" SET \"username\" = ?, \"deviceLimit\" = ?, \"expires\" = ?, \"validAfter\" = ?, \"validBefore\" = ?"
-	passParam := ""
-	if u.ClearPassword {
-		baseSQL += ", \"password\" = ?"
-	} else if u.Password != "" {
-		baseSQL += ", \"password\" = ?"
-		passParam = u.Password
-	}
-	baseSQL += " WHERE \"id\" = ?"
+	sql += " WHERE \"id\" = ?"
 
 	var err error
-	if u.ClearPassword || u.Password != "" {
-		_, err = db.Exec(
-			baseSQL,
-			u.Username,
+	if u.HasPassword && u.Password != "" {
+		_, err = u.e.DB.Exec(
+			sql,
 			u.DeviceLimit,
-			u.DefaultExpiration.Unix(),
-			u.ValidAfter.Unix(),
-			u.ValidBefore.Unix(),
-			passParam,
-			u.ID,
+			u.DeviceExpiration,
+			u.DeviceExpirationType,
+			u.CanManage,
+			u.ValidForever,
+			u.ValidStart,
+			u.ValidEnd,
+			u.Password,
 		)
 	} else {
-		_, err = db.Exec(
-			baseSQL,
-			u.Username,
+		_, err = u.e.DB.Exec(
+			sql,
 			u.DeviceLimit,
-			u.DefaultExpiration.Unix(),
-			u.ValidAfter.Unix(),
-			u.ValidBefore.Unix(),
-			u.ID,
+			u.DeviceExpiration,
+			u.DeviceExpirationType,
+			u.CanManage,
+			u.ValidForever,
+			u.ValidStart,
+			u.ValidEnd,
 		)
 	}
 	return err
 }
 
-func (u *User) saveNew(db *common.DatabaseAccessor) error {
+func (u *User) saveNew() error {
 	if u.Username == "" {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := "INSERT INTO \"user\" (\"username\", \"password\", \"deviceLimit\", \"expires\", \"validAfter\", \"validBefore\") "
-	sql += "VALUES (?,?,?,?,?,?)"
-	_, err := db.Exec(
+	sql := "INSERT INTO \"user\" (\"username\", \"password\", \"device_limit\", \"default_expiration\", \"expiration_type\", \"can_manage\", \"valid_forever\", \"valid_start\", \"valid_end\") VALUES (?,?,?,?,?,?,?,?)"
+
+	_, err := u.e.DB.Exec(
 		sql,
 		u.Username,
 		u.Password,
 		u.DeviceLimit,
-		u.DefaultExpiration.Unix(),
-		u.ValidAfter.Unix(),
-		u.ValidBefore.Unix(),
+		u.DeviceExpiration,
+		u.DeviceExpirationType,
+		u.CanManage,
+		u.ValidForever,
+		u.ValidStart,
+		u.ValidEnd,
+		u.Password,
 	)
 	return err
 }

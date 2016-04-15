@@ -83,15 +83,3 @@ func (q Query) Search(e *common.Environment) []Device {
 	}
 	return results
 }
-
-// Device represents a device in the system
-type Device struct {
-	ID             int
-	MAC            string
-	Platform       string
-	RegIP          string
-	DateRegistered string
-	Username       string
-	UserAgent      string
-	Blacklisted    bool
-}
