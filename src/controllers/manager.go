@@ -8,9 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	"github.com/onesimus-systems/packet-guardian/src/auth"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
@@ -34,16 +32,17 @@ func NewManagerController(e *common.Environment) *Manager {
 
 func (m *Manager) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/register", m.registrationHandler).Methods("GET")
-	r.HandleFunc("/manage", middleware.CheckAuth(m.e, m.manageHandler)).Methods("GET")
-	r.HandleFunc("/admin/user/{username}", middleware.CheckAdmin(m.e, m.manageHandler)).Methods("GET")
+	r.Handle("/manage", middleware.CheckAuth(m.e, http.HandlerFunc(m.manageHandler))).Methods("GET")
 }
 
 func (m *Manager) registrationHandler(w http.ResponseWriter, r *http.Request) {
+	sessionUser := models.GetUserFromContext(r)
+	session := common.GetSessionFromContext(r)
 	flash := ""
 	man := (r.FormValue("manual") == "1")
-	loggedIn := auth.IsLoggedIn(m.e, r)
+	loggedIn := session.GetBool("loggedin")
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, _ := dhcp.IsRegisteredByIP(m.e.DB, ip)
+	reg, _ := dhcp.IsRegisteredByIP(m.e, ip)
 	if !man && reg {
 		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return
@@ -51,7 +50,7 @@ func (m *Manager) registrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	formType := nonAdminAutoReg
 	if man {
-		if !m.e.Config.Core.AllowManualRegistrations {
+		if !m.e.Config.Registration.AllowManualRegistrations {
 			flash = "Manual registrations are not allowed"
 		} else {
 			formType = nonAdminManReg
@@ -61,96 +60,67 @@ func (m *Manager) registrationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	username := m.e.Sessions.GetSession(r).GetString("username")
-	if r.FormValue("username") != "" && auth.IsAdminUser(m.e, r) {
+	username := sessionUser.Username
+	if r.FormValue("username") != "" && sessionUser.IsAdmin() {
 		username = r.FormValue("username")
-		formType = "admin"
+		formType = adminReg
 		flash = ""
 	}
 
 	// TODO: Don't show the registration page at all if blacklisted
 	if formType == nonAdminAutoReg {
-		ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 		mac, err := dhcp.GetMacFromIP(ip)
 		if err != nil {
 			m.e.Log.Errorf("Failed to get MAC from IP for %s", ip.String())
 		} else {
-			bl, err := dhcp.IsBlacklisted(m.e.DB, mac.String())
+			device, err := models.GetDeviceByMAC(m.e, mac)
 			if err != nil {
-				m.e.Log.Errorf("There was an error checking the blacklist for MAC %s", mac.String())
-			}
-			if bl {
-				flash = "The device appears to be blacklisted"
+				m.e.Log.Errorf("Error getting device for reg check: %s", err.Error())
+			} else {
+				if device.Blacklisted {
+					flash = "The device appears to be blacklisted"
+				}
 			}
 		}
 	}
 
-	data := struct {
-		Policy       []template.HTML
-		Type         string
-		Username     string
-		FlashMessage string
-	}{
-		Policy:       m.loadPolicyText(),
-		Type:         formType,
-		Username:     username,
-		FlashMessage: flash,
+	session.AddFlash(flash)
+	session.Save(r, w)
+	data := map[string]interface{}{
+		"policy":   m.loadPolicyText(),
+		"type":     formType,
+		"username": username,
 	}
 
-	if err := m.e.Views.NewView("register").Render(w, data); err != nil {
+	if err := m.e.Views.NewView("register", r).Render(w, data); err != nil {
 		m.e.Log.Error(err.Error())
 	}
 }
 
 func (m *Manager) manageHandler(w http.ResponseWriter, r *http.Request) {
-	sessionUser := context.Get(r, "sessionUser").(*models.User)
-	formUsername, ok := mux.Vars(r)["username"]
-	username := formUsername
-	if !ok {
-		username = sessUsername
+	sessionUser := models.GetUserFromContext(r)
+	results, err := models.GetDevicesForUser(m.e, sessionUser)
+	if err != nil {
+		m.e.Log.Errorf("Error getting devices for user %s: %s", sessionUser.Username, err.Error())
+		// TODO: Show error page to user
+		return
 	}
 
-	var user *models.User
-	var err error
+	bl := sessionUser.IsBlacklisted()
+	showAddBtn := (m.e.Config.Registration.AllowManualRegistrations && !bl)
 
-	if sessionUser.Username == formUsername {
-		user = sessionUser
-	} else {
-		user, err = models.GetUserByUsername(formUsername)
-		if err != nil {
-			m.e.Log.Error(err.Error())
-			// TODO: Show error page to user
-			return
-		}
-	}
+	data := make(map[string]interface{})
+	data["sessionUser"] = sessionUser
+	data["devices"] = results
+	data["showAddBtn"] = showAddBtn
 
-	results := models.GetDevicesForUser(e, u)
-
-	bl := user.IsBlacklisted()
-	showAddBtn := (sessionUser.IsAdmin() || (m.e.Config.Core.AllowManualRegistrations && !bl))
-
-	data := struct {
-		Username      string
-		IsAdmin       bool
-		Devices       []*models.Device
-		FlashMessage  string
-		ShowAddBtn    bool
-		IsBlacklisted bool
-	}{
-		Username:      username,
-		IsAdmin:       sessionUser.IsAdmin(),
-		Devices:       results,
-		ShowAddBtn:    showAddBtn,
-		IsBlacklisted: bl,
-	}
-
-	if err := m.e.Views.NewView("manage").Render(w, data); err != nil {
+	if err := m.e.Views.NewView("manage", r).Render(w, data); err != nil {
 		m.e.Log.Error(err.Error())
 	}
 }
 
 func (m *Manager) loadPolicyText() []template.HTML {
-	f, err := os.Open(m.e.Config.Core.RegistrationPolicyFile)
+	f, err := os.Open(m.e.Config.Registration.RegistrationPolicyFile)
 	if err != nil {
 		return nil
 	}

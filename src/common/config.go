@@ -12,12 +12,15 @@ import (
 type Config struct {
 	sourceFile string
 	Core       struct {
-		DatabaseFile             string
-		SiteTitle                string
-		SiteCompanyName          string
+		DatabaseFile    string
+		SiteTitle       string
+		SiteCompanyName string
+	}
+	Registration struct {
 		RegistrationPolicyFile   string
 		AllowManualRegistrations bool
 		DefaultDeviceLimit       int
+		ManualRegPlatforms       []string
 	}
 	Webserver struct {
 		Address             string

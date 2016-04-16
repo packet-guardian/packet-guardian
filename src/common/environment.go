@@ -13,7 +13,6 @@ import (
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 
 	log "github.com/dragonrider23/go-logger"
-	"github.com/gorilla/sessions"
 )
 
 // Environment holds "global" application information such as a database connection,
@@ -81,9 +80,6 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 		"list": func(values ...interface{}) ([]interface{}, error) {
 			return values, nil
 		},
-		"config": func() *Config {
-			return e.Config
-		},
 	})
 
 	filepath.Walk(basepath, func(path string, info os.FileInfo, err1 error) error {
@@ -102,11 +98,12 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 	return v, nil
 }
 
-func (v *Views) NewView(view string) *View {
+func (v *Views) NewView(view string, r *http.Request) *View {
 	return &View{
 		name: view,
 		t:    v.t,
 		e:    v.e,
+		r:    r,
 	}
 }
 
@@ -123,116 +120,27 @@ type View struct {
 	name string
 	t    *template.Template
 	e    *Environment
+	r    *http.Request
 }
 
-func (v *View) Render(w io.Writer, data interface{}) error {
+func (v *View) Render(w io.Writer, data map[string]interface{}) error {
+	if data == nil {
+		data = make(map[string]interface{})
+	}
+	flashes := GetSessionFromContext(v.r).Flashes()
+	flash := ""
+	if len(flashes) > 0 {
+		flash = flashes[0].(string)
+	}
+	data["config"] = v.e.Config
+	data["flashMessage"] = flash
 	return v.t.ExecuteTemplate(w, v.name, data)
-}
-
-type SessionStore struct {
-	*sessions.FilesystemStore
-	sessionName string
-}
-
-func NewSessionStore(config *Config) (*SessionStore, error) {
-	if config.Webserver.SessionsDir == "" {
-		config.Webserver.SessionsDir = "sessions"
-	}
-	if config.Webserver.SessionsAuthKey == "" {
-		return nil, errors.New("No session authentication key given in configuration")
-	}
-
-	err := os.MkdirAll(config.Webserver.SessionsDir, 0700)
-	if err != nil {
-		return nil, err
-	}
-
-	sessDir := config.Webserver.SessionsDir
-	sessKeyPair := make([][]byte, 1)
-	sessKeyPair[0] = []byte(config.Webserver.SessionsAuthKey)
-	if config.Webserver.SessionsEncryptKey != "" {
-		sessKeyPair = append(sessKeyPair, []byte(config.Webserver.SessionsEncryptKey))
-	}
-
-	store := &SessionStore{
-		FilesystemStore: sessions.NewFilesystemStore(sessDir, sessKeyPair...),
-		sessionName:     config.Webserver.SessionName,
-	}
-
-	store.Options = &sessions.Options{
-		Path:   "/",
-		MaxAge: 3600 * 8, // 8 hours
-	}
-	return store, nil
-}
-
-// GetSession returns a session based on the http request.
-func (s *SessionStore) GetSession(r *http.Request) *Session {
-	sess, _ := s.Get(r, s.sessionName)
-	return &Session{sess}
-}
-
-// Session is a wrapper around Gorilla sessions to provide access methods
-type Session struct {
-	*sessions.Session
-}
-
-func (s *Session) Delete(r *http.Request, w http.ResponseWriter) error {
-	s.Options.MaxAge = -1
-	return s.Save(r, w)
-}
-
-// Get a value from the session object
-func (s *Session) Get(key interface{}, def ...interface{}) interface{} {
-	if val, ok := s.Values[key]; ok {
-		return val
-	}
-	if len(def) > 0 {
-		return def[0]
-	}
-	return nil
-}
-
-// Set a value to the session object
-func (s *Session) Set(key, val interface{}) {
-	s.Values[key] = val
-}
-
-// GetBool takes the same arguments as Get but def must be a bool type.
-func (s *Session) GetBool(key interface{}, def ...bool) bool {
-	if v := s.Get(key); v != nil {
-		return v.(bool)
-	}
-	if len(def) > 0 {
-		return def[0]
-	}
-	return false
-}
-
-// GetString takes the same arguments as Get but def must be a string type.
-func (s *Session) GetString(key interface{}, def ...string) string {
-	if v := s.Get(key); v != nil {
-		return v.(string)
-	}
-	if len(def) > 0 {
-		return def[0]
-	}
-	return ""
-}
-
-// GetInt takes the same arguments as Get but def must be an int type.
-func (s *Session) GetInt(key interface{}, def ...int) int {
-	if v := s.Get(key); v != nil {
-		return v.(int)
-	}
-	if len(def) > 0 {
-		return def[0]
-	}
-	return 0
 }
 
 type Logger struct {
 	*log.Logger
+	dev    bool
+	logDir string
 }
 
 func NewLogger(logDir string, dev bool) *Logger {
@@ -241,5 +149,23 @@ func NewLogger(logDir string, dev bool) *Logger {
 		logger.Verbose(3)
 		logger.Info("Packet Guardian running in DEVELOPMENT mode")
 	}
-	return &Logger{logger}
+	return &Logger{
+		Logger: logger,
+		dev:    dev,
+		logDir: logDir,
+	}
+}
+
+// GetLogger returns a new Logger based on its parent but with a new name
+// This can be used to separate logs from different sub-systems.
+func (l *Logger) GetLogger(name string) *Logger {
+	logger := log.New(name).Path(l.logDir)
+	if l.dev {
+		logger.Verbose(3)
+	}
+	return &Logger{
+		Logger: logger,
+		dev:    l.dev,
+		logDir: l.logDir,
+	}
 }

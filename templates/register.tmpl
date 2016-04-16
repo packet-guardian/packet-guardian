@@ -1,5 +1,5 @@
 {{define "register"}}
-{{template "header" dict "css" (list "register") "main" .}}
+{{template "header" dict "css" (list "register") "main" . "pageTitle" "Register"}}
 <div id="suc-msg-auto" class="success-message">
     <p class="instructions">
         Please disconnect your computer from the network for 1 minute and then reconnect.
@@ -15,13 +15,13 @@
 <div class="register-box">
     <form>
         <fieldset>
-            {{if eq .Type "na-auto"}}
+            {{if eq .type "na-auto"}}
                 {{template "reg-non-admin-auto" .}}
-            {{else if eq .Type "na-man"}}
+            {{else if eq .type "na-man"}}
                 {{template "reg-non-admin-man" .}}
-            {{else if eq .Type "na-man-nologin"}}
+            {{else if eq .type "na-man-nologin"}}
                 {{template "reg-non-admin-nologin-man" .}}
-            {{else if eq .Type "admin"}}
+            {{else if eq .type "admin"}}
                 {{template "reg-admin-man" .}}
             {{end}}
         </fieldset>
@@ -30,7 +30,7 @@
             <p class="instructions">
                 Please read the policy below and click "Register":
             </p>
-            {{range .Policy}}
+            {{range .policy}}
             <p>{{.}}</p>
             {{end}}
         </div>

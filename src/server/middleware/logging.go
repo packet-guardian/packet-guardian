@@ -2,15 +2,14 @@ package middleware
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 
-func Logging(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		now := time.Now().Format("02/Jan/2006 15:04:05 -0700")
-		e.Log.Infof("%s %s %s \"%s\"", r.RemoteAddr, now, r.Method, r.RequestURI)
-		next(w, r)
-	}
+func Logging(e *common.Environment, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//e.Log.GetLogger("server").Infof("%s %s \"%s\"", r.RemoteAddr, r.Method, r.RequestURI)
+		// TODO: Reenable server request logging
+		next.ServeHTTP(w, r)
+	})
 }

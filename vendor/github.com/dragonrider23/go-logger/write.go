@@ -45,7 +45,7 @@ func (l *Logger) writeToStdout(e, s, c string) {
 	}
 
 	now := time.Now().Format(l.tlayout)
-	fmt.Printf("%s%s: %s%s: %s%s\n", Grey, now, c, strings.ToUpper(e), Reset, s)
+	fmt.Printf("%s%s: %s%s: %s%s: %s%s\n", Grey, now, c, strings.ToUpper(e), Green, l.name, Reset, s)
 	return
 }
 

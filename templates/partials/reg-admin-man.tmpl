@@ -1,10 +1,18 @@
 {{define "reg-admin-man"}}
 <p>
     <label for="username">Username:</label>
-    <input type="text" name="username" value="{{.Username}}">
+    <input type="text" name="username" value="{{.username}}">
 </p>
 <p>
     <label for="mac-address">MAC Address:</label>
     <input type="text" name="mac-address" autofocus="autofocus">
+</p>
+<p>
+    <label for="platform">Type of Device:</label>
+    <select name="platform">
+        {{range .config.Registration.ManualRegPlatforms}}
+        <option value="{{.}}">{{.}}</option>
+        {{end}}
+    </select>
 </p>
 {{end}}

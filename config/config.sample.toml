@@ -2,9 +2,12 @@
 databaseFile = "config/database.sqlite3"
 siteTitle = "Packet Guardian"
 siteCompanyName = ""
+
+[registration]
 registrationPolicyFile = "config/policy.txt"
 allowManualRegistrations = true
 defaultDeviceLimit = 10
+manualRegPlatforms = ["Playstation", "XBox", "Nintendo", "TV", "Chromecast", "Apple TV", "Roku", "Other"]
 
 [webserver]
 # Leave address blank to bind to all addresses

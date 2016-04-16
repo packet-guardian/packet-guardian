@@ -2,10 +2,12 @@ package models
 
 import (
 	"errors"
+	"net/http"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/gorilla/context"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 
@@ -65,7 +67,7 @@ func GetUserByUsername(e *common.Environment, username string) (*User, error) {
 
 	sql := "WHERE \"username\" = ?"
 	users, err := getUsersFromDatabase(e, sql, username)
-	if err != nil {
+	if users == nil || len(users) == 0 {
 		u := NewUser(e)
 		u.Username = username
 		return u, err
@@ -76,7 +78,7 @@ func GetUserByUsername(e *common.Environment, username string) (*User, error) {
 func GetUserByID(e *common.Environment, id int) (*User, error) {
 	sql := "WHERE \"id\" = ?"
 	users, err := getUsersFromDatabase(e, sql, id)
-	if err != nil {
+	if users == nil || len(users) == 0 {
 		return NewUser(e), err
 	}
 	return users[0], nil
@@ -88,7 +90,7 @@ func GetAllUsers(e *common.Environment) ([]*User, error) {
 
 func getUsersFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*User, error) {
 	sql := "SELECT \"id\", \"username\", \"password\", \"device_limit\", \"default_expiration\", \"expiration_type\", \"can_manage\", \"valid_forever\", \"valid_start\", \"valid_end\" FROM \"user\" " + where
-	rows, err := e.DB.Query(sql, values)
+	rows, err := e.DB.Query(sql, values...)
 	if err != nil {
 		return nil, err
 	}
@@ -140,6 +142,17 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 	return results, nil
 }
 
+func GetUserFromContext(r *http.Request) *User {
+	if rv := context.Get(r, common.SessionUserKey); rv != nil {
+		return rv.(*User)
+	}
+	return nil
+}
+
+func SetUserToContext(r *http.Request, u *User) {
+	context.Set(r, common.SessionUserKey, u)
+}
+
 // NewPassword will hash s and set it as the password for User u.
 func (u *User) NewPassword(s string) error {
 	pass, err := bcrypt.GenerateFromPassword([]byte(s), 0)
@@ -169,7 +182,7 @@ func (u *User) IsBlacklisted() bool {
 	var id int
 	row := u.e.DB.QueryRow(sql, u.Username)
 	err := row.Scan(&id)
-	u.blacklisted = (err != nil)
+	u.blacklisted = (err == nil)
 	u.blacklistCached = true
 	return u.blacklisted
 }

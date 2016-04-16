@@ -29,13 +29,10 @@ func NewDevice(e *common.Environment) *Device {
 func GetDeviceByMAC(e *common.Environment, mac net.HardwareAddr) (*Device, error) {
 	sql := "WHERE \"mac\" = ?"
 	devices, err := getDevicesFromDatabase(e, sql, mac.String())
-	if err != nil {
-		return NewDevice(e), err
-	}
-	if len(devices) == 0 {
+	if devices == nil || len(devices) == 0 {
 		dev := NewDevice(e)
 		dev.MAC = mac
-		return dev, nil
+		return dev, err
 	}
 	return devices[0], nil
 }
@@ -43,11 +40,8 @@ func GetDeviceByMAC(e *common.Environment, mac net.HardwareAddr) (*Device, error
 func GetDeviceByID(e *common.Environment, id int) (*Device, error) {
 	sql := "WHERE \"id\" = ?"
 	devices, err := getDevicesFromDatabase(e, sql, id)
-	if err != nil {
+	if devices == nil || len(devices) == 0 {
 		return NewDevice(e), err
-	}
-	if len(devices) == 0 {
-		return NewDevice(e), nil
 	}
 	return devices[0], nil
 }
@@ -73,9 +67,9 @@ func GetAllDevices(e *common.Environment) ([]*Device, error) {
 }
 
 func getDevicesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Device, error) {
-	sql := "SELECT \"id\", \"mac\", \"username\", \"registered_from\", \"platform\", \"expires\", \"date_registered\", \"user_agent\", \"blacklisted\" " + where
+	sql := "SELECT \"id\", \"mac\", \"username\", \"registered_from\", \"platform\", \"expires\", \"date_registered\", \"user_agent\", \"blacklisted\" FROM \"device\" " + where
 
-	rows, err := e.DB.Query(sql, values)
+	rows, err := e.DB.Query(sql, values...)
 	if err != nil {
 		return nil, err
 	}

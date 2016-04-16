@@ -23,21 +23,6 @@ func IsValidLogin(db *common.DatabaseAccessor, username, password string) bool {
 	return authFunctions["local"](db, username, password)
 }
 
-// IsLoggedIn checks if a user is logged in
-func IsLoggedIn(e *common.Environment, r *http.Request) bool {
-	sess := e.Sessions.GetSession(r)
-	return sess.GetBool("loggedin", false)
-}
-
-// IsAdminUser checks if a user is an administrator
-func IsAdminUser(e *common.Environment, r *http.Request) bool {
-	username := e.Sessions.GetSession(r).GetString("username", "")
-	return common.StringInSlice(username, e.Config.Auth.AdminUsers)
-}
-
-// LogoutUser will set loggedin to false and delete the session
-func LogoutUser(e *common.Environment, w http.ResponseWriter, r *http.Request) {
-	sess := e.Sessions.GetSession(r)
-	sess.Set("loggedin", false)
-	sess.Delete(r, w)
+func IsLoggedIn(r *http.Request) bool {
+	return common.GetSessionFromContext(r).GetBool("loggedin")
 }
