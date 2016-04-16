@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 )
@@ -26,4 +27,13 @@ func StringInSlice(a string, list []string) bool {
 func ConvertToInt(s string) int {
 	i, _ := strconv.Atoi(s)
 	return i
+}
+
+// FormatMacAddress will attempt to format and parse a string as a MAC address
+func FormatMacAddress(mac string) (net.HardwareAddr, error) {
+	// If no punctuation was provided, use the format xxxx.xxxx.xxxx
+	if len(mac) == 12 {
+		mac = mac[0:4] + "." + mac[4:8] + "." + mac[8:12]
+	}
+	return net.ParseMAC(mac)
 }

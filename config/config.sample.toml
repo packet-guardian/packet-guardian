@@ -9,9 +9,11 @@ defaultDeviceLimit = 10
 [webserver]
 # Leave address blank to bind to all addresses
 address = "127.0.0.1"
-port = 7000
+httpPort = 8080
+httpsPort = 1443
 TLSCertFile = ""
 TLSKeyFile = ""
+redirectHttpToHttps = true
 sessionName = "net-guardian"
 sessionsDir = "sessions"
 # This is the authentication key for web sessions

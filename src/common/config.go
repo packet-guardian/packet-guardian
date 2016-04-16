@@ -20,14 +20,16 @@ type Config struct {
 		DefaultDeviceLimit       int
 	}
 	Webserver struct {
-		Address            string
-		Port               int
-		TLSCertFile        string
-		TLSKeyFile         string
-		SessionName        string
-		SessionsDir        string
-		SessionsAuthKey    string
-		SessionsEncryptKey string
+		Address             string
+		HttpPort            int
+		HttpsPort           int
+		TLSCertFile         string
+		TLSKeyFile          string
+		RedirectHttpToHttps bool
+		SessionName         string
+		SessionsDir         string
+		SessionsAuthKey     string
+		SessionsEncryptKey  string
 	}
 	Auth struct {
 		AuthMethod []string

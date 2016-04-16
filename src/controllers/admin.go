@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/onesimus-systems/packet-guardian/src/common"
@@ -49,7 +48,7 @@ func (a *Admin) adminSearchHandler(w http.ResponseWriter, r *http.Request) {
 	if query == "*" {
 		q.User = ""
 	} else if query != "" {
-		if m, err := dhcp.FormatMacAddress(query); err == nil {
+		if m, err := common.FormatMacAddress(query); err == nil {
 			q.MAC = m
 		} else if ip := net.ParseIP(query); ip != nil {
 			q.IP = ip
@@ -75,7 +74,7 @@ func (a *Admin) adminSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		Query         string
-		SearchResults []dhcp.Device
+		SearchResults []*models.Device
 		FlashMessage  string
 		NoResultType  string
 	}{
@@ -165,7 +164,7 @@ func (a *Admin) adminUserHandler(w http.ResponseWriter, r *http.Request) {
 	username := mux.Vars(r)["username"]
 	var template string
 	if username == "" {
-		users, err := models.GetAllUsers(a.e.DB)
+		users, err := models.GetAllUsers(a.e)
 		if err != nil {
 			a.e.Log.Errorf("Error getting users: %s", err.Error())
 			data.FlashMessage = "Error getting users"
@@ -173,9 +172,8 @@ func (a *Admin) adminUserHandler(w http.ResponseWriter, r *http.Request) {
 		data.Users = users
 		template = "admin-users"
 	} else {
-		user, _ := models.GetUser(a.e.DB, username)
-		if user == nil {
-			user = models.NewUser()
+		user, _ := models.GetUserByUsername(a.e, username)
+		if user.ID == 0 {
 			user.Username = username
 		}
 		data.Users = []*models.User{user}
@@ -188,83 +186,83 @@ func (a *Admin) adminUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Admin) saveUserHandler(w http.ResponseWriter, r *http.Request) {
-	username := r.FormValue("username")
-	// Get or create user
-	user, _ := models.GetUser(a.e.DB, username)
-	if user == nil {
-		a.e.Log.Info("Creating user")
-		user = &models.User{
-			ID:       common.ConvertToInt(r.FormValue("user-id")),
-			Username: username,
-		}
-	}
-
-	// Password
-	user.ClearPassword = (r.FormValue("clear-pass") == "true")
-	if r.FormValue("password") != "" {
-		user.NewPassword(r.FormValue("password"))
-	}
-
-	// Registered device limit
-	limitType := r.FormValue("special-limit")
-	if limitType == "global" {
-		user.DeviceLimit = -1
-	} else if limitType == "unlimited" {
-		user.DeviceLimit = 0
-	} else {
-		user.DeviceLimit = common.ConvertToInt(r.FormValue("device-limit"))
-	}
-
-	// Expiration times
-	loc, _ := time.LoadLocation("Local")
-	if r.FormValue("device-expiration") == "0" || r.FormValue("device-expiration") == "" {
-		user.DefaultExpiration = time.Unix(0, 0)
-	} else if r.FormValue("device-expiration") == "1" {
-		user.DefaultExpiration = time.Unix(1, 0)
-	} else {
-		user.DefaultExpiration, _ = time.ParseInLocation("2006-01-02 15:04:05", r.FormValue("device-expiration"), loc)
-	}
-
-	if r.FormValue("valid-after") == "0" || r.FormValue("valid-after") == "" {
-		user.ValidAfter = time.Unix(0, 0)
-	} else {
-		user.ValidAfter, _ = time.ParseInLocation("2006-01-02 15:04:05", r.FormValue("valid-after"), loc)
-	}
-
-	if r.FormValue("valid-before") == "0" || r.FormValue("valid-before") == "" {
-		user.ValidBefore = time.Unix(0, 0)
-	} else {
-		user.ValidBefore, _ = time.ParseInLocation("2006-01-02 15:04:05", r.FormValue("valid-before"), loc)
-	}
-
-	if err := user.Save(a.e.DB); err != nil {
-		a.e.Log.Errorf("Error saving user: %s", err.Error())
-		common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
-		return
-	}
-
-	a.e.Log.Infof("Created user augmentation: %s", user.Username)
+	// username := r.FormValue("username")
+	// // Get or create user
+	// user, _ := models.GetUserByUsername(a.e, username)
+	// if user == nil {
+	// 	a.e.Log.Info("Creating user")
+	// 	user = &models.User{
+	// 		ID:       common.ConvertToInt(r.FormValue("user-id")),
+	// 		Username: username,
+	// 	}
+	// }
+	//
+	// // Password
+	// user.ClearPassword = (r.FormValue("clear-pass") == "true")
+	// if r.FormValue("password") != "" {
+	// 	user.NewPassword(r.FormValue("password"))
+	// }
+	//
+	// // Registered device limit
+	// limitType := r.FormValue("special-limit")
+	// if limitType == "global" {
+	// 	user.DeviceLimit = -1
+	// } else if limitType == "unlimited" {
+	// 	user.DeviceLimit = 0
+	// } else {
+	// 	user.DeviceLimit = common.ConvertToInt(r.FormValue("device-limit"))
+	// }
+	//
+	// // Expiration times
+	// loc, _ := time.LoadLocation("Local")
+	// if r.FormValue("device-expiration") == "0" || r.FormValue("device-expiration") == "" {
+	// 	user.DefaultExpiration = time.Unix(0, 0)
+	// } else if r.FormValue("device-expiration") == "1" {
+	// 	user.DefaultExpiration = time.Unix(1, 0)
+	// } else {
+	// 	user.DefaultExpiration, _ = time.ParseInLocation("2006-01-02 15:04:05", r.FormValue("device-expiration"), loc)
+	// }
+	//
+	// if r.FormValue("valid-after") == "0" || r.FormValue("valid-after") == "" {
+	// 	user.ValidAfter = time.Unix(0, 0)
+	// } else {
+	// 	user.ValidAfter, _ = time.ParseInLocation("2006-01-02 15:04:05", r.FormValue("valid-after"), loc)
+	// }
+	//
+	// if r.FormValue("valid-before") == "0" || r.FormValue("valid-before") == "" {
+	// 	user.ValidBefore = time.Unix(0, 0)
+	// } else {
+	// 	user.ValidBefore, _ = time.ParseInLocation("2006-01-02 15:04:05", r.FormValue("valid-before"), loc)
+	// }
+	//
+	// if err := user.Save(a.e.DB); err != nil {
+	// 	a.e.Log.Errorf("Error saving user: %s", err.Error())
+	// 	common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
+	// 	return
+	// }
+	//
+	// a.e.Log.Infof("Created user augmentation: %s", user.Username)
 	common.NewAPIOK("User created", nil).WriteTo(w)
 }
 
 func (a *Admin) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	username := mux.Vars(r)["username"]
-
-	user, err := models.GetUser(a.e.DB, username)
-	if user == nil {
-		a.e.Log.Errorf("Error deleting user: %s", err.Error())
-		common.NewAPIResponse(common.APIStatusGenericError, "Error deleting user", nil).WriteTo(w)
-		return
-	}
-
-	sql := "DELETE FROM \"user\" WHERE \"username\" = ?"
-	_, err = a.e.DB.Exec(sql, username)
-	if err != nil {
-		a.e.Log.Errorf("Error deleting user: %s", err.Error())
-		common.NewAPIResponse(common.APIStatusGenericError, "Error deleting user", nil).WriteTo(w)
-		return
-	}
-
-	a.e.Log.Infof("Deleted user: %s", username)
+	// username := mux.Vars(r)["username"]
+	//
+	// user, err := models.GetUser(a.e.DB, username)
+	// if user == nil {
+	// 	a.e.Log.Errorf("Error deleting user: %s", err.Error())
+	// 	common.NewAPIResponse(common.APIStatusGenericError, "Error deleting user", nil).WriteTo(w)
+	// 	return
+	// }
+	//
+	// sql := "DELETE FROM \"user\" WHERE \"username\" = ?"
+	// _, err = a.e.DB.Exec(sql, username)
+	// if err != nil {
+	// 	a.e.Log.Errorf("Error deleting user: %s", err.Error())
+	// 	common.NewAPIResponse(common.APIStatusGenericError, "Error deleting user", nil).WriteTo(w)
+	// 	return
+	// }
+	//
+	// a.e.Log.Infof("Deleted user: %s", username)
 	common.NewAPIOK("User deleted", nil).WriteTo(w)
 }

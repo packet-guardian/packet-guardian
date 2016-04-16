@@ -3,46 +3,77 @@ package server
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 
 type Server struct {
-	e      *common.Environment
-	routes http.Handler
+	e         *common.Environment
+	routes    http.Handler
+	address   string
+	httpPort  int
+	httpsPort int
 }
 
 func NewServer(e *common.Environment, routes http.Handler) *Server {
-	return &Server{
-		e:      e,
-		routes: routes,
+	serv := &Server{
+		e:       e,
+		routes:  routes,
+		address: e.Config.Webserver.Address,
 	}
+
+	if e.Config.Webserver.HttpPort == 0 {
+		serv.httpPort = 8080
+	} else {
+		serv.httpPort = strconv.Itoa(e.Config.Webserver.HttpPort)
+	}
+
+	if e.Config.Webserver.HttpsPort == 0 {
+		serv.httpsPort = 1443
+	} else {
+		serv.httpsPort = strconv.Itoa(e.Config.Webserver.HttpsPort)
+	}
+	return serv
 }
 
 func (s *Server) Run() {
-	bindAddr := ""
-	bindPort := "8000"
-	if s.e.Config.Webserver.Address != "" {
-		bindAddr = s.e.Config.Webserver.Address
-	}
-	if s.e.Config.Webserver.Port != 0 {
-		bindPort = strconv.Itoa(s.e.Config.Webserver.Port)
-	}
-	if bindAddr == "" {
-		s.e.Log.Infof("Now listening on *:%s", bindPort)
+	if s.e.Config.Webserver.TLSCertFile != "" && s.e.Config.Webserver.TLSKeyFile != "" {
+		if s.e.Webserver.RedirectHttpToHttps {
+			go func() {
+				s.e.Log.Infof("Now listening on %s:%s", s.address, s.httpPort)
+				http.ListenAndServe(s.address+":"+s.httpPort, http.HandleFunc(s.redirectToHttps))
+			}()
+		}
+		s.startHttps()
 	} else {
-		s.e.Log.Infof("Now listening on %s:%s", bindAddr, bindPort)
+		s.startHttp()
+	}
+}
+
+func (s *Server) startHttp() {
+	s.e.Log.Infof("Now listening on %s:%s", s.address, s.httpPort)
+	http.ListenAndServe(s.address+":"+s.httpPort, s.routes)
+}
+
+func (s *Server) startHttps() {
+	s.e.Log.Infof("Now listening on %s:%s", s.address, s.httpPort)
+	s.e.Log.Info("Starting server with TLS certificates")
+	http.ListenAndServeTLS(
+		s.address+":"+s.httpsPort,
+		s.e.Config.Webserver.TLSCertFile,
+		s.e.Config.Webserver.TLSKeyFile,
+		s.routes,
+	)
+}
+
+func (s *Server) redirectToHttps(w http.ResponseWriter, r *http.Request) {
+	// Lets not do a split if we don't need to
+	if s.httpPort == 80 && s.httpsPort == 443 {
+		http.Redirect(w, req, "https://"+r.Host+req.RequestURI, http.StatusMovedPermanently)
+		return
 	}
 
-	if s.e.Config.Webserver.TLSCertFile != "" && s.e.Config.Webserver.TLSKeyFile != "" {
-		s.e.Log.Info("Starting server with TLS certificates")
-		http.ListenAndServeTLS(
-			bindAddr+":"+bindPort,
-			s.e.Config.Webserver.TLSCertFile,
-			s.e.Config.Webserver.TLSKeyFile,
-			s.routes,
-		)
-	} else {
-		http.ListenAndServe(bindAddr+":"+bindPort, s.routes)
-	}
+	host := strings.Split(r.Host, ":")[0]
+	http.Redirect(w, req, "https://"+host+":"+s.httpsPort+req.RequestURI, http.StatusMovedPermanently)
 }

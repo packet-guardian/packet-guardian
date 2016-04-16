@@ -10,7 +10,7 @@ import (
 func Logging(e *common.Environment, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		now := time.Now().Format("02/Jan/2006 15:04:05 -0700")
-		e.Log.Infof("%s %s \"%s\"", r.RemoteAddr, now, r.RequestURI)
+		e.Log.Infof("%s %s %s \"%s\"", r.RemoteAddr, now, r.Method, r.RequestURI)
 		next(w, r)
 	}
 }

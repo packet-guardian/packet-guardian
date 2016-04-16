@@ -49,6 +49,7 @@ vendor_get: vendor_clean
 	github.com/dragonrider23/go-logger \
 	github.com/gorilla/mux \
 	github.com/gorilla/sessions \
+	github.com/gorilla/context \
 	github.com/mattn/go-sqlite3 \
 	github.com/naoina/toml \
 	golang.org/x/crypto/bcrypt

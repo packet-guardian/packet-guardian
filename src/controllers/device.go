@@ -3,9 +3,10 @@ package controllers
 import (
 	"net"
 	"net/http"
-	"strconv"
 	"strings"
+	"time"
 
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/onesimus-systems/packet-guardian/src/auth"
 	"github.com/onesimus-systems/packet-guardian/src/common"
@@ -28,8 +29,9 @@ func (d *Device) RegisterRoutes(r *mux.Router) {
 }
 
 func (d *Device) registrationHandler(w http.ResponseWriter, r *http.Request) {
-	// Check authentication
-	username := ""
+	// Check authentication and get User models
+	var formUser *model.User // The user to whom the device is being registered
+	sessionUser := context.Get(r, "sessionUser").(*models.User)
 	if !auth.IsLoggedIn(d.e, r) {
 		username = r.FormValue("username")
 		// Authenticate
@@ -38,30 +40,46 @@ func (d *Device) registrationHandler(w http.ResponseWriter, r *http.Request) {
 			common.NewAPIResponse(common.APIStatusInvalidAuth, "Incorrect username or password", nil).WriteTo(w)
 			return
 		}
+
+		formUser = sessionUser
 	} else {
 		formUsername := r.FormValue("username")
-		sessUsername := d.e.Sessions.GetSession(r).GetString("username")
-		if formUsername == "" || sessUsername == "" {
+		if formUsername == "" {
 			common.NewAPIResponse(common.APIStatusInvalidAuth, "Incorrect username or password", nil).WriteTo(w)
 			return
 		}
 
-		if sessUsername != formUsername && !auth.IsAdminUser(d.e, r) {
+		if sessionUser.Username != formUsername && !sessionUser.IsAdmin() {
 			d.e.Log.Errorf("Admin action attempted: Register device for %s attempted by user %s", formUsername, sessUsername)
 			common.NewAPIResponse(common.APIStatusNotAdmin, "Only admins can do that", nil).WriteTo(w)
 			return
 		}
-		username = formUsername
+
+		if formUsername == sessUsername {
+			formUser = sessionUser
+		} else {
+			formUser, err := models.GetUserByUsername(formUsername)
+			if err != nil {
+				d.e.Log.Error(err.Error())
+				// TODO: Show error page to user
+				return
+			}
+		}
 	}
 
+	// Get and enforce the device limit
 	var err error
 	limit := d.e.Config.Core.DefaultDeviceLimit
-	if user, _ := models.GetUser(d.e.DB, username); user != nil && user.DeviceLimit != -1 {
-		limit = user.DeviceLimit
+	if formUser.DeviceLimit != -1 {
+		limit = formUser.DeviceLimit
 	}
 
-	devices := dhcp.Query{User: username}.Search(d.e)
-	if limit != 0 && len(devices) >= limit {
+	deviceCount, err := models.GetDeviceCountForUser(e, u)
+	if err != nil {
+		d.e.Log.Errorf("Error getting device count: %s", err.Error())
+	}
+	// A limit of 0 means unlimited
+	if limit != 0 && deviceCount >= limit {
 		common.NewAPIResponse(common.APIStatusGenericError, "Device limit reached", nil).WriteTo(w)
 		return
 	}
@@ -81,11 +99,11 @@ func (d *Device) registrationHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// Manual registration
 		if !d.e.Config.Core.AllowManualRegistrations {
-			d.e.Log.Errorf("Unauthorized manual registration attempt for MAC %s from user %s", macPost, username)
+			d.e.Log.Errorf("Unauthorized manual registration attempt for MAC %s from user %s", macPost, formUser.Username)
 			common.NewAPIResponse(common.APIStatusGenericError, "Manual registrations are not allowed.", nil).WriteTo(w)
 			return
 		}
-		mac, err = dhcp.FormatMacAddress(macPost)
+		mac, err = common.FormatMacAddress(macPost)
 		if err != nil {
 			d.e.Log.Errorf("Error formatting MAC %s", macPost)
 			common.NewAPIResponse(common.APIStatusGenericError, "Incorrect MAC address format.", nil).WriteTo(w)
@@ -93,104 +111,58 @@ func (d *Device) registrationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Check if the mac or username is blacklisted
-	// Administrators bypass the blacklist check
-	if !auth.IsAdminUser(d.e, r) {
-		bl, err1 := dhcp.IsBlacklisted(d.e.DB, mac.String(), username)
-		if err1 != nil {
-			d.e.Log.Errorf("There was an error checking the blacklist for MAC %s and user %s: %s", mac.String(), username, err1.Error())
-			common.NewAPIResponse(common.APIStatusGenericError, "There was an error registering your devicd.e.", nil).WriteTo(w)
-			return
-		}
-		if bl {
-			d.e.Log.Errorf("Attempted registration of blacklisted MAC or user %s - %s", mac.String(), username)
-			common.NewAPIResponse(common.APIStatusGenericError, "There was an error registering your devicd.e. Blacklisted username or MAC address", nil).WriteTo(w)
-			return
-		}
+	// Get device from database
+	device, err := models.GetDeviceByMAC(e, mac)
+	if err != nil {
+		d.e.Log.Errorf("Error getting device: %s", err.Error())
 	}
 
-	// Register the MAC to the user
-	err = dhcp.Register(d.e.DB, mac, username, r.FormValue("platform"), ip, r.UserAgent(), "")
-	if err != nil {
-		d.e.Log.Errorf("Failed to register MAC address %s to user %s: %s", mac.String(), username, err.Error())
-		// TODO: Look at what error messages are being returned from Register()
-		common.NewAPIResponse(common.APIStatusGenericError, "Error: "+err.Error(), nil).WriteTo(w)
+	// Check if device is already registered
+	if device.ID != 0 {
+		d.e.Log.Errorf("Attempted duplicate registration of MAC %s to user %s", mac.String(), formUser.Username)
+		common.NewAPIResponse(common.APIStatusGenericError, "Device already registered", nil).WriteTo(w)
 		return
 	}
-	d.e.Log.Infof("Successfully registered MAC %s to user %s", mac.String(), username)
 
+	// Check if the mac or username is blacklisted
+	// Administrators bypass the blacklist check
+	if !sessionUser.IsAdmin() {
+		if device.Blacklisted {
+			d.e.Log.Errorf("Attempted registration of blacklisted MAC %s by user %s", mac.String(), formUser.Username)
+			common.NewAPIResponse(common.APIStatusGenericError, "Failed to register device: MAC address blacklisted", nil).WriteTo(w)
+			return
+		}
+		if formUser.IsBlacklisted() {
+			d.e.Log.Errorf("Attempted registration by blacklisted user %s", formUser.Username)
+			common.NewAPIResponse(common.APIStatusGenericError, "Failed to register device: Username blacklisted", nil).WriteTo(w)
+			return
+		}
+	}
+
+	// Fill in device information
+	device.Username = formUser.Username
+	device.RegisteredFrom = ip
+	device.Platform = r.FormValue("platform")
+	device.Expired = time.Unix(0, 0)
+	device.DateRegistered = time.Now()
+	device.UserAgent = r.UserAgent()
+
+	// Save new device
+	if err := device.Save(); err != nil {
+		d.e.Log.Errorf("Error registering device: %s", err.Error())
+		common.NewAPIResponse(common.APIStatusGenericError, "Error registering device", nil).WriteTo(w)
+	}
+	d.e.Log.Infof("Successfully registered MAC %s to user %s", mac.String(), formUser.Username)
+
+	// Redirect client as needed
 	resp := struct{ Location string }{Location: "/manage"}
-	if auth.IsAdminUser(d.e, r) {
-		resp.Location = "/admin/user/" + username
+	if sessionUser.IsAdmin() {
+		resp.Location = "/admin/user/" + formUser.Username
 	}
 
 	common.NewAPIOK("Registration successful", resp).WriteTo(w)
 }
 
 func (d *Device) deleteHandler(w http.ResponseWriter, r *http.Request) {
-	sessUsername := d.e.Sessions.GetSession(r).GetString("username")
-	formUsername := r.FormValue("username")
 
-	// If the two don't match, check if the user is an admin, if not return an error
-	if sessUsername != formUsername && !auth.IsAdminUser(d.e, r) {
-		d.e.Log.Errorf("Admin action attempted: Delete device for %s attempted by user %s", formUsername, sessUsername)
-		common.NewAPIResponse(common.APIStatusNotAdmin, "Only admins can do that", nil).WriteTo(w)
-		return
-	}
-
-	var devices []dhcp.Device
-	var sqlParams []interface{}
-	var sql string
-	var err error
-
-	deviceIDs := strings.Split(r.FormValue("devices"), ",")
-	all := (len(deviceIDs) == 1 && deviceIDs[0] == "")
-
-	if all {
-		sql = "DELETE FROM \"device\" WHERE \"username\" = ?"
-	} else {
-		sql = "DELETE FROM \"device\" WHERE (0 = 1"
-		dIDs := make([]int, len(deviceIDs))
-
-		for i, deviceID := range deviceIDs {
-			sql += " OR \"id\" = ?"
-			sqlParams = append(sqlParams, deviceID)
-			if in, err := strconv.Atoi(deviceID); err == nil {
-				dIDs[i] = in
-			} else {
-				d.e.Log.Error(err.Error())
-				common.NewAPIResponse(common.APIStatusGenericError, "Error deleting devices", nil).WriteTo(w)
-				return
-			}
-		}
-		sql += ") AND \"username\" = ?"
-		devices = dhcp.Query{ID: dIDs}.Search(d.e)
-	}
-	sqlParams = append(sqlParams, formUsername)
-
-	if bl, _ := dhcp.IsBlacklisted(d.e.DB, sqlParams...); bl && !auth.IsAdminUser(d.e, r) {
-		d.e.Log.Errorf("Admin action attempted: Delete blacklisted device by user %s", formUsername)
-		common.NewAPIResponse(common.APIStatusNotAdmin, "Only admins can do that", nil).WriteTo(w)
-		return
-	}
-
-	_, err = d.e.DB.Exec(sql, sqlParams...)
-	if err != nil {
-		d.e.Log.Error(err.Error())
-		common.NewAPIResponse(common.APIStatusGenericError, "Error deleting devices", nil).WriteTo(w)
-		return
-	}
-
-	if all {
-		d.e.Log.Infof("Successfully deleted all registrations for user %s by user %s", formUsername, sessUsername)
-	} else {
-		if devices != nil {
-			for i := range devices {
-				d.e.Log.Infof("Successfully deleted MAC %s for user %s by user %s", devices[i].MAC, formUsername, sessUsername)
-			}
-		} else {
-			d.e.Log.Error("An error occured that prevents me from listing the deleted MAC addresses")
-		}
-	}
-	common.NewAPIResponse(common.APIStatusOK, "Devices deleted successfully", nil).WriteTo(w)
 }

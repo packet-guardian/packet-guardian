@@ -8,10 +8,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	"github.com/onesimus-systems/packet-guardian/src/auth"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
+	"github.com/onesimus-systems/packet-guardian/src/models"
 	"github.com/onesimus-systems/packet-guardian/src/server/middleware"
 )
 
@@ -101,26 +103,42 @@ func (m *Manager) registrationHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *Manager) manageHandler(w http.ResponseWriter, r *http.Request) {
-	username, ok := mux.Vars(r)["username"]
+	sessionUser := context.Get(r, "sessionUser").(*models.User)
+	formUsername, ok := mux.Vars(r)["username"]
+	username := formUsername
 	if !ok {
-		username = m.e.Sessions.GetSession(r).GetString("username")
+		username = sessUsername
 	}
-	results := dhcp.Query{User: username}.Search(m.e)
 
-	admin := auth.IsAdminUser(m.e, r)
-	bl, _ := dhcp.IsBlacklisted(m.e.DB, username)
-	showAddBtn := (admin || (m.e.Config.Core.AllowManualRegistrations && !bl))
+	var user *models.User
+	var err error
+
+	if sessionUser.Username == formUsername {
+		user = sessionUser
+	} else {
+		user, err = models.GetUserByUsername(formUsername)
+		if err != nil {
+			m.e.Log.Error(err.Error())
+			// TODO: Show error page to user
+			return
+		}
+	}
+
+	results := models.GetDevicesForUser(e, u)
+
+	bl := user.IsBlacklisted()
+	showAddBtn := (sessionUser.IsAdmin() || (m.e.Config.Core.AllowManualRegistrations && !bl))
 
 	data := struct {
 		Username      string
 		IsAdmin       bool
-		Devices       []dhcp.Device
+		Devices       []*models.Device
 		FlashMessage  string
 		ShowAddBtn    bool
 		IsBlacklisted bool
 	}{
 		Username:      username,
-		IsAdmin:       auth.IsAdminUser(m.e, r),
+		IsAdmin:       sessionUser.IsAdmin(),
 		Devices:       results,
 		ShowAddBtn:    showAddBtn,
 		IsBlacklisted: bl,

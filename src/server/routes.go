@@ -10,6 +10,7 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/controllers"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
+	"github.com/onesimus-systems/packet-guardian/src/server/middleware"
 )
 
 func LoadRoutes(e *common.Environment) http.Handler {
@@ -25,6 +26,9 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	controllers.NewManagerController(e).RegisterRoutes(r)
 	controllers.NewDeviceController(e).RegisterRoutes(r)
 	controllers.NewAdminController(e).RegisterRoutes(r)
+
+	r = middleware.SetSessionUser(e, r)
+	r = middleware.Logging(e, r)
 
 	return r
 }

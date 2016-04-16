@@ -37,6 +37,9 @@ type User struct {
 	ValidEnd             time.Time
 	ValidForever         bool
 	CanManage            bool
+	blacklistCached      bool
+	blacklistSave        bool
+	blacklisted          bool
 }
 
 // NewUser creates a new base user
@@ -56,10 +59,16 @@ func NewUser(e *common.Environment) *User {
 }
 
 func GetUserByUsername(e *common.Environment, username string) (*User, error) {
+	if username == "" {
+		return NewUser(e), nil
+	}
+
 	sql := "WHERE \"username\" = ?"
 	users, err := getUsersFromDatabase(e, sql, username)
 	if err != nil {
-		return NewUser(e), err
+		u := NewUser(e)
+		u.Username = username
+		return u, err
 	}
 	return users[0], nil
 }
@@ -147,6 +156,36 @@ func (u *User) RemovePassword() {
 	u.HasPassword = false
 }
 
+func (u *User) IsAdmin() bool {
+	return common.StringInSlice(u.Username, u.e.Config.Auth.AdminUsers)
+}
+
+func (u *User) IsBlacklisted() bool {
+	if u.blacklistCached {
+		return u.blacklisted
+	}
+
+	sql := "SELECT \"id\" FROM \"blacklist\" WHERE \"value\" = ?"
+	var id int
+	row := u.e.DB.QueryRow(sql, u.Username)
+	err := row.Scan(&id)
+	u.blacklisted = (err != nil)
+	u.blacklistCached = true
+	return u.blacklisted
+}
+
+func (u *User) Blacklist() {
+	u.blacklistCached = true
+	u.blacklisted = true
+	u.blacklistSave = true
+}
+
+func (u *User) Unblacklist() {
+	u.blacklistCached = true
+	u.blacklisted = false
+	u.blacklistSave = true
+}
+
 func (u *User) Save() error {
 	if u.ID == 0 {
 		return u.saveNew()
@@ -188,7 +227,10 @@ func (u *User) updateExisting() error {
 			u.ValidEnd,
 		)
 	}
-	return err
+	if err != nil {
+		return err
+	}
+	return u.writeToBlacklist()
 }
 
 func (u *User) saveNew() error {
@@ -211,5 +253,33 @@ func (u *User) saveNew() error {
 		u.ValidEnd,
 		u.Password,
 	)
+	if err != nil {
+		return err
+	}
+	return u.writeToBlacklist()
+}
+
+func (u *User) writeToBlacklist() error {
+	// We only need to do something if the blacklist setting was changed
+	if !u.blacklistSave {
+		return nil
+	}
+
+	// If blacklisted, insert into database
+	if u.blacklisted {
+		sql := "INSERT INTO \"blacklist\" (\"value\") VALUES (?)"
+		_, err := u.e.DB.Exec(sql, u.Username)
+		return err
+	}
+
+	// Otherwise remove them from the blacklist
+	sql := "DELETE FROM \"blacklist\" WHERE \"value\" = ?"
+	_, err := u.e.DB.Exec(sql, u.Username)
+	return err
+}
+
+func (u *User) Delete() error {
+	sql := "DELETE FROM \"user\" WHERE \"id\" = ?"
+	_, err := u.e.DB.Exec(sql, u.ID)
 	return err
 }
