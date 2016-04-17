@@ -93,6 +93,11 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 
+	if sessionUser.IsHelpDesk() {
+		http.Redirect(w, r, "/admin/manage/"+sessionUser.Username, http.StatusTemporaryRedirect)
+		return
+	}
+
 	results, err := models.GetDevicesForUser(m.e, sessionUser)
 	if err != nil {
 		m.e.Log.Errorf("Error getting devices for user %s: %s", sessionUser.Username, err.Error())
