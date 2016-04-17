@@ -173,6 +173,10 @@ func (u *User) IsAdmin() bool {
 	return common.StringInSlice(u.Username, u.e.Config.Auth.AdminUsers)
 }
 
+func (u *User) IsHelpDesk() bool {
+	return common.StringInSlice(u.Username, u.e.Config.Auth.HelpDeskUsers)
+}
+
 func (u *User) IsBlacklisted() bool {
 	if u.blacklistCached {
 		return u.blacklisted

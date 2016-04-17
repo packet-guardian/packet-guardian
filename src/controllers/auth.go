@@ -3,7 +3,6 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/onesimus-systems/packet-guardian/src/auth"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/models"
@@ -17,12 +16,7 @@ func NewAuthController(e *common.Environment) *Auth {
 	return &Auth{e: e}
 }
 
-func (a *Auth) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/login", a.loginHandler).Methods("GET", "POST")
-	r.HandleFunc("/logout", a.logoutHandler).Methods("GET")
-}
-
-func (a *Auth) loginHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Auth) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		a.showLoginPage(w, r)
 	} else if r.Method == "POST" {
@@ -65,7 +59,7 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // LogoutHandler voids a user's session
-func (a *Auth) logoutHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Auth) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	sess := common.GetSessionFromContext(r)
 	if sess.GetBool("loggedin", false) {
 		user := models.GetUserFromContext(r)

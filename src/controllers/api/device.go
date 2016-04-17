@@ -1,4 +1,4 @@
-package controllers
+package api
 
 import (
 	"net"
@@ -6,12 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/onesimus-systems/packet-guardian/src/auth"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
-	"github.com/onesimus-systems/packet-guardian/src/server/middleware"
 )
 
 type Device struct {
@@ -22,12 +20,7 @@ func NewDeviceController(e *common.Environment) *Device {
 	return &Device{e: e}
 }
 
-func (d *Device) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/device/register", d.registrationHandler).Methods("POST")
-	r.Handle("/device/delete", middleware.CheckAuthAPI(d.e, http.HandlerFunc(d.deleteHandler))).Methods("POST")
-}
-
-func (d *Device) registrationHandler(w http.ResponseWriter, r *http.Request) {
+func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	// Check authentication and get User models
 	var formUser *models.User // The user to whom the device is being registered
 	sessionUser := models.GetUserFromContext(r)
@@ -57,7 +50,7 @@ func (d *Device) registrationHandler(w http.ResponseWriter, r *http.Request) {
 
 		if sessionUser.Username != formUsername && !sessionUser.IsAdmin() {
 			d.e.Log.Errorf("Admin action attempted: Register device for %s attempted by user %s", formUsername, sessionUser.Username)
-			common.NewAPIResponse(common.APIStatusNotAdmin, "Only admins can do that", nil).WriteTo(w)
+			common.NewAPIResponse(common.APIStatusInsufficientPrivilages, "Only admins can do that", nil).WriteTo(w)
 			return
 		}
 
@@ -170,7 +163,7 @@ func (d *Device) registrationHandler(w http.ResponseWriter, r *http.Request) {
 	common.NewAPIOK("Registration successful", resp).WriteTo(w)
 }
 
-func (d *Device) deleteHandler(w http.ResponseWriter, r *http.Request) {
+func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 	if r.FormValue("username") != sessionUser.Username {
 		common.NewAPIResponse(common.APIStatusGenericError, "Admin Error", nil).WriteTo(w)

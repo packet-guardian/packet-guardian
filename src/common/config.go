@@ -23,6 +23,7 @@ type Config struct {
 		ManualRegPlatforms       []string
 	}
 	Webserver struct {
+		EnableLogging       bool
 		Address             string
 		HttpPort            int
 		HttpsPort           int
@@ -35,8 +36,9 @@ type Config struct {
 		SessionsEncryptKey  string
 	}
 	Auth struct {
-		AuthMethod []string
-		AdminUsers []string
+		AuthMethod    []string
+		AdminUsers    []string
+		HelpDeskUsers []string
 
 		LDAP struct {
 			UseAD   bool

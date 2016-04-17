@@ -1,4 +1,4 @@
-.PHONY: build clean_full doc fmt lint run test vendor_clean vendor_get vendor_update vet
+.PHONY: build clean_full doc fmt install inst_build lint run test vendor_clean vendor_get vendor_update vet
 
 # Prepend our vendor directory to the system GOPATH
 # so that import path resolution will prioritize
@@ -22,6 +22,12 @@ doc:
 # http://golang.org/cmd/go/#hdr-Run_gofmt_on_package_sources
 fmt:
 	go fmt ./src/...
+
+install: vet
+	go install -v ./src/cmd/pg
+
+inst_build: install
+	go build -v -o ./bin/pg ./src/cmd/pg
 
 # https://github.com/golang/lint
 # go get github.com/golang/lint/golint

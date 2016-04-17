@@ -8,11 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
-	"github.com/onesimus-systems/packet-guardian/src/server/middleware"
 )
 
 const (
@@ -30,12 +28,7 @@ func NewManagerController(e *common.Environment) *Manager {
 	return &Manager{e: e}
 }
 
-func (m *Manager) RegisterRoutes(r *mux.Router) {
-	r.HandleFunc("/register", m.registrationHandler).Methods("GET")
-	r.Handle("/manage", middleware.CheckAuth(m.e, http.HandlerFunc(m.manageHandler))).Methods("GET")
-}
-
-func (m *Manager) registrationHandler(w http.ResponseWriter, r *http.Request) {
+func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 	session := common.GetSessionFromContext(r)
 	flash := ""
@@ -97,8 +90,9 @@ func (m *Manager) registrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (m *Manager) manageHandler(w http.ResponseWriter, r *http.Request) {
+func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
+
 	results, err := models.GetDevicesForUser(m.e, sessionUser)
 	if err != nil {
 		m.e.Log.Errorf("Error getting devices for user %s: %s", sessionUser.Username, err.Error())
@@ -106,8 +100,7 @@ func (m *Manager) manageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bl := sessionUser.IsBlacklisted()
-	showAddBtn := (m.e.Config.Registration.AllowManualRegistrations && !bl)
+	showAddBtn := (m.e.Config.Registration.AllowManualRegistrations && !sessionUser.IsBlacklisted())
 
 	data := make(map[string]interface{})
 	data["sessionUser"] = sessionUser

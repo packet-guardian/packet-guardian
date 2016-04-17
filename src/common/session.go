@@ -14,6 +14,7 @@ type Key int
 const (
 	SessionKey     Key = 0
 	SessionUserKey Key = 1
+	SessionEnvKey  Key = 2
 )
 
 type SessionStore struct {

@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gorilla/context"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 
 	log "github.com/dragonrider23/go-logger"
@@ -28,6 +29,17 @@ type Environment struct {
 
 func NewEnvironment(dev bool) *Environment {
 	return &Environment{Dev: dev}
+}
+
+func GetEnvironmentFromContext(r *http.Request) *Environment {
+	if rv := context.Get(r, SessionEnvKey); rv != nil {
+		return rv.(*Environment)
+	}
+	return nil
+}
+
+func SetEnvironmentToContext(r *http.Request, s *Environment) {
+	context.Set(r, SessionEnvKey, s)
 }
 
 type DatabaseAccessor struct {

@@ -10,6 +10,7 @@ defaultDeviceLimit = 10
 manualRegPlatforms = ["Playstation", "XBox", "Nintendo", "TV", "Chromecast", "Apple TV", "Roku", "Other"]
 
 [webserver]
+enableLogging = true
 # Leave address blank to bind to all addresses
 address = "127.0.0.1"
 httpPort = 8080
@@ -30,6 +31,7 @@ sessionsEncryptKey = ""
 # Valid values: ldap, local
 authMethod = ["local"]
 adminUsers = ["admin"]
+helpDeskUsers = [""]
 
 [auth.ldap]
 useAD = true

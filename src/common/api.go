@@ -17,8 +17,8 @@ const (
 	APIStatusInvalidAuth APIStatus = 10
 	// APIStatusAuthNeeded no active login, but it's needed
 	APIStatusAuthNeeded APIStatus = 11
-	// APIStatusNotAdmin user is not an administrator
-	APIStatusNotAdmin APIStatus = 12
+	// APIStatusInsufficientPrivilages user doesn't have the needed auth level
+	APIStatusInsufficientPrivilages APIStatus = 12
 )
 
 // A APIResponse is returned as a JSON struct to the client

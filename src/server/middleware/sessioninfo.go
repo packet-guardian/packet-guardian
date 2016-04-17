@@ -15,6 +15,7 @@ func SetSessionInfo(e *common.Environment, next http.Handler) http.Handler {
 			e.Log.Error("Failed to get session user: " + err.Error())
 		}
 		common.SetSessionToContext(r, session)
+		common.SetEnvironmentToContext(r, e)
 		models.SetUserToContext(r, sessionUser)
 		next.ServeHTTP(w, r)
 	})

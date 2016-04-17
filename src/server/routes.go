@@ -9,28 +9,53 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/auth"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/controllers"
+	"github.com/onesimus-systems/packet-guardian/src/controllers/api"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
-	"github.com/onesimus-systems/packet-guardian/src/server/middleware"
+	mid "github.com/onesimus-systems/packet-guardian/src/server/middleware"
 )
 
 func LoadRoutes(e *common.Environment) http.Handler {
-	r := mux.NewRouter()
+	r := mux.NewRouter().StrictSlash(true)
 
+	// Page routes
 	bh := &baseHandlers{e: e}
-	r.HandleFunc("/", bh.rootHandler)
 	r.NotFoundHandler = http.HandlerFunc(bh.notFoundHandler)
+	r.HandleFunc("/", bh.rootHandler)
 	r.PathPrefix("/public").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public/"))))
 
-	controllers.NewDevController(e).RegisterRoutes(r)
-	controllers.NewAuthController(e).RegisterRoutes(r)
-	controllers.NewManagerController(e).RegisterRoutes(r)
-	controllers.NewDeviceController(e).RegisterRoutes(r)
-	// controllers.NewAdminController(e).RegisterRoutes(r)
+	authController := controllers.NewAuthController(e)
+	r.HandleFunc("/login", authController.LoginHandler).Methods("GET", "POST")
+	r.HandleFunc("/logout", authController.LogoutHandler).Methods("GET")
+
+	manageController := controllers.NewManagerController(e)
+	r.HandleFunc("/register", manageController.RegistrationHandler).Methods("GET")
+	r.Handle("/manage", mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler))).Methods("GET")
+
+	adminController := controllers.NewAdminController(e)
+	r.Handle("/admin", mid.CheckRead(http.HandlerFunc(adminController.DashboardHandler))).Methods("GET")
+	s := r.PathPrefix("/admin").Subrouter()
+	s.Handle("/manage/{username}", mid.CheckRead(http.HandlerFunc(adminController.ManageHandler))).Methods("GET")
+
+	// API Routes
+	apiRouter := r.PathPrefix("/api").Subrouter()
+
+	deviceApiController := api.NewDeviceController(e)
+	s = apiRouter.PathPrefix("/device").Subrouter()
+	s.HandleFunc("/register", deviceApiController.RegistrationHandler).Methods("POST")
+	s.Handle("/delete", mid.CheckAuthAPI(http.HandlerFunc(deviceApiController.DeleteHandler))).Methods("DELETE")
+
+	// Development Routes
+	if e.Dev {
+		devController := controllers.NewDevController(e)
+		s := r.PathPrefix("/dev").Subrouter()
+		s.HandleFunc("/reloadtemp", devController.ReloadTemplates).Methods("GET")
+		s.HandleFunc("/reloadconf", devController.ReloadConfiguration).Methods("GET")
+	}
 
 	// We're done with Gorilla's special router, convert to an http.Handler
-	h := middleware.SetSessionInfo(e, r)
-	h = middleware.Logging(e, h)
+	h := mid.SetSessionInfo(e, r)
+	h = mid.Logging(e, h)
 
 	return h
 }
@@ -48,8 +73,7 @@ func (b *baseHandlers) rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	if auth.IsLoggedIn(r) {
 		if models.GetUserFromContext(r).IsAdmin() {
-			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
-			//http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
+			http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
 		} else {
 			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		}
@@ -64,9 +88,14 @@ func (b *baseHandlers) rootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *baseHandlers) notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/favicon.ico" { // Special exception
+		http.NotFound(w, r)
+		return
+	}
+
+	b.e.Log.GetLogger("server").Infof("Path not found %s", r.RequestURI)
 	if models.GetUserFromContext(r).IsAdmin() {
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		//http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
 	} else {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 	}
