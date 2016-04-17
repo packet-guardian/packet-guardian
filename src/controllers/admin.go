@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"net"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -20,9 +21,7 @@ func (a *Admin) DashboardHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"sessionUser": models.GetUserFromContext(r),
 	}
-	if err := a.e.Views.NewView("admin-dash", r).Render(w, data); err != nil {
-		a.e.Log.Error(err.Error())
-	}
+	a.e.Views.NewView("admin-dash", r).Render(w, data)
 }
 
 func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request) {
@@ -40,58 +39,42 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	data["sessionUser"] = models.GetUserFromContext(r)
 	data["devices"] = results
 
-	if err := a.e.Views.NewView("admin-manage", r).Render(w, data); err != nil {
-		a.e.Log.Error(err.Error())
-	}
+	a.e.Views.NewView("admin-manage", r).Render(w, data)
 }
 
-//
-// func (a *Admin) adminSearchHandler(w http.ResponseWriter, r *http.Request) {
-// 	// Was a search query performed
-// 	query := r.FormValue("q")
-// 	var results []dhcp.Device
-// 	q := dhcp.Query{}
-// 	if query == "*" {
-// 		q.User = ""
-// 	} else if query != "" {
-// 		if m, err := common.FormatMacAddress(query); err == nil {
-// 			q.MAC = m
-// 		} else if ip := net.ParseIP(query); ip != nil {
-// 			q.IP = ip
-// 		} else {
-// 			q.User = query
-// 		}
-// 	}
-//
-// 	if query != "" {
-// 		results = q.Search(a.e)
-// 	}
-//
-// 	noResultType := ""
-// 	if query != "" && len(results) == 0 {
-// 		if q.User != "" {
-// 			noResultType = "username"
-// 		} else if q.MAC != nil {
-// 			noResultType = "mac"
-// 		} else if q.IP != nil {
-// 			noResultType = "ip"
-// 		}
-// 	}
-//
-// 	data := struct {
-// 		Query         string
-// 		SearchResults []*models.Device
-// 		FlashMessage  string
-// 		NoResultType  string
-// 	}{
-// 		Query:         query,
-// 		SearchResults: results,
-// 		NoResultType:  noResultType,
-// 	}
-// 	if err := a.e.Views.NewView("admin-search").Render(w, data); err != nil {
-// 		a.e.Log.Error(err.Error())
-// 	}
-// }
+func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.FormValue("q")
+	var results []*models.Device
+	var err error
+
+	if query == "*" {
+		results, err = models.SearchDevicesByField(a.e, "username", "%")
+	} else if query != "" {
+		if m, err := common.FormatMacAddress(query); err == nil {
+			results, err = models.SearchDevicesByField(a.e, "mac", m.String())
+		} else if ip := net.ParseIP(query); ip != nil {
+			//results, err = models.SearchDevicesByField(a.e, "registred_from", ip.String())
+			// TODO: Finish IP search when the leases system is implemented
+		} else {
+			results, err = models.SearchDevicesByField(a.e, "username", query+"%")
+			if len(results) == 0 {
+				results, err = models.SearchDevicesByField(a.e, "user_agent", "%"+query+"%")
+			}
+		}
+	}
+
+	if err != nil {
+		a.e.Log.Errorf("Error getting search results: %s", err.Error())
+	}
+
+	data := map[string]interface{}{
+		"query":         query,
+		"searchResults": results,
+	}
+
+	a.e.Views.NewView("admin-search", r).Render(w, data)
+}
+
 //
 // func (a *Admin) adminBlacklistHandler(w http.ResponseWriter, r *http.Request) {
 // 	// Slice of MAC addresses

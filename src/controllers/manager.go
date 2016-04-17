@@ -70,7 +70,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				m.e.Log.Errorf("Error getting device for reg check: %s", err.Error())
 			} else {
-				if device.Blacklisted {
+				if device.IsBlacklisted {
 					flash = "The device appears to be blacklisted"
 				}
 			}
@@ -85,9 +85,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		"username": username,
 	}
 
-	if err := m.e.Views.NewView("register", r).Render(w, data); err != nil {
-		m.e.Log.Error(err.Error())
-	}
+	m.e.Views.NewView("register", r).Render(w, data)
 }
 
 func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
@@ -112,9 +110,7 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	data["devices"] = results
 	data["showAddBtn"] = showAddBtn
 
-	if err := m.e.Views.NewView("manage", r).Render(w, data); err != nil {
-		m.e.Log.Error(err.Error())
-	}
+	m.e.Views.NewView("manage", r).Render(w, data)
 }
 
 func (m *Manager) loadPolicyText() []template.HTML {

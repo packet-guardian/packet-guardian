@@ -36,6 +36,7 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	r.Handle("/admin", mid.CheckRead(http.HandlerFunc(adminController.DashboardHandler))).Methods("GET")
 	s := r.PathPrefix("/admin").Subrouter()
 	s.Handle("/manage/{username}", mid.CheckRead(http.HandlerFunc(adminController.ManageHandler))).Methods("GET")
+	s.Handle("/search", mid.CheckRead(http.HandlerFunc(adminController.SearchHandler))).Methods("GET")
 
 	// API Routes
 	apiRouter := r.PathPrefix("/api").Subrouter()
@@ -72,7 +73,8 @@ func (b *baseHandlers) rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if auth.IsLoggedIn(r) {
-		if models.GetUserFromContext(r).IsAdmin() {
+		sessionUser := models.GetUserFromContext(r)
+		if sessionUser.IsHelpDesk() || sessionUser.IsAdmin() {
 			http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
 		} else {
 			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
@@ -94,7 +96,8 @@ func (b *baseHandlers) notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	b.e.Log.GetLogger("server").Infof("Path not found %s", r.RequestURI)
-	if models.GetUserFromContext(r).IsAdmin() {
+	sessionUser := models.GetUserFromContext(r)
+	if sessionUser.IsHelpDesk() || sessionUser.IsAdmin() {
 		http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
 	} else {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)

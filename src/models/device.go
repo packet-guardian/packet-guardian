@@ -19,7 +19,7 @@ type Device struct {
 	Expires        time.Time
 	DateRegistered time.Time
 	UserAgent      string
-	Blacklisted    bool
+	IsBlacklisted  bool
 }
 
 func NewDevice(e *common.Environment) *Device {
@@ -64,6 +64,11 @@ func GetDeviceCountForUser(e *common.Environment, u *User) (int, error) {
 
 func GetAllDevices(e *common.Environment) ([]*Device, error) {
 	return getDevicesFromDatabase(e, "")
+}
+
+func SearchDevicesByField(e *common.Environment, field, pattern string) ([]*Device, error) {
+	sql := "WHERE \"" + field + "\" LIKE ?"
+	return getDevicesFromDatabase(e, sql, pattern)
 }
 
 func getDevicesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Device, error) {
@@ -113,7 +118,7 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 			Expires:        time.Unix(expires, 0),
 			DateRegistered: time.Unix(dateRegistered, 0),
 			UserAgent:      ua,
-			Blacklisted:    blacklisted,
+			IsBlacklisted:  blacklisted,
 		}
 		results = append(results, device)
 	}
@@ -145,7 +150,7 @@ func (d *Device) updateExisting() error {
 		d.Expires.Unix(),
 		d.DateRegistered.Unix(),
 		d.UserAgent,
-		d.Blacklisted,
+		d.IsBlacklisted,
 		d.ID,
 	)
 	return err
@@ -167,7 +172,7 @@ func (d *Device) saveNew() error {
 		d.Expires.Unix(),
 		d.DateRegistered.Unix(),
 		d.UserAgent,
-		d.Blacklisted,
+		d.IsBlacklisted,
 	)
 	return err
 }

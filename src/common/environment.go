@@ -135,7 +135,7 @@ type View struct {
 	r    *http.Request
 }
 
-func (v *View) Render(w io.Writer, data map[string]interface{}) error {
+func (v *View) Render(w io.Writer, data map[string]interface{}) {
 	if data == nil {
 		data = make(map[string]interface{})
 	}
@@ -146,7 +146,9 @@ func (v *View) Render(w io.Writer, data map[string]interface{}) error {
 	}
 	data["config"] = v.e.Config
 	data["flashMessage"] = flash
-	return v.t.ExecuteTemplate(w, v.name, data)
+	if err := v.t.ExecuteTemplate(w, v.name, data); err != nil {
+		v.e.Log.Errorf("Error rendering %s", err.Error())
+	}
 }
 
 type Logger struct {

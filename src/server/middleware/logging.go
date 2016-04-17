@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
@@ -10,8 +11,9 @@ import (
 // of its response as well as the request's status returned to the client
 type responseWriter struct {
 	http.ResponseWriter
-	length int
-	status int
+	length    int
+	status    int
+	startTime time.Time
 }
 
 func (w *responseWriter) Write(b []byte) (n int, err error) {
@@ -25,19 +27,27 @@ func (w *responseWriter) WriteHeader(status int) {
 	w.ResponseWriter.WriteHeader(status)
 }
 
+func (w *responseWriter) requestTime() time.Duration {
+	return time.Since(w.startTime)
+}
+
 func Logging(e *common.Environment, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w = &responseWriter{w, 0, 200}
-		next.ServeHTTP(w, r)
+		newW := &responseWriter{
+			ResponseWriter: w,
+			status:         200,
+			startTime:      time.Now(),
+		}
+		next.ServeHTTP(newW, r)
 		if e.Config.Webserver.EnableLogging {
-			resp := w.(*responseWriter)
 			e.Log.GetLogger("server").Infof(
-				"%s %s \"%s\" %d %d",
+				"%s %s \"%s\" %d %d %s",
 				r.RemoteAddr,
 				r.Method,
 				r.URL.Path,
-				resp.status,
-				resp.length,
+				newW.status,
+				newW.length,
+				newW.requestTime().String(),
 			)
 		}
 	})

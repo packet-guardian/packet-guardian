@@ -33,7 +33,7 @@
             {{range .devices}}
             <tr>
                 <td><input type="checkbox" value="{{.MAC}}" class="device-select"></td>
-                <td>{{if .Blacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
+                <td>{{if .IsBlacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
                 <td class="ua">{{.UserAgent}}</td>
                 <td>{{.Platform}}</td>
                 <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>

@@ -30,9 +30,7 @@ func (a *Auth) showLoginPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return
 	}
-	if err := a.e.Views.NewView("login", r).Render(w, nil); err != nil {
-		a.e.Log.Error(err.Error())
-	}
+	a.e.Views.NewView("login", r).Render(w, nil)
 }
 
 func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {

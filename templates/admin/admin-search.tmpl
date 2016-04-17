@@ -1,23 +1,19 @@
 {{define "admin-search"}}
-{{template "header" dict "css" (list "admin-search") "main" .}}
+{{template "header" dict "css" (list "admin-search") "main" . "page-title" "Admin Search"}}
 <div class="admin-search">
     <h2>Administration Search</h2>
     <form method="GET">
         <div class="controls">
-            <input type="text" name="q" placeholder="Search" value="{{.Query}}" autofocus="autofocus">
+            <input type="text" name="q" placeholder="Search" value="{{.query}}" autofocus="autofocus">
             <button type="submit">Search</button>
         </div>
     </form>
 
-    {{if eq (len .SearchResults) 0}}
-        {{if eq .NoResultType "ip"}}
-        <div class="no-devices">IP lease not found</div>
-        {{else if eq .NoResultType "mac"}}
-        <div class="no-devices">No devices found</div>
-        {{else if eq .NoResultType "username"}}
-        <div class="no-devices">No devices found for user <a href="/admin/user/{{.Query}}">{{.Query}}</a></div>
-        {{else}}
+    {{if eq (len .searchResults) 0}}
+        {{if eq .query ""}}
         <div class="no-devices">Please enter a search query</div>
+        {{else}}
+        <div class="no-devices">No results found</div>
         {{end}}
     {{else}}
     <p>
@@ -32,14 +28,14 @@
             <th>Date Registered</th>
             <th>Registered From</th>
         </tr>
-        {{range .SearchResults}}
+        {{range .searchResults}}
         <tr>
-            <td>{{if .Blacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
-            <td><a href="/admin/user/{{.Username}}">{{.Username}}</a></td>
+            <td>{{if .IsBlacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
+            <td><a href="/admin/manage/{{.Username}}">{{.Username}}</a></td>
             <td class="ua">{{.UserAgent}}</td>
             <td>{{.Platform}}</td>
             <td>{{.DateRegistered}}</td>
-            <td>{{.RegIP}}</td>
+            <td>{{.RegisteredFrom}}</td>
         </tr>
         {{end}}
     </table>

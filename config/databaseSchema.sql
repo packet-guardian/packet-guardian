@@ -25,7 +25,8 @@ CREATE TABLE "user" (
     "valid_forever" INTEGER DEFAULT (1)
 );
 
-INSERT INTO "user" ("username", "password") VALUES ("admin", "$2a$10$qTSqBy7YI8YVMNT0Ozl99uImx4jEYgUKJrA4qJcnffMmpOB3mOcEq");
+INSERT INTO "user" ("username", "password") VALUES ("admin", "$2a$10$rZfN/gdXZdGYyLtUb6LF.eHOraDes3ibBECmWic2I3SocMC0L2Lxa");
+INSERT INTO "user" ("username", "password") VALUES ("helpdesk", "$2a$10$ICCdq/OyZBBoNPTRmfgntOnujD6INGv7ZAtA/Xq6JIdRMO65xCuNC");
 
 DROP TABLE "blacklist";
 CREATE TABLE "blacklist" (

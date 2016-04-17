@@ -31,7 +31,7 @@ sessionsEncryptKey = ""
 # Valid values: ldap, local
 authMethod = ["local"]
 adminUsers = ["admin"]
-helpDeskUsers = [""]
+helpDeskUsers = ["helpdesk"]
 
 [auth.ldap]
 useAD = true

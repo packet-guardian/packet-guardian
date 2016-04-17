@@ -88,6 +88,11 @@ func GetAllUsers(e *common.Environment) ([]*User, error) {
 	return getUsersFromDatabase(e, "")
 }
 
+func SearchUsersByField(e *common.Environment, field, pattern string) ([]*User, error) {
+	sql := "WHERE \"" + field + "\" LIKE ?"
+	return getUsersFromDatabase(e, sql, pattern)
+}
+
 func getUsersFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*User, error) {
 	sql := "SELECT \"id\", \"username\", \"password\", \"device_limit\", \"default_expiration\", \"expiration_type\", \"can_manage\", \"valid_forever\", \"valid_start\", \"valid_end\" FROM \"user\" " + where
 	rows, err := e.DB.Query(sql, values...)
