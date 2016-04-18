@@ -47,6 +47,8 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 		// The context user is not filled in here
 		if common.StringInSlice(username, a.e.Config.Auth.AdminUsers) {
 			a.e.Log.Infof("Successful login by administrative user %s", username)
+		} else if common.StringInSlice(username, a.e.Config.Auth.HelpDeskUsers) {
+			a.e.Log.Infof("Successful login by helpdesk user %s", username)
 		} else {
 			a.e.Log.Infof("Successful login by user %s", username)
 		}

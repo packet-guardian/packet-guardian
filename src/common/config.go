@@ -12,9 +12,14 @@ import (
 type Config struct {
 	sourceFile string
 	Core       struct {
-		DatabaseFile    string
 		SiteTitle       string
 		SiteCompanyName string
+	}
+	Database struct {
+		Type     string
+		Address  string
+		Username string
+		Password string
 	}
 	Registration struct {
 		RegistrationPolicyFile   string

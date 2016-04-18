@@ -46,8 +46,16 @@ type DatabaseAccessor struct {
 	*sql.DB
 }
 
-func NewDatabaseAccessor(file string) (*DatabaseAccessor, error) {
-	db, err := sql.Open("sqlite3", file)
+func NewDatabaseAccessor(config *Config) (*DatabaseAccessor, error) {
+	var db *sql.DB
+	var err error
+
+	if config.Database.Type == "sqlite" {
+		db, err = sql.Open("sqlite3", config.Database.Address)
+	} else {
+		return nil, errors.New("Unsupported database type " + config.Database.Type)
+	}
+
 	if err != nil {
 		return nil, err
 	}

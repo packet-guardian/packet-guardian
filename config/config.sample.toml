@@ -1,7 +1,12 @@
 [core]
-databaseFile = "config/database.sqlite3"
 siteTitle = "Packet Guardian"
 siteCompanyName = ""
+
+[database]
+type = "sqlite"
+address = "private/database.sqlite3"
+username = ""
+password = ""
 
 [registration]
 registrationPolicyFile = "config/policy.txt"

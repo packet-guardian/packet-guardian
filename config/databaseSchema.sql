@@ -1,4 +1,4 @@
-DROP TABLE "device";
+DROP TABLE IF EXISTS "device";
 CREATE TABLE "device" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
     "mac" TEXT NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE "device" (
     "blacklisted" INTEGER DEFAULT (0)
 );
 
-DROP TABLE "user";
+DROP TABLE IF EXISTS "user";
 CREATE TABLE "user" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     "username" TEXT NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE "user" (
 INSERT INTO "user" ("username", "password") VALUES ("admin", "$2a$10$rZfN/gdXZdGYyLtUb6LF.eHOraDes3ibBECmWic2I3SocMC0L2Lxa");
 INSERT INTO "user" ("username", "password") VALUES ("helpdesk", "$2a$10$ICCdq/OyZBBoNPTRmfgntOnujD6INGv7ZAtA/Xq6JIdRMO65xCuNC");
 
-DROP TABLE "blacklist";
+DROP TABLE IF EXISTS "blacklist";
 CREATE TABLE "blacklist" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     "value" TEXT NOT NULL UNIQUE ON CONFLICT IGNORE
