@@ -42,6 +42,9 @@ type User struct {
 	blacklistCached      bool
 	blacklistSave        bool
 	blacklisted          bool
+
+	isAdmin    int
+	isHelpDesk int
 }
 
 // NewUser creates a new base user
@@ -57,6 +60,8 @@ func NewUser(e *common.Environment) *User {
 		DeviceExpirationType: UserDeviceExpirationGlobal,
 		ValidForever:         true,
 		CanManage:            true,
+		isAdmin:              -1,
+		isHelpDesk:           -1,
 	}
 }
 
@@ -141,6 +146,8 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 			ValidEnd:             time.Unix(validEnd, 0),
 			ValidForever:         validForever,
 			CanManage:            canManage,
+			isAdmin:              -1,
+			isHelpDesk:           -1,
 		}
 		results = append(results, user)
 	}
@@ -175,11 +182,25 @@ func (u *User) RemovePassword() {
 }
 
 func (u *User) IsAdmin() bool {
-	return common.StringInSlice(u.Username, u.e.Config.Auth.AdminUsers)
+	if u.isAdmin != -1 {
+		return (u.isAdmin == 1)
+	}
+	u.isAdmin = 0
+	if common.StringInSlice(u.Username, u.e.Config.Auth.AdminUsers) {
+		u.isAdmin = 1
+	}
+	return (u.isAdmin == 1)
 }
 
 func (u *User) IsHelpDesk() bool {
-	return common.StringInSlice(u.Username, u.e.Config.Auth.HelpDeskUsers)
+	if u.isHelpDesk != -1 {
+		return (u.isHelpDesk == 1)
+	}
+	u.isHelpDesk = 0
+	if common.StringInSlice(u.Username, u.e.Config.Auth.HelpDeskUsers) {
+		u.isHelpDesk = 1
+	}
+	return (u.isHelpDesk == 1)
 }
 
 func (u *User) IsBlacklisted() bool {
@@ -206,6 +227,10 @@ func (u *User) Unblacklist() {
 	u.blacklistCached = true
 	u.blacklisted = false
 	u.blacklistSave = true
+}
+
+func (u *User) SaveToBlacklist() error {
+	return u.writeToBlacklist()
 }
 
 func (u *User) Save() error {

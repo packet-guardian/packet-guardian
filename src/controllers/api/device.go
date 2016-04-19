@@ -69,19 +69,21 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get and enforce the device limit
 	var err error
-	limit := d.e.Config.Registration.DefaultDeviceLimit
-	if formUser.DeviceLimit != models.UserDeviceLimitGlobal {
-		limit = int(formUser.DeviceLimit)
-	}
+	if !sessionUser.IsAdmin() { // Admins can register above the limit
+		limit := d.e.Config.Registration.DefaultDeviceLimit
+		if formUser.DeviceLimit != models.UserDeviceLimitGlobal {
+			limit = int(formUser.DeviceLimit)
+		}
 
-	deviceCount, err := models.GetDeviceCountForUser(d.e, formUser)
-	if err != nil {
-		d.e.Log.Errorf("Error getting device count: %s", err.Error())
-	}
-	// A limit of 0 means unlimited
-	if limit != 0 && deviceCount >= limit {
-		common.NewAPIResponse(common.APIStatusGenericError, "Device limit reached", nil).WriteTo(w)
-		return
+		deviceCount, err := models.GetDeviceCountForUser(d.e, formUser)
+		if err != nil {
+			d.e.Log.Errorf("Error getting device count: %s", err.Error())
+		}
+		// A limit of 0 means unlimited
+		if limit != 0 && deviceCount >= limit {
+			common.NewAPIResponse(common.APIStatusGenericError, "Device limit reached", nil).WriteTo(w)
+			return
+		}
 	}
 
 	// Get MAC address
@@ -157,7 +159,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	// Redirect client as needed
 	resp := struct{ Location string }{Location: "/manage"}
 	if sessionUser.IsAdmin() {
-		//resp.Location = "/admin/user/" + formUser.Username
+		resp.Location = "/admin/manage/" + formUser.Username
 	}
 
 	common.NewAPIOK("Registration successful", resp).WriteTo(w)
@@ -165,14 +167,24 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
+	formUser := sessionUser
 	if r.FormValue("username") != sessionUser.Username {
-		common.NewAPIResponse(common.APIStatusGenericError, "Admin Error", nil).WriteTo(w)
-		return
+		if !sessionUser.IsAdmin() {
+			common.NewAPIResponse(common.APIStatusGenericError, "Admin Error", nil).WriteTo(w)
+			return
+		}
+		var err error
+		formUser, err = models.GetUserByUsername(d.e, r.FormValue("username"))
+		if err != nil {
+			d.e.Log.Errorf("Error getting user: %s", err.Error())
+			common.NewAPIResponse(common.APIStatusGenericError, "Server error", nil).WriteTo(w)
+			return
+		}
 	}
 
 	deleteAll := (r.FormValue("mac") == "")
 	macsToDelete := strings.Split(r.FormValue("mac"), ",")
-	usersDevices, err := models.GetDevicesForUser(d.e, sessionUser)
+	usersDevices, err := models.GetDevicesForUser(d.e, formUser)
 	if err != nil {
 		d.e.Log.Errorf("Error deleting devices: %s", err.Error())
 		common.NewAPIResponse(common.APIStatusGenericError, "Error deleting devices", nil).WriteTo(w)
@@ -181,14 +193,17 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	finishedWithErrors := false
 	for _, device := range usersDevices {
-		if deleteAll || common.StringInSlice(device.MAC.String(), macsToDelete) {
-			if err := device.Delete(); err != nil {
-				d.e.Log.Errorf("Error deleting device %s: %s", device.MAC.String(), err.Error())
-				finishedWithErrors = true
-			} else {
-				d.e.Log.Infof("Deleted device %s for user %s", device.MAC.String(), sessionUser.Username)
-			}
+		if !deleteAll && !common.StringInSlice(device.MAC.String(), macsToDelete) {
+			continue
 		}
+
+		if err := device.Delete(); err != nil {
+			d.e.Log.Errorf("Error deleting device %s: %s", device.MAC.String(), err.Error())
+			finishedWithErrors = true
+			continue
+		}
+
+		d.e.Log.Infof("Deleted device %s for user %s", device.MAC.String(), formUser.Username)
 	}
 
 	if finishedWithErrors {

@@ -4,7 +4,7 @@
 {{/* Helpdesk users are read-only */}}
 <div class="manager">
     <form>
-        <input type="hidden" name="username" value="{{.Username}}">
+        <input type="hidden" name="username" value="{{.user.Username}}">
         <div class="info">
             <span class="text-label">Username:</span>
             <span class="username">{{.user.Username}}</span>
@@ -23,7 +23,7 @@
 
             {{if .sessionUser.IsAdmin}}
                 <div class="admin-controls">
-                   <button type="button" name="black-user-btn" data-blacklisted="{{.IsBlacklisted}}" class="admin-btn">Blacklist Username</button>
+                   <button type="button" name="black-user-btn" data-blacklisted="{{.user.IsBlacklisted}}" class="admin-btn">Blacklist Username</button>
                 </div>
                 {{if gt (len .devices) 0}}
                 <div class="admin-controls">
@@ -51,7 +51,7 @@
             </tr>
             {{range .devices}}
             <tr>
-                {{if $.sessionUser.IsAdmin}}<td><input type="checkbox" value="{{.ID}}" class="device-select"></td>{{end}}
+                {{if $.sessionUser.IsAdmin}}<td><input type="checkbox" value="{{.MAC}}" class="device-select"></td>{{end}}
                 <td>{{if .IsBlacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
                 <td class="ua">{{.UserAgent}}</td>
                 <td>{{.Platform}}</td>
@@ -69,5 +69,5 @@
     </p>
     {{end}}
 </div>
-{{template "footer" dict "js" (list "manage")}}
+{{template "footer" dict "js" (list "manage" "manage-admin")}}
 {{end}}

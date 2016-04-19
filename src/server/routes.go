@@ -32,19 +32,8 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	r.HandleFunc("/register", manageController.RegistrationHandler).Methods("GET")
 	r.Handle("/manage", mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler))).Methods("GET")
 
-	adminController := controllers.NewAdminController(e)
-	r.Handle("/admin", mid.CheckRead(http.HandlerFunc(adminController.DashboardHandler))).Methods("GET")
-	s := r.PathPrefix("/admin").Subrouter()
-	s.Handle("/manage/{username}", mid.CheckRead(http.HandlerFunc(adminController.ManageHandler))).Methods("GET")
-	s.Handle("/search", mid.CheckRead(http.HandlerFunc(adminController.SearchHandler))).Methods("GET")
-
-	// API Routes
-	apiRouter := r.PathPrefix("/api").Subrouter()
-
-	deviceApiController := api.NewDeviceController(e)
-	s = apiRouter.PathPrefix("/device").Subrouter()
-	s.HandleFunc("/register", deviceApiController.RegistrationHandler).Methods("POST")
-	s.Handle("/delete", mid.CheckAuthAPI(http.HandlerFunc(deviceApiController.DeleteHandler))).Methods("DELETE")
+	r.PathPrefix("/admin").Handler(adminRouter(e))
+	r.PathPrefix("/api").Handler(apiRouter(e))
 
 	// Development Routes
 	if e.Dev {
@@ -59,6 +48,33 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	h = mid.Logging(e, h)
 
 	return h
+}
+
+func adminRouter(e *common.Environment) http.Handler {
+	r := mux.NewRouter()
+	get := r.Methods("GET").Subrouter()
+
+	adminController := controllers.NewAdminController(e)
+	get.HandleFunc("/admin", adminController.DashboardHandler)
+	get.HandleFunc("/admin/search", adminController.SearchHandler)
+	get.HandleFunc("/admin/manage/{username}", adminController.ManageHandler)
+
+	h := mid.CheckAdmin(r)
+	h = mid.CheckAuth(h)
+	return h
+}
+
+func apiRouter(e *common.Environment) http.Handler {
+	r := mux.NewRouter()
+
+	deviceApiController := api.NewDeviceController(e)
+	r.HandleFunc("/api/device/register", deviceApiController.RegistrationHandler).Methods("POST")
+	r.HandleFunc("/api/device/delete", deviceApiController.DeleteHandler).Methods("DELETE")
+
+	blacklistController := api.NewBlacklistController(e)
+	r.HandleFunc("/api/blacklist/{type}", blacklistController.BlacklistHandler).Methods("POST", "DELETE")
+
+	return mid.CheckAPI(r)
 }
 
 type baseHandlers struct {

@@ -13,6 +13,8 @@ const (
 	APIStatusOK APIStatus = 0
 	// APIStatusGenericError something went wrong but there's no specific error number for it
 	APIStatusGenericError APIStatus = 1
+	// APIStatusMalformedRequest means the request wasn't formatted properly or not all the required data was sent
+	APIStatusMalformedRequest APIStatus = 2
 	// APIStatusInvalidAuth failed login
 	APIStatusInvalidAuth APIStatus = 10
 	// APIStatusAuthNeeded no active login, but it's needed
