@@ -5,19 +5,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func normalAuth(db *common.DatabaseAccessor, username, password string) bool {
-	if password == "" || username == "" {
-		return false
-	}
+func init() {
+	authFunctions["local"] = normalAuth
+}
 
-	stmt, err := db.Prepare("SELECT \"password\" FROM \"user\" WHERE \"username\" = ?")
-	if err != nil {
-		return false
-	}
-	user := stmt.QueryRow(username)
+func normalAuth(e *common.Environment, username, password string) bool {
+	result := e.DB.QueryRow(`SELECT "password" FROM "user" WHERE "username" = ?`, username)
 
 	var storedPass string
-	err = user.Scan(&storedPass)
+	err := result.Scan(&storedPass)
 	if err != nil {
 		return false
 	}

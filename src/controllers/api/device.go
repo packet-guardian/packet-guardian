@@ -27,7 +27,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	if !auth.IsLoggedIn(r) {
 		username := r.FormValue("username")
 		// Authenticate
-		if !auth.IsValidLogin(d.e.DB, username, r.FormValue("password")) {
+		if !auth.IsValidLogin(d.e, username, r.FormValue("password")) {
 			d.e.Log.Errorf("Failed authentication for %s", username)
 			common.NewAPIResponse(common.APIStatusInvalidAuth, "Incorrect username or password", nil).WriteTo(w)
 			return

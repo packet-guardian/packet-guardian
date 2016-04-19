@@ -46,9 +46,21 @@ type Config struct {
 		HelpDeskUsers []string
 
 		LDAP struct {
-			UseAD   bool
+			UseAD      bool
+			Servers    []string
+			UseTLS     bool
+			DomainName string
+
+			BaseDN       string
+			BindDN       string
+			BindPassword string
+			UserFilter   string
+			GroupFilter  string
+		}
+		Radius struct {
 			Servers []string
-			UseTLS  bool
+			Port    int
+			Secret  string
 		}
 	}
 	DHCP struct {

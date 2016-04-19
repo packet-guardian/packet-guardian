@@ -37,7 +37,7 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	// Assume invalid until convinced otherwise
 	resp := common.NewAPIResponse(common.APIStatusInvalidAuth, "Invalid login", nil)
 	username := r.FormValue("username")
-	if auth.IsValidLogin(a.e.DB, username, r.FormValue("password")) {
+	if auth.IsValidLogin(a.e, username, r.FormValue("password")) {
 		resp.Code = common.APIStatusOK
 		resp.Message = ""
 		sess := common.GetSessionFromContext(r)

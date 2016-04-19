@@ -33,19 +33,28 @@ sessionsEncryptKey = ""
 
 [auth]
 # An array of auth types in order of precidence
-# Valid values: ldap, local
+# Valid values: ldap, ad, local
 authMethod = ["local"]
 adminUsers = ["admin"]
 helpDeskUsers = ["helpdesk"]
 
 [auth.ldap]
 useAD = true
+domainName = "example.com"
 servers = ["127.0.0.1"]
 useTLS = true
 
-# If using Active Directory, ignore the remaining LDAP settings
-#useDN = ""
-#... other LDAPy things
+# Below LDAP settings for non-AD environments only
+baseDN = ""
+bindDN = ""
+bindPassword = ""
+userFilter = ""
+groupFilter = ""
+
+[auth.radius]
+server = [""]
+port = 1812
+secret = ""
 
 [dhcp]
 configFile = "config/dhcp.conf"
