@@ -52,7 +52,7 @@ func GetDevicesForUser(e *common.Environment, u *User) ([]*Device, error) {
 }
 
 func GetDeviceCountForUser(e *common.Environment, u *User) (int, error) {
-	sql := "SELECT count(*) as \"device_count\" FROM \"device\" WHERE \"username\" = ?"
+	sql := `SELECT count(*) as "device_count" FROM "device" WHERE "username" = ?`
 	row := e.DB.QueryRow(sql, u.Username)
 	var deviceCount int
 	err := row.Scan(&deviceCount)
@@ -72,7 +72,7 @@ func SearchDevicesByField(e *common.Environment, field, pattern string) ([]*Devi
 }
 
 func getDevicesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Device, error) {
-	sql := "SELECT \"id\", \"mac\", \"username\", \"registered_from\", \"platform\", \"expires\", \"date_registered\", \"user_agent\", \"blacklisted\" FROM \"device\" " + where
+	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted" FROM "device" ` + where
 
 	rows, err := e.DB.Query(sql, values...)
 	if err != nil {
@@ -126,7 +126,7 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 }
 
 func DeleteAllDeviceForUser(e *common.Environment, u *User) error {
-	sql := "DELETE FROM \"device\" WHERE \"username\" = ?"
+	sql := `DELETE FROM "device" WHERE "username" = ?`
 	_, err := e.DB.Exec(sql, u.Username)
 	return err
 }
@@ -138,8 +138,13 @@ func (d *Device) Save() error {
 	return d.updateExisting()
 }
 
+func (d *Device) detectPlatform() string {
+	// Do some contains magic and figure out the platform
+	return ""
+}
+
 func (d *Device) updateExisting() error {
-	sql := "UPDATE \"device\" SET \"mac\" = ?, \"username\" = ?, \"registered_from\" = ?, \"platform\" = ?, \"expires\" = ?, \"date_registered\" = ?, \"user_agent\" = ?, \"blacklisted\" = ? WHERE \"id\" = ?"
+	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "blacklisted" = ? WHERE "id" = ?`
 
 	_, err := d.e.DB.Exec(
 		sql,
@@ -161,14 +166,14 @@ func (d *Device) saveNew() error {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := "INSERT INTO \"device\" (\"mac\", \"username\", \"registered_from\", \"platform\", \"expires\", \"date_registered\", \"user_agent\", \"blacklisted\") VALUES (?,?,?,?,?,?,?,?)"
+	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted") VALUES (?,?,?,?,?,?,?,?)`
 
 	_, err := d.e.DB.Exec(
 		sql,
 		d.MAC.String(),
 		d.Username,
 		d.RegisteredFrom.String(),
-		d.Platform,
+		d.detectPlatform(),
 		d.Expires.Unix(),
 		d.DateRegistered.Unix(),
 		d.UserAgent,
@@ -178,7 +183,7 @@ func (d *Device) saveNew() error {
 }
 
 func (d *Device) Delete() error {
-	sql := "DELETE FROM \"device\" WHERE \"id\" = ?"
+	sql := `DELETE FROM "device" WHERE "id" = ?`
 	_, err := d.e.DB.Exec(sql, d.ID)
 	return err
 }

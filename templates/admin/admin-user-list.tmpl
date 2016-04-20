@@ -1,5 +1,5 @@
-{{define "admin-users"}}
-{{template "header" dict "css" (list "admin-users") "main" .}}
+{{define "admin-user-list"}}
+{{template "header" dict "css" (list "admin-users") "main" . "pageTitle" "Admin User Management"}}
 <div class="admin-users">
     <h2>Administration Users</h2>
 
@@ -24,27 +24,21 @@
             <th>Valid</th>
             <th>Default Expiration</th>
         </tr>
-        {{range .Users}}
+        {{range .users}}
         <tr>
             <td><a href="/admin/users/{{.Username}}">edit</a></td>
-            <td><a href="/admin/user/{{.Username}}">{{.Username}}</a></td>
+            <td><a href="/admin/manage/{{.Username}}">{{.Username}}</a></td>
             <td>{{if eq .DeviceLimit 0}}Unlimited
                 {{else if eq .DeviceLimit -1}}Global
                 {{else}}{{.DeviceLimit}} <span class="userLimit">&bull;</span>
                 {{end}}</td>
-            {{if .UserNeverExpires}}
-            <td>Always</td>
+            {{if .ValidForever}}
+            <td>Forever</td>
             {{else}}
-            <td>{{.ValidAfter}} to {{.ValidBefore}}</td>
+            <td>{{.ValidStart}} to {{.ValidEnd}}</td>
             {{end}}
 
-            {{if eq .RawExpiration 0}}
-            <td>Never</td>
-            {{else if eq .RawExpiration 1}}
-            <td>Global</td>
-            {{else}}
-            <td>{{.DefaultExpiration}}</td>
-            {{end}}
+            <td>{{.DeviceExpiration.String}}</td>
         </tr>
         {{end}}
     </table>

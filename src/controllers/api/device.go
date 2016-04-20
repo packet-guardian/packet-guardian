@@ -67,12 +67,12 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Get and enforce the device limit
 	var err error
 	if !sessionUser.IsAdmin() { // Admins can register above the limit
-		limit := d.e.Config.Registration.DefaultDeviceLimit
+		// Get and enforce the device limit
+		limit := models.UserDeviceLimit(d.e.Config.Registration.DefaultDeviceLimit)
 		if formUser.DeviceLimit != models.UserDeviceLimitGlobal {
-			limit = int(formUser.DeviceLimit)
+			limit = formUser.DeviceLimit
 		}
 
 		deviceCount, err := models.GetDeviceCountForUser(d.e, formUser)
@@ -80,7 +80,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 			d.e.Log.Errorf("Error getting device count: %s", err.Error())
 		}
 		// A limit of 0 means unlimited
-		if limit != 0 && deviceCount >= limit {
+		if limit != models.UserDeviceLimitUnlimited && deviceCount >= int(limit) {
 			common.NewAPIResponse(common.APIStatusGenericError, "Device limit reached", nil).WriteTo(w)
 			return
 		}
@@ -145,7 +145,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	device.Username = formUser.Username
 	device.RegisteredFrom = ip
 	device.Platform = platform
-	device.Expires = time.Unix(0, 0)
+	device.Expires = formUser.DeviceExpiration.NextExpiration(d.e)
 	device.DateRegistered = time.Now()
 	device.UserAgent = r.UserAgent()
 

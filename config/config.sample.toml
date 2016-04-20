@@ -52,7 +52,7 @@ userFilter = ""
 groupFilter = ""
 
 [auth.radius]
-server = [""]
+servers = [""]
 port = 1812
 secret = ""
 

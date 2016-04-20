@@ -59,3 +59,7 @@ label {
 .admin-user input[type="text"], .admin-user input[type="password"] {
     width: 300px;
 }
+
+label, .label {
+    font-weight: bold;
+}

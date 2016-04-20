@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/onesimus-systems/packet-guardian/src/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -10,18 +11,20 @@ func init() {
 }
 
 func normalAuth(e *common.Environment, username, password string) bool {
-	result := e.DB.QueryRow(`SELECT "password" FROM "user" WHERE "username" = ?`, username)
+	user, err := models.GetUserByUsername(e, username)
+	if err != nil {
+		e.Log.Errorf("Error authenticating user: %s", err.Error())
+		return false
+	}
 
-	var storedPass string
-	err := result.Scan(&storedPass)
+	testPass := user.GetPassword()
+
+	// Always hash to avoid timing attacks
+	err = bcrypt.CompareHashAndPassword([]byte(testPass), []byte(password))
 	if err != nil {
 		return false
 	}
 
-	if storedPass == "" {
-		return false
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(storedPass), []byte(password))
-	return (err == nil)
+	// If the passwords match, check if the user is still valid
+	return user.IsExpired()
 }

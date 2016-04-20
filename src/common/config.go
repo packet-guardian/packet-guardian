@@ -46,10 +46,10 @@ type Config struct {
 		HelpDeskUsers []string
 
 		LDAP struct {
-			UseAD      bool
-			Servers    []string
-			UseTLS     bool
-			DomainName string
+			UseAD         bool
+			Servers       []string
+			VerifySSLCert bool
+			DomainName    string
 
 			BaseDN       string
 			BindDN       string

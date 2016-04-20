@@ -19,9 +19,8 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	r := mux.NewRouter().StrictSlash(true)
 
 	// Page routes
-	bh := &baseHandlers{e: e}
-	r.NotFoundHandler = http.HandlerFunc(bh.notFoundHandler)
-	r.HandleFunc("/", bh.rootHandler)
+	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	r.HandleFunc("/", rootHandler)
 	r.PathPrefix("/public").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public/"))))
 
 	authController := controllers.NewAuthController(e)
@@ -52,12 +51,15 @@ func LoadRoutes(e *common.Environment) http.Handler {
 
 func adminRouter(e *common.Environment) http.Handler {
 	r := mux.NewRouter()
+	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	get := r.Methods("GET").Subrouter()
 
 	adminController := controllers.NewAdminController(e)
 	get.HandleFunc("/admin", adminController.DashboardHandler)
 	get.HandleFunc("/admin/search", adminController.SearchHandler)
 	get.HandleFunc("/admin/manage/{username}", adminController.ManageHandler)
+	get.HandleFunc("/admin/users", adminController.AdminUserListHandler)
+	get.HandleFunc("/admin/users/{username}", adminController.AdminUserHandler)
 
 	h := mid.CheckAdmin(r)
 	h = mid.CheckAuth(h)
@@ -74,18 +76,18 @@ func apiRouter(e *common.Environment) http.Handler {
 	blacklistController := api.NewBlacklistController(e)
 	r.HandleFunc("/api/blacklist/{type}", blacklistController.BlacklistHandler).Methods("POST", "DELETE")
 
+	userApiController := api.NewUserController(e)
+	r.HandleFunc("/api/user", userApiController.UserHandler).Methods("POST", "DELETE")
+
 	return mid.CheckAPI(r)
 }
 
-type baseHandlers struct {
-	e *common.Environment
-}
-
-func (b *baseHandlers) rootHandler(w http.ResponseWriter, r *http.Request) {
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+	e := common.GetEnvironmentFromContext(r)
 	ip := strings.Split(r.RemoteAddr, ":")[0]
-	reg, err := dhcp.IsRegisteredByIP(b.e, net.ParseIP(ip))
+	reg, err := dhcp.IsRegisteredByIP(e, net.ParseIP(ip))
 	if err != nil {
-		b.e.Log.Errorf("Error checking auto registration IP: %s", err.Error())
+		e.Log.Errorf("Error checking auto registration IP: %s", err.Error())
 	}
 
 	if auth.IsLoggedIn(r) {
@@ -105,13 +107,14 @@ func (b *baseHandlers) rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (b *baseHandlers) notFoundHandler(w http.ResponseWriter, r *http.Request) {
+func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	e := common.GetEnvironmentFromContext(r)
 	if r.URL.Path == "/favicon.ico" { // Special exception
 		http.NotFound(w, r)
 		return
 	}
 
-	b.e.Log.GetLogger("server").Infof("Path not found %s", r.RequestURI)
+	e.Log.GetLogger("server").Infof("Path not found %s", r.RequestURI)
 	sessionUser := models.GetUserFromContext(r)
 	if sessionUser.IsHelpDesk() || sessionUser.IsAdmin() {
 		http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)

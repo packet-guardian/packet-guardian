@@ -75,6 +75,9 @@ func (lc *LDAPClient) Authenticate(username, password string) (bool, map[string]
 	if lc.ADDomainName != "" {
 		err = lc.Conn.Bind(username+"@"+lc.ADDomainName, password)
 		if err != nil {
+			if ldap.IsErrorWithCode(err, ldap.LDAPResultInvalidCredentials) {
+				return false, nil, nil
+			}
 			return false, nil, err
 		}
 		return true, nil, nil
@@ -121,7 +124,10 @@ func (lc *LDAPClient) Authenticate(username, password string) (bool, map[string]
 	// Bind as the user to verify their password
 	err = lc.Conn.Bind(userDN, password)
 	if err != nil {
-		return false, user, err
+		if ldap.IsErrorWithCode(err, ldap.LDAPResultInvalidCredentials) {
+			return false, nil, nil
+		}
+		return false, nil, err
 	}
 
 	// Rebind as the read only user for any further queries

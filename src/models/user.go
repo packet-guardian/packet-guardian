@@ -19,29 +19,72 @@ const (
 	UserDeviceExpirationGlobal   UserExpiration = 1
 	UserDeviceExpirationSpecific UserExpiration = 2
 	UserDeviceExpirationDuration UserExpiration = 3
+	UserDeviceExpirationDaily    UserExpiration = 4
 
 	UserDeviceLimitGlobal    UserDeviceLimit = -1
 	UserDeviceLimitUnlimited UserDeviceLimit = 0
 )
 
+type UserDeviceExpiration struct {
+	Mode  UserExpiration
+	Value int64
+}
+
+func (e *UserDeviceExpiration) String() string {
+	if e.Mode == UserDeviceExpirationNever {
+		return "Never"
+	} else if e.Mode == UserDeviceExpirationGlobal {
+		return "Global"
+	} else if e.Mode == UserDeviceExpirationSpecific {
+		return time.Unix(e.Value, 0).Format(common.TimeFormat)
+	} else if e.Mode == UserDeviceExpirationDuration {
+		return (time.Duration(e.Value) * time.Second).String()
+	} else {
+		year, month, day := time.Now().Date()
+		bod := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+		bod = bod.Add(time.Duration(e.Value) * time.Second)
+		return "Daily at " + bod.Format("15:04")
+	}
+}
+
+func (e *UserDeviceExpiration) NextExpiration(env *common.Environment) time.Time {
+	if e.Mode == UserDeviceExpirationNever {
+		return time.Unix(0, 0)
+	} else if e.Mode == UserDeviceExpirationGlobal {
+		return time.Unix(0, 0) // TODO: Calculate global expiration
+	} else if e.Mode == UserDeviceExpirationSpecific {
+		return time.Unix(e.Value, 0)
+	} else if e.Mode == UserDeviceExpirationDuration {
+		return time.Now().Add(time.Duration(e.Value) * time.Second)
+	} else {
+		now := time.Now()
+		year, month, day := now.Date()
+		bod := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+		bod = bod.Add(time.Duration(e.Value) * time.Second)
+		if bod.Before(now) {
+			bod = bod.Add(time.Duration(24) * time.Hour)
+		}
+		return bod
+	}
+}
+
 // User it's a user
 type User struct {
-	e                    *common.Environment
-	ID                   int
-	Username             string
-	Password             string
-	HasPassword          bool
-	ClearPassword        bool
-	DeviceLimit          UserDeviceLimit
-	DeviceExpirationType UserExpiration
-	DeviceExpiration     time.Time
-	ValidStart           time.Time
-	ValidEnd             time.Time
-	ValidForever         bool
-	CanManage            bool
-	blacklistCached      bool
-	blacklistSave        bool
-	blacklisted          bool
+	e                *common.Environment
+	ID               int
+	Username         string
+	Password         string
+	HasPassword      bool
+	ClearPassword    bool
+	DeviceLimit      UserDeviceLimit
+	DeviceExpiration *UserDeviceExpiration
+	ValidStart       time.Time
+	ValidEnd         time.Time
+	ValidForever     bool
+	CanManage        bool
+	blacklistCached  bool
+	blacklistSave    bool
+	blacklisted      bool
 
 	isAdmin    int
 	isHelpDesk int
@@ -55,13 +98,13 @@ func NewUser(e *common.Environment) *User {
 	// User never expires
 	// User can manage their devices
 	return &User{
-		e:                    e,
-		DeviceLimit:          UserDeviceLimitGlobal,
-		DeviceExpirationType: UserDeviceExpirationGlobal,
-		ValidForever:         true,
-		CanManage:            true,
-		isAdmin:              -1,
-		isHelpDesk:           -1,
+		e:                e,
+		DeviceLimit:      UserDeviceLimitGlobal,
+		DeviceExpiration: &UserDeviceExpiration{Mode: UserDeviceExpirationGlobal},
+		ValidForever:     true,
+		CanManage:        true,
+		isAdmin:          -1,
+		isHelpDesk:       -1,
 	}
 }
 
@@ -99,7 +142,7 @@ func SearchUsersByField(e *common.Environment, field, pattern string) ([]*User, 
 }
 
 func getUsersFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*User, error) {
-	sql := "SELECT \"id\", \"username\", \"password\", \"device_limit\", \"default_expiration\", \"expiration_type\", \"can_manage\", \"valid_forever\", \"valid_start\", \"valid_end\" FROM \"user\" " + where
+	sql := `SELECT "id", "username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "valid_forever", "valid_start", "valid_end" FROM "user" ` + where
 	rows, err := e.DB.Query(sql, values...)
 	if err != nil {
 		return nil, err
@@ -135,19 +178,21 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 		}
 
 		user := &User{
-			e:                    e,
-			ID:                   id,
-			Username:             username,
-			HasPassword:          (password != ""),
-			DeviceLimit:          deviceLimit,
-			DeviceExpirationType: expirationType,
-			DeviceExpiration:     time.Unix(defaultExpiration, 0),
-			ValidStart:           time.Unix(validStart, 0),
-			ValidEnd:             time.Unix(validEnd, 0),
-			ValidForever:         validForever,
-			CanManage:            canManage,
-			isAdmin:              -1,
-			isHelpDesk:           -1,
+			e:            e,
+			ID:           id,
+			Username:     username,
+			HasPassword:  (password != ""),
+			DeviceLimit:  deviceLimit,
+			ValidStart:   time.Unix(validStart, 0),
+			ValidEnd:     time.Unix(validEnd, 0),
+			ValidForever: validForever,
+			CanManage:    canManage,
+			isAdmin:      -1,
+			isHelpDesk:   -1,
+		}
+		user.DeviceExpiration = &UserDeviceExpiration{
+			Mode:  expirationType,
+			Value: defaultExpiration,
 		}
 		results = append(results, user)
 	}
@@ -163,6 +208,15 @@ func GetUserFromContext(r *http.Request) *User {
 
 func SetUserToContext(r *http.Request, u *User) {
 	context.Set(r, common.SessionUserKey, u)
+}
+
+func (u *User) GetPassword() string {
+	result := u.e.DB.QueryRow(`SELECT "password" FROM "user" WHERE "username" = ?`, u.Username)
+	err := result.Scan(&u.Password)
+	if err != nil {
+		return ""
+	}
+	return u.Password
 }
 
 // NewPassword will hash s and set it as the password for User u.
@@ -208,13 +262,22 @@ func (u *User) IsBlacklisted() bool {
 		return u.blacklisted
 	}
 
-	sql := "SELECT \"id\" FROM \"blacklist\" WHERE \"value\" = ?"
+	sql := `SELECT "id" FROM "blacklist" WHERE "value" = ?`
 	var id int
 	row := u.e.DB.QueryRow(sql, u.Username)
 	err := row.Scan(&id)
 	u.blacklisted = (err == nil)
 	u.blacklistCached = true
 	return u.blacklisted
+}
+
+func (u *User) IsExpired() bool {
+	if u.ValidForever {
+		return true
+	}
+
+	now := time.Now()
+	return (u.ValidStart.Before(now) && u.ValidEnd.After(now))
 }
 
 func (u *User) Blacklist() {
@@ -241,7 +304,7 @@ func (u *User) Save() error {
 }
 
 func (u *User) updateExisting() error {
-	sql := "UPDATE \"user\" SET \"device_limit\" = ?, \"default_expiration\" = ?, \"expiration_type\" = ?, \"can_manage\" = ?, \"valid_forever\" = ?, \"valid_start\" = ?, \"valid_end\" = ?"
+	sql := `UPDATE "user" SET "device_limit" = ?, "default_expiration" = ?, "expiration_type" = ?, "can_manage" = ?, "valid_forever" = ?, "valid_start" = ?, "valid_end" = ?`
 
 	if u.HasPassword && u.Password != "" {
 		sql += ", \"password = ?"
@@ -254,8 +317,8 @@ func (u *User) updateExisting() error {
 		_, err = u.e.DB.Exec(
 			sql,
 			u.DeviceLimit,
-			u.DeviceExpiration,
-			u.DeviceExpirationType,
+			u.DeviceExpiration.Value,
+			u.DeviceExpiration.Mode,
 			u.CanManage,
 			u.ValidForever,
 			u.ValidStart,
@@ -266,8 +329,8 @@ func (u *User) updateExisting() error {
 		_, err = u.e.DB.Exec(
 			sql,
 			u.DeviceLimit,
-			u.DeviceExpiration,
-			u.DeviceExpirationType,
+			u.DeviceExpiration.Value,
+			u.DeviceExpiration.Mode,
 			u.CanManage,
 			u.ValidForever,
 			u.ValidStart,
@@ -285,15 +348,15 @@ func (u *User) saveNew() error {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := "INSERT INTO \"user\" (\"username\", \"password\", \"device_limit\", \"default_expiration\", \"expiration_type\", \"can_manage\", \"valid_forever\", \"valid_start\", \"valid_end\") VALUES (?,?,?,?,?,?,?,?)"
+	sql := `INSERT INTO "user" ("username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "valid_forever", "valid_start", "valid_end") VALUES (?,?,?,?,?,?,?,?)`
 
 	_, err := u.e.DB.Exec(
 		sql,
 		u.Username,
 		u.Password,
 		u.DeviceLimit,
-		u.DeviceExpiration,
-		u.DeviceExpirationType,
+		u.DeviceExpiration.Value,
+		u.DeviceExpiration.Mode,
 		u.CanManage,
 		u.ValidForever,
 		u.ValidStart,
@@ -314,19 +377,23 @@ func (u *User) writeToBlacklist() error {
 
 	// If blacklisted, insert into database
 	if u.blacklisted {
-		sql := "INSERT INTO \"blacklist\" (\"value\") VALUES (?)"
+		sql := `INSERT INTO "blacklist" ("value") VALUES (?)`
 		_, err := u.e.DB.Exec(sql, u.Username)
 		return err
 	}
 
 	// Otherwise remove them from the blacklist
-	sql := "DELETE FROM \"blacklist\" WHERE \"value\" = ?"
+	sql := `DELETE FROM "blacklist" WHERE "value" = ?`
 	_, err := u.e.DB.Exec(sql, u.Username)
 	return err
 }
 
 func (u *User) Delete() error {
-	sql := "DELETE FROM \"user\" WHERE \"id\" = ?"
+	if u.ID == 0 {
+		return nil
+	}
+
+	sql := `DELETE FROM "user" WHERE "id" = ?`
 	_, err := u.e.DB.Exec(sql, u.ID)
 	return err
 }

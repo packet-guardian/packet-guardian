@@ -7,6 +7,10 @@ import (
 	"strconv"
 )
 
+const (
+	TimeFormat string = "2006-01-02 15:04"
+)
+
 // NotImplementedHandler is a mock handler for paths that aren't implemented yet
 func NotImplementedHandler(w http.ResponseWriter, r *http.Request) {
 	resp := fmt.Sprintf("The path \"%s\" is not implemented yet\n", r.URL.Path)
