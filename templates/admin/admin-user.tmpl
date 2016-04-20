@@ -1,0 +1,74 @@
+{{define "admin-user"}}
+{{template "header" dict "css" (list "admin-users") "main" .}}
+<div class="admin-user">
+    <h2>Administration Users</h2>
+
+    <form id="user-form">
+        <input type="hidden" name="user-id" value="{{.user.ID}}">
+        <fieldset>
+            <p>
+                <label for="username">Username:</label>
+                <input type="text" name="username" value="{{.user.Username}}" disabled="disabled">
+            </p>
+            <p>
+                {{if .user.HasPassword}}
+                Has Password: Yes
+                {{else}}
+                Has Password: No
+                {{end}}
+            </p>
+            <p>
+                <label for="password">New Password:</label>
+                <input type="password" name="password">
+                <input type="checkbox" name="clear-pass"> Clear Password
+            </p>
+            <p>
+                <label for="device-limit">Device Limit:</label>
+                <select name="special-limit">
+                    <option value="global">Global</option>
+                    <option value="unlimited">Unlimited</option>
+                    <option value="specific">Other:</option>
+                </select>
+                <input type="text" name="device-limit" value="{{.user.DeviceLimit}}">
+            </p>
+            <p>
+                <span class="label">Date format</span>: YYYY-MM-DD HH:mm<br>
+                <span class="label">Time format</span>: HH:mm<br>
+                <span class="label">Duration</span>: 5h30m = 5 hours and 30 minutes
+            </p>
+            <p>
+                <label for="device-expiration"><span title="When the user's device will expire by default">Default Device Expiration:</span></label>
+                <select name="dev-exp-sel" data-expires="{{.user.DeviceExpiration.Mode}}">
+                    <option value="global">Global</option>
+                    <option value="never">Never</option>
+                    <option value="specific">Specific</option>
+                    <option value="duration">Duration</option>
+                    <option value="daily">Daily @</option>
+                </select>
+                <input type="text" name="device-expiration" value="{{.user.DeviceExpiration.String}}">
+            </p>
+            <p>
+                <label for="val-bef-sel">User Valid:</label>
+                <select name="val-bef-sel" data-forever="{{.user.ValidForever}}">
+                    <option value="forever">Forever</option>
+                    <option value="specific">Specify</option>
+                </select>
+            </p>
+            <p>
+                <label for="valid-after">Start:</label>
+                <input type="text" name="valid-after" value="{{.user.ValidStart.Format "2006-01-02 15:04:05"}}">
+            </p>
+            <p>
+                <label for="valid-before">End:</label>
+                <input type="text" name="valid-before" value="{{.user.ValidEnd.Format "2006-01-02 15:04:05"}}">
+            </p>
+            <p>
+                <button type="submit">Save</button>
+                <button type="button" name="delete-btn">Delete</button>
+                <a href="/admin/users" class="btn">Back to User List</a>
+            </p>
+        </fieldset>
+    </form>
+</div>
+{{template "footer" dict "js" (list "admin-user")}}
+{{end}}

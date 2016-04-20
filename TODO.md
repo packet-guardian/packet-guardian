@@ -1,5 +1,11 @@
 Here's a list of TODO items:
 
+Restructure Items
+
+- [ ] Finish Device model
+- [ ] Change code to use new models, including User model
+- [ ] Other items in my head
+
 - [X] User administration
 - [ ] Read-only help desk user
 - [ ] Enforce expiration times/dates

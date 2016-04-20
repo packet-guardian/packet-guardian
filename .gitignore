@@ -1,6 +1,6 @@
 sessions/
-pg
 config.toml
 private/
 database.sqlite3
 logs/
+bin/

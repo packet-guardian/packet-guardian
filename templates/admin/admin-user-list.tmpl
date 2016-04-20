@@ -1,0 +1,48 @@
+{{define "admin-user-list"}}
+{{template "header" dict "css" (list "admin-users") "main" . "pageTitle" "Admin User Management"}}
+<div class="admin-users">
+    <h2>Administration Users</h2>
+
+    <div class="clearfix">
+        <div class="controls">
+            <a href="/admin" class="btn">Dashboard</a>
+            <a href="/logout" class="btn">Logout</a>
+        </div>
+        <div class="new-user">
+            <form id="new-user-form">
+                New User:
+                <input type="text" name="username">
+                <button type="submit">Create</button>
+            </form>
+        </div>
+    </div>
+
+    <table>
+        <tr>
+            <th>&nbsp;</th>
+            <th>Username</th>
+            <th>Device Limit</th>
+            <th>Valid</th>
+            <th>Default Expiration</th>
+        </tr>
+        {{range .users}}
+        <tr>
+            <td><a href="/admin/users/{{.Username}}">edit</a></td>
+            <td><a href="/admin/manage/{{.Username}}">{{.Username}}</a></td>
+            <td>{{if eq .DeviceLimit 0}}Unlimited
+                {{else if eq .DeviceLimit -1}}Global
+                {{else}}{{.DeviceLimit}} <span class="userLimit">&bull;</span>
+                {{end}}</td>
+            {{if .ValidForever}}
+            <td>Forever</td>
+            {{else}}
+            <td>{{.ValidStart}} to {{.ValidEnd}}</td>
+            {{end}}
+
+            <td>{{.DeviceExpiration.String}}</td>
+        </tr>
+        {{end}}
+    </table>
+</div>
+{{template "footer" dict "js" (list "admin-users")}}
+{{end}}

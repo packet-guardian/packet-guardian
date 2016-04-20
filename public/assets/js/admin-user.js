@@ -2,6 +2,15 @@
 /*globals j*/
 j.OnReady(function () {
     'use strict';
+
+    var devExpirationTypes = {
+        "never": 0,
+        "global": 1,
+        "specific": 2,
+        "duration": 3,
+        "daily": 4
+    };
+
     // Device limit select box init
     function checkLimit() {
         var limit = j.$("[name=device-limit]");
@@ -33,10 +42,17 @@ j.OnReady(function () {
             devExpSel.value = "never";
             limit.value = "";
             limit.disabled = true;
+        } else if (expires === "3") {
+            devExpSel.value = "duration";
+        } else if (expires === "4") {
+            devExpSel.value = "daily";
+            // Remove "Daily at " text
+            limit.value = limit.value.slice(10);
         } else {
             devExpSel.value = "specific";
         }
 
+        var valAfter = j.$("[name=valid-after]");
         var valBefore = j.$("[name=valid-before]");
         var valBefSel = j.$("[name=val-bef-sel]");
         var forever = valBefSel.getAttribute("data-forever");
@@ -44,6 +60,8 @@ j.OnReady(function () {
             valBefSel.value = "forever";
             valBefore.value = "";
             valBefore.disabled = true;
+            valAfter.value = "";
+            valAfter.disabled = true;
         } else {
             valBefSel.value = "specific";
         }
@@ -57,7 +75,11 @@ j.OnReady(function () {
     });
 
     j.Change('[name=dev-exp-sel]', function() {
-        j.$('[name=device-expiration]').disabled = (this.value !== "specific");
+        if (this.value === "specific" || this.value === "daily" || this.value === "duration") {
+            j.$("[name=device-expiration]").disabled = false;
+        } else {
+            j.$("[name=device-expiration]").disabled = true;
+        }
 
         if (this.value === "specific") {
             setTextboxToToday('[name=device-expiration]');
@@ -67,18 +89,21 @@ j.OnReady(function () {
     });
 
     j.Change('[name=val-bef-sel]', function() {
-        j.$('[name=valid-before]').disabled = (this.value !== "specific");
+        j.$('[name=valid-before]').disabled = (this.value === "forever");
+        j.$("[name=valid-after]").disabled = (this.value === "forever");
 
         if (this.value === "specific") {
             setTextboxToToday('[name=valid-before]');
+            setTextboxToToday('[name=valid-after]');
         } else {
             j.$("[name=valid-before]").value = "";
+            j.$("[name=valid-after]").value = "";
         }
     });
 
     j.Click('[name=delete-btn]', function() {
         var username = j.$('[name=username]').value;
-        j.Delete('/admin/users/'+username, {}, function(resp) {
+        j.Delete('/api/user', {"username": username}, function(resp) {
             resp = JSON.parse(resp);
             if (resp.Code !== 0) {
                 c.FlashMessage(resp.Message);
@@ -93,27 +118,35 @@ j.OnReady(function () {
         var formData = {
             "username": j.$('[name=username]').value,
             "password": j.$('[name=password]').value,
-            "clear-pass": j.$('[name=clear-pass]').checked,
-            "special-limit": j.$('[name=special-limit]').value,
-            "device-limit": j.$('[name=device-limit]').value,
-            "device-expiration": j.$('[name=device-expiration]').value,
-            "valid-after": j.$('[name=valid-after]').value,
-            "valid-before": j.$('[name=valid-before]').value
+            "device_limit": "",
+            "expiration_type": "",
+            "device_expiration": j.$('[name=device-expiration]').value,
+            "valid_start": 0,
+            "valid_end": 0
         };
 
+        if (j.$('[name=clear-pass]').checked) {
+            formData.password = -1;
+        }
+
+        var devLimit = j.$('[name=special-limit]').value;
+        if (devLimit === "global") {
+            formData.device_limit = -1;
+        } else if (devLimit === "unlimited") {
+            formData.device_limit = 0;
+        } else {
+            formData.device_limit = j.$('[name=device-limit]').value;
+        }
+
         var devExpSel = j.$("[name=dev-exp-sel]").value;
-        if (devExpSel === "global") {
-            formData["device-expiration"] = 1;
-        } else if (devExpSel === "never") {
-            formData["device-expiration"] = 0;
+        formData.expiration_type = devExpirationTypes[devExpSel];
+
+        if (j.$("[name=val-bef-sel]").value !== "forever") {
+            formData.valid_start = j.$('[name=valid-after]').value;
+            formData.valid_end = j.$('[name=valid-before]').value;
         }
 
-        var valBefSel = j.$("[name=val-bef-sel]").value;
-        if (valBefSel === "forever") {
-            formData["valid-before"] = 0;
-        }
-
-        j.Post('/admin/users', formData, function(resp) {
+        j.Post('/api/user', formData, function(resp) {
             resp = JSON.parse(resp);
             if (resp.Code !== 0) {
                 c.FlashMessage(resp.Message);
@@ -122,6 +155,7 @@ j.OnReady(function () {
 
             c.FlashMessage(resp.Message, 'success');
             j.$('[name=password]').value = "";
+            j.$('[name=clear-pass]').checked = false;
         });
 
         e.preventDefault();

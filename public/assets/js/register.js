@@ -32,7 +32,13 @@ j.OnReady(function () {
             if (data["mac-address"] === "") { return; }
         }
 
-        j.Post('/register', data, function (resp, req) {
+        var platform = j.$('[name=platform]');
+        if (platform !== null) {
+            data.platform = platform.value;
+            if (data.platform === "") { return; }
+        }
+
+        j.Post('/api/device/register', data, function (resp, req) {
             if (resp === '') {
                 c.FlashMessage("Server error, please call the IT help desk");
                 return;
@@ -54,7 +60,7 @@ j.OnReady(function () {
             }
 
             j.$('#suc-msg-manual').style.display = 'block';
-            setTimeout(function() { location.href = resp.Data.Location; }, 5000);
+            setTimeout(function() { location.href = resp.Data.Location; }, 3000);
         }, function (req) {
             c.FlashMessage("Server error, please call the IT help desk");
             return;

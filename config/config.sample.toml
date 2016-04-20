@@ -1,0 +1,60 @@
+[core]
+siteTitle = "Packet Guardian"
+siteCompanyName = ""
+
+[database]
+type = "sqlite"
+address = "private/database.sqlite3"
+username = ""
+password = ""
+
+[registration]
+registrationPolicyFile = "config/policy.txt"
+allowManualRegistrations = true
+defaultDeviceLimit = 10
+manualRegPlatforms = ["Playstation", "XBox", "Nintendo", "TV", "Chromecast", "Apple TV", "Roku", "Other"]
+
+[webserver]
+enableLogging = true
+# Leave address blank to bind to all addresses
+address = "127.0.0.1"
+httpPort = 8080
+httpsPort = 1443
+TLSCertFile = ""
+TLSKeyFile = ""
+redirectHttpToHttps = true
+sessionName = "net-guardian"
+sessionsDir = "sessions"
+# This is the authentication key for web sessions
+# Make sure this is unique and protected
+sessionsAuthKey = "change me please"
+# Optional. Should be 16, 24, or 32 characters long
+sessionsEncryptKey = ""
+
+[auth]
+# An array of auth types in order of precidence
+# Valid values: ldap, ad, local
+authMethod = ["local"]
+adminUsers = ["admin"]
+helpDeskUsers = ["helpdesk"]
+
+[auth.ldap]
+useAD = true
+domainName = "example.com"
+servers = ["127.0.0.1"]
+useTLS = true
+
+# Below LDAP settings for non-AD environments only
+baseDN = ""
+bindDN = ""
+bindPassword = ""
+userFilter = ""
+groupFilter = ""
+
+[auth.radius]
+servers = [""]
+port = 1812
+secret = ""
+
+[dhcp]
+configFile = "config/dhcp.conf"

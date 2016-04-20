@@ -1,0 +1,32 @@
+package controllers
+
+import (
+	"net/http"
+
+	"github.com/onesimus-systems/packet-guardian/src/common"
+)
+
+type Dev struct {
+	e *common.Environment
+}
+
+func NewDevController(e *common.Environment) *Dev {
+	return &Dev{e: e}
+}
+
+// Dev mode route handlers
+func (d *Dev) ReloadTemplates(w http.ResponseWriter, r *http.Request) {
+	if err := d.e.Views.Reload(); err != nil {
+		w.Write([]byte("Error loading HTML templates: " + err.Error()))
+		return
+	}
+	w.Write([]byte("Templates reloaded"))
+}
+
+func (d *Dev) ReloadConfiguration(w http.ResponseWriter, r *http.Request) {
+	if err := d.e.Config.Reload(); err != nil {
+		w.Write([]byte("Error loading config: " + err.Error()))
+		return
+	}
+	w.Write([]byte("Configuration reloaded"))
+}

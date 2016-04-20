@@ -1,0 +1,47 @@
+{{define "admin-search"}}
+{{template "header" dict "css" (list "admin-search") "main" . "page-title" "Admin Search"}}
+<div class="admin-search">
+    <h2>Administration Search</h2>
+    <form method="GET">
+        <div class="controls">
+            <input type="text" name="q" placeholder="Search" value="{{.query}}" autofocus="autofocus">
+            <button type="submit">Search</button>
+        </div>
+    </form>
+
+    {{if eq (len .searchResults) 0}}
+        {{if eq .query ""}}
+        <div class="no-devices">Please enter a search query</div>
+        {{else}}
+        <div class="no-devices">No results found</div>
+        {{end}}
+    {{else}}
+    <p>
+        <span class="blacklist-icon">&cross;</span> = Blacklisted MAC address
+    </p>
+    <table>
+        <tr>
+            <th>MAC Address</th>
+            <th>User</th>
+            <th class="ua">User Agent</th>
+            <th>Platform</th>
+            <th>Date Registered</th>
+            <th>Registered From</th>
+            <th>Expires</th>
+        </tr>
+        {{range .searchResults}}
+        <tr>
+            <td>{{if .IsBlacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
+            <td><a href="/admin/manage/{{.Username}}">{{.Username}}</a></td>
+            <td class="ua">{{.UserAgent}}</td>
+            <td>{{.Platform}}</td>
+            <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>
+            <td>{{.RegisteredFrom}}</td>
+            <td>{{.Expires.Format "2006-01-02 15:04"}}</td>
+        </tr>
+        {{end}}
+    </table>
+    {{end}}
+</div>
+{{template "footer" dict "js" (list "")}}
+{{end}}
