@@ -27,6 +27,7 @@
             <th>Platform</th>
             <th>Date Registered</th>
             <th>Registered From</th>
+            <th>Expires</th>
         </tr>
         {{range .searchResults}}
         <tr>
@@ -34,12 +35,13 @@
             <td><a href="/admin/manage/{{.Username}}">{{.Username}}</a></td>
             <td class="ua">{{.UserAgent}}</td>
             <td>{{.Platform}}</td>
-            <td>{{.DateRegistered}}</td>
+            <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>
             <td>{{.RegisteredFrom}}</td>
+            <td>{{.Expires.Format "2006-01-02 15:04"}}</td>
         </tr>
         {{end}}
     </table>
     {{end}}
 </div>
-{{template "footer" dict "js" (list "admin-search")}}
+{{template "footer" dict "js" (list "")}}
 {{end}}

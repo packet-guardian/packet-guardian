@@ -60,7 +60,7 @@ j.OnReady(function () {
             }
 
             j.$('#suc-msg-manual').style.display = 'block';
-            setTimeout(function() { location.href = resp.Data.Location; }, 5000);
+            setTimeout(function() { location.href = resp.Data.Location; }, 3000);
         }, function (req) {
             c.FlashMessage("Server error, please call the IT help desk");
             return;

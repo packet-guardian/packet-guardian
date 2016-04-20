@@ -78,7 +78,7 @@ j.OnReady(function () {
         if (this.value === "specific" || this.value === "daily" || this.value === "duration") {
             j.$("[name=device-expiration]").disabled = false;
         } else {
-            j.$("[name=device-expiration]").disabled = false;
+            j.$("[name=device-expiration]").disabled = true;
         }
 
         if (this.value === "specific") {
@@ -155,6 +155,7 @@ j.OnReady(function () {
 
             c.FlashMessage(resp.Message, 'success');
             j.$('[name=password]').value = "";
+            j.$('[name=clear-pass]').checked = false;
         });
 
         e.preventDefault();

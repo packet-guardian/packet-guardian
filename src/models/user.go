@@ -75,6 +75,7 @@ type User struct {
 	Username         string
 	Password         string
 	HasPassword      bool
+	savePassword     bool
 	ClearPassword    bool
 	DeviceLimit      UserDeviceLimit
 	DeviceExpiration *UserDeviceExpiration
@@ -227,12 +228,14 @@ func (u *User) NewPassword(s string) error {
 	}
 	u.Password = string(pass)
 	u.HasPassword = true
+	u.savePassword = true
 	return nil
 }
 
 func (u *User) RemovePassword() {
 	u.Password = ""
 	u.HasPassword = false
+	u.savePassword = true
 }
 
 func (u *User) IsAdmin() bool {
@@ -306,14 +309,14 @@ func (u *User) Save() error {
 func (u *User) updateExisting() error {
 	sql := `UPDATE "user" SET "device_limit" = ?, "default_expiration" = ?, "expiration_type" = ?, "can_manage" = ?, "valid_forever" = ?, "valid_start" = ?, "valid_end" = ?`
 
-	if u.HasPassword && u.Password != "" {
-		sql += ", \"password = ?"
+	if u.savePassword {
+		sql += ", \"password\" = ?"
 	}
 
 	sql += " WHERE \"id\" = ?"
 
 	var err error
-	if u.HasPassword && u.Password != "" {
+	if u.savePassword {
 		_, err = u.e.DB.Exec(
 			sql,
 			u.DeviceLimit,
@@ -321,9 +324,10 @@ func (u *User) updateExisting() error {
 			u.DeviceExpiration.Mode,
 			u.CanManage,
 			u.ValidForever,
-			u.ValidStart,
-			u.ValidEnd,
+			u.ValidStart.Unix(),
+			u.ValidEnd.Unix(),
 			u.Password,
+			u.ID,
 		)
 	} else {
 		_, err = u.e.DB.Exec(
@@ -333,8 +337,9 @@ func (u *User) updateExisting() error {
 			u.DeviceExpiration.Mode,
 			u.CanManage,
 			u.ValidForever,
-			u.ValidStart,
-			u.ValidEnd,
+			u.ValidStart.Unix(),
+			u.ValidEnd.Unix(),
+			u.ID,
 		)
 	}
 	if err != nil {
@@ -348,7 +353,7 @@ func (u *User) saveNew() error {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := `INSERT INTO "user" ("username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "valid_forever", "valid_start", "valid_end") VALUES (?,?,?,?,?,?,?,?)`
+	sql := `INSERT INTO "user" ("username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "valid_forever", "valid_start", "valid_end") VALUES (?,?,?,?,?,?,?,?,?)`
 
 	_, err := u.e.DB.Exec(
 		sql,
@@ -359,9 +364,8 @@ func (u *User) saveNew() error {
 		u.DeviceExpiration.Mode,
 		u.CanManage,
 		u.ValidForever,
-		u.ValidStart,
-		u.ValidEnd,
-		u.Password,
+		u.ValidStart.Unix(),
+		u.ValidEnd.Unix(),
 	)
 	if err != nil {
 		return err
