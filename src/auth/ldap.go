@@ -1,7 +1,7 @@
 package auth
 
 import (
-	ldapc "github.com/jtblin/go-ldap-client"
+	ldapc "github.com/dragonrider23/go-ldap-client"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"gopkg.in/ldap.v2"
 )

@@ -59,8 +59,9 @@ vendor_get: vendor_clean
 	github.com/mattn/go-sqlite3 \
 	github.com/naoina/toml \
 	golang.org/x/crypto/bcrypt \
-	github.com/jtblin/go-ldap-client \
-	github.com/oec/goradius
+	github.com/dragonrider23/go-ldap-client \
+	github.com/oec/goradius \
+	github.com/krolaw/dhcp4
 	mv ./vendor/src/* ./vendor
 	rm -df ./vendor/src
 

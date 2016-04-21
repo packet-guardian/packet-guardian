@@ -3,9 +3,9 @@ package dhcp
 import (
 	"net"
 	"time"
-)
 
-type Option int
+	"github.com/krolaw/dhcp4"
+)
 
 type Config struct {
 	Global   *GlobalConfig
@@ -13,6 +13,7 @@ type Config struct {
 }
 
 type GlobalConfig struct {
+	ServerIdentifier     net.IP
 	Settings             *SettingsConfig
 	RegisteredSettings   *SettingsConfig
 	UnregisteredSettings *SettingsConfig
@@ -27,7 +28,7 @@ type NetworkConfig struct {
 
 type SettingsConfig struct {
 	// Replace with a map of the dhcp server package's options
-	Options          map[Option][]byte
+	Options          map[dhcp4.OptionCode][]byte
 	DefaultLeaseTime time.Duration
 	MaxLeaseTime     time.Duration
 }
