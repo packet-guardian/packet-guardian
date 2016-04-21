@@ -8,34 +8,33 @@ import (
 )
 
 type Config struct {
-	Global   *GlobalConfig
-	Networks []*NetworkConfig
+	Global   *Global
+	Networks []*Network
 }
 
-type GlobalConfig struct {
+type Global struct {
 	ServerIdentifier     net.IP
-	Settings             *SettingsConfig
-	RegisteredSettings   *SettingsConfig
-	UnregisteredSettings *SettingsConfig
+	Settings             *Settings
+	RegisteredSettings   *Settings
+	UnregisteredSettings *Settings
 }
 
-type NetworkConfig struct {
-	Settings             *SettingsConfig
-	RegisteredSettings   *SettingsConfig
-	UnregisteredSettings *SettingsConfig
-	Subnets              []*SubnetConfig
+type Network struct {
+	Settings             *Settings
+	RegisteredSettings   *Settings
+	UnregisteredSettings *Settings
+	Subnets              []*Subnet
 }
 
-type SettingsConfig struct {
-	// Replace with a map of the dhcp server package's options
+type Settings struct {
 	Options          map[dhcp4.OptionCode][]byte
 	DefaultLeaseTime time.Duration
 	MaxLeaseTime     time.Duration
 }
 
-type SubnetConfig struct {
+type Subnet struct {
 	AllowUnknown bool
-	Settings     *SettingsConfig
+	Settings     *Settings
 	Network      *net.IPNet
 	Pools        []*Pool
 }
@@ -43,5 +42,5 @@ type SubnetConfig struct {
 type Pool struct {
 	RangeStart net.IP
 	RangeEnd   net.IP
-	Settings   *SettingsConfig
+	Settings   *Settings
 }
