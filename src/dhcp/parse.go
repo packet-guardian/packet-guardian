@@ -8,6 +8,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/krolaw/dhcp4"
 )
 
 func ParseFile(path string) (*Config, error) {
@@ -65,7 +67,7 @@ func (p *parser) nextLine() []byte {
 }
 
 func (p *parser) parse() (*Config, error) {
-	p.c = &Config{}
+	p.c = newConfig()
 
 	for {
 		line := p.nextLine()
@@ -80,6 +82,9 @@ func (p *parser) parse() (*Config, error) {
 			if p.c.Global != nil {
 				return nil, newError(p.line, "unexpected 'global'")
 			}
+			if len(p.c.Networks) > 0 {
+				return nil, newError(p.line, "global settings must come before network settings")
+			}
 			gc, err := p.parseGlobal()
 			if err != nil {
 				return nil, err
@@ -87,11 +92,14 @@ func (p *parser) parse() (*Config, error) {
 			p.c.Global = gc
 			continue
 		} else if bytes.Equal(keyword, tokens[TkNetwork]) {
+			if p.c.Global == nil {
+				p.c.Global = newGlobal()
+			}
 			net, err := p.parseNetwork(lineParts[1])
 			if err != nil {
 				return nil, err
 			}
-			p.c.Networks = append(p.c.Networks, net)
+			p.c.Networks[net.Name] = net
 			continue
 		} else {
 			return nil, newError(p.line, `unexpected "%s"`, keyword)
@@ -147,6 +155,12 @@ func (p *parser) parseGlobal() (*Global, error) {
 			}
 		}
 	}
+	if g.Settings.DefaultLeaseTime == 0 {
+		g.Settings.DefaultLeaseTime = time.Duration(604800) * time.Second // 1 Week
+	}
+	if g.Settings.MaxLeaseTime == 0 {
+		g.Settings.MaxLeaseTime = time.Duration(604800) * time.Second // 1 Week
+	}
 	return g, nil
 }
 
@@ -163,7 +177,11 @@ func (p *parser) parseSetting(line []byte, s *Settings) error {
 		if !ok {
 			return newError(p.line, `unknown option "%s"`, lineParts[0])
 		}
-		s.Options[oc] = lineParts[1]
+		data, err := p.parseDHCPOption(oc, lineParts[1])
+		if err != nil {
+			return err
+		}
+		s.Options[oc] = data
 	} else if bytes.Equal(keyword, tokens[TkDefaultLeaseTime]) {
 		i, err := strconv.Atoi(string(lineParts[1]))
 		if err != nil {
@@ -180,6 +198,59 @@ func (p *parser) parseSetting(line []byte, s *Settings) error {
 		return newError(p.line, `unexpected "%s"`, keyword)
 	}
 	return nil
+}
+
+func (p *parser) parseDHCPOption(opcode dhcp4.OptionCode, data []byte) ([]byte, error) {
+	switch opcode {
+	case dhcp4.OptionSubnetMask:
+		mask := net.ParseIP(string(data))
+		if mask == nil {
+			return nil, newError(p.line, `invalid subnet mask "%s"`, data)
+		}
+		return []byte(mask.To4()), nil
+	case dhcp4.OptionDomainName:
+		return data, nil
+	case dhcp4.OptionBroadcastAddress:
+		broadcast := net.ParseIP(string(data))
+		if broadcast == nil {
+			return nil, newError(p.line, `invalid broadcast address "%s"`, data)
+		}
+		return []byte(broadcast.To4()), nil
+	case dhcp4.OptionRouter:
+		routersIn := bytes.Split(data, []byte(","))
+		var routersOut []byte
+		for _, r := range routersIn {
+			router := net.ParseIP(string(bytes.TrimSpace(r)))
+			if router == nil {
+				return nil, newError(p.line, `invalid router address "%s"`, r)
+			}
+			routersOut = bytes.Join([][]byte{routersOut, router.To4()}, []byte(""))
+		}
+		return routersOut, nil
+	case dhcp4.OptionDomainNameServer:
+		serversIn := bytes.Split(data, []byte(","))
+		var serversOut []byte
+		for _, r := range serversIn {
+			server := net.ParseIP(string(bytes.TrimSpace(r)))
+			if server == nil {
+				return nil, newError(p.line, `invalid DNS address "%s"`, r)
+			}
+			serversOut = bytes.Join([][]byte{serversOut, server.To4()}, []byte(""))
+		}
+		return serversOut, nil
+	case dhcp4.OptionNetworkTimeProtocolServers:
+		serversIn := bytes.Split(data, []byte(","))
+		var serversOut []byte
+		for _, r := range serversIn {
+			server := net.ParseIP(string(bytes.TrimSpace(r)))
+			if server == nil {
+				return nil, newError(p.line, `invalid NTP address "%s"`, r)
+			}
+			serversOut = bytes.Join([][]byte{serversOut, server.To4()}, []byte(""))
+		}
+		return serversOut, nil
+	}
+	return data, nil
 }
 
 func (p *parser) parseSettingBlock() (*Settings, error) {
@@ -253,6 +324,7 @@ func (p *parser) parseNetwork(header []byte) (*Network, error) {
 			if err != nil {
 				return nil, err
 			}
+			sub.Network = n
 			n.Subnets = append(n.Subnets, sub)
 		} else {
 			return nil, newError(p.line, `unknown identifier %s`, keyword)
@@ -270,7 +342,7 @@ func (p *parser) parseSubnet(header []byte, allowUnknown bool) (*Subnet, error) 
 	if err != nil {
 		return nil, newError(p.line, `invalid CIDR formatted network: %s`, header)
 	}
-	s.Network = sub
+	s.Net = sub
 	s.AllowUnknown = allowUnknown
 	for {
 		line := p.nextLine()
@@ -278,35 +350,90 @@ func (p *parser) parseSubnet(header []byte, allowUnknown bool) (*Subnet, error) 
 			break
 		}
 
-		lineParts := bytes.SplitN(line, []byte(" "), 2)
+		lineParts := bytes.Split(line, []byte(" "))
 		keyword := lineParts[0]
 
 		if bytes.Equal(keyword, tokens[TkEnd]) {
 			break
+		} else if isSetting(keyword) {
+			if err := p.parseSetting(line, s.Settings); err != nil {
+				return nil, err
+			}
+			continue
+		} else if bytes.Equal(keyword, tokens[TkPool]) {
+			pool, err := p.parsePool(nil, nil)
+			if err != nil {
+				return nil, err
+			}
+			s.Pools = append(s.Pools, pool)
+			continue
+		} else if bytes.Equal(keyword, tokens[TkRange]) {
+			// Implict pool section. The range keyword start an implict pool
+			// All subsequent lines will be consumed by the pool
+			if len(lineParts) != 3 {
+				return nil, newError(p.line, "range requires a start and an end")
+			}
+			pool, err := p.parsePool(lineParts[1], lineParts[2])
+			if err != nil {
+				return nil, err
+			}
+			pool.Subnet = s
+			s.Pools = append(s.Pools, pool)
+			break
+		} else {
+			return nil, newError(p.line, `unknown keyword "%s"`, keyword)
 		}
-		// TODO: Actually parse the subnet piece
 	}
 	return s, nil
 }
 
-func (p *parser) parsePool() (*Pool, error) {
+func (p *parser) parsePool(rangeStart, rangeEnd []byte) (*Pool, error) {
 	pool := newPool()
-	pool.RangeStart = net.IP{}
-	pool.RangeEnd = net.IP{}
+	if rangeStart != nil {
+		pool.RangeStart = net.ParseIP(string(rangeStart))
+		if pool.RangeStart == nil {
+			return nil, newError(p.line, `invalid range start "%s"`, rangeStart)
+		}
+	}
+	if rangeEnd != nil {
+		pool.RangeEnd = net.ParseIP(string(rangeEnd))
+		if pool.RangeEnd == nil {
+			return nil, newError(p.line, `invalid range start "%s"`, rangeEnd)
+		}
+	}
 	for {
 		line := p.nextLine()
 		if line == nil {
 			break
 		}
 
-		lineParts := bytes.SplitN(line, []byte(" "), 2)
+		lineParts := bytes.Split(line, []byte(" "))
 		keyword := lineParts[0]
 
 		if bytes.Equal(keyword, tokens[TkEnd]) {
 			break
+		} else if isSetting(keyword) {
+			if err := p.parseSetting(line, pool.Settings); err != nil {
+				return nil, err
+			}
+			continue
+		} else if bytes.Equal(keyword, tokens[TkRange]) {
+			if len(lineParts) != 3 {
+				return nil, newError(p.line, "range requires a start and an end")
+			}
+
+			pool.RangeStart = net.ParseIP(string(lineParts[1]))
+			if pool.RangeStart == nil {
+				return nil, newError(p.line, `invalid range start "%s"`, lineParts[1])
+			}
+
+			pool.RangeEnd = net.ParseIP(string(lineParts[2]))
+			if pool.RangeEnd == nil {
+				return nil, newError(p.line, `invalid range start "%s"`, lineParts[2])
+			}
+		} else {
+			return nil, newError(p.line, `unknown keyword "%s"`, keyword)
 		}
-		// TODO: Actually parse the pool piece
 	}
 	return pool, nil
-	return nil, nil
 }
