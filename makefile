@@ -1,10 +1,4 @@
-.PHONY: build clean clean_vendor doc fmt install lint run test vet
-
-# Prepend our vendor directory to the system GOPATH
-# so that import path resolution will prioritize
-# our third party snapshots.
-GOPATH := ${PWD}/vendor:${GOPATH}
-export GOPATH
+.PHONY: build clean doc fmt install lint run test vet vendor_cleanup vendor_update vendor_updateall vendor_save vendor_saveall
 
 default: build
 
@@ -15,11 +9,6 @@ clean:
 	rm -rf ./bin/*
 	rm -rf ./logs/*
 	rm -rf ./sessions/*
-
-# Godep has a bug where it copies the dot-files from a dependency
-# Until I have time to look at it, this job will clean them up.
-clean_vendor:
-	rm -rf `find ./vendor -type f -name ".*"`
 
 doc:
 	godoc -http=:6060 -index
@@ -43,3 +32,18 @@ test:
 
 vet:
 	go vet ./src/...
+
+# Godep has a bug where it copies the dot-files from a dependency
+# Until I have time to look at it, this job will clean them up.
+vendor_cleanup:
+	rm -rf `find ./vendor -type f -name ".*"`
+
+# Godep: go get github.com/tools/godep
+vendor_updateall: vendor_update vendor_cleanup
+vendor_saveall: vendor_save vendor_cleanup
+
+vendor_update:
+	godep update ./src/...
+
+vendor_save:
+	godep save ./src/...

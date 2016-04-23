@@ -11,9 +11,8 @@
 			"Rev": "b33c09cb02f289fe666b7f45c722273ad73c7a4b"
 		},
 		{
-			"ImportPath": "github.com/dragonrider23/go-logger",
-			"Comment": "v2.2.0-2-g5b494c7",
-			"Rev": "5b494c7f2adade49e3fa1ae855475a5bd7afa6b7"
+			"ImportPath": "github.com/dragonrider23/verbose",
+			"Rev": "a5dc42e5973b968ae07a8381b74356abef83ef48"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",

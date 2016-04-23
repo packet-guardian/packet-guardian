@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/context"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 
-	log "github.com/dragonrider23/go-logger"
+	"github.com/dragonrider23/verbose"
 )
 
 // Environment holds "global" application information such as a database connection,
@@ -160,17 +160,23 @@ func (v *View) Render(w io.Writer, data map[string]interface{}) {
 }
 
 type Logger struct {
-	*log.Logger
+	*verbose.Logger
 	dev    bool
 	logDir string
 }
 
 func NewLogger(logDir string, dev bool) *Logger {
-	logger := log.New("app").Path(logDir)
-	if dev {
-		logger.Verbose(3)
+	logger := verbose.New("app")
+	sh := verbose.NewStdoutHandler()
+	fh, _ := verbose.NewFileHandler(logDir)
+	if !dev {
+		sh.SetMinLevel(verbose.LogLevelWarning)
+		fh.SetMinLevel(verbose.LogLevelWarning)
+	} else {
 		logger.Info("Packet Guardian running in DEVELOPMENT mode")
 	}
+	logger.AddHandler("stdout", sh)
+	logger.AddHandler("file", fh)
 	return &Logger{
 		Logger: logger,
 		dev:    dev,
@@ -181,10 +187,15 @@ func NewLogger(logDir string, dev bool) *Logger {
 // GetLogger returns a new Logger based on its parent but with a new name
 // This can be used to separate logs from different sub-systems.
 func (l *Logger) GetLogger(name string) *Logger {
-	logger := log.New(name).Path(l.logDir)
-	if l.dev {
-		logger.Verbose(3)
+	logger := verbose.New("app")
+	sh := verbose.NewStdoutHandler()
+	fh, _ := verbose.NewFileHandler(l.logDir)
+	if !l.dev {
+		sh.SetMinLevel(verbose.LogLevelWarning)
+		fh.SetMinLevel(verbose.LogLevelWarning)
 	}
+	logger.AddHandler("stdout", sh)
+	logger.AddHandler("file", fh)
 	return &Logger{
 		Logger: logger,
 		dev:    l.dev,
