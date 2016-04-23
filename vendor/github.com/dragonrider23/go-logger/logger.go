@@ -215,7 +215,7 @@ func (l *Logger) Fatal(format string) {
 // Fatalf is a wrapper for formatted Log("Fatal", ...). Shows red in stdout.
 // Exits application with os.Exit(1).
 func (l *Logger) Fatalf(format string, v ...interface{}) {
-	l.Log("Fatal", Red, format, v...)
+	l.Log("Fatl", Red, format, v...)
 	os.Exit(1)
 	return
 }

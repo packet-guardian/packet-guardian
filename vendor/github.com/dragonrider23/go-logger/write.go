@@ -35,7 +35,7 @@ func (l *Logger) writeToStdout(e, s, c string) {
 	// Check verbosity
 	log := false
 	if vlevel, ok := verboseLevels[e]; ok {
-		log = l.verbosity >= vlevel
+		log = vlevel >= l.verbosity
 	} else {
 		log = l.verbosity > 3
 	}
@@ -45,7 +45,7 @@ func (l *Logger) writeToStdout(e, s, c string) {
 	}
 
 	now := time.Now().Format(l.tlayout)
-	fmt.Printf("%s%s: %s%s: %s%s: %s%s\n", Grey, now, c, strings.ToUpper(e), Green, l.name, Reset, s)
+	fmt.Printf("%s%s: %s%s: %s%s\n", Grey, now, c, strings.ToUpper(e), Reset, s)
 	return
 }
 
