@@ -3,8 +3,12 @@ package dhcp
 import (
 	"fmt"
 	"net"
+	"os/exec"
+	"regexp"
+	"runtime"
 	"time"
 
+	"github.com/dragonrider23/verbose"
 	"github.com/krolaw/dhcp4"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
@@ -16,6 +20,7 @@ type Pool struct {
 	optionsCached bool
 	Leases        map[string]*Lease // IP -> Lease
 	Subnet        *Subnet
+	nextStart     int
 }
 
 func newPool() *Pool {
@@ -75,10 +80,13 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 	// Find an expired current lease over a week old
 	weekInSecs := time.Duration(604800) * time.Second
 	for _, l := range p.Leases {
+		if l.IsAbandoned { // IP in use by a device we don't know about
+			continue
+		}
 		if l.End.After(now) { // Active lease
 			continue
 		}
-		if l.Offered && now.After(l.End) {
+		if l.Offered && now.After(l.End) { // Lease was offered but not taken
 			l.Offered = false
 			return l
 		}
@@ -89,19 +97,37 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 
 	// No candidates, find the next available lease
 	ipsInPool := dhcp4.IPRange(p.RangeStart, p.RangeEnd)
-	for i := 0; i < ipsInPool; i++ {
+	for i := p.nextStart; i < ipsInPool; i++ {
 		next := dhcp4.IPAdd(p.RangeStart, i)
+		// Check if IP has a lease
 		_, ok := p.Leases[next.String()]
 		if ok {
 			continue
 		}
 
+		// IP has no lease with it
 		l := NewLease(e)
+		// All known leases have already been checked, which means if this IP
+		// is in use, we didn't do it. Mark as abandoned.
+		if isIPInUse(next) {
+			e.Log.WithFields(verbose.Fields{
+				"IP": next.String(),
+			}).Warning("Abandoned IP")
+			l.IsAbandoned = true
+			continue
+		}
+
+		// Set IP and pool, add to leases map, return
 		l.IP = next
+		l.Network = p.Subnet.Network.Name
 		l.Pool = p
 		p.Leases[next.String()] = l
+		p.nextStart = i + 1
 		return l
 	}
+
+	// No free leases, no existing leases, check Abandoned leases
+	// TODO: Create abandoned recollection
 	return nil
 }
 
@@ -113,4 +139,33 @@ func (p *Pool) Print() {
 	fmt.Printf("\n---Pool %s - %s---\n", p.RangeStart.String(), p.RangeEnd.String())
 	fmt.Println("Pool Settings")
 	p.Settings.Print()
+}
+
+// isIPInUse will use the system ping utility to determine if an IP is in use.
+// At the moment this is Linux specific. I need to find a more cross platform
+// method to do ICMP probes. Right now abandonment checks will be disabled in
+// Windows machines.
+func isIPInUse(host net.IP) bool {
+	if runtime.GOOS == "windows" {
+		return false
+	}
+
+	six := ""
+	if host.To4() == nil {
+		six = "6"
+	}
+	// -c: packet count, -w: timeout in seconds
+	out, err := exec.Command("ping"+six, "-c", "1", "-w", "3", "--", host.String()).Output()
+	if err != nil {
+		return false
+	}
+	r, _ := regexp.Compile(`\d+ bytes from .*`)
+	line := r.Find(out)
+	return (line != nil)
+}
+
+func (p *Pool) PrintLeases() {
+	for _, l := range p.Leases {
+		fmt.Printf("%+v\n", l)
+	}
 }

@@ -99,6 +99,7 @@ func (p *parser) parse() (*Config, error) {
 			if err != nil {
 				return nil, err
 			}
+			net.Global = p.c.Global
 			p.c.Networks[net.Name] = net
 			continue
 		} else {
@@ -383,6 +384,9 @@ func (p *parser) parseSubnet(header []byte, allowUnknown bool) (*Subnet, error) 
 		} else {
 			return nil, newError(p.line, `unknown keyword "%s"`, keyword)
 		}
+	}
+	if _, ok := s.Settings.Options[dhcp4.OptionSubnetMask]; !ok {
+		s.Settings.Options[dhcp4.OptionSubnetMask] = []byte(s.Net.Mask)
 	}
 	return s, nil
 }

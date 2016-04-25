@@ -36,6 +36,10 @@ func GetLeaseByMAC(e *common.Environment, mac net.HardwareAddr) (*Lease, error) 
 	return leases[0], nil
 }
 
+func GetAllLeases(e *common.Environment) ([]*Lease, error) {
+	return getLeasesFromDatabase(e, "")
+}
+
 func getLeasesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Lease, error) {
 	sql := `SELECT "id", "ip", "mac", "network", "start", "end", "hostname", "abandoned" FROM "lease" ` + where
 
@@ -89,4 +93,8 @@ func getLeasesFromDatabase(e *common.Environment, where string, values ...interf
 
 func (l *Lease) IsFree() bool {
 	return (l.ID == 0 || time.Now().After(l.End))
+}
+
+func (l *Lease) Save() {
+	l.e.Log.Info("Saved... not really")
 }
