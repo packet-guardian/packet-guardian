@@ -3,7 +3,7 @@
 	"GoVersion": "go1.6",
 	"GodepVersion": "v62",
 	"Packages": [
-		"./..."
+		"./src/..."
 	],
 	"Deps": [
 		{
@@ -12,7 +12,8 @@
 		},
 		{
 			"ImportPath": "github.com/dragonrider23/verbose",
-			"Rev": "a5dc42e5973b968ae07a8381b74356abef83ef48"
+			"Comment": "v2.0.0-1-g1a7ae87",
+			"Rev": "1a7ae878500a7c16b998555a0f946093353f660b"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",

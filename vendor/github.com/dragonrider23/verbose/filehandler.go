@@ -1,13 +1,13 @@
 package verbose
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 )
 
 // FileHandler writes log messages to a file to a directory
@@ -27,7 +27,7 @@ type FileHandler struct {
 func NewFileHandler(path string) (*FileHandler, error) {
 	f := &FileHandler{
 		min:  LogLevelDebug,
-		max:  LogLevelCustom,
+		max:  LogLevelEmergency,
 		path: path,
 		m:    sync.Mutex{},
 	}
@@ -88,28 +88,41 @@ func (f *FileHandler) Handles(l LogLevel) bool {
 }
 
 // WriteLog will write the log message to a file.
-func (f *FileHandler) WriteLog(l LogLevel, name, msg string) {
-	now := time.Now().Format("2006-01-02 15:04:05 MST")
+func (f *FileHandler) WriteLog(e *Entry) {
 	var logfile string
 	if !f.separate {
 		logfile = f.path
 	} else {
-		logfile = fmt.Sprintf("%s-%s.log", strings.ToLower(l.String()), name)
+		logfile = fmt.Sprintf("%s-%s.log", strings.ToLower(e.Level.String()), e.Logger.Name())
 		logfile = path.Join(f.path, logfile)
 	}
+
+	buf := &bytes.Buffer{}
+	fmt.Fprintf(
+		buf,
+		"%s: %s: %s: %s",
+		e.Timestamp.Format("2006-01-02 15:04:05 MST"),
+		strings.ToUpper(e.Level.String()),
+		e.Logger.Name(),
+		e.Message,
+	)
+	for k, v := range e.Data {
+		fmt.Fprintf(buf, " %s=%v", k, v)
+	}
+	buf.WriteByte('\n')
 
 	f.m.Lock()
 	defer f.m.Unlock()
 
 	file, err := os.OpenFile(logfile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
-		fmt.Printf("Error opening log file: %s\n", err.Error())
+		fmt.Printf("Error opening log file: %v\n", err)
 	}
 	defer file.Close()
 
-	_, err = file.WriteString(now + ": " + msg + "\n")
+	_, err = file.Write(buf.Bytes())
 	if err != nil {
-		fmt.Printf("Error writing to log file: %s\n", err.Error())
+		fmt.Printf("Error writing to log file: %v\n", err)
 	}
 	return
 }

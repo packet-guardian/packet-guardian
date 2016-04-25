@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/dragonrider23/verbose"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 
@@ -57,7 +58,10 @@ func (s *Server) startHttp() {
 }
 
 func (s *Server) startHttps() {
-	s.e.Log.Infof("Now listening on %s:%s", s.address, s.httpsPort)
+	s.e.Log.WithFields(verbose.Fields{
+		"address": s.address,
+		"port":    s.httpsPort,
+	}).Info("Now listening on TLS")
 	s.e.Log.Info("Starting server with TLS certificates")
 	http.ListenAndServeTLS(
 		s.address+":"+s.httpsPort,

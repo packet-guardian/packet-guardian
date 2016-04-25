@@ -1,11 +1,27 @@
 package verbose
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"strings"
-	"time"
+)
+
+// Color is an escaped color code for the terminal
+type Color string
+
+// Pre-defined colors
+const (
+	ColorReset   Color = "\033[0m"
+	ColorRed     Color = "\033[31m"
+	ColorGreen   Color = "\033[32m"
+	ColorYellow  Color = "\033[33m"
+	ColorBlue    Color = "\033[34m"
+	ColorMagenta Color = "\033[35m"
+	ColorCyan    Color = "\033[36m"
+	ColorWhite   Color = "\033[37m"
+	ColorGrey    Color = "\033[90m"
 )
 
 var colors = map[LogLevel]Color{
@@ -18,7 +34,6 @@ var colors = map[LogLevel]Color{
 	LogLevelAlert:     ColorRed,
 	LogLevelEmergency: ColorRed,
 	LogLevelFatal:     ColorRed,
-	LogLevelCustom:    ColorWhite,
 }
 
 // StdoutHandler writes log message to standard out
@@ -33,7 +48,7 @@ type StdoutHandler struct {
 func NewStdoutHandler() *StdoutHandler {
 	return &StdoutHandler{
 		min: LogLevelDebug,
-		max: LogLevelCustom,
+		max: LogLevelEmergency,
 		out: os.Stdout,
 	}
 }
@@ -67,20 +82,26 @@ func (s *StdoutHandler) Handles(l LogLevel) bool {
 }
 
 // WriteLog writes the log message to standard output
-func (s *StdoutHandler) WriteLog(l LogLevel, name, msg string) {
-	now := time.Now().Format("2006-01-02 15:04:05 MST")
+func (s *StdoutHandler) WriteLog(e *Entry) {
+	buf := &bytes.Buffer{}
+	now := e.Timestamp.Format("2006-01-02 15:04:05 MST")
 	fmt.Fprintf(
-		s.out,
-		"%s%s: %s%s: %s%s: %s%s\n",
+		buf,
+		"%s%s: %s%s: %s%s: %s%s",
 		ColorGrey,
 		now,
-		colors[l],
-		strings.ToUpper(l.String()),
+		colors[e.Level],
+		strings.ToUpper(e.Level.String()),
 		ColorGreen,
-		name,
+		e.Logger.Name(),
 		ColorReset,
-		msg,
+		e.Message,
 	)
+	for k, v := range e.Data {
+		fmt.Fprintf(buf, " %s=%v", k, v)
+	}
+	buf.WriteByte('\n')
+	fmt.Fprint(s.out, buf.String())
 }
 
 // Close satisfies the interface, NOOP
