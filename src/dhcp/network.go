@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/krolaw/dhcp4"
+	"github.com/onesimus-systems/dhcp4"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 
@@ -174,8 +174,6 @@ func (n *Network) GetLeaseByMAC(mac net.HardwareAddr, registered bool) *Lease {
 		}
 		for _, p := range s.Pools {
 			for _, l := range p.Leases {
-				fmt.Printf("%#v\n", l.MAC)
-				fmt.Printf("%#v\n", mac)
 				if bytes.Equal(l.MAC, mac) {
 					return l
 				}

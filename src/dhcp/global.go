@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/krolaw/dhcp4"
+	"github.com/onesimus-systems/dhcp4"
 )
 
 type Global struct {

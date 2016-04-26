@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/krolaw/dhcp4"
+	"github.com/onesimus-systems/dhcp4"
 )
 
 func ParseFile(path string) (*Config, error) {

@@ -35,10 +35,6 @@
 			"Rev": "a1216e0aed834aa9074063dd4085f5c3df8d1fab"
 		},
 		{
-			"ImportPath": "github.com/krolaw/dhcp4",
-			"Rev": "ffbbb16f447b3e05b80e8ddecbb8ada36e2ae006"
-		},
-		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
 			"Comment": "v1.1.0-62-g467f50b",
 			"Rev": "467f50b0c026317ad28fc2c0a08aab6f755cfc7a"
@@ -61,6 +57,10 @@
 		{
 			"ImportPath": "github.com/oec/goradius",
 			"Rev": "dce7f6ef2e5a8ab51f7f1c24ffa014825de5d00a"
+		},
+		{
+			"ImportPath": "github.com/onesimus-systems/dhcp4",
+			"Rev": "61013e9749a6339978c450af6c7cc26a30a04eca"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/bcrypt",

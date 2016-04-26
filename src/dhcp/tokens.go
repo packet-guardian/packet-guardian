@@ -3,7 +3,7 @@ package dhcp
 import (
 	"bytes"
 
-	"github.com/krolaw/dhcp4"
+	"github.com/onesimus-systems/dhcp4"
 )
 
 type Token int

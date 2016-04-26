@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/dragonrider23/verbose"
-	"github.com/krolaw/dhcp4"
+	"github.com/onesimus-systems/dhcp4"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/models"
 )
@@ -69,6 +69,8 @@ func (h *DHCPHandler) LoadLeases() error {
 					continue
 				}
 				lease.Pool = pool
+				pool.Leases[lease.IP.String()] = lease
+				h.e.Log.WithField("Address", lease.IP).Debug("Loaded lease")
 				break subnetLoop
 			}
 		}
@@ -108,12 +110,17 @@ func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, optio
 
 // Handle DHCP DISCOVER messages
 func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
+	// Don't respond to requests on the same subnet
+	if p.GIAddr().Equal(net.IPv4zero) {
+		return nil
+	}
+
 	// Get a device object associated with the MAC
 	device, err := models.GetDeviceByMAC(h.e, p.CHAddr())
 	if err != nil {
 		h.e.Log.WithFields(verbose.Fields{
-			"MAC":   p.CHAddr().String(),
-			"Error": err,
+			"Client MAC": p.CHAddr().String(),
+			"Error":      err,
 		}).Error("Error getting device")
 		return nil
 	}
@@ -121,13 +128,12 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 	// Check device standing
 	if device.IsBlacklisted {
 		h.e.Log.WithFields(verbose.Fields{
-			"MAC":      p.CHAddr().String(),
-			"Gateway":  p.GIAddr().String(),
-			"Username": device.Username,
-		}).Warning("Blacklisted MAC tried to get a lease")
-		return nil
+			"Client MAC":  p.CHAddr().String(),
+			"Relay Agent": p.GIAddr().String(),
+			"Username":    device.Username,
+		}).Warning("Blacklisted MAC got a lease")
 	}
-	registered := (device.ID != 0)
+	registered := (device.ID != 0 || device.IsBlacklisted)
 
 	// Get network object that the relay IP belongs to
 	gatewayMutex.Lock()
@@ -145,10 +151,6 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 	gatewayMutex.Unlock()
 
 	// Find an appropiate lease
-	h.e.Log.WithFields(verbose.Fields{
-		"MAC": device.MAC.String(),
-	}).Debug()
-	network.Subnets[0].Pools[0].PrintLeases()
 	lease := network.GetLeaseByMAC(device.MAC, registered)
 	if lease == nil {
 		// Device doesn't have a recent lease, get a new one
@@ -166,8 +168,8 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 	}
 
 	h.e.Log.WithFields(verbose.Fields{
-		"IP":  lease.IP.String(),
-		"MAC": p.CHAddr().String(),
+		"Lease IP":   lease.IP.String(),
+		"Client MAC": p.CHAddr().String(),
 	}).Info("Offering lease to client")
 
 	// Set temporary offered flag and end time
@@ -181,7 +183,6 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 	// No Save because this is a temporary "lease", if the client accepts then we commit to storage
 	// Get options
 	leaseOptions := lease.Pool.GetOptions(registered)
-	lease.Pool.PrintLeases()
 	// Send an offer
 	return h.readOnlyFilter(dhcp4.ReplyPacket(
 		p,
@@ -220,8 +221,8 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 	device, err := models.GetDeviceByMAC(h.e, p.CHAddr())
 	if err != nil {
 		h.e.Log.WithFields(verbose.Fields{
-			"MAC":   p.CHAddr().String(),
-			"Error": err,
+			"Client MAC": p.CHAddr().String(),
+			"Error":      err,
 		}).Error("Error getting device")
 		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, h.c.Global.ServerIdentifier, nil, 0, nil))
 	}
@@ -229,36 +230,40 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 	// Check device standing
 	if device.IsBlacklisted {
 		h.e.Log.WithFields(verbose.Fields{
-			"MAC":      p.CHAddr().String(),
-			"Gateway":  p.GIAddr().String(),
-			"Username": device.Username,
-		}).Notice("Blacklisted MAC tried to renew lease")
-		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, h.c.Global.ServerIdentifier, nil, 0, nil))
+			"Client MAC":  p.CHAddr().String(),
+			"Relay Agent": p.GIAddr().String(),
+			"Username":    device.Username,
+		}).Notice("Blacklisted MAC renewed lease")
 	}
-	registered := (device.ID != 0)
+	registered := (device.ID != 0 || device.IsBlacklisted)
 
 	network := h.c.SearchNetworksFor(reqIP)
 	if network == nil {
 		h.e.Log.WithFields(verbose.Fields{
-			"IP": reqIP.String(),
+			"Requested IP": reqIP.String(),
+			"Registered":   registered,
 		}).Notice("Got a REQUEST for IP not in a scope")
 		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, h.c.Global.ServerIdentifier, nil, 0, nil))
 	}
 
 	lease := network.GetLeaseByIP(reqIP, registered)
-	if lease == nil {
+	if lease == nil || lease.MAC == nil { // If it returns a new lease, the MAC is nil
 		h.e.Log.WithFields(verbose.Fields{
-			"IP":  reqIP.String(),
-			"MAC": p.CHAddr().String(),
+			"Requested IP": reqIP.String(),
+			"Client MAC":   p.CHAddr().String(),
+			"Network":      network.Name,
+			"Registered":   registered,
 		}).Notice("Client tried to request a lease that doesn't exist")
 		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, h.c.Global.ServerIdentifier, nil, 0, nil))
 	}
 
 	if !bytes.Equal(lease.MAC, p.CHAddr()) {
 		h.e.Log.WithFields(verbose.Fields{
-			"IP":        reqIP.String(),
-			"MAC":       p.CHAddr().String(),
-			"Lease MAC": lease.MAC.String(),
+			"Requested IP": reqIP.String(),
+			"Client MAC":   p.CHAddr().String(),
+			"Lease MAC":    lease.MAC.String(),
+			"Network":      network.Name,
+			"Registered":   registered,
 		}).Notice("Client tried to request lease not belonging to them")
 		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, h.c.Global.ServerIdentifier, nil, 0, nil))
 	}
@@ -267,17 +272,19 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 	lease.Start = time.Now()
 	lease.End = time.Now().Add(leaseDur + (time.Duration(10) * time.Second)) // Add 10 seconds to account for slight clock drift
 	lease.Offered = false
-	if ci, ok := options[dhcp4.OptionClientIdentifier]; ok {
+	if ci, ok := options[dhcp4.OptionHostName]; ok {
 		lease.Hostname = string(ci)
 	}
 	lease.Save()
 	leaseOptions := lease.Pool.GetOptions(registered)
-	lease.Pool.PrintLeases()
 
 	h.e.Log.WithFields(verbose.Fields{
-		"IP":       lease.IP.String(),
-		"MAC":      lease.MAC.String(),
-		"Duration": leaseDur.String(),
+		"Requested IP": lease.IP.String(),
+		"Client MAC":   lease.MAC.String(),
+		"Duration":     leaseDur.String(),
+		"Network":      network.Name,
+		"Registered":   registered,
+		"Hostname":     lease.Hostname,
 	}).Info("Acknowledging request")
 
 	return h.readOnlyFilter(dhcp4.ReplyPacket(
@@ -301,26 +308,40 @@ func (h *DHCPHandler) handleRelease(p dhcp4.Packet, msgType dhcp4.MessageType, o
 	device, err := models.GetDeviceByMAC(h.e, p.CHAddr())
 	if err != nil {
 		h.e.Log.WithFields(verbose.Fields{
-			"MAC":   p.CHAddr().String(),
-			"Error": err,
+			"Client MAC": p.CHAddr().String(),
+			"Error":      err,
 		}).Error("Error getting device")
 		return nil
 	}
-	registered := (device.ID != 0)
+	registered := (device.ID != 0 || device.IsBlacklisted)
 
 	network := h.c.SearchNetworksFor(reqIP)
 	if network == nil {
+		h.e.Log.WithFields(verbose.Fields{
+			"Releasing IP": reqIP.String(),
+			"Registered":   registered,
+		}).Notice("Got a RELEASE for IP not in a scope")
 		return nil
 	}
 
 	lease := network.GetLeaseByIP(reqIP, registered)
 	if lease == nil || !bytes.Equal(lease.MAC, p.CHAddr()) {
+		h.e.Log.WithFields(verbose.Fields{
+			"Releasing IP": reqIP.String(),
+			"Client MAC":   p.CHAddr().String(),
+			"Lease MAC":    lease.MAC.String(),
+			"Network":      network.Name,
+			"Registered":   registered,
+		}).Notice("Client tried to release lease not belonging to them")
 		return nil
 	}
 	h.e.Log.WithFields(verbose.Fields{
-		"IP":  lease.IP.String(),
-		"MAC": lease.MAC.String(),
+		"IP":         lease.IP.String(),
+		"Client MAC": lease.MAC.String(),
+		"Network":    network.Name,
+		"Registered": registered,
 	}).Info("Releasing lease")
+	lease.Start = time.Unix(1, 0)
 	lease.End = time.Unix(1, 0)
 	lease.Save()
 	return nil

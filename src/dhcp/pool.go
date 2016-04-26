@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/dragonrider23/verbose"
-	"github.com/krolaw/dhcp4"
+	"github.com/onesimus-systems/dhcp4"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 

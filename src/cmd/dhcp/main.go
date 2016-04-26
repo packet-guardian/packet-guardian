@@ -50,6 +50,8 @@ func main() {
 
 	handler := dhcp.NewDHCPServer(config, e)
 	//handler.Readonly()
-	handler.LoadLeases()
+	if err := handler.LoadLeases(); err != nil {
+		e.Log.WithField("Error", err).Fatal("Couldn't load leases")
+	}
 	e.Log.Critical(handler.ListenAndServe())
 }
