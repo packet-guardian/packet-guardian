@@ -79,6 +79,11 @@ func (h *DHCPHandler) LoadLeases() error {
 }
 
 func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
+	defer func() {
+		if r := recover(); r != nil {
+			h.e.Log.Emergencyf("Recovering from DHCP panic %s", r)
+		}
+	}()
 	if msgType == dhcp4.Inform {
 		return nil
 	}
@@ -106,6 +111,14 @@ func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, optio
 		// Mark address as abandoned
 	}
 	return response
+}
+
+// Only allows real packet returns if not in readonly mode
+func (h *DHCPHandler) readOnlyFilter(p dhcp4.Packet) dhcp4.Packet {
+	if h.ro {
+		return nil
+	}
+	return p
 }
 
 // Handle DHCP DISCOVER messages
@@ -192,14 +205,6 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 		lease.Pool.GetLeaseTime(0, registered),
 		leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]),
 	))
-}
-
-// Only allows real packet returns if not in readonly mode
-func (h *DHCPHandler) readOnlyFilter(p dhcp4.Packet) dhcp4.Packet {
-	if h.ro {
-		return nil
-	}
-	return p
 }
 
 // Handle DHCP REQUEST messages
@@ -291,7 +296,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 		p,
 		dhcp4.ACK,
 		h.c.Global.ServerIdentifier,
-		net.IP(options[dhcp4.OptionRequestedIPAddress]),
+		lease.IP,
 		leaseDur,
 		leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]),
 	))
