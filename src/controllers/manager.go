@@ -67,7 +67,6 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil || lease.ID == 0 {
 			m.e.Log.WithFields(verbose.Fields{
 				"IP":    ip.String(),
-				"Lease": lease,
 				"Error": err,
 			}).Error("Failed to get MAC from IP")
 		} else {

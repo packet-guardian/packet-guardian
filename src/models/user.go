@@ -276,11 +276,11 @@ func (u *User) IsBlacklisted() bool {
 
 func (u *User) IsExpired() bool {
 	if u.ValidForever {
-		return true
+		return false
 	}
 
 	now := time.Now()
-	return (u.ValidStart.Before(now) && u.ValidEnd.After(now))
+	return (u.ValidStart.After(now) || u.ValidEnd.Before(now))
 }
 
 func (u *User) Blacklist() {

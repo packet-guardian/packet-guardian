@@ -22,8 +22,14 @@ func CheckAuth(next http.Handler) http.Handler {
 
 func CheckAPI(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// /api/device handles it's own authentication
 		if strings.HasPrefix(r.URL.Path, "/api/device") {
 			next.ServeHTTP(w, r)
+			return
+		}
+
+		if !auth.IsLoggedIn(r) {
+			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 			return
 		}
 
