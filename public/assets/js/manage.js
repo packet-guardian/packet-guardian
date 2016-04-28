@@ -37,6 +37,10 @@ j.OnReady(function() {
         for (var i = 0; i < checked.length; i++) {
             devicesToRemove.push(checked[i].value);
         }
+        if (devicesToRemove.length === 0) {
+            return;
+        }
+
         j.Delete('/api/device/delete', {"username": username, "mac": devicesToRemove}, function(resp) {
             resp = JSON.parse(resp);
             if (resp.Code === 0) {
