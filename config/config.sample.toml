@@ -1,6 +1,8 @@
 [core]
 siteTitle = "Packet Guardian"
 siteCompanyName = ""
+# Must include port if not normal http/https
+siteDomainName = ""
 
 [database]
 type = "sqlite"

@@ -14,6 +14,7 @@ type Config struct {
 	Core       struct {
 		SiteTitle       string
 		SiteCompanyName string
+		SiteDomainName  string
 	}
 	Database struct {
 		Type     string

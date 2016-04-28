@@ -42,9 +42,9 @@ func LoadRoutes(e *common.Environment) http.Handler {
 		s.HandleFunc("/reloadconf", devController.ReloadConfiguration).Methods("GET")
 	}
 
-	// We're done with Gorilla's special router, convert to an http.Handler
-	h := mid.SetSessionInfo(e, r)
-	h = mid.Logging(e, h)
+	h := mid.Cache(e, r)         // Set cache headers if needed
+	h = mid.SetSessionInfo(e, h) // Adds Environment and user information to requet context
+	h = mid.Logging(e, h)        // Logging
 
 	return h
 }
