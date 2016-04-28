@@ -5,7 +5,6 @@ import (
 
 	"github.com/onesimus-systems/packet-guardian/src/auth"
 	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/models"
 )
 
 type Auth struct {
@@ -37,13 +36,9 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	// Assume invalid until convinced otherwise
 	resp := common.NewAPIResponse(common.APIStatusInvalidAuth, "Invalid login", nil)
 	username := r.FormValue("username")
-	if auth.IsValidLogin(a.e, username, r.FormValue("password")) {
+	if auth.LoginUser(r, w) {
 		resp.Code = common.APIStatusOK
 		resp.Message = ""
-		sess := common.GetSessionFromContext(r)
-		sess.Set("loggedin", true)
-		sess.Set("username", username)
-		sess.Save(r, w)
 		// The context user is not filled in here
 		if common.StringInSlice(username, a.e.Config.Auth.AdminUsers) {
 			a.e.Log.Infof("Successful login by administrative user %s", username)
@@ -60,13 +55,6 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 
 // LogoutHandler voids a user's session
 func (a *Auth) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	sess := common.GetSessionFromContext(r)
-	if sess.GetBool("loggedin", false) {
-		user := models.GetUserFromContext(r)
-		sess.Set("loggedin", false)
-		sess.Set("username", "")
-		sess.Save(r, w)
-		a.e.Log.Infof("Successful logout by user %s", user.Username)
-	}
+	auth.LogoutUser(r, w)
 	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }

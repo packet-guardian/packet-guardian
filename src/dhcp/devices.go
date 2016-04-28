@@ -20,20 +20,9 @@ func IsRegistered(e *common.Environment, mac net.HardwareAddr) (bool, error) {
 // IsRegisteredByIP checks if an IP is leased to a registered MAC address.
 // IsRegisteredByIP will return false if an error occurs as well as the error itself.
 func IsRegisteredByIP(e *common.Environment, ip net.IP) (bool, error) {
-	mac, err := GetMacFromIP(ip)
-	if err != nil {
+	lease, err := GetLeaseByIP(e, ip)
+	if err != nil || lease.MAC == nil {
 		return false, err
 	}
-	return IsRegistered(e, mac)
-}
-
-// GetMacFromIP finds the mac address that has the lease ip
-func GetMacFromIP(ip net.IP) (net.HardwareAddr, error) {
-	// TODO: Replace with getting lease info from database
-	// l, err := getLeaseFromFile(ip, leasesFile)
-	// if err != nil {
-	// 	return net.HardwareAddr{}, err
-	// }
-	//return l.mac, nil
-	return net.HardwareAddr{}, nil
+	return IsRegistered(e, lease.MAC)
 }

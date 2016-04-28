@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/dragonrider23/verbose"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
@@ -62,11 +63,14 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Don't show the registration page at all if blacklisted
 	if formType == nonAdminAutoReg {
-		mac, err := dhcp.GetMacFromIP(ip)
-		if err != nil {
-			m.e.Log.Errorf("Failed to get MAC from IP for %s", ip.String())
+		lease, err := dhcp.GetLeaseByIP(m.e, ip)
+		if err != nil || lease.ID == 0 {
+			m.e.Log.WithFields(verbose.Fields{
+				"IP":    ip.String(),
+				"Error": err,
+			}).Error("Failed to get MAC from IP")
 		} else {
-			device, err := models.GetDeviceByMAC(m.e, mac)
+			device, err := models.GetDeviceByMAC(m.e, lease.MAC)
 			if err != nil {
 				m.e.Log.Errorf("Error getting device for reg check: %s", err.Error())
 			} else {

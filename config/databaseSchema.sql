@@ -33,3 +33,15 @@ CREATE TABLE "blacklist" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     "value" TEXT NOT NULL UNIQUE ON CONFLICT IGNORE
 );
+
+DROP TABLE IF EXISTS "lease";
+CREATE TABLE "lease" (
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    "ip" TEXT NOT NULL,
+    "mac" TEXT NOT NULL,
+    "network" TEXT NOT NULL,
+    "start" INTEGER NOT NULL,
+    "end" INTEGER NOT NULL,
+    "hostname" TEXT NOT NULL,
+    "abandoned" INTEGER DEFAULT (0)
+);

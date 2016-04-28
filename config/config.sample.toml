@@ -56,5 +56,8 @@ servers = [""]
 port = 1812
 secret = ""
 
+[auth.cas]
+server = ""
+
 [dhcp]
 configFile = "config/dhcp.conf"

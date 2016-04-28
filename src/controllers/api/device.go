@@ -23,18 +23,19 @@ func NewDeviceController(e *common.Environment) *Device {
 func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	// Check authentication and get User models
 	var formUser *models.User // The user to whom the device is being registered
+	var err error
 	sessionUser := models.GetUserFromContext(r)
 	if !auth.IsLoggedIn(r) {
 		username := r.FormValue("username")
 		// Authenticate
-		if !auth.IsValidLogin(d.e, username, r.FormValue("password")) {
+		if !auth.LoginUser(r, w) {
 			d.e.Log.Errorf("Failed authentication for %s", username)
 			common.NewAPIResponse(common.APIStatusInvalidAuth, "Incorrect username or password", nil).WriteTo(w)
 			return
 		}
 
 		// User authenticated successfully
-		formUser, err := models.GetUserByUsername(d.e, username)
+		formUser, err = models.GetUserByUsername(d.e, username)
 		if err != nil {
 			d.e.Log.Errorf("Failed to get user from database %s: %s", username, err.Error())
 			common.NewAPIResponse(common.APIStatusInvalidAuth, "Error registering device", nil).WriteTo(w)
@@ -67,7 +68,6 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var err error
 	if !sessionUser.IsAdmin() { // Admins can register above the limit
 		// Get and enforce the device limit
 		limit := models.UserDeviceLimit(d.e.Config.Registration.DefaultDeviceLimit)
@@ -106,12 +106,14 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// Automatic registration
-		mac, err = dhcp.GetMacFromIP(ip)
-		if err != nil {
+		lease, err := dhcp.GetLeaseByIP(d.e, ip)
+		d.e.Log.Debugf("%+v\n", lease)
+		if err != nil || lease.ID == 0 {
 			d.e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
 			common.NewAPIResponse(common.APIStatusGenericError, "Error detecting MAC address.", nil).WriteTo(w)
 			return
 		}
+		mac = lease.MAC
 	}
 
 	// Get device from database
