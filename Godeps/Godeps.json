@@ -7,6 +7,10 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "github.com/dragonlibs/cas",
+			"Rev": "5f29a22520453e33c1f5af6dbee4bcbe804646e8"
+		},
+		{
 			"ImportPath": "github.com/dragonrider23/go-ldap-client",
 			"Rev": "b33c09cb02f289fe666b7f45c722273ad73c7a4b"
 		},
@@ -71,12 +75,20 @@
 			"Rev": "7b428712abe956d0e9e1e9a01e163fb6c7171438"
 		},
 		{
+			"ImportPath": "golang.org/x/net/html",
+			"Rev": "b6fdb7d8a4ccefede406f8fe0f017fb58265054c"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html/atom",
+			"Rev": "b6fdb7d8a4ccefede406f8fe0f017fb58265054c"
+		},
+		{
 			"ImportPath": "golang.org/x/net/internal/iana",
-			"Rev": "b797637b7aeeed133049c7281bfa31dcc9ca42d6"
+			"Rev": "b6fdb7d8a4ccefede406f8fe0f017fb58265054c"
 		},
 		{
 			"ImportPath": "golang.org/x/net/ipv4",
-			"Rev": "b797637b7aeeed133049c7281bfa31dcc9ca42d6"
+			"Rev": "b6fdb7d8a4ccefede406f8fe0f017fb58265054c"
 		},
 		{
 			"ImportPath": "gopkg.in/asn1-ber.v1",
@@ -87,6 +99,10 @@
 			"ImportPath": "gopkg.in/ldap.v2",
 			"Comment": "v2.2.2",
 			"Rev": "a3bce49e0d824978c01ce29eb00d0a2b72749b25"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "a83829b6f1293c91addabc89d0571c246397bbf4"
 		}
 	]
 }

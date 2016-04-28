@@ -62,6 +62,9 @@ type Config struct {
 			Port    int
 			Secret  string
 		}
+		CAS struct {
+			Server string
+		}
 	}
 	DHCP struct {
 		ConfigFile string
