@@ -129,3 +129,17 @@ func (s *Session) GetInt(key interface{}, def ...int) int {
 	}
 	return 0
 }
+
+func NewTestSession() *Session {
+	return &Session{
+		sessions.NewSession(&TestStore{}, "something"),
+	}
+}
+
+type TestStore struct{}
+
+func (t *TestStore) Get(r *http.Request, name string) (*sessions.Session, error) { return nil, nil }
+func (t *TestStore) New(r *http.Request, name string) (*sessions.Session, error) { return nil, nil }
+func (t *TestStore) Save(r *http.Request, w http.ResponseWriter, s *sessions.Session) error {
+	return nil
+}

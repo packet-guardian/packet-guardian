@@ -45,23 +45,5 @@ func (rad *radAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 		e.Log.WithField("username", user.Username).Info("Failed login by expired user")
 		return false
 	}
-
-	sess := common.GetSessionFromContext(r)
-	sess.Set("loggedin", true)
-	sess.Set("username", r.FormValue("username"))
-	sess.Save(r, w)
 	return true
-}
-
-func (rad *radAuthenticator) logoutUser(r *http.Request, w http.ResponseWriter) {
-	sess := common.GetSessionFromContext(r)
-	if sess.GetBool("loggedin") {
-		sess.Set("loggedin", false)
-		sess.Set("username", "")
-		sess.Save(r, w)
-	}
-}
-
-func (rad *radAuthenticator) isLoggedIn(r *http.Request) bool {
-	return common.GetSessionFromContext(r).GetBool("loggedin")
 }

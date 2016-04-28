@@ -72,6 +72,10 @@ type Config struct {
 	}
 }
 
+func NewEmptyConfig() *Config {
+	return &Config{}
+}
+
 func NewConfig(configFile string) (conf *Config, err error) {
 	defer func() {
 		if r := recover(); r != nil {

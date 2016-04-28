@@ -54,22 +54,5 @@ func (l *ldapAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bo
 		return false
 	}
 
-	sess := common.GetSessionFromContext(r)
-	sess.Set("loggedin", true)
-	sess.Set("username", user.Username)
-	sess.Save(r, w)
 	return true
-}
-
-func (l *ldapAuthenticator) logoutUser(r *http.Request, w http.ResponseWriter) {
-	sess := common.GetSessionFromContext(r)
-	if sess.GetBool("loggedin") {
-		sess.Set("loggedin", false)
-		sess.Set("username", "")
-		sess.Save(r, w)
-	}
-}
-
-func (l *ldapAuthenticator) isLoggedIn(r *http.Request) bool {
-	return common.GetSessionFromContext(r).GetBool("loggedin")
 }

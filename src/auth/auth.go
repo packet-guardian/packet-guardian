@@ -10,8 +10,6 @@ import (
 
 type authenticator interface {
 	loginUser(r *http.Request, w http.ResponseWriter) bool
-	logoutUser(r *http.Request, w http.ResponseWriter)
-	isLoggedIn(r *http.Request) bool
 }
 
 var authFunctions = make(map[string]authenticator)
@@ -24,11 +22,12 @@ func LoginUser(r *http.Request, w http.ResponseWriter) bool {
 		return false
 	}
 
-	e.Log.Debug(e.Config.Auth.AuthMethod)
 	for _, method := range e.Config.Auth.AuthMethod {
 		if authMethod, ok := authFunctions[method]; ok {
 			if authMethod.loginUser(r, w) {
 				sess := common.GetSessionFromContext(r)
+				sess.Set("loggedin", true)
+				sess.Set("username", r.FormValue("username"))
 				sess.Set("_authMethod", method)
 				sess.Save(r, w)
 				e.Log.WithFields(verbose.Fields{
@@ -43,25 +42,21 @@ func LoginUser(r *http.Request, w http.ResponseWriter) bool {
 }
 
 func IsLoggedIn(r *http.Request) bool {
-	method := common.GetSessionFromContext(r).GetString("_authMethod")
-	if m, ok := authFunctions[method]; ok {
-		return m.isLoggedIn(r)
-	}
-	return false
+	return common.GetSessionFromContext(r).GetBool("loggedin")
 }
 
 func LogoutUser(r *http.Request, w http.ResponseWriter) {
-	method := common.GetSessionFromContext(r).GetString("_authMethod")
-	m, ok := authFunctions[method]
-	if !ok {
-		return
+	sess := common.GetSessionFromContext(r)
+	if sess.GetBool("loggedin") {
+		sess.Set("loggedin", false)
+		sess.Set("username", "")
+		sess.Save(r, w)
 	}
-	m.logoutUser(r, w)
 
 	e := common.GetEnvironmentFromContext(r)
 	user := models.GetUserFromContext(r)
 	e.Log.WithFields(verbose.Fields{
 		"username": user.Username,
-		"method":   method,
+		"method":   sess.GetString("_authMethod"),
 	}).Info("Logged out user")
 }

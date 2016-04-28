@@ -36,7 +36,7 @@ func (c *casAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) boo
 		}
 	}
 
-	resp, err := c.client.AuthenticateUser(r.FormValue("username"), r.FormValue("password"), r)
+	_, err := c.client.AuthenticateUser(r.FormValue("username"), r.FormValue("password"), r)
 	if err == cas.InvalidCredentials {
 		return false
 	}
@@ -44,23 +44,5 @@ func (c *casAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) boo
 		e.Log.WithField("Err Msg", err).Error("Error communicating with CAS server")
 		return false
 	}
-
-	sess := common.GetSessionFromContext(r)
-	sess.Set("loggedin", true)
-	sess.Set("username", resp.User)
-	sess.Save(r, w)
 	return true
-}
-
-func (c *casAuthenticator) logoutUser(r *http.Request, w http.ResponseWriter) {
-	sess := common.GetSessionFromContext(r)
-	if sess.GetBool("loggedin") {
-		sess.Set("loggedin", false)
-		sess.Set("username", "")
-		sess.Save(r, w)
-	}
-}
-
-func (c *casAuthenticator) isLoggedIn(r *http.Request) bool {
-	return common.GetSessionFromContext(r).GetBool("loggedin")
 }

@@ -31,6 +31,13 @@ func NewEnvironment(dev bool) *Environment {
 	return &Environment{Dev: dev}
 }
 
+func NewTestEnvironment() *Environment {
+	return &Environment{
+		Config: NewEmptyConfig(),
+		Log:    NewEmptyLogger(),
+	}
+}
+
 func GetEnvironmentFromContext(r *http.Request) *Environment {
 	if rv := context.Get(r, SessionEnvKey); rv != nil {
 		return rv.(*Environment)
@@ -38,8 +45,8 @@ func GetEnvironmentFromContext(r *http.Request) *Environment {
 	return nil
 }
 
-func SetEnvironmentToContext(r *http.Request, s *Environment) {
-	context.Set(r, SessionEnvKey, s)
+func SetEnvironmentToContext(r *http.Request, e *Environment) {
+	context.Set(r, SessionEnvKey, e)
 }
 
 type DatabaseAccessor struct {
@@ -163,6 +170,12 @@ type Logger struct {
 	*verbose.Logger
 	dev    bool
 	logDir string
+}
+
+func NewEmptyLogger() *Logger {
+	return &Logger{
+		Logger: verbose.New("null"),
+	}
 }
 
 func NewLogger(logDir string, dev bool) *Logger {
