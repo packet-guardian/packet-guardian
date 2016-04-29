@@ -1,18 +1,45 @@
-.admin-dash {
-    width: 60%;
-    margin: 0 auto;
-}
-
 h2 {
     margin-top: 0;
 }
 
+.controls {
+    margin-left: 5px;
+}
+
 .search-box {
-    float: right;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.search-box input {
+    display: block;
+    width: 98%;
+    margin-bottom: 5px;
 }
 
 .dash-status {
     margin-top: 20px;
     background-color: lightgray;
     min-height: 300px;
+}
+
+@media (min-width: 600px) {
+    .admin-dash {
+        width: 60%;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 850px) {
+    .search-box {
+        float: right;
+        margin-top: 0;
+        width: auto;
+    }
+
+    .search-box input {
+        display: inline;
+        width: auto;
+        margin-bottom: 0;
+    }
 }
