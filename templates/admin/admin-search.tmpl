@@ -2,12 +2,17 @@
 {{template "header" dict "css" (list "admin-search") "main" . "page-title" "Admin Search"}}
 <div class="admin-search">
     <h2>Administration Search</h2>
-    <form method="GET">
-        <div class="controls">
-            <input type="text" name="q" placeholder="Search" value="{{.query}}" autofocus="autofocus">
-            <button type="submit">Search</button>
+    <div class="controls">
+        <a href="/admin" class="btn">Dashboard</a>
+        <a href="/logout" class="btn">Logout</a>
+
+        <div class="search-box">
+            <form method="GET">
+                <input type="text" name="q" placeholder="Search" value="{{.query}}" autofocus="autofocus">
+                <button type="submit" class="btn">Search</button>
+            </form>
         </div>
-    </form>
+    </div>
 
     {{if eq (len .searchResults) 0}}
         {{if eq .query ""}}
