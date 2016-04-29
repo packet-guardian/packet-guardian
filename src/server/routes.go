@@ -3,6 +3,7 @@ package server
 import (
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -40,6 +41,20 @@ func LoadRoutes(e *common.Environment) http.Handler {
 		s := r.PathPrefix("/dev").Subrouter()
 		s.HandleFunc("/reloadtemp", devController.ReloadTemplates).Methods("GET")
 		s.HandleFunc("/reloadconf", devController.ReloadConfiguration).Methods("GET")
+
+		// Add routes for profiler
+		s = r.PathPrefix("/debug").Subrouter()
+		s.HandleFunc("/pprof/", pprof.Index)
+		s.HandleFunc("/pprof/cmdline", pprof.Cmdline)
+		s.HandleFunc("/pprof/profile", pprof.Profile)
+		s.HandleFunc("/pprof/symbol", pprof.Symbol)
+		s.HandleFunc("/pprof/trace", pprof.Trace)
+		// Manually add support for paths linked to by index page at /debug/pprof/
+		s.Handle("/pprof/goroutine", pprof.Handler("goroutine"))
+		s.Handle("/pprof/heap", pprof.Handler("heap"))
+		s.Handle("/pprof/threadcreate", pprof.Handler("threadcreate"))
+		s.Handle("/pprof/block", pprof.Handler("block"))
+		e.Log.Debug("Profiling enabled")
 	}
 
 	h := mid.Cache(e, r)         // Set cache headers if needed

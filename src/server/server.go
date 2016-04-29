@@ -54,7 +54,7 @@ func (s *Server) Run() {
 
 func (s *Server) startHttp() {
 	s.e.Log.Infof("Now listening on %s:%s", s.address, s.httpPort)
-	http.ListenAndServe(s.address+":"+s.httpPort, s.routes)
+	s.e.Log.Emergency(http.ListenAndServe(s.address+":"+s.httpPort, s.routes))
 }
 
 func (s *Server) startHttps() {
@@ -63,12 +63,12 @@ func (s *Server) startHttps() {
 		"port":    s.httpsPort,
 	}).Info("Now listening on TLS")
 	s.e.Log.Info("Starting server with TLS certificates")
-	http.ListenAndServeTLS(
+	s.e.Log.Emergency(http.ListenAndServeTLS(
 		s.address+":"+s.httpsPort,
 		s.e.Config.Webserver.TLSCertFile,
 		s.e.Config.Webserver.TLSKeyFile,
 		s.routes,
-	)
+	))
 }
 
 func (s *Server) redirectToHttps(w http.ResponseWriter, r *http.Request) {

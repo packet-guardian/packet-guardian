@@ -182,14 +182,14 @@ func NewLogger(logDir string, dev bool) *Logger {
 	logger := verbose.New("app")
 	sh := verbose.NewStdoutHandler()
 	fh, _ := verbose.NewFileHandler(logDir)
-	if !dev {
-		sh.SetMinLevel(verbose.LogLevelWarning)
-		fh.SetMinLevel(verbose.LogLevelWarning)
-	} else {
-		logger.Info("Packet Guardian running in DEVELOPMENT mode")
-	}
 	logger.AddHandler("stdout", sh)
 	logger.AddHandler("file", fh)
+	if dev {
+		logger.Debug("Packet Guardian running in DEVELOPMENT mode")
+	} else {
+		sh.SetMinLevel(verbose.LogLevelInfo)
+		fh.SetMinLevel(verbose.LogLevelInfo)
+	}
 	return &Logger{
 		Logger: logger,
 		dev:    dev,

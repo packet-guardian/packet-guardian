@@ -48,7 +48,7 @@ func TestLocalAuth(t *testing.T) {
 		WillReturnRows(passRows)
 
 	e := common.NewTestEnvironment()
-	e.DB = &common.DatabaseAccessor{db}
+	e.DB = &common.DatabaseAccessor{DB: db}
 
 	session := common.NewTestSession()
 
@@ -108,7 +108,7 @@ func TestFailedLocalAuth(t *testing.T) {
 		WillReturnRows(passRows)
 
 	e := common.NewTestEnvironment()
-	e.DB = &common.DatabaseAccessor{db}
+	e.DB = &common.DatabaseAccessor{DB: db}
 
 	session := common.NewTestSession()
 
