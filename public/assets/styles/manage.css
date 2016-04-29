@@ -63,3 +63,20 @@ table tr:nth-child(2n) {
     color: red;
     font-weight: bold;
 }
+
+select {
+    font-weight: bold;
+    padding: 4px 10px;
+    color: white;
+    border: 0;
+    background-color: #FF3131;
+    background: linear-gradient(to bottom, #FF3131, #EA2F2F);
+}
+
+select:nth-child(1n) {
+    background-color: #0083A8;
+}
+
+select > .placeholder {
+  display: none;
+}
