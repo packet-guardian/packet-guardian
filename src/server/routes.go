@@ -100,10 +100,7 @@ func apiRouter(e *common.Environment) http.Handler {
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	e := common.GetEnvironmentFromContext(r)
 	ip := strings.Split(r.RemoteAddr, ":")[0]
-	reg, err := dhcp.IsRegisteredByIP(e, net.ParseIP(ip))
-	if err != nil {
-		e.Log.Errorf("Error checking auto registration IP: %s", err.Error())
-	}
+	reg, _ := dhcp.IsRegisteredByIP(e, net.ParseIP(ip))
 
 	if auth.IsLoggedIn(r) {
 		sessionUser := models.GetUserFromContext(r)
@@ -123,8 +120,6 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
-	e := common.GetEnvironmentFromContext(r)
-	e.Log.GetLogger("server").Infof("Path not found %s", r.RequestURI)
 	sessionUser := models.GetUserFromContext(r)
 	if sessionUser.IsHelpDesk() || sessionUser.IsAdmin() {
 		http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)

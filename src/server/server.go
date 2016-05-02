@@ -42,7 +42,10 @@ func (s *Server) Run() {
 	if s.e.Config.Webserver.TLSCertFile != "" && s.e.Config.Webserver.TLSKeyFile != "" {
 		if s.e.Config.Webserver.RedirectHttpToHttps {
 			go func() {
-				s.e.Log.Infof("Now listening on %s:%s", s.address, s.httpPort)
+				s.e.Log.WithFields(verbose.Fields{
+					"address": s.address,
+					"port":    s.httpPort,
+				}).Debug("Listening")
 				http.ListenAndServe(s.address+":"+s.httpPort, http.HandlerFunc(s.redirectToHttps))
 			}()
 		}
@@ -53,7 +56,10 @@ func (s *Server) Run() {
 }
 
 func (s *Server) startHttp() {
-	s.e.Log.Infof("Now listening on %s:%s", s.address, s.httpPort)
+	s.e.Log.WithFields(verbose.Fields{
+		"address": s.address,
+		"port":    s.httpPort,
+	}).Debug("Listening")
 	s.e.Log.Emergency(http.ListenAndServe(s.address+":"+s.httpPort, s.routes))
 }
 
@@ -61,8 +67,7 @@ func (s *Server) startHttps() {
 	s.e.Log.WithFields(verbose.Fields{
 		"address": s.address,
 		"port":    s.httpsPort,
-	}).Info("Now listening on TLS")
-	s.e.Log.Info("Starting server with TLS certificates")
+	}).Debug("Now listening on TLS")
 	s.e.Log.Emergency(http.ListenAndServeTLS(
 		s.address+":"+s.httpsPort,
 		s.e.Config.Webserver.TLSCertFile,

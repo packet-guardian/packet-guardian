@@ -40,13 +40,13 @@ func main() {
 	if err != nil {
 		e.Log.Fatalf("Error loading configuration: %s", err.Error())
 	}
-	e.Log.Infof("Configuration loaded from %s", configFile)
+	e.Log.Debugf("Configuration loaded from %s", configFile)
 
 	e.DB, err = common.NewDatabaseAccessor(e.Config)
 	if err != nil {
 		e.Log.Fatalf("Error loading database: %s", err.Error())
 	}
-	e.Log.Infof("Using %s database at %s", e.Config.Database.Type, e.Config.Database.Address)
+	e.Log.Debugf("Using %s database at %s", e.Config.Database.Type, e.Config.Database.Address)
 
 	handler := dhcp.NewDHCPServer(config, e)
 	//handler.Readonly()

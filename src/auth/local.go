@@ -34,7 +34,7 @@ func (l *localAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 
 	// If the passwords match, check if the user is still valid
 	if user.IsExpired() {
-		e.Log.WithField("username", user.Username).Info("Failed login by expired user")
+		e.Log.WithField("username", user.Username).Info("User expired")
 		return false
 	}
 	return true

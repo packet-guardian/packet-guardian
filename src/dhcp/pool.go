@@ -112,7 +112,7 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 		if isIPInUse(next) {
 			e.Log.WithFields(verbose.Fields{
 				"IP": next.String(),
-			}).Warning("Abandoned IP")
+			}).Notice("Abandoned IP")
 			l.IsAbandoned = true
 			continue
 		}

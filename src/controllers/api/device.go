@@ -29,7 +29,6 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		// Authenticate
 		if !auth.LoginUser(r, w) {
-			d.e.Log.Errorf("Failed authentication for %s", username)
 			common.NewAPIResponse(common.APIStatusInvalidAuth, "Incorrect username or password", nil).WriteTo(w)
 			return
 		}
@@ -37,7 +36,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		// User authenticated successfully
 		formUser, err = models.GetUserByUsername(d.e, username)
 		if err != nil {
-			d.e.Log.Errorf("Failed to get user from database %s: %s", username, err.Error())
+			d.e.Log.Errorf("Failed getting user %s: %s", username, err.Error())
 			common.NewAPIResponse(common.APIStatusInvalidAuth, "Error registering device", nil).WriteTo(w)
 			return
 		}
@@ -94,7 +93,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	if manual {
 		// Manual registration
 		if !d.e.Config.Registration.AllowManualRegistrations {
-			d.e.Log.Errorf("Unauthorized manual registration attempt for MAC %s from user %s", macPost, formUser.Username)
+			d.e.Log.Noticef("Unauthorized manual registration attempt for MAC %s from user %s", macPost, formUser.Username)
 			common.NewAPIResponse(common.APIStatusGenericError, "Manual registrations are not allowed.", nil).WriteTo(w)
 			return
 		}
@@ -124,7 +123,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Check if device is already registered
 	if device.ID != 0 {
-		d.e.Log.Errorf("Attempted duplicate registration of MAC %s to user %s", mac.String(), formUser.Username)
+		d.e.Log.Noticef("Attempted duplicate registration of MAC %s to user %s", mac.String(), formUser.Username)
 		common.NewAPIResponse(common.APIStatusGenericError, "Device already registered", nil).WriteTo(w)
 		return
 	}
@@ -132,7 +131,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if the username is blacklisted
 	// Administrators bypass the blacklist check
 	if !sessionUser.IsAdmin() && formUser.IsBlacklisted() {
-		d.e.Log.Errorf("Attempted registration by blacklisted user %s", formUser.Username)
+		d.e.Log.Noticef("Attempted registration by blacklisted user %s", formUser.Username)
 		common.NewAPIResponse(common.APIStatusGenericError, "Failed to register device: Username blacklisted", nil).WriteTo(w)
 		return
 	}

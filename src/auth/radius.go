@@ -42,7 +42,7 @@ func (rad *radAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 		return false
 	}
 	if user.IsExpired() {
-		e.Log.WithField("username", user.Username).Info("Failed login by expired user")
+		e.Log.WithField("username", user.Username).Info("User expired")
 		return false
 	}
 	return true

@@ -35,20 +35,9 @@ func (a *Auth) showLoginPage(w http.ResponseWriter, r *http.Request) {
 func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	// Assume invalid until convinced otherwise
 	resp := common.NewAPIResponse(common.APIStatusInvalidAuth, "Invalid login", nil)
-	username := r.FormValue("username")
 	if auth.LoginUser(r, w) {
 		resp.Code = common.APIStatusOK
 		resp.Message = ""
-		// The context user is not filled in here
-		if common.StringInSlice(username, a.e.Config.Auth.AdminUsers) {
-			a.e.Log.Infof("Successful login by administrative user %s", username)
-		} else if common.StringInSlice(username, a.e.Config.Auth.HelpDeskUsers) {
-			a.e.Log.Infof("Successful login by helpdesk user %s", username)
-		} else {
-			a.e.Log.Infof("Successful login by user %s", username)
-		}
-	} else {
-		a.e.Log.Errorf("Failed login attempt by user %s", username)
 	}
 	resp.WriteTo(w)
 }

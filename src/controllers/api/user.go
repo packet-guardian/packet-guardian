@@ -34,7 +34,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := models.GetUserByUsername(u.e, username)
 	if err != nil {
-		u.e.Log.Errorf("1Error saving user: %s", err.Error())
+		u.e.Log.Errorf("Error saving user: %s", err.Error())
 		common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
 		return
 	}
@@ -47,13 +47,6 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			user.NewPassword(password)
 		}
-		// } else if len(password) > 8 {
-		// 	user.NewPassword(password)
-		// } else {
-		// 	u.e.Log.Error("2Error saving user: password too short")
-		// 	common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
-		// 	return
-		// }
 	}
 
 	// Device limit
@@ -61,7 +54,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 	if limitStr != "" {
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil {
-			u.e.Log.Errorf("3Error saving user: %s", err.Error())
+			u.e.Log.Errorf("Error saving user: %s", err.Error())
 			common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
 			return
 		}
@@ -79,7 +72,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 
 		expType, err := strconv.Atoi(expTypeStr)
 		if err != nil {
-			u.e.Log.Errorf("4Error saving user: %s", err.Error())
+			u.e.Log.Errorf("Error saving user: %s", err.Error())
 			common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
 			return
 		}
@@ -90,7 +83,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		} else if user.DeviceExpiration.Mode == models.UserDeviceExpirationSpecific {
 			t, err := time.Parse(common.TimeFormat, devExpiration)
 			if err != nil {
-				u.e.Log.Errorf("5Error saving user: %s", err.Error())
+				u.e.Log.Errorf("Error saving user: %s", err.Error())
 				common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
 				return
 			}
@@ -98,7 +91,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		} else if user.DeviceExpiration.Mode == models.UserDeviceExpirationDaily {
 			secs, err := common.ParseTime(devExpiration)
 			if err != nil {
-				u.e.Log.Errorf("6Error saving user: %s", err.Error())
+				u.e.Log.Errorf("Error saving user: %s", err.Error())
 				common.NewAPIResponse(common.APIStatusGenericError, "Error saving user: Invalid time format", nil).WriteTo(w)
 				return
 			}
@@ -106,7 +99,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		} else if user.DeviceExpiration.Mode == models.UserDeviceExpirationDuration {
 			d, err := time.ParseDuration(devExpiration)
 			if err != nil {
-				u.e.Log.Errorf("7Error saving user: %s", err.Error())
+				u.e.Log.Errorf("Error saving user: %s", err.Error())
 				common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
 				return
 			}
@@ -114,7 +107,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 			// For sanity we don't care and don't want the nanoseconds
 			user.DeviceExpiration.Value = int64(d / time.Second)
 		} else {
-			u.e.Log.Error("8Error saving user: Invalid device expiration type")
+			u.e.Log.Error("Error saving user: Invalid device expiration type")
 			common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
 			return
 		}
@@ -132,7 +125,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		if validStart != "" {
 			t, err := time.Parse(common.TimeFormat, validStart)
 			if err != nil {
-				u.e.Log.Errorf("9Error saving user: %s", err.Error())
+				u.e.Log.Errorf("Error saving user: %s", err.Error())
 				common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
 				return
 			}
@@ -141,14 +134,14 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		if validEnd != "" {
 			t, err := time.Parse(common.TimeFormat, validEnd)
 			if err != nil {
-				u.e.Log.Errorf("10Error saving user: %s", err.Error())
+				u.e.Log.Errorf("Error saving user: %s", err.Error())
 				common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
 				return
 			}
 			user.ValidEnd = t
 		}
 		if user.ValidEnd.Before(user.ValidStart) {
-			u.e.Log.Error("11Error saving user: Valid end date before start date")
+			u.e.Log.Error("Error saving user: Valid end date before start date")
 			common.NewAPIResponse(common.APIStatusGenericError, "Error saving user: Valid start can't be after valid end", nil).WriteTo(w)
 			return
 		}
@@ -160,7 +153,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := user.Save(); err != nil {
-		u.e.Log.Errorf("12Error saving user: %s", err.Error())
+		u.e.Log.Errorf("Error saving user: %s", err.Error())
 		common.NewAPIResponse(common.APIStatusGenericError, "Error saving user", nil).WriteTo(w)
 		return
 	}

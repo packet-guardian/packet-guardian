@@ -31,7 +31,7 @@ func NewDHCPServer(c *Config, e *common.Environment) *DHCPHandler {
 }
 
 func (h *DHCPHandler) ListenAndServe() error {
-	h.e.Log.Info("Starting DHCP server")
+	h.e.Log.Debug("Starting DHCP server")
 	return dhcp4.ListenAndServe(h)
 }
 
@@ -81,7 +81,7 @@ func (h *DHCPHandler) LoadLeases() error {
 func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
 	defer func() {
 		if r := recover(); r != nil {
-			h.e.Log.Emergencyf("Recovering from DHCP panic %s", r)
+			h.e.Log.Criticalf("Recovering from DHCP panic %s", r)
 		}
 	}()
 	if msgType == dhcp4.Inform {
@@ -95,7 +95,7 @@ func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, optio
 			"Client IP":  p.CIAddr().String(),
 			"Client MAC": p.CHAddr().String(),
 			"Relay IP":   p.GIAddr().String(),
-		}).Info()
+		}).Debug()
 	}
 
 	var response dhcp4.Packet
@@ -144,7 +144,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 			"Client MAC":  p.CHAddr().String(),
 			"Relay Agent": p.GIAddr().String(),
 			"Username":    device.Username,
-		}).Warning("Blacklisted MAC got a lease")
+		}).Notice("Blacklisted MAC got a lease")
 	}
 	registered := (device.ID != 0 || device.IsBlacklisted)
 
@@ -175,9 +175,6 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 			}).Alert("No free leases available in network")
 			return nil
 		}
-		h.e.Log.Debug("Got new, free lease")
-	} else {
-		h.e.Log.Debug("Got existing lease")
 	}
 
 	h.e.Log.WithFields(verbose.Fields{

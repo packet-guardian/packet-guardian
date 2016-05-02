@@ -9,6 +9,7 @@ import (
 	"github.com/dragonrider23/verbose"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/onesimus-systems/packet-guardian/src/models"
 )
 
 func init() {
@@ -44,5 +45,16 @@ func (c *casAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) boo
 		e.Log.WithField("Err Msg", err).Error("Error communicating with CAS server")
 		return false
 	}
+
+	user, err := models.GetUserByUsername(e, r.FormValue("username"))
+	if err != nil {
+		e.Log.WithField("Err", err).Error("Error getting user")
+		return false
+	}
+	if user.IsExpired() {
+		e.Log.WithField("username", user.Username).Info("User expired")
+		return false
+	}
+
 	return true
 }

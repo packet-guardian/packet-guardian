@@ -38,6 +38,7 @@ func LoginUser(r *http.Request, w http.ResponseWriter) bool {
 			}
 		}
 	}
+	e.Log.WithField("username", r.FormValue("username")).Info("Failed login")
 	return false
 }
 
