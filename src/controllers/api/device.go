@@ -141,6 +141,8 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	platform := ""
 	if manual && !common.StringInSlice(r.FormValue("platform"), d.e.Config.Registration.ManualRegPlatforms) {
 		platform = r.FormValue("platform")
+	} else {
+		platform = common.ParseUserAgent(r.UserAgent())
 	}
 
 	// Fill in device information

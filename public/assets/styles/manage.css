@@ -91,8 +91,7 @@ select > .placeholder {
 
 @media (min-width: 800px) {
     .manager {
-        width: 80%;
-        margin: 0 auto;
+        margin: 0 15px;
     }
 
     .controls {

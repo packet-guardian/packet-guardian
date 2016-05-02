@@ -40,18 +40,24 @@
             <tr>
                 {{if $.sessionUser.IsAdmin}}<th>&nbsp;</th>{{end}}
                 <th>MAC Address</th>
-                <th class="ua">User Agent</th>
+                <th>User Agent</th>
                 <th>Platform</th>
-                <th>Date Registered</th>
+                <th>Registered</th>
+                <th>Expires</th>
                 <th>Registered From</th>
             </tr>
             {{range .devices}}
             <tr>
                 {{if $.sessionUser.IsAdmin}}<td><input type="checkbox" value="{{.MAC}}" class="device-select"></td>{{end}}
                 <td>{{if .IsBlacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
-                <td class="ua">{{.UserAgent}}</td>
+                <td>{{.UserAgent}}</td>
                 <td>{{.Platform}}</td>
-                <td>{{.DateRegistered.Format "2006-01-02 15:04:05"}}</td>
+                <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>
+                {{if eq .Expires.Unix 0}}
+                <td>Never</td>
+                {{else}}
+                <td>{{.Expires.Format "2006-01-02 15:04"}}</td>
+                {{end}}
                 <td>{{.RegisteredFrom}}</td>
             </tr>
             {{end}}
