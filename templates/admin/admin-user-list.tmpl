@@ -1,17 +1,15 @@
 {{define "admin-user-list"}}
-{{template "header" dict "css" (list "admin-users") "main" . "pageTitle" "Admin User Management"}}
+{{template "header" dict "css" (list "admin-users") "main" . "pageTitle" "Admin - User Management"}}
 <div class="admin-users">
     <h2>Administration Users</h2>
 
-    <div class="clearfix">
-        <div class="controls">
-            <a href="/admin" class="btn">Dashboard</a>
-            <a href="/logout" class="btn">Logout</a>
-        </div>
+    <div class="controls">
+        <a href="/admin" class="btn">Dashboard</a>
+        <a href="/logout" class="btn">Logout</a>
+
         <div class="new-user">
             <form id="new-user-form">
-                New User:
-                <input type="text" name="username">
+                <input type="text" name="username" placeholder="Username">
                 <button type="submit">Create</button>
             </form>
         </div>

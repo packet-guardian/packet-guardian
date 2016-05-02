@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
 )
 
@@ -53,8 +54,10 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 		if m, err := common.FormatMacAddress(query); err == nil {
 			results, err = models.SearchDevicesByField(a.e, "mac", m.String())
 		} else if ip := net.ParseIP(query); ip != nil {
-			//results, err = models.SearchDevicesByField(a.e, "registred_from", ip.String())
-			// TODO: Finish IP search when the leases system is implemented
+			lease, err := dhcp.GetLeaseByIP(a.e, ip)
+			if err == nil {
+				results, err = models.SearchDevicesByField(a.e, "mac", lease.MAC.String())
+			}
 		} else {
 			results, err = models.SearchDevicesByField(a.e, "username", query+"%")
 			if len(results) == 0 {

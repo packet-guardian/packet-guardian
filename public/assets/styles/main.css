@@ -100,7 +100,11 @@ footer .copyright {
     color: white;
 }
 
-@media (min-width: 600px) {
+.main {
+    min-height: calc(100% - 140px);
+}
+
+@media (min-width: 550px) {
     header {
         position: relative;
         height: 100px;
@@ -115,9 +119,5 @@ footer .copyright {
         color: white;
         vertical-align: middle;
         margin-left: 2%;
-    }
-
-    .main {
-        min-height: calc(100% - 140px);
     }
 }
