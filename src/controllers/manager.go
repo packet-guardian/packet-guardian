@@ -103,7 +103,7 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	results, err := models.GetDevicesForUser(m.e, sessionUser)
 	if err != nil {
 		m.e.Log.Errorf("Error getting devices for user %s: %s", sessionUser.Username, err.Error())
-		// TODO: Show error page to user
+		m.e.Views.RenderError(w, r, nil)
 		return
 	}
 

@@ -143,6 +143,10 @@ func (v *Views) Reload() error {
 	return nil
 }
 
+func (v *Views) RenderError(w http.ResponseWriter, r *http.Request, data map[string]interface{}) {
+	v.NewView("error", r).Render(w, data)
+}
+
 type View struct {
 	name string
 	t    *template.Template

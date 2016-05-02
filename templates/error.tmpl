@@ -1,0 +1,14 @@
+{{define "error"}}
+{{template "header" dict "css" (list "error") "main" . "pageTitle" "Internal Server Error"}}
+<div class="error">
+    <h1>Oh my, an internal server error occured</h1>
+
+    <p>
+        Please try going back to the <a href="/">home page</a>.
+    </p>
+    <p>
+        If the problem persists, please call your IT help desk.
+    </p>
+</div>
+{{template "footer" dict "js" (list "login")}}
+{{end}}

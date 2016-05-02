@@ -31,7 +31,7 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	results, err := models.GetDevicesForUser(a.e, user)
 	if err != nil {
 		a.e.Log.Errorf("Error getting devices for user %s: %s", user.Username, err.Error())
-		// TODO: Show error page to user
+		a.e.Views.RenderError(w, r, nil)
 		return
 	}
 
