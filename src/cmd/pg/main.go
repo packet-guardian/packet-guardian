@@ -15,8 +15,8 @@ var (
 )
 
 func init() {
-	flag.StringVar(&configFile, "config", "", "Configuration file path")
-	flag.BoolVar(&dev, "dev", false, "Run in development mode")
+	flag.StringVar(&configFile, "c", "", "Configuration file path")
+	flag.BoolVar(&dev, "d", false, "Run in development mode")
 }
 
 func main() {
@@ -25,6 +25,20 @@ func main() {
 
 	var err error
 	e := common.NewEnvironment(dev)
+
+	// Find a configuration file if one wasn't given
+	if configFile == "" {
+		if common.FileExists("./config.toml") {
+			configFile = "./config.toml"
+		} else if common.FileExists(os.ExpandEnv("$HOME/.pg/config.toml")) {
+			configFile = os.ExpandEnv("$HOME/.pg/config.toml")
+		} else if common.FileExists("/etc/packet-guardian/config.toml") {
+			configFile = "/etc/packet-guardian/config.toml"
+		} else {
+			fmt.Println("No configuration file found")
+			os.Exit(1)
+		}
+	}
 
 	e.Config, err = common.NewConfig(configFile)
 	if err != nil {

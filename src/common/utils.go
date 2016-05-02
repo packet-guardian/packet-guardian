@@ -3,6 +3,7 @@ package common
 import (
 	"errors"
 	"net"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -63,6 +64,11 @@ func FormatMacAddress(mac string) (net.HardwareAddr, error) {
 		mac = mac[0:4] + "." + mac[4:8] + "." + mac[8:12]
 	}
 	return net.ParseMAC(mac)
+}
+
+func FileExists(file string) bool {
+	_, err := os.Stat(file)
+	return !os.IsNotExist(err)
 }
 
 func ParseTime(time string) (int64, error) {

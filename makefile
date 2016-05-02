@@ -25,7 +25,7 @@ lint:
 	golint ./src
 
 run: build
-	-./bin/pg -dev -config=$(CONFIG)
+	-./bin/pg -d -c=$(CONFIG)
 
 test:
 	go test ./src/...
