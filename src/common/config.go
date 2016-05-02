@@ -16,6 +16,12 @@ type Config struct {
 		SiteCompanyName string
 		SiteDomainName  string
 	}
+	Logging struct {
+		Enabled    bool
+		EnableHTTP bool
+		Level      string
+		Directory  string
+	}
 	Database struct {
 		Type     string
 		Address  string
@@ -29,7 +35,6 @@ type Config struct {
 		ManualRegPlatforms       []string
 	}
 	Webserver struct {
-		EnableLogging       bool
 		Address             string
 		HttpPort            int
 		HttpsPort           int

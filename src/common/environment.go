@@ -166,10 +166,21 @@ func (v *View) Render(w io.Writer, data map[string]interface{}) {
 	}
 }
 
+var logLevels = map[string]verbose.LogLevel{
+	"debug":     verbose.LogLevelDebug,
+	"info":      verbose.LogLevelInfo,
+	"notice":    verbose.LogLevelNotice,
+	"warning":   verbose.LogLevelWarning,
+	"error":     verbose.LogLevelError,
+	"critical":  verbose.LogLevelCritical,
+	"alert":     verbose.LogLevelAlert,
+	"emergency": verbose.LogLevelEmergency,
+	"fatal":     verbose.LogLevelFatal,
+}
+
 type Logger struct {
 	*verbose.Logger
-	dev    bool
-	logDir string
+	c *Config
 }
 
 func NewEmptyLogger() *Logger {
@@ -178,40 +189,42 @@ func NewEmptyLogger() *Logger {
 	}
 }
 
-func NewLogger(logDir string, dev bool) *Logger {
+func NewLogger(c *Config) *Logger {
 	logger := verbose.New("app")
+	if !c.Logging.Enabled {
+		return &Logger{
+			Logger: logger,
+		}
+	}
 	sh := verbose.NewStdoutHandler()
-	fh, _ := verbose.NewFileHandler(logDir)
+	fh, _ := verbose.NewFileHandler(c.Logging.Directory)
 	logger.AddHandler("stdout", sh)
 	logger.AddHandler("file", fh)
-	if dev {
-		logger.Debug("Packet Guardian running in DEVELOPMENT mode")
-	} else {
-		sh.SetMinLevel(verbose.LogLevelInfo)
-		fh.SetMinLevel(verbose.LogLevelInfo)
+
+	if level, ok := logLevels[c.Logging.Level]; ok {
+		sh.SetMinLevel(level)
+		fh.SetMinLevel(level)
 	}
 	return &Logger{
 		Logger: logger,
-		dev:    dev,
-		logDir: logDir,
+		c:      c,
 	}
 }
 
 // GetLogger returns a new Logger based on its parent but with a new name
 // This can be used to separate logs from different sub-systems.
 func (l *Logger) GetLogger(name string) *Logger {
-	logger := verbose.New("app")
+	logger := verbose.New(name)
 	sh := verbose.NewStdoutHandler()
-	fh, _ := verbose.NewFileHandler(l.logDir)
-	if !l.dev {
-		sh.SetMinLevel(verbose.LogLevelWarning)
-		fh.SetMinLevel(verbose.LogLevelWarning)
+	fh, _ := verbose.NewFileHandler(l.c.Logging.Directory)
+	if level, ok := logLevels[l.c.Logging.Level]; ok {
+		sh.SetMinLevel(level)
+		fh.SetMinLevel(level)
 	}
 	logger.AddHandler("stdout", sh)
 	logger.AddHandler("file", fh)
 	return &Logger{
 		Logger: logger,
-		dev:    l.dev,
-		logDir: l.logDir,
+		c:      l.c,
 	}
 }

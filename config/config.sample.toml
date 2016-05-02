@@ -4,6 +4,12 @@ siteCompanyName = ""
 # Must include port if not normal http/https
 siteDomainName = ""
 
+[logging]
+enabled = true
+enableHTTP = true
+level = "notice"
+directory = "logs"
+
 [database]
 type = "sqlite"
 address = "private/database.sqlite3"
@@ -17,7 +23,6 @@ defaultDeviceLimit = 10
 manualRegPlatforms = ["Playstation", "XBox", "Nintendo", "TV", "Chromecast", "Apple TV", "Roku", "Other"]
 
 [webserver]
-enableLogging = true
 # Leave address blank to bind to all addresses
 address = "127.0.0.1"
 httpPort = 8080

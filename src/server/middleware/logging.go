@@ -33,22 +33,26 @@ func (w *responseWriter) requestTime() time.Duration {
 
 func Logging(e *common.Environment, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// If HTTP logging is disabled, no need in wasting the space
+		if !e.Config.Logging.EnableHTTP {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		newW := &responseWriter{
 			ResponseWriter: w,
 			status:         200,
 			startTime:      time.Now(),
 		}
 		next.ServeHTTP(newW, r)
-		if e.Config.Webserver.EnableLogging {
-			e.Log.GetLogger("server").Infof(
-				"%s %s \"%s\" %d %d %s",
-				r.RemoteAddr,
-				r.Method,
-				r.URL.Path,
-				newW.status,
-				newW.length,
-				newW.requestTime().String(),
-			)
-		}
+		e.Log.GetLogger("server").Infof(
+			"%s %s \"%s\" %d %d %s",
+			r.RemoteAddr,
+			r.Method,
+			r.URL.Path,
+			newW.status,
+			newW.length,
+			newW.requestTime().String(),
+		)
 	})
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"os"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/server"
@@ -23,13 +25,19 @@ func main() {
 
 	var err error
 	e := common.NewEnvironment(dev)
-	e.Log = common.NewLogger("logs", dev)
 
 	e.Config, err = common.NewConfig(configFile)
 	if err != nil {
-		e.Log.Fatalf("Error loading configuration: %s", err.Error())
+		fmt.Printf("Error parsing configuration: %s\n", err.Error())
+		os.Exit(1)
 	}
+
+	e.Log = common.NewLogger(e.Config)
 	e.Log.Debugf("Configuration loaded from %s", configFile)
+
+	if dev {
+		e.Log.Debug("Packet Guardian running in DEVELOPMENT mode")
+	}
 
 	e.Sessions, err = common.NewSessionStore(e.Config)
 	if err != nil {
