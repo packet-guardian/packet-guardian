@@ -10,23 +10,17 @@
 .login-box input {
     color: black;
     font-size: 1.25em;
+    width: 100%;
 }
 
 fieldset {
     border: none;
     margin: 10px auto;
-    width: 400px;
 }
 
 label {
     display: block;
     margin-bottom: 5px;
-}
-
-@media (min-width: 370px) {
-    .login-box input {
-        width: 350px;
-    }
 }
 
 @media (min-width: 600px) and (min-height: 430px) {
@@ -48,5 +42,9 @@ label {
         border-radius: 15px;
         background-color: #303030;
         background: linear-gradient(to bottom, #454545, #303030);
+    }
+
+    fieldset {
+        width: 400px;
     }
 }

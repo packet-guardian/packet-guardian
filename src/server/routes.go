@@ -124,11 +124,6 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	e := common.GetEnvironmentFromContext(r)
-	if r.URL.Path == "/favicon.ico" { // Special exception
-		http.NotFound(w, r)
-		return
-	}
-
 	e.Log.GetLogger("server").Infof("Path not found %s", r.RequestURI)
 	sessionUser := models.GetUserFromContext(r)
 	if sessionUser.IsHelpDesk() || sessionUser.IsAdmin() {

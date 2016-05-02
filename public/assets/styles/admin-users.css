@@ -1,8 +1,3 @@
-.admin-users, .admin-user {
-    width: 60%;
-    margin: 0 auto;
-}
-
 h2 {
     margin-top: 0;
 }
@@ -13,14 +8,19 @@ h2 {
 }
 
 .controls {
-    display: inline-block;
+    margin-left: 5px;
 }
 
 .new-user {
-    text-align: right;
-    margin-bottom: 10px;
-    display: inline-block;
-    float: right;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.new-user input {
+    display: block;
+    width: 98%;
+    margin-bottom: 5px;
+    max-width: 450px;
 }
 
 button {
@@ -33,8 +33,8 @@ button {
 }
 
 table {
+    margin-top: 10px;
     border-collapse: collapse;
-    margin: 0 auto;
 }
 
 table td, table th {
@@ -48,18 +48,33 @@ table tr:nth-child(2n) {
 
 fieldset {
     border: none;
-    margin: 10px auto;
 }
 
-label {
-    display: block;
-    margin-bottom: 5px;
-}
-
-.admin-user input[type="text"], .admin-user input[type="password"] {
-    width: 300px;
+@media (min-width: 700px) {
+    .admin-users, .admin-user {
+        width: 70%;
+        margin: 0 auto;
+    }
 }
 
 label, .label {
     font-weight: bold;
+}
+
+@media (min-width: 850px) {
+    table {
+        margin: 20px auto;
+    }
+
+    .new-user {
+        float: right;
+        margin-top: 0;
+        width: auto;
+    }
+
+    .new-user input {
+        display: inline;
+        width: auto;
+        margin-bottom: 0;
+    }
 }

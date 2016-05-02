@@ -1,5 +1,5 @@
 {{define "admin-manage"}}
-{{template "header" dict "css" (list "manage") "main" . "pageTitle" "Admin Device Management"}}
+{{template "header" dict "css" (list "manage") "main" . "pageTitle" "Admin - Device Management"}}
 {{/* All the .IsAdmin checks are because this template is used for both Helpdesk and Admin users */}}
 {{/* Helpdesk users are read-only */}}
 <div class="manager">
@@ -18,24 +18,20 @@
                 <button type="button" name="del-all-btn">Delete All</button>
                 {{end}}
             {{end}}
-            <button type="button" name="admin-btn" class="admin-btn">Admin Dashboard</button>
             <button type="button" name="logout-btn">Logout</button>
-
+        </div>
+        <div class="controls">
             {{if .sessionUser.IsAdmin}}
-                <div class="admin-controls">
-                   <button type="button" name="black-user-btn" data-blacklisted="{{.user.IsBlacklisted}}" class="admin-btn">Blacklist Username</button>
-                </div>
-                {{if gt (len .devices) 0}}
-                <div class="admin-controls">
-                   <button type="button" name="black-all-btn" class="admin-btn">Blacklist All</button>
-                   <button type="button" name="unblack-all-btn" class="admin-btn">Unblacklist All</button>
-                </div>
-                <div class="admin-controls">
-                   <button type="button" name="black-sel-btn" class="admin-btn">Blacklist Selected</button>
-                   <button type="button" name="unblack-sel-btn" class="admin-btn">Unblacklist Selected</button>
-                </div>
-                {{end}}
+                <select name="blacklist-sel" data-blacklisted="{{.user.IsBlacklisted}}" required>
+                    <option  class="placeholder" selected disabled value="">Blacklist Options</option>
+                    <option value="username" name="black-user-option">Add Username</option>
+                    <option value="black-all">Add All Devices</option>
+                    <option value="unblack-all">Remove All Devices</option>
+                    <option value="black-sel">Add Selected Devices</option>
+                    <option value="unblack-sel">Remove Selected Devices</option>
+                </select>
             {{end}}
+            <button type="button" name="admin-btn" class="admin-btn">Admin Dashboard</button>
         </div>
         {{if eq (len .devices) 0}}
         <div class="no-devices">No devices registered</div>

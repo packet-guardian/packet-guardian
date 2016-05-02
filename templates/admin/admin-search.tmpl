@@ -1,13 +1,18 @@
 {{define "admin-search"}}
-{{template "header" dict "css" (list "admin-search") "main" . "page-title" "Admin Search"}}
+{{template "header" dict "css" (list "admin-search") "main" . "page-title" "Admin - Search"}}
 <div class="admin-search">
     <h2>Administration Search</h2>
-    <form method="GET">
-        <div class="controls">
-            <input type="text" name="q" placeholder="Search" value="{{.query}}" autofocus="autofocus">
-            <button type="submit">Search</button>
+    <div class="controls">
+        <a href="/admin" class="btn">Dashboard</a>
+        <a href="/logout" class="btn">Logout</a>
+
+        <div class="search-box">
+            <form method="GET">
+                <input type="text" name="q" placeholder="Search" value="{{.query}}" autofocus="autofocus">
+                <button type="submit" class="btn">Search</button>
+            </form>
         </div>
-    </form>
+    </div>
 
     {{if eq (len .searchResults) 0}}
         {{if eq .query ""}}
@@ -23,21 +28,25 @@
         <tr>
             <th>MAC Address</th>
             <th>User</th>
-            <th class="ua">User Agent</th>
+            <th class="not-important">User Agent</th>
             <th>Platform</th>
             <th>Date Registered</th>
-            <th>Registered From</th>
+            <th class="not-important">Registered From</th>
             <th>Expires</th>
         </tr>
         {{range .searchResults}}
         <tr>
             <td>{{if .IsBlacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
             <td><a href="/admin/manage/{{.Username}}">{{.Username}}</a></td>
-            <td class="ua">{{.UserAgent}}</td>
+            <td class="not-important">{{.UserAgent}}</td>
             <td>{{.Platform}}</td>
             <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>
-            <td>{{.RegisteredFrom}}</td>
+            <td class="not-important">{{.RegisteredFrom}}</td>
+            {{if eq .Expires.Unix 0}}
+            <td>Never</td>
+            {{else}}
             <td>{{.Expires.Format "2006-01-02 15:04"}}</td>
+            {{end}}
         </tr>
         {{end}}
     </table>
