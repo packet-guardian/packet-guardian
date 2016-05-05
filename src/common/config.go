@@ -113,7 +113,62 @@ func NewConfig(configFile string) (conf *Config, err error) {
 		return nil, err
 	}
 	con.sourceFile = configFile
-	return &con, nil
+	return setSensibleDefaults(&con)
+}
+
+func setSensibleDefaults(c *Config) (*Config, error) {
+	// Anything not set here implies its zero value is the default
+
+	// Core
+	c.Core.SiteTitle = setStringOrDefault(c.Core.SiteTitle, "Packet Guardian")
+
+	// Logging
+	c.Logging.Level = setStringOrDefault(c.Logging.Level, "notice")
+	c.Logging.Directory = setStringOrDefault(c.Logging.Directory, "logs")
+
+	// Database
+	c.Database.Type = setStringOrDefault(c.Database.Type, "sqlite")
+	c.Database.Address = setStringOrDefault(c.Database.Address, "database.sqlite3")
+
+	// Registration
+	c.Registration.RegistrationPolicyFile = setStringOrDefault(c.Registration.RegistrationPolicyFile, "config/policy.txt")
+
+	// Webserver
+	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 80)
+	c.Webserver.HttpsPort = setIntOrDefault(c.Webserver.HttpsPort, 443)
+	c.Webserver.SessionName = setStringOrDefault(c.Webserver.SessionName, "packet-guardian")
+	c.Webserver.SessionsDir = setStringOrDefault(c.Webserver.SessionsDir, "sessions")
+
+	// Authentication
+	if len(c.Auth.AuthMethod) == 0 {
+		c.Auth.AuthMethod = []string{"local"}
+	}
+	if len(c.Auth.AdminUsers) == 0 {
+		c.Auth.AdminUsers = []string{"admin"}
+	}
+	if len(c.Auth.HelpDeskUsers) == 0 {
+		c.Auth.HelpDeskUsers = []string{"helpdesk"}
+	}
+
+	// DHCP
+	c.DHCP.ConfigFile = setStringOrDefault(c.DHCP.ConfigFile, "config/dhcp.conf")
+	return c, nil
+}
+
+// Given string s, if it is empty, return v else return s.
+func setStringOrDefault(s, v string) string {
+	if s == "" {
+		return v
+	}
+	return s
+}
+
+// Given integer s, if it is 0, return v else return s.
+func setIntOrDefault(s, v int) int {
+	if s == 0 {
+		return v
+	}
+	return s
 }
 
 func (c *Config) Reload() error {
