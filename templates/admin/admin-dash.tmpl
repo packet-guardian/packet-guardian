@@ -17,7 +17,25 @@
     </div>
 
     <div class="dash-status">
-        This is where some sort of status system is going
+        <h2>System Statistics</h2>
+        <h3>Devices</h3>
+        <div class="stat-block">
+            <h3 class="hlabel">Total Registered Devices:</h3> {{.deviceTotal}}<br>
+            <h3 class="hlabel">Average Devices per User:</h3> {{.deviceAvg}}
+        </div>
+
+        <h3>Networks</h3>
+        <div class="stat-block">
+            {{range $netName, $stat := .leaseStats}}
+            <div>
+                <h3>{{$netName}}</h3>
+                <div class="stat-block">
+                    <h4 class="hlabel">Registered:</h4> {{$stat.Registered}}<br>
+                    <h4 class="hlabel">Unregistered:</h4> {{$stat.Unregistered}}
+                </div>
+            </div>
+            {{end}}
+        </div>
     </div>
 </div>
 {{template "footer"}}

@@ -43,5 +43,6 @@ CREATE TABLE "lease" (
     "start" INTEGER NOT NULL,
     "end" INTEGER NOT NULL,
     "hostname" TEXT NOT NULL,
-    "abandoned" INTEGER DEFAULT (0)
+    "abandoned" INTEGER DEFAULT (0),
+    "registered" INTEGER DEFAULT (0)
 );

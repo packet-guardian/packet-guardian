@@ -8,6 +8,7 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
+	"github.com/onesimus-systems/packet-guardian/src/stats"
 )
 
 type Admin struct {
@@ -19,8 +20,12 @@ func NewAdminController(e *common.Environment) *Admin {
 }
 
 func (a *Admin) DashboardHandler(w http.ResponseWriter, r *http.Request) {
+	deviceTotal, deviceAvg := stats.GetDeviceStats(a.e)
 	data := map[string]interface{}{
 		"sessionUser": models.GetUserFromContext(r),
+		"leaseStats":  stats.GetLeaseStats(a.e),
+		"deviceTotal": deviceTotal,
+		"deviceAvg":   deviceAvg,
 	}
 	a.e.Views.NewView("admin-dash", r).Render(w, data)
 }

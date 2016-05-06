@@ -19,6 +19,7 @@ type Lease struct {
 	IsAbandoned bool
 	Offered     bool
 	Pool        *Pool
+	Registered  bool
 }
 
 func NewLease(e *common.Environment) *Lease {
@@ -52,7 +53,7 @@ func GetAllLeases(e *common.Environment) ([]*Lease, error) {
 }
 
 func getLeasesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Lease, error) {
-	sql := `SELECT "id", "ip", "mac", "network", "start", "end", "hostname", "abandoned" FROM "lease" ` + where
+	sql := `SELECT "id", "ip", "mac", "network", "start", "end", "hostname", "abandoned", "regisered" FROM "lease" ` + where
 
 	rows, err := e.DB.Query(sql, values...)
 	if err != nil {
@@ -69,6 +70,7 @@ func getLeasesFromDatabase(e *common.Environment, where string, values ...interf
 		var end int64
 		var hostname string
 		var isAbandoned bool
+		var registered bool
 
 		err := rows.Scan(
 			&id,
@@ -79,6 +81,7 @@ func getLeasesFromDatabase(e *common.Environment, where string, values ...interf
 			&end,
 			&hostname,
 			&isAbandoned,
+			&registered,
 		)
 		if err != nil {
 			continue
@@ -96,6 +99,7 @@ func getLeasesFromDatabase(e *common.Environment, where string, values ...interf
 			End:         time.Unix(end, 0),
 			Hostname:    hostname,
 			IsAbandoned: isAbandoned,
+			Registered:  registered,
 		}
 		results = append(results, lease)
 	}
@@ -114,7 +118,7 @@ func (l *Lease) Save() error {
 }
 
 func (l *Lease) updateLease() error {
-	sql := `UPDATE "lease" SET "ip" = ?, "mac" = ?, "network" = ?, "start" = ?, "end" = ?, "hostname" = ?, "abandoned" = ? WHERE "id" = ?`
+	sql := `UPDATE "lease" SET "ip" = ?, "mac" = ?, "network" = ?, "start" = ?, "end" = ?, "hostname" = ?, "abandoned" = ?, "registered" = ? WHERE "id" = ?`
 
 	_, err := l.e.DB.Exec(
 		sql,
@@ -125,13 +129,14 @@ func (l *Lease) updateLease() error {
 		l.End.Unix(),
 		l.Hostname,
 		l.IsAbandoned,
+		l.Registered,
 		l.ID,
 	)
 	return err
 }
 
 func (l *Lease) insertLease() error {
-	sql := `INSERT INTO "lease" ("ip", "mac", "network", "start", "end", "hostname", "abandoned") VALUES (?,?,?,?,?,?,?)`
+	sql := `INSERT INTO "lease" ("ip", "mac", "network", "start", "end", "hostname", "abandoned", "registered") VALUES (?,?,?,?,?,?,?,?)`
 
 	result, err := l.e.DB.Exec(
 		sql,
@@ -142,6 +147,7 @@ func (l *Lease) insertLease() error {
 		l.End.Unix(),
 		l.Hostname,
 		l.IsAbandoned,
+		l.Registered,
 	)
 	if err != nil {
 		return err

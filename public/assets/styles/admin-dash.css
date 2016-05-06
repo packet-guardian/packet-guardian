@@ -20,7 +20,16 @@ h2 {
 .dash-status {
     margin-top: 20px;
     background-color: lightgray;
-    min-height: 300px;
+    padding: 1em;
+}
+
+.hlabel {
+    display: inline-block;
+    margin: .25em 0;
+}
+
+.stat-block {
+    margin-left: 2em;
 }
 
 @media (min-width: 600px) {

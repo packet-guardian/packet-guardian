@@ -15,17 +15,17 @@ import (
 var (
 	gatewayCache = map[string]*Network{}
 	gatewayMutex = sync.Mutex{}
+	config       *Config
 )
 
 type DHCPHandler struct {
-	c  *Config
 	e  *common.Environment
 	ro bool
 }
 
 func NewDHCPServer(c *Config, e *common.Environment) *DHCPHandler {
+	config = c
 	return &DHCPHandler{
-		c: c,
 		e: e,
 	}
 }
@@ -55,7 +55,7 @@ func (h *DHCPHandler) LoadLeases() error {
 
 	// Find the pool each lease belongs to
 	for _, lease := range leases {
-		n, ok := h.c.Networks[lease.Network]
+		n, ok := config.Networks[lease.Network]
 		if !ok {
 			continue
 		}
@@ -89,7 +89,7 @@ func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, optio
 	}
 
 	// Log every message
-	if server, ok := options[dhcp4.OptionServerIdentifier]; !ok || net.IP(server).Equal(h.c.Global.ServerIdentifier) {
+	if server, ok := options[dhcp4.OptionServerIdentifier]; !ok || net.IP(server).Equal(config.Global.ServerIdentifier) {
 		h.e.Log.WithFields(verbose.Fields{
 			"Type":       msgType.String(),
 			"Client IP":  p.CIAddr().String(),
@@ -153,7 +153,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 	network, ok := gatewayCache[p.GIAddr().String()]
 	if !ok {
 		// That gateway hasn't been seen before, find its network
-		network = h.c.SearchNetworksFor(p.GIAddr())
+		network = config.SearchNetworksFor(p.GIAddr())
 		if network == nil {
 			gatewayMutex.Unlock()
 			return nil
@@ -197,7 +197,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 	return h.readOnlyFilter(dhcp4.ReplyPacket(
 		p,
 		dhcp4.Offer,
-		h.c.Global.ServerIdentifier,
+		config.Global.ServerIdentifier,
 		lease.IP,
 		lease.Pool.GetLeaseTime(0, registered),
 		leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]),
@@ -206,7 +206,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 
 // Handle DHCP REQUEST messages
 func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
-	if server, ok := options[dhcp4.OptionServerIdentifier]; ok && !net.IP(server).Equal(h.c.Global.ServerIdentifier) {
+	if server, ok := options[dhcp4.OptionServerIdentifier]; ok && !net.IP(server).Equal(config.Global.ServerIdentifier) {
 		return nil // Message not for this dhcp server
 	}
 
@@ -216,7 +216,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 	}
 
 	if len(reqIP) != 4 || reqIP.Equal(net.IPv4zero) {
-		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, h.c.Global.ServerIdentifier, nil, 0, nil))
+		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, config.Global.ServerIdentifier, nil, 0, nil))
 	}
 
 	// Get a device object associated with the MAC
@@ -226,7 +226,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 			"Client MAC": p.CHAddr().String(),
 			"Error":      err,
 		}).Error("Error getting device")
-		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, h.c.Global.ServerIdentifier, nil, 0, nil))
+		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, config.Global.ServerIdentifier, nil, 0, nil))
 	}
 
 	// Check device standing
@@ -239,13 +239,13 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 	}
 	registered := (device.ID != 0 || device.IsBlacklisted)
 
-	network := h.c.SearchNetworksFor(reqIP)
+	network := config.SearchNetworksFor(reqIP)
 	if network == nil {
 		h.e.Log.WithFields(verbose.Fields{
 			"Requested IP": reqIP.String(),
 			"Registered":   registered,
 		}).Notice("Got a REQUEST for IP not in a scope")
-		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, h.c.Global.ServerIdentifier, nil, 0, nil))
+		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, config.Global.ServerIdentifier, nil, 0, nil))
 	}
 
 	lease := network.GetLeaseByIP(reqIP, registered)
@@ -256,7 +256,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 			"Network":      network.Name,
 			"Registered":   registered,
 		}).Notice("Client tried to request a lease that doesn't exist")
-		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, h.c.Global.ServerIdentifier, nil, 0, nil))
+		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, config.Global.ServerIdentifier, nil, 0, nil))
 	}
 
 	if !bytes.Equal(lease.MAC, p.CHAddr()) {
@@ -267,7 +267,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 			"Network":      network.Name,
 			"Registered":   registered,
 		}).Notice("Client tried to request lease not belonging to them")
-		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, h.c.Global.ServerIdentifier, nil, 0, nil))
+		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, config.Global.ServerIdentifier, nil, 0, nil))
 	}
 
 	leaseDur := lease.Pool.GetLeaseTime(0, registered)
@@ -292,7 +292,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 	return h.readOnlyFilter(dhcp4.ReplyPacket(
 		p,
 		dhcp4.ACK,
-		h.c.Global.ServerIdentifier,
+		config.Global.ServerIdentifier,
 		lease.IP,
 		leaseDur,
 		leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]),
@@ -317,7 +317,7 @@ func (h *DHCPHandler) handleRelease(p dhcp4.Packet, msgType dhcp4.MessageType, o
 	}
 	registered := (device.ID != 0 || device.IsBlacklisted)
 
-	network := h.c.SearchNetworksFor(reqIP)
+	network := config.SearchNetworksFor(reqIP)
 	if network == nil {
 		h.e.Log.WithFields(verbose.Fields{
 			"Releasing IP": reqIP.String(),

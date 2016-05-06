@@ -21,6 +21,7 @@ type Pool struct {
 	Leases        map[string]*Lease // IP -> Lease
 	Subnet        *Subnet
 	nextStart     int
+	ipsInPool     int
 }
 
 func newPool() *Pool {
@@ -28,6 +29,13 @@ func newPool() *Pool {
 		Settings: newSettingsBlock(),
 		Leases:   make(map[string]*Lease),
 	}
+}
+
+func (p *Pool) GetCountOfIPs() int {
+	if p.ipsInPool == 0 {
+		p.ipsInPool = dhcp4.IPRange(p.RangeStart, p.RangeEnd)
+	}
+	return p.ipsInPool
 }
 
 // GetLeaseTime returns the lease time given the requested time req and if the client is registered.
@@ -96,8 +104,7 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 	}
 
 	// No candidates, find the next available lease
-	ipsInPool := dhcp4.IPRange(p.RangeStart, p.RangeEnd)
-	for i := p.nextStart; i < ipsInPool; i++ {
+	for i := p.nextStart; i < p.GetCountOfIPs(); i++ {
 		next := dhcp4.IPAdd(p.RangeStart, i)
 		// Check if IP has a lease
 		_, ok := p.Leases[next.String()]
@@ -121,6 +128,7 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 		l.IP = next
 		l.Network = p.Subnet.Network.Name
 		l.Pool = p
+		l.Registered = !p.Subnet.AllowUnknown
 		p.Leases[next.String()] = l
 		p.nextStart = i + 1
 		return l
