@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/server"
 )
 
@@ -42,11 +43,11 @@ func main() {
 
 	e.Config, err = common.NewConfig(configFile)
 	if err != nil {
-		fmt.Printf("Error parsing configuration: %s\n", err.Error())
+		fmt.Printf("Error loading configuration: %s\n", err.Error())
 		os.Exit(1)
 	}
 
-	e.Log = common.NewLogger(e.Config)
+	e.Log = common.NewLogger(e.Config, "app")
 	e.Log.Debugf("Configuration loaded from %s", configFile)
 
 	if dev {
@@ -69,6 +70,20 @@ func main() {
 		e.Log.Fatalf("Error loading frontend templates: %s", err.Error())
 	}
 
-	// Let's begin!
+	// Start DHCP server
+	if e.Config.DHCP.Enabled {
+		dhcpConfig, err := dhcp.ParseFile(e.Config.DHCP.ConfigFile)
+		if err != nil {
+			e.Log.WithField("ErrMsg", err).Fatal("Failed loading DHCP config")
+		}
+
+		handler := dhcp.NewDHCPServer(dhcpConfig, e)
+		if err := handler.LoadLeases(); err != nil {
+			e.Log.WithField("ErrMsg", err).Fatal("Couldn't load leases")
+		}
+		go e.Log.Fatal(handler.ListenAndServe())
+	}
+
+	// Start web server
 	server.NewServer(e, server.LoadRoutes(e)).Run()
 }

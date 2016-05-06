@@ -21,7 +21,7 @@ j.OnReady(function() {
     // Delete buttons
     j.Click('[name=del-all-btn]', function() {
         var username = j.$('[name=username]').value;
-        j.Delete('/api/device/delete', {"username": username}, function(resp) {
+        j.Delete('/api/device', {"username": username}, function(resp) {
             resp = JSON.parse(resp);
             if (resp.Code === 0) {
                 location.reload();
@@ -41,7 +41,7 @@ j.OnReady(function() {
             return;
         }
 
-        j.Delete('/api/device/delete', {"username": username, "mac": devicesToRemove}, function(resp) {
+        j.Delete('/api/device', {"username": username, "mac": devicesToRemove}, function(resp) {
             resp = JSON.parse(resp);
             if (resp.Code === 0) {
                 location.reload();

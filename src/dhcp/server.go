@@ -31,7 +31,7 @@ func NewDHCPServer(c *Config, e *common.Environment) *DHCPHandler {
 }
 
 func (h *DHCPHandler) ListenAndServe() error {
-	h.e.Log.Debug("Starting DHCP server")
+	h.e.Log.Info("Starting DHCP server...")
 	return dhcp4.ListenAndServe(h)
 }
 
@@ -108,7 +108,7 @@ func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, optio
 		response = h.handleRelease(p, msgType, options)
 	case dhcp4.Decline:
 		//return h.handleDecline(p, msgType, options)
-		// Mark address as abandoned
+		//TODO: Mark address as abandoned
 	}
 	return response
 }

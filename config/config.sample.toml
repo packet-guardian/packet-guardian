@@ -8,7 +8,7 @@
 # enabled = false
 # enableHTTP = false
 # level = "notice"
-# directory = "logs"
+# path = "logs/pg.log"
 
 [database]
 # type = "sqlite"
@@ -25,8 +25,8 @@
 [webserver]
 # Leave address blank to bind to all addresses
 # address = ""
-# httpPort = 80
-# httpsPort = 443
+# httpPort = 8080
+# httpsPort = 1443
 # TLSCertFile = ""
 # TLSKeyFile = ""
 # redirectHttpToHttps = false
@@ -67,4 +67,5 @@
 # server = ""
 
 [dhcp]
+#enabled = false
 #configFile = "config/dhcp.conf"

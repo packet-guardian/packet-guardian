@@ -85,8 +85,8 @@ func apiRouter(e *common.Environment) http.Handler {
 	r := mux.NewRouter()
 
 	deviceApiController := api.NewDeviceController(e)
-	r.HandleFunc("/api/device/register", deviceApiController.RegistrationHandler).Methods("POST")
-	r.HandleFunc("/api/device/delete", deviceApiController.DeleteHandler).Methods("DELETE")
+	r.HandleFunc("/api/device", deviceApiController.RegistrationHandler).Methods("POST")
+	r.HandleFunc("/api/device", deviceApiController.DeleteHandler).Methods("DELETE")
 
 	blacklistController := api.NewBlacklistController(e)
 	r.HandleFunc("/api/blacklist/{type}", blacklistController.BlacklistHandler).Methods("POST", "DELETE")

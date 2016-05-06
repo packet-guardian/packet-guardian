@@ -38,7 +38,7 @@ j.OnReady(function () {
             if (data.platform === "") { return; }
         }
 
-        j.Post('/api/device/register', data, function (resp, req) {
+        j.Post('/api/device', data, function (resp, req) {
             if (resp === '') {
                 c.FlashMessage("Server error, please call the IT help desk");
                 return;

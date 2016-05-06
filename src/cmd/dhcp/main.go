@@ -1,3 +1,10 @@
+/**
+ * This application runs the Packet Guardian DHCP server as a separate process.
+ * By default, the main PG binary will not run a DHCP server and it may be better
+ * in some circumstances to not allow the main binary to run with root privilages
+ * as they are needed to bind to DHCP port 69.
+ */
+
 package main
 
 import (
@@ -5,7 +12,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dragonrider23/verbose"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 )
@@ -13,34 +19,33 @@ import (
 var (
 	configFile string
 	dhcpConfig string
+	dev        bool
 )
 
 func init() {
-	flag.StringVar(&configFile, "config", "", "Configuration file path")
-	flag.StringVar(&dhcpConfig, "dhcp", "", "DHCP configuration file path")
+	flag.StringVar(&configFile, "pc", "", "Packet Guardian configuration file")
+	flag.StringVar(&dhcpConfig, "dc", "", "DHCP configuration file")
+	flag.BoolVar(&dev, "d", false, "Run in development mode")
 }
 
 func main() {
 	flag.Parse()
 
 	var err error
-	config, err := dhcp.ParseFile(dhcpConfig)
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-	//config.Print()
-
-	e := common.NewEnvironment(true)
-
-	e.Log = &common.Logger{Logger: verbose.New("dhcp")}
-	e.Log.AddHandler("stdout", verbose.NewStdoutHandler())
+	e := common.NewEnvironment(dev)
 
 	e.Config, err = common.NewConfig(configFile)
 	if err != nil {
-		e.Log.Fatalf("Error loading configuration: %s", err.Error())
+		fmt.Printf("Error loading configuration: %s\n", err.Error())
+		os.Exit(1)
 	}
+
+	e.Log = common.NewLogger(e.Config, "dhcp")
 	e.Log.Debugf("Configuration loaded from %s", configFile)
+
+	if dev {
+		e.Log.Debug("Packet Guardian DHCP running in DEVELOPMENT mode")
+	}
 
 	e.DB, err = common.NewDatabaseAccessor(e.Config)
 	if err != nil {
@@ -48,10 +53,14 @@ func main() {
 	}
 	e.Log.Debugf("Using %s database at %s", e.Config.Database.Type, e.Config.Database.Address)
 
-	handler := dhcp.NewDHCPServer(config, e)
-	//handler.Readonly()
-	if err := handler.LoadLeases(); err != nil {
-		e.Log.WithField("Error", err).Fatal("Couldn't load leases")
+	dhcpConfig, err := dhcp.ParseFile(dhcpConfig)
+	if err != nil {
+		e.Log.WithField("ErrMsg", err).Fatal("Error loading DHCP configuration")
 	}
-	e.Log.Critical(handler.ListenAndServe())
+
+	handler := dhcp.NewDHCPServer(dhcpConfig, e)
+	if err := handler.LoadLeases(); err != nil {
+		e.Log.WithField("ErrMsg", err).Fatal("Couldn't load leases")
+	}
+	e.Log.Fatal(handler.ListenAndServe())
 }

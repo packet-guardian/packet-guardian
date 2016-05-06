@@ -193,15 +193,15 @@ func NewEmptyLogger() *Logger {
 	}
 }
 
-func NewLogger(c *Config) *Logger {
-	logger := verbose.New("app")
+func NewLogger(c *Config, name string) *Logger {
+	logger := verbose.New(name)
 	if !c.Logging.Enabled {
 		return &Logger{
 			Logger: logger,
 		}
 	}
 	sh := verbose.NewStdoutHandler()
-	fh, _ := verbose.NewFileHandler(c.Logging.Directory)
+	fh, _ := verbose.NewFileHandler(c.Logging.Path)
 	logger.AddHandler("stdout", sh)
 	logger.AddHandler("file", fh)
 
@@ -209,6 +209,9 @@ func NewLogger(c *Config) *Logger {
 		sh.SetMinLevel(level)
 		fh.SetMinLevel(level)
 	}
+	// The verbose package sets the default max to Emergancy
+	sh.SetMaxLevel(verbose.LogLevelFatal)
+	fh.SetMaxLevel(verbose.LogLevelFatal)
 	return &Logger{
 		Logger: logger,
 		c:      c,
@@ -218,17 +221,5 @@ func NewLogger(c *Config) *Logger {
 // GetLogger returns a new Logger based on its parent but with a new name
 // This can be used to separate logs from different sub-systems.
 func (l *Logger) GetLogger(name string) *Logger {
-	logger := verbose.New(name)
-	sh := verbose.NewStdoutHandler()
-	fh, _ := verbose.NewFileHandler(l.c.Logging.Directory)
-	if level, ok := logLevels[l.c.Logging.Level]; ok {
-		sh.SetMinLevel(level)
-		fh.SetMinLevel(level)
-	}
-	logger.AddHandler("stdout", sh)
-	logger.AddHandler("file", fh)
-	return &Logger{
-		Logger: logger,
-		c:      l.c,
-	}
+	return NewLogger(l.c, name)
 }

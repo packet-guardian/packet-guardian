@@ -20,7 +20,7 @@ type Config struct {
 		Enabled    bool
 		EnableHTTP bool
 		Level      string
-		Directory  string
+		Path       string
 	}
 	Database struct {
 		Type     string
@@ -73,6 +73,7 @@ type Config struct {
 		}
 	}
 	DHCP struct {
+		Enabled    bool
 		ConfigFile string
 	}
 }
@@ -124,7 +125,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	// Logging
 	c.Logging.Level = setStringOrDefault(c.Logging.Level, "notice")
-	c.Logging.Directory = setStringOrDefault(c.Logging.Directory, "logs")
+	c.Logging.Path = setStringOrDefault(c.Logging.Path, "logs/pg.log")
 
 	// Database
 	c.Database.Type = setStringOrDefault(c.Database.Type, "sqlite")
@@ -134,8 +135,8 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Registration.RegistrationPolicyFile = setStringOrDefault(c.Registration.RegistrationPolicyFile, "config/policy.txt")
 
 	// Webserver
-	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 80)
-	c.Webserver.HttpsPort = setIntOrDefault(c.Webserver.HttpsPort, 443)
+	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 8080)
+	c.Webserver.HttpsPort = setIntOrDefault(c.Webserver.HttpsPort, 1443)
 	c.Webserver.SessionName = setStringOrDefault(c.Webserver.SessionName, "packet-guardian")
 	c.Webserver.SessionsDir = setStringOrDefault(c.Webserver.SessionsDir, "sessions")
 

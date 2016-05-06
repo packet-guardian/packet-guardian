@@ -24,51 +24,52 @@ func NewServer(e *common.Environment, routes http.Handler) *Server {
 		address: e.Config.Webserver.Address,
 	}
 
-	if e.Config.Webserver.HttpPort == 0 {
-		serv.httpPort = "8080"
-	} else {
-		serv.httpPort = strconv.Itoa(e.Config.Webserver.HttpPort)
-	}
-
-	if e.Config.Webserver.HttpsPort == 0 {
-		serv.httpsPort = "1443"
-	} else {
-		serv.httpsPort = strconv.Itoa(e.Config.Webserver.HttpsPort)
-	}
+	serv.httpPort = strconv.Itoa(e.Config.Webserver.HttpPort)
+	serv.httpsPort = strconv.Itoa(e.Config.Webserver.HttpsPort)
 	return serv
 }
 
 func (s *Server) Run() {
-	if s.e.Config.Webserver.TLSCertFile != "" && s.e.Config.Webserver.TLSKeyFile != "" {
-		if s.e.Config.Webserver.RedirectHttpToHttps {
-			go func() {
-				s.e.Log.WithFields(verbose.Fields{
-					"address": s.address,
-					"port":    s.httpPort,
-				}).Debug("Listening")
-				http.ListenAndServe(s.address+":"+s.httpPort, http.HandlerFunc(s.redirectToHttps))
-			}()
-		}
-		s.startHttps()
-	} else {
+	s.e.Log.Info("Starting web server...")
+	if s.e.Config.Webserver.TLSCertFile == "" || s.e.Config.Webserver.TLSKeyFile == "" {
 		s.startHttp()
+		return
 	}
+
+	if s.e.Config.Webserver.RedirectHttpToHttps {
+		go s.startRedirector()
+	}
+	s.startHttps()
+}
+
+func (s *Server) startRedirector() {
+	s.e.Log.WithFields(verbose.Fields{
+		"address": s.address,
+		"port":    s.httpPort,
+	}).Debug()
+	s.e.Log.Critical(http.ListenAndServe(
+		s.address+":"+s.httpPort,
+		http.HandlerFunc(s.redirectToHttps),
+	))
 }
 
 func (s *Server) startHttp() {
 	s.e.Log.WithFields(verbose.Fields{
 		"address": s.address,
 		"port":    s.httpPort,
-	}).Debug("Listening")
-	s.e.Log.Emergency(http.ListenAndServe(s.address+":"+s.httpPort, s.routes))
+	}).Debug()
+	s.e.Log.Fatal(http.ListenAndServe(
+		s.address+":"+s.httpPort,
+		s.routes,
+	))
 }
 
 func (s *Server) startHttps() {
 	s.e.Log.WithFields(verbose.Fields{
 		"address": s.address,
 		"port":    s.httpsPort,
-	}).Debug("Now listening on TLS")
-	s.e.Log.Emergency(http.ListenAndServeTLS(
+	}).Debug()
+	s.e.Log.Fatal(http.ListenAndServeTLS(
 		s.address+":"+s.httpsPort,
 		s.e.Config.Webserver.TLSCertFile,
 		s.e.Config.Webserver.TLSKeyFile,
