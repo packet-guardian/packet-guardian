@@ -47,6 +47,10 @@ func NewFileHandler(path string) (*FileHandler, error) {
 			}
 			f.separate = true
 		} else {
+			// Attempt to create the directory
+			if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+				return nil, err
+			}
 			// Attempt to create the file
 			file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0644)
 			if err != nil {

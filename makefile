@@ -1,14 +1,31 @@
 .PHONY: build clean doc fmt install lint run test vet vendor_cleanup vendor_update vendor_updateall vendor_save vendor_saveall
 
+VERSION?=unversioned
+
 default: build
 
-build: vet
+build: vet test
 	go build -v -o ./bin/pg ./src/cmd/pg
 
 clean:
 	rm -rf ./bin/*
 	rm -rf ./logs/*
 	rm -rf ./sessions/*
+
+dist: build
+	rm -rf ./dist
+	mkdir -p dist/packet-guardian
+	cp -R config dist/packet-guardian/
+	cp -R public dist/packet-guardian/
+	cp -R templates dist/packet-guardian/
+	cp LICENSE dist/packet-guardian/
+	cp README.md dist/packet-guardian/
+	mkdir dist/packet-guardian/bin
+	cp bin/pg dist/packet-guardian/bin/pg
+
+	(cd "dist"; tar -cz packet-guardian) > "dist/pg-dist-$(VERSION).tar.gz"
+
+	rm -rf dist/packet-guardian
 
 doc:
 	godoc -http=:6060 -index

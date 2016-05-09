@@ -27,8 +27,10 @@ func (l *localAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 		return false
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(testPass), []byte(r.FormValue("password")))
-	if err != nil && err != bcrypt.ErrMismatchedHashAndPassword {
-		e.Log.WithField("Err", err).Debug("Bcrypt failed")
+	if err != nil {
+		if err != bcrypt.ErrMismatchedHashAndPassword {
+			e.Log.WithField("Err", err).Debug("Bcrypt failed")
+		}
 		return false
 	}
 

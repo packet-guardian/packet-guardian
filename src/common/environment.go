@@ -58,6 +58,9 @@ func NewDatabaseAccessor(config *Config) (*DatabaseAccessor, error) {
 	var err error
 
 	if config.Database.Type == "sqlite" {
+		if !FileExists(config.Database.Address) {
+			return nil, errors.New("SQLite database file doesn't exist")
+		}
 		db, err = sql.Open("sqlite3", config.Database.Address)
 	} else {
 		return nil, errors.New("Unsupported database type " + config.Database.Type)

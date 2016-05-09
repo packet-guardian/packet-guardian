@@ -10,36 +10,53 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/server"
 )
 
+const (
+	version = "0.5.0"
+)
+
 var (
-	configFile string
-	dev        bool
+	configFile   string
+	dev          bool
+	verFlag      bool
+	testConfig   bool
+	testDHCPConf bool
 )
 
 func init() {
 	flag.StringVar(&configFile, "c", "", "Configuration file path")
 	flag.BoolVar(&dev, "d", false, "Run in development mode")
+	flag.BoolVar(&verFlag, "version", false, "Display version information")
+	flag.BoolVar(&testConfig, "test", false, "Test main configuration")
+	flag.BoolVar(&testDHCPConf, "testd", false, "Test DHCP configuration only")
 }
 
 func main() {
 	// Parse CLI flags
 	flag.Parse()
 
+	if verFlag {
+		displayVersionInfo()
+		return
+	}
+
+	configFile = findConfigFile()
+	if configFile == "" {
+		fmt.Println("No configuration file found")
+		os.Exit(1)
+	}
+
+	if testConfig {
+		testMainConfig()
+		return
+	}
+
+	if testDHCPConf {
+		testDHCPConfig()
+		return
+	}
+
 	var err error
 	e := common.NewEnvironment(dev)
-
-	// Find a configuration file if one wasn't given
-	if configFile == "" {
-		if common.FileExists("./config.toml") {
-			configFile = "./config.toml"
-		} else if common.FileExists(os.ExpandEnv("$HOME/.pg/config.toml")) {
-			configFile = os.ExpandEnv("$HOME/.pg/config.toml")
-		} else if common.FileExists("/etc/packet-guardian/config.toml") {
-			configFile = "/etc/packet-guardian/config.toml"
-		} else {
-			fmt.Println("No configuration file found")
-			os.Exit(1)
-		}
-	}
 
 	e.Config, err = common.NewConfig(configFile)
 	if err != nil {
@@ -86,4 +103,49 @@ func main() {
 
 	// Start web server
 	server.NewServer(e, server.LoadRoutes(e)).Run()
+}
+
+func displayVersionInfo() {
+	fmt.Printf(`Packet Guardian - (C) 2016 Lee Keitel
+University of Southern Indiana
+
+Version: %s
+`, version)
+}
+
+func findConfigFile() string {
+	// Find a configuration file if one wasn't given
+	if configFile != "" && common.FileExists(configFile) {
+		return configFile
+	}
+
+	if os.Getenv("PG_CONFIG") != "" && common.FileExists(os.Getenv("PG_CONFIG")) {
+		return os.Getenv("PG_CONFIG")
+	} else if common.FileExists("./config.toml") {
+		return "./config.toml"
+	} else if common.FileExists(os.ExpandEnv("$HOME/.pg/config.toml")) {
+		return os.ExpandEnv("$HOME/.pg/config.toml")
+	} else if common.FileExists("/etc/packet-guardian/config.toml") {
+		return "/etc/packet-guardian/config.toml"
+	}
+	return ""
+}
+
+func testMainConfig() {
+	_, err := common.NewConfig(configFile)
+	if err != nil {
+		fmt.Printf("Error loading configuration: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Configuration looks good")
+}
+
+func testDHCPConfig() {
+	_, err := dhcp.ParseFile(configFile)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Configuration looks good")
 }

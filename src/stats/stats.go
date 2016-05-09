@@ -53,5 +53,8 @@ func GetDeviceStats(e *common.Environment) (int, int) {
 		e.Log.WithField("ErrMsg", err).Error("SQL statement failed")
 		return 0, 0
 	}
+	if distinct == 0 {
+		distinct = 1
+	}
 	return total, (total / distinct)
 }
