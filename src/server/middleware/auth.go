@@ -29,19 +29,19 @@ func CheckAPI(next http.Handler) http.Handler {
 		}
 
 		if !auth.IsLoggedIn(r) {
-			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			common.NewAPIResponse("Login required", nil).WriteResponse(w, http.StatusUnauthorized)
 			return
 		}
 
 		u := models.GetUserFromContext(r)
 		// Only admin and helpdesk users may proceed
 		if !u.IsAdmin() && !u.IsHelpDesk() {
-			common.NewAPIResponse(common.APIStatusInsufficientPrivilages, "Insufficient privilages", nil).WriteTo(w)
+			common.NewAPIResponse("Insufficient privilages", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
 
 		if r.Method != "GET" && !u.IsAdmin() {
-			common.NewAPIResponse(common.APIStatusInsufficientPrivilages, "Admins only", nil).WriteTo(w)
+			common.NewAPIResponse("Admins only", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
 		next.ServeHTTP(w, r)

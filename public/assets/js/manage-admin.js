@@ -1,15 +1,16 @@
-j.OnReady(function() {
-    var blacklistSelect = j.$('[name=blacklist-sel]');
-    if (blacklistSelect !== null) {
-        if (blacklistSelect.getAttribute("data-blacklisted") === "true") {
-            j.$('[name=black-user-option]').text = "Remove Username";
+$.onReady(function() {
+    var blacklistSelect = $('[name=blacklist-sel]');
+    if (blacklistSelect.length !== 0) {
+        if (blacklistSelect.data("blacklisted") === "true") {
+            $('[name=black-user-option]').text("Remove Username");
         }
     }
 
-    j.Change("[name=blacklist-sel]", function() {
-        switch (this.value) {
+    $("[name=blacklist-sel]").change(function(e) {
+        var self = $(e.target);
+        switch (self.value()) {
             case "username":
-                var isBl = (this.getAttribute("data-blacklisted") === "true");
+                var isBl = (self.data("blacklisted") === "true");
                 blacklistUsername(isBl);
                 break;
             case "black-all":
@@ -25,11 +26,11 @@ j.OnReady(function() {
                 blacklistSelectedDevices(false);
                 break;
         }
-        this.value = "";
+        self.value("");
     });
 
     function getUsername(encode) {
-        var u = j.$('[name=username]').value;
+        var u = $('[name=username]').value();
         if (encode) {
             return encodeURIComponent(u);
         }
@@ -37,24 +38,25 @@ j.OnReady(function() {
     }
 
     function blacklistUsername(isBlacklisted) {
-        var method = j.Post;
-
+        var method = "POST";
         if (isBlacklisted) {
-            method = j.Delete;
+            method = "DELETE";
         }
 
-        method('/api/blacklist/user', {"username": getUsername(true)}, function(resp) {
-            resp = JSON.parse(resp);
-            if (resp.Code === 0) {
+        $.ajax({
+            method: method,
+            url: '/api/blacklist/user/'+getUsername(),
+            success: function() {
                 location.reload();
-                return;
+            },
+            error: function() {
+                c.FlashMessage("Error blacklisting user");
             }
-            c.FlashMessage("Error blacklisting user");
         });
     }
 
     function blacklistSelectedDevices(add) {
-        var checked = j.$('.device-select:checked', true);
+        var checked = $('.device-select:checked');
         var devicesToRemove = [];
         for (var i = 0; i < checked.length; i++) {
             devicesToRemove.push(checked[i].value);
@@ -66,18 +68,32 @@ j.OnReady(function() {
     }
 
     function blacklistDevices(devices, add) {
-        var method = j.Delete;
         if (add) {
-            method = j.Post;
+            addDevicesToBlacklist(devices);
+        } else {
+            removeDevicesFromBlacklist(devices);
         }
+    }
 
-        method('/api/blacklist/device', {"mac": devices, "username": getUsername(true)}, function(resp) {
-            resp = JSON.parse(resp);
-            if (resp.Code === 0) {
+    function addDevicesToBlacklist(devices) {
+        $.post('/api/blacklist/device/'+getUsername(), {"mac": devices}, function() {
+            location.reload();
+        }, function() {
+            c.FlashMessage("Error blacklisting devices");
+        });
+    }
+
+    function removeDevicesFromBlacklist(devices) {
+        $.ajax({
+            method: 'DELETE',
+            url: '/api/blacklist/device/'+getUsername(),
+            params: {"mac": devices},
+            success: function() {
                 location.reload();
-                return;
+            },
+            error: function() {
+                c.FlashMessage("Error removing devices from blacklist");
             }
-            c.FlashMessage("Error removing devices from blacklist");
         });
     }
 });

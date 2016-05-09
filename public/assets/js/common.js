@@ -3,25 +3,25 @@ var c = {
     flashTimeout: 0,
 
     FlashMessage: function (text, type) {
-        var flash = j.$('#flashDiv'),
+        var flash = $('#flashDiv'),
             flashClass = (type === 'success') ? 'flashSuccess' : 'flashFailure';
 
         // Post is a callback which is called after the message has faded out
         var clear = function(post) {
-            post = (post !== undefined && post !== null) ? post : j.Noop;
-            j.FadeOut(flash, 500, function() {
-                j.RemoveClass(flash, 'flashSuccess');
-                j.RemoveClass(flash, 'flashFailure');
-                j.$('#flashText').innerHTML = "";
+            post = (post) ? post : $.noop;
+            flash.fadeOut(500, function() {
+                flash.removeClass('flashSuccess');
+                flash.removeClass('flashFailure');
+                $('#flashText').html("");
                 c.flashTimeout = 0;
                 post();
             });
         };
 
         var show = function() {
-            j.$('#flashText').innerHTML = text;
-            j.AddClass(flash, flashClass);
-            j.FadeIn(flash, 500);
+            $('#flashText').html(text);
+            flash.addClass(flashClass);
+            flash.fadeIn(500);
             c.flashTimeout = setTimeout(clear, 10000);
         };
 
@@ -30,12 +30,12 @@ var c = {
             clear(show);
             return;
         }
-        show(j.Noop);
+        show();
     },
 };
 
-j.OnReady(function() {
-    var flashMsg = j.$('#flashText').innerHTML;
+$.onReady(function() {
+    var flashMsg = $('#flashText').html();
     if (flashMsg !== '') {
         c.FlashMessage(flashMsg);
     }

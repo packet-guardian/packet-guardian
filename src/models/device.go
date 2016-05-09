@@ -138,11 +138,6 @@ func (d *Device) Save() error {
 	return d.updateExisting()
 }
 
-func (d *Device) detectPlatform() string {
-	// Do some contains magic and figure out the platform
-	return ""
-}
-
 func (d *Device) updateExisting() error {
 	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "blacklisted" = ? WHERE "id" = ?`
 
@@ -173,7 +168,7 @@ func (d *Device) saveNew() error {
 		d.MAC.String(),
 		d.Username,
 		d.RegisteredFrom.String(),
-		d.detectPlatform(),
+		d.Platform,
 		d.Expires.Unix(),
 		d.DateRegistered.Unix(),
 		d.UserAgent,

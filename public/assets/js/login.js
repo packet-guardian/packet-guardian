@@ -1,35 +1,30 @@
-j.OnReady(function () {
+$.onReady(function () {
     'use strict';
-    var login = function () {
+    var login = function() {
         var data = {};
-        data.username = j.$('[name=username]').value;
-        data.password = j.$('[name=password]').value;
+        data.username = $('[name=username]').value();
+        data.password = $('[name=password]').value();
 
         if (data.username === '' || data.password === '') {
             return;
         }
 
-        j.Post('/login', data, function (resp, req) {
-            if (resp === '') {
-                console.log("malformed response");
-            }
-            resp = JSON.parse(resp);
-            if (resp.Code === 0) {
-                location.href = "/";
-            } else {
+        $.post('/login', data, function(resp, req) {
+            location.href = '/';
+        }, function(req) {
+            if (req.status === 401) {
                 c.FlashMessage("Incorrect username or password");
+            } else {
+                c.FlashMessage("Unknown error");
             }
-
-        }, function (req) {
-            console.log("an error was encountered");
         });
     };
 
-    j.Click('#login-btn', function () {
+    $('#login-btn').click(function() {
         login();
     });
 
-    j.Keyup('[name=password]', function (e) {
+    $('[name=password]').keyup(function(e) {
         if (e.keyCode === 13) {
             login();
         }

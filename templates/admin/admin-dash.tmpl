@@ -18,13 +18,14 @@
 
     <div class="dash-status">
         <h2>System Statistics</h2>
-        <h3>Devices</h3>
+        <h3>Registrations</h3>
         <div class="stat-block">
             <h3 class="hlabel">Total Registered Devices:</h3> {{.deviceTotal}}<br>
             <h3 class="hlabel">Average Devices per User:</h3> {{.deviceAvg}}
         </div>
 
-        <h3>Networks</h3>
+        {{if gt (len .leaseStats) 0}}
+        <h3>DHCP Lease Stats</h3>
         <div class="stat-block">
             {{range $netName, $stat := .leaseStats}}
             <div>
@@ -36,6 +37,7 @@
             </div>
             {{end}}
         </div>
+        {{end}}
     </div>
 </div>
 {{template "footer"}}

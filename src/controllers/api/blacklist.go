@@ -17,28 +17,18 @@ func NewBlacklistController(e *common.Environment) *Blacklist {
 	return &Blacklist{e: e}
 }
 
-func (b *Blacklist) BlacklistHandler(w http.ResponseWriter, r *http.Request) {
-	reqType := mux.Vars(r)["type"]
-	if reqType == "user" {
-		b.blacklistUser(w, r)
-	} else if reqType == "device" {
-		b.blacklistDevice(w, r)
-	} else {
-		common.NewAPIResponse(common.APIStatusMalformedRequest, "Invalid blacklist type", nil).WriteTo(w)
-	}
-}
-
-func (b *Blacklist) blacklistUser(w http.ResponseWriter, r *http.Request) {
-	username := r.FormValue("username")
-	if username == "" {
-		common.NewAPIResponse(common.APIStatusMalformedRequest, "No username given", nil).WriteTo(w)
+func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	username, ok := vars["username"]
+	if !ok {
+		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
 		return
 	}
 
 	user, err := models.GetUserByUsername(b.e, username)
 	if err != nil {
 		b.e.Log.Errorf("Error getting user: %s", err.Error())
-		common.NewAPIResponse(common.APIStatusGenericError, "Error blacklisting user", nil).WriteTo(w)
+		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -50,26 +40,32 @@ func (b *Blacklist) blacklistUser(w http.ResponseWriter, r *http.Request) {
 
 	if err := user.SaveToBlacklist(); err != nil {
 		b.e.Log.Errorf("Error blacklisting user: %s", err.Error())
-		common.NewAPIResponse(common.APIStatusGenericError, "Error blacklisting user", nil).WriteTo(w)
+		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
 
 	if r.Method == "POST" {
 		b.e.Log.Infof("Admin %s blacklisted user %s", models.GetUserFromContext(r).Username, user.Username)
-		common.NewAPIOK("User blacklisted", nil).WriteTo(w)
+		common.NewAPIResponse("", nil).WriteResponse(w, http.StatusNoContent)
 	} else if r.Method == "DELETE" {
 		b.e.Log.Infof("Admin %s unblacklisted user %s", models.GetUserFromContext(r).Username, user.Username)
-		common.NewAPIOK("User removed from blacklist", nil).WriteTo(w)
+		common.NewAPIResponse("", nil).WriteResponse(w, http.StatusNoContent)
 	}
 
 }
 
-func (b *Blacklist) blacklistDevice(w http.ResponseWriter, r *http.Request) {
-	username := r.FormValue("username")
+func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	username, ok := vars["username"]
+	if !ok {
+		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
+		return
+	}
+
 	user, err := models.GetUserByUsername(b.e, username)
 	if err != nil {
 		b.e.Log.Errorf("Error getting user: %s", err.Error())
-		common.NewAPIResponse(common.APIStatusGenericError, "Error blacklisting user", nil).WriteTo(w)
+		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -78,7 +74,7 @@ func (b *Blacklist) blacklistDevice(w http.ResponseWriter, r *http.Request) {
 	usersDevices, err := models.GetDevicesForUser(b.e, user)
 	if err != nil {
 		b.e.Log.Errorf("Error blacklisting devices: %s", err.Error())
-		common.NewAPIResponse(common.APIStatusGenericError, "Error blacklisting devices", nil).WriteTo(w)
+		common.NewAPIResponse("Error blacklisting devices", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -103,14 +99,14 @@ func (b *Blacklist) blacklistDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if finishedWithErrors {
-		common.NewAPIResponse(common.APIStatusGenericError, "Finished but with errors", nil).WriteTo(w)
+		common.NewAPIResponse("Finished but with errors", nil).WriteResponse(w, http.StatusNoContent)
 		return
 	}
 
 	if r.Method == "POST" {
-		common.NewAPIOK("Devices blacklisted successful", nil).WriteTo(w)
+		common.NewAPIResponse("Devices blacklisted successful", nil).WriteResponse(w, http.StatusNoContent)
 		return
 	}
 
-	common.NewAPIOK("Devices removed from blacklist successful", nil).WriteTo(w)
+	common.NewAPIResponse("Devices removed from blacklist successful", nil).WriteResponse(w, http.StatusNoContent)
 }

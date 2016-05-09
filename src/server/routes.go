@@ -89,7 +89,8 @@ func apiRouter(e *common.Environment) http.Handler {
 	r.HandleFunc("/api/device", deviceApiController.DeleteHandler).Methods("DELETE")
 
 	blacklistController := api.NewBlacklistController(e)
-	r.HandleFunc("/api/blacklist/{type}", blacklistController.BlacklistHandler).Methods("POST", "DELETE")
+	r.HandleFunc("/api/blacklist/user/{username}", blacklistController.BlacklistUserHandler).Methods("POST", "DELETE")
+	r.HandleFunc("/api/blacklist/device/{username}", blacklistController.BlacklistDeviceHandler).Methods("POST", "DELETE")
 
 	userApiController := api.NewUserController(e)
 	r.HandleFunc("/api/user", userApiController.UserHandler).Methods("POST", "DELETE")
@@ -120,6 +121,11 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	if strings.HasPrefix(r.URL.Path, "/api") {
+		common.NewAPIResponse("", nil).WriteResponse(w, http.StatusNotFound)
+		return
+	}
+
 	sessionUser := models.GetUserFromContext(r)
 	if sessionUser.IsHelpDesk() || sessionUser.IsAdmin() {
 		http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)

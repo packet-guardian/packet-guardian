@@ -29,7 +29,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		// Authenticate
 		if !auth.LoginUser(r, w) {
-			common.NewAPIResponse(common.APIStatusInvalidAuth, "Incorrect username or password", nil).WriteTo(w)
+			common.NewAPIResponse("Incorrect username or password", nil).WriteResponse(w, http.StatusUnauthorized)
 			return
 		}
 
@@ -37,20 +37,20 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		formUser, err = models.GetUserByUsername(d.e, username)
 		if err != nil {
 			d.e.Log.Errorf("Failed getting user %s: %s", username, err.Error())
-			common.NewAPIResponse(common.APIStatusInvalidAuth, "Error registering device", nil).WriteTo(w)
+			common.NewAPIResponse("Error registering device", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
 		sessionUser = formUser
 	} else {
 		formUsername := r.FormValue("username")
 		if formUsername == "" {
-			common.NewAPIResponse(common.APIStatusInvalidAuth, "No username given", nil).WriteTo(w)
+			common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
 			return
 		}
 
 		if sessionUser.Username != formUsername && !sessionUser.IsAdmin() {
 			d.e.Log.Errorf("Admin action attempted: Register device for %s attempted by user %s", formUsername, sessionUser.Username)
-			common.NewAPIResponse(common.APIStatusInsufficientPrivilages, "Only admins can do that", nil).WriteTo(w)
+			common.NewAPIResponse("Only admins can do that", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
 
@@ -61,7 +61,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 			formUser, err = models.GetUserByUsername(d.e, formUsername)
 			if err != nil {
 				d.e.Log.Errorf("Failed to get user from database %s: %s", formUsername, err.Error())
-				common.NewAPIResponse(common.APIStatusInvalidAuth, "Error registering device", nil).WriteTo(w)
+				common.NewAPIResponse("Error registering device", nil).WriteResponse(w, http.StatusInternalServerError)
 				return
 			}
 		}
@@ -78,9 +78,8 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			d.e.Log.Errorf("Error getting device count: %s", err.Error())
 		}
-		// A limit of 0 means unlimited
 		if limit != models.UserDeviceLimitUnlimited && deviceCount >= int(limit) {
-			common.NewAPIResponse(common.APIStatusGenericError, "Device limit reached", nil).WriteTo(w)
+			common.NewAPIResponse("Device limit reached", nil).WriteResponse(w, http.StatusConflict)
 			return
 		}
 	}
@@ -94,13 +93,12 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		// Manual registration
 		if !d.e.Config.Registration.AllowManualRegistrations {
 			d.e.Log.Noticef("Unauthorized manual registration attempt for MAC %s from user %s", macPost, formUser.Username)
-			common.NewAPIResponse(common.APIStatusGenericError, "Manual registrations are not allowed.", nil).WriteTo(w)
+			common.NewAPIResponse("Manual registrations are not allowed.", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
 		mac, err = common.FormatMacAddress(macPost)
 		if err != nil {
-			d.e.Log.Errorf("Error formatting MAC %s", macPost)
-			common.NewAPIResponse(common.APIStatusGenericError, "Incorrect MAC address format.", nil).WriteTo(w)
+			common.NewAPIResponse("Incorrect MAC address format.", nil).WriteResponse(w, http.StatusBadRequest)
 			return
 		}
 	} else {
@@ -109,7 +107,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		d.e.Log.Debugf("%+v\n", lease)
 		if err != nil || lease.ID == 0 {
 			d.e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
-			common.NewAPIResponse(common.APIStatusGenericError, "Error detecting MAC address.", nil).WriteTo(w)
+			common.NewAPIResponse("Error detecting MAC address.", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
 		mac = lease.MAC
@@ -124,7 +122,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if device is already registered
 	if device.ID != 0 {
 		d.e.Log.Noticef("Attempted duplicate registration of MAC %s to user %s", mac.String(), formUser.Username)
-		common.NewAPIResponse(common.APIStatusGenericError, "Device already registered", nil).WriteTo(w)
+		common.NewAPIResponse("Device already registered", nil).WriteResponse(w, http.StatusConflict)
 		return
 	}
 
@@ -132,14 +130,18 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	// Administrators bypass the blacklist check
 	if !sessionUser.IsAdmin() && formUser.IsBlacklisted() {
 		d.e.Log.Noticef("Attempted registration by blacklisted user %s", formUser.Username)
-		common.NewAPIResponse(common.APIStatusGenericError, "Failed to register device: Username blacklisted", nil).WriteTo(w)
+		common.NewAPIResponse("Username blacklisted", nil).WriteResponse(w, http.StatusForbidden)
 		return
 	}
 
 	// Validate platform, we don't want someone to submit an inappropiate value
 	platform := ""
-	if manual && !common.StringInSlice(r.FormValue("platform"), d.e.Config.Registration.ManualRegPlatforms) {
-		platform = r.FormValue("platform")
+	d.e.Log.Debug(common.StringInSlice(r.FormValue("platform"), d.e.Config.Registration.ManualRegPlatforms))
+	d.e.Log.Debug(r.FormValue("platform"))
+	if manual {
+		if common.StringInSlice(r.FormValue("platform"), d.e.Config.Registration.ManualRegPlatforms) {
+			platform = r.FormValue("platform")
+		}
 	} else {
 		platform = common.ParseUserAgent(r.UserAgent())
 	}
@@ -150,12 +152,16 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	device.Platform = platform
 	device.Expires = formUser.DeviceExpiration.NextExpiration(d.e)
 	device.DateRegistered = time.Now()
-	device.UserAgent = r.UserAgent()
+	if !manual {
+		device.UserAgent = r.UserAgent()
+	} else {
+		device.UserAgent = "Manual"
+	}
 
 	// Save new device
 	if err := device.Save(); err != nil {
 		d.e.Log.Errorf("Error registering device: %s", err.Error())
-		common.NewAPIResponse(common.APIStatusGenericError, "Error registering device", nil).WriteTo(w)
+		common.NewAPIResponse("Error registering device", nil).WriteResponse(w, http.StatusInternalServerError)
 	}
 	d.e.Log.Infof("Successfully registered MAC %s to user %s", mac.String(), formUser.Username)
 
@@ -165,7 +171,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		resp.Location = "/admin/manage/" + formUser.Username
 	}
 
-	common.NewAPIOK("Registration successful", resp).WriteTo(w)
+	common.NewAPIResponse("Registration successful", resp).WriteResponse(w, http.StatusOK)
 }
 
 func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -173,14 +179,14 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	formUser := sessionUser
 	if r.FormValue("username") != sessionUser.Username {
 		if !sessionUser.IsAdmin() {
-			common.NewAPIResponse(common.APIStatusGenericError, "Admin Error", nil).WriteTo(w)
+			common.NewAPIResponse("Admin Error", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
 		var err error
 		formUser, err = models.GetUserByUsername(d.e, r.FormValue("username"))
 		if err != nil {
 			d.e.Log.Errorf("Error getting user: %s", err.Error())
-			common.NewAPIResponse(common.APIStatusGenericError, "Server error", nil).WriteTo(w)
+			common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -190,7 +196,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	usersDevices, err := models.GetDevicesForUser(d.e, formUser)
 	if err != nil {
 		d.e.Log.Errorf("Error deleting devices: %s", err.Error())
-		common.NewAPIResponse(common.APIStatusGenericError, "Error deleting devices", nil).WriteTo(w)
+		common.NewAPIResponse("Error deleting devices", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -210,9 +216,9 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if finishedWithErrors {
-		common.NewAPIResponse(common.APIStatusGenericError, "Finished but with errors", nil).WriteTo(w)
+		common.NewAPIResponse("Finished but with errors", nil).WriteResponse(w, http.StatusOK)
 		return
 	}
 
-	common.NewAPIOK("Devices deleted successful", nil).WriteTo(w)
+	common.NewAPIResponse("Devices deleted successful", nil).WriteResponse(w, http.StatusNoContent)
 }

@@ -34,12 +34,12 @@ func (a *Auth) showLoginPage(w http.ResponseWriter, r *http.Request) {
 
 func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	// Assume invalid until convinced otherwise
-	resp := common.NewAPIResponse(common.APIStatusInvalidAuth, "Invalid login", nil)
+	resp := common.NewAPIResponse("Invalid login", nil)
 	if auth.LoginUser(r, w) {
-		resp.Code = common.APIStatusOK
 		resp.Message = ""
+		resp.WriteResponse(w, http.StatusNoContent)
 	}
-	resp.WriteTo(w)
+	resp.WriteResponse(w, http.StatusUnauthorized)
 }
 
 // LogoutHandler voids a user's session
