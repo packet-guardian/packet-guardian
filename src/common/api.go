@@ -19,6 +19,10 @@ func NewAPIResponse(m string, d interface{}) *APIResponse {
 	}
 }
 
+func NewEmptyAPIResponse() *APIResponse {
+	return &APIResponse{}
+}
+
 // Encode the APIResponse into JSON
 func (a *APIResponse) Encode() []byte {
 	b, err := json.Marshal(a)

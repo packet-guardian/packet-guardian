@@ -8,18 +8,18 @@ $.onReady(function () {
         regBtnEnabled = false;
         var data = {
             "username": "",
-            "password": "",
             "mac-address": ""
         };
 
         // It's not guaranteed that all fields will be shown
-        // The username and password boxes will only show if the user isn't logged in
+        // The username box will always be shown, sometimes disabled
         var username = $('[name=username]');
         if (username.length !== 0) {
             data.username = username.value();
-            if (data.username === "") { return; }
         }
+        if (data.username === "") { return; } // Required
 
+        // The password box will only show if the user isn't logged in
         var password = $('[name=password]');
         if (password.length !== 0) {
             data.password = password.value();
@@ -33,12 +33,32 @@ $.onReady(function () {
             if (data["mac-address"] === "") { return; }
         }
 
+        // The platform field will only show for a manual registration
         var platform = $('[name=platform]');
         if (platform.length !== 0) {
             data.platform = platform.value();
             if (data.platform === "") { return; }
         }
 
+        if (data.password !== "") { // Need to login first
+            $.post('/login', {"username": data.username, "password": data.password}, function(resp, req) {
+                delete(data.password);
+                registerDevice(data);
+            }, function(req) {
+                window.scrollTo(0, 0);
+                regBtnEnabled = true;
+                if (req.status === 401) {
+                    c.FlashMessage("Incorrect username or password");
+                } else {
+                    c.FlashMessage("Unknown error");
+                }
+            });
+        } else {
+            registerDevice(data);
+        }
+    };
+
+    function registerDevice(data) {
         $.post('/api/device', data, function(resp, req) {
             resp = JSON.parse(resp);
             window.scrollTo(0, 0);
@@ -55,10 +75,10 @@ $.onReady(function () {
         }, function (req) {
             regBtnEnabled = true;
             window.scrollTo(0, 0);
-            var resp = JSON.parse(req.responseText);
             switch(req.status) {
                 case 400:
                 case 409:
+                    var resp = JSON.parse(req.responseText);
                     c.FlashMessage(resp.Message);
                     break;
                 case 401:
@@ -71,7 +91,7 @@ $.onReady(function () {
                     c.FlashMessage("Internal Server Error");
             }
         });
-    };
+    }
 
     $('#register-btn').click(register);
 });

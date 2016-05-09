@@ -46,10 +46,10 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request)
 
 	if r.Method == "POST" {
 		b.e.Log.Infof("Admin %s blacklisted user %s", models.GetUserFromContext(r).Username, user.Username)
-		common.NewAPIResponse("", nil).WriteResponse(w, http.StatusNoContent)
+		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusNoContent)
 	} else if r.Method == "DELETE" {
 		b.e.Log.Infof("Admin %s unblacklisted user %s", models.GetUserFromContext(r).Username, user.Username)
-		common.NewAPIResponse("", nil).WriteResponse(w, http.StatusNoContent)
+		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusNoContent)
 	}
 
 }

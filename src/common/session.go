@@ -49,7 +49,7 @@ func NewSessionStore(config *Config) (*SessionStore, error) {
 
 	store.Options = &sessions.Options{
 		Path:   "/",
-		MaxAge: 3600 * 8, // 8 hours
+		MaxAge: 0, // Expire on browser close
 	}
 	return store, nil
 }

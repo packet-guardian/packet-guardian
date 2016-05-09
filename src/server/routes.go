@@ -60,6 +60,7 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	h := mid.Cache(e, r)         // Set cache headers if needed
 	h = mid.SetSessionInfo(e, h) // Adds Environment and user information to requet context
 	h = mid.Logging(e, h)        // Logging
+	h = mid.Panic(e, h)          // Panic catcher
 
 	return h
 }
@@ -122,7 +123,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.Path, "/api") {
-		common.NewAPIResponse("", nil).WriteResponse(w, http.StatusNotFound)
+		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusNotFound)
 		return
 	}
 

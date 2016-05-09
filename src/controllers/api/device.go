@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/src/auth"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
@@ -25,45 +24,27 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	var formUser *models.User // The user to whom the device is being registered
 	var err error
 	sessionUser := models.GetUserFromContext(r)
-	if !auth.IsLoggedIn(r) {
-		username := r.FormValue("username")
-		// Authenticate
-		if !auth.LoginUser(r, w) {
-			common.NewAPIResponse("Incorrect username or password", nil).WriteResponse(w, http.StatusUnauthorized)
-			return
-		}
+	formUsername := r.FormValue("username")
+	if formUsername == "" {
+		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
+		return
+	}
 
-		// User authenticated successfully
-		formUser, err = models.GetUserByUsername(d.e, username)
+	if sessionUser.Username != formUsername && !sessionUser.IsAdmin() {
+		d.e.Log.Errorf("Admin action attempted: Register device for %s attempted by user %s", formUsername, sessionUser.Username)
+		common.NewAPIResponse("Only admins can do that", nil).WriteResponse(w, http.StatusForbidden)
+		return
+	}
+
+	if formUsername == sessionUser.Username {
+		formUser = sessionUser
+	} else {
+		var err error
+		formUser, err = models.GetUserByUsername(d.e, formUsername)
 		if err != nil {
-			d.e.Log.Errorf("Failed getting user %s: %s", username, err.Error())
+			d.e.Log.Errorf("Failed to get user from database %s: %s", formUsername, err.Error())
 			common.NewAPIResponse("Error registering device", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
-		}
-		sessionUser = formUser
-	} else {
-		formUsername := r.FormValue("username")
-		if formUsername == "" {
-			common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
-			return
-		}
-
-		if sessionUser.Username != formUsername && !sessionUser.IsAdmin() {
-			d.e.Log.Errorf("Admin action attempted: Register device for %s attempted by user %s", formUsername, sessionUser.Username)
-			common.NewAPIResponse("Only admins can do that", nil).WriteResponse(w, http.StatusForbidden)
-			return
-		}
-
-		if formUsername == sessionUser.Username {
-			formUser = sessionUser
-		} else {
-			var err error
-			formUser, err = models.GetUserByUsername(d.e, formUsername)
-			if err != nil {
-				d.e.Log.Errorf("Failed to get user from database %s: %s", formUsername, err.Error())
-				common.NewAPIResponse("Error registering device", nil).WriteResponse(w, http.StatusInternalServerError)
-				return
-			}
 		}
 	}
 
@@ -93,21 +74,24 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		// Manual registration
 		if !d.e.Config.Registration.AllowManualRegistrations {
 			d.e.Log.Noticef("Unauthorized manual registration attempt for MAC %s from user %s", macPost, formUser.Username)
-			common.NewAPIResponse("Manual registrations are not allowed.", nil).WriteResponse(w, http.StatusForbidden)
+			common.NewAPIResponse("Manual registrations are not allowed", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
 		mac, err = common.FormatMacAddress(macPost)
 		if err != nil {
-			common.NewAPIResponse("Incorrect MAC address format.", nil).WriteResponse(w, http.StatusBadRequest)
+			common.NewAPIResponse("Incorrect MAC address format", nil).WriteResponse(w, http.StatusBadRequest)
 			return
 		}
 	} else {
 		// Automatic registration
 		lease, err := dhcp.GetLeaseByIP(d.e, ip)
-		d.e.Log.Debugf("%+v\n", lease)
-		if err != nil || lease.ID == 0 {
+		if err != nil {
 			d.e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
-			common.NewAPIResponse("Error detecting MAC address.", nil).WriteResponse(w, http.StatusInternalServerError)
+			common.NewEmptyAPIResponse().WriteResponse(w, http.StatusInternalServerError)
+			return
+		} else if lease.ID == 0 {
+			d.e.Log.Errorf("Attempted automatic registration on non-leased device %s", ip)
+			common.NewAPIResponse("Error detecting MAC address", nil).WriteResponse(w, http.StatusBadRequest)
 			return
 		}
 		mac = lease.MAC
@@ -136,8 +120,6 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Validate platform, we don't want someone to submit an inappropiate value
 	platform := ""
-	d.e.Log.Debug(common.StringInSlice(r.FormValue("platform"), d.e.Config.Registration.ManualRegPlatforms))
-	d.e.Log.Debug(r.FormValue("platform"))
 	if manual {
 		if common.StringInSlice(r.FormValue("platform"), d.e.Config.Registration.ManualRegPlatforms) {
 			platform = r.FormValue("platform")
