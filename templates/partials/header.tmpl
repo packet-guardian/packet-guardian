@@ -21,9 +21,11 @@
     <body>
         <header>
             <img src="/public/assets/images/logo.png">
-            <!-- <div class="header-title">
+            {{if ne .main.config.Core.SiteTitle ""}}
+            <div class="header-title">
                 <a href="/">{{.main.config.Core.SiteTitle}}</a>
-            </div> -->
+            </div>
+            {{end}}
         </header>
         <div class="main">
             <div id="flashDiv" class="flash">

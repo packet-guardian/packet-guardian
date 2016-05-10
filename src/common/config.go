@@ -131,7 +131,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	// Database
 	c.Database.Type = setStringOrDefault(c.Database.Type, "sqlite")
-	c.Database.Address = setStringOrDefault(c.Database.Address, "database.sqlite3")
+	c.Database.Address = setStringOrDefault(c.Database.Address, "config/database.sqlite3")
 
 	// Registration
 	c.Registration.RegistrationPolicyFile = setStringOrDefault(c.Registration.RegistrationPolicyFile, "config/policy.txt")

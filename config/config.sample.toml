@@ -1,71 +1,161 @@
+## Packet Guardian Configuration File
+
 [core]
+## The site title will be shown on ever page on the right side of the logo.
 # siteTitle = "Packet Guardian"
+
+## The company name is shown in the browser title bar. It can also be used with
+## a modified template to show in the header.
 # siteCompanyName = ""
-# Must include port if not normal http/https
+
+## The site domain name is used to determine when to tell the client to cache.
+## Packet Guardian relies on DNS redirection to work and may be configured to accept
+## requests from any domain name. If the domain name matches this setting, the client
+## is instructed to cache. Otherwise it's instructed to never cache. This should avoid
+## situation where a registered client shows a ghost page when going to the same domain
+## as was redirected to this application. It must include the port if not normal http/https
+## Example: wifi.example.com  OR  wifi.example.com:5000
 # siteDomainName = ""
 
 [logging]
-# enabled = false
-# enableHTTP = false
-# level = "notice"
-# path = "logs/pg.log"
+## Enable or disable normal application logging.
+enabled = true
+
+## Enable to disable web server logging. The log format is very similar to Apache.
+enableHTTP = true
+
+## Lowest level to log. Recommended to be information in dev/testing and notice in prod.
+## Standard syslog levels plus fatal.
+level = "notice"
+
+## File path or directory to store log files. If a directory is given, each log level
+## will be outputted to its own file.
+path = "logs/pg.log"
 
 [database]
-# type = "sqlite"
-# address = "database.sqlite3"
+## Supported database types are: sqlite
+type = "sqlite"
+
+## The address, socket, or filename of the database
+address = "config/database.sqlite3"
+
+## Username of database
 # username = ""
+
+## Password of database
 # password = ""
 
 [registration]
-# registrationPolicyFile = "config/policy.txt"
-# allowManualRegistrations = false
-# defaultDeviceLimit = 0
-# manualRegPlatforms = []
+## The file containing the policy text that's shown on the registration page
+## HTML is allowed in the file. An empty line denotes a new paragraph
+registrationPolicyFile = "config/policy.txt"
+
+## Whether or not manual registrations are permitted. An admin can always
+## manually register a device, regardless of this setting.
+allowManualRegistrations = true
+
+## Default number of devices for per user. 0 means unlimited.
+defaultDeviceLimit = 0
+
+## The type of device expiration. Valid values: never, date, duration, daily
+defaultDeviceExpirationType = "never"
+
+## The value for the device expiration type.
+## date - Specific date in yyyy-mm-dd format
+## duration - Duration of device in Go time.Duration syntax: 1h = 1 hour, 7d = 7 days
+## daily - Time each day the device will expire in HH:mm format (24 hour time)
+# defaultDeviceExpiration = ""
+
+## Available platforms for a user to choose when manually registering a device.
+## Automatic registrations will determine the platform based on the user agent.
+manualRegPlatforms = []
 
 [webserver]
-# Leave address blank to bind to all addresses
-# address = ""
-# httpPort = 8080
-# httpsPort = 1443
+## IP address to listen on. Leave blank to listen on all addresses.
+address = ""
+
+## Plain HTTP port to listen on
+httpPort = 8080
+
+## Encrypted HTTP port to listen on
+httpsPort = 1443
+
+## TLS Certificate, must be concatentated with all intermediate certificates
 # TLSCertFile = ""
+
+## Private key file for main certificate
 # TLSKeyFile = ""
+
+## Enable/disable HTTP redirect to HTTPS
 # redirectHttpToHttps = false
-# sessionName = "packet-guardian"
-# sessionsDir = "sessions"
-# This is the authentication key for web sessions
-# Make sure this is unique and protected
+
+## The name given to the cookie on the client that stores a session token
+sessionName = "packet-guardian"
+
+## Directory path to store session data
+sessionsDir = "sessions"
+
+# This is the authentication key for web sessions. Make sure this is unique and protected.
 # sessionsAuthKey = ""
-# Optional. Should be 16, 24, or 32 characters long
+
+# Key to use when encrypting session data server-side. Optional.
+# Should be 16, 24, or 32 characters long.
 # sessionsEncryptKey = ""
 
 [auth]
-# An array of auth types in order of precidence
-# Valid values: ldap, ad, local
-# authMethod = ["local"]
-# adminUsers = ["admin"]
-# helpDeskUsers = ["helpdesk"]
+## An array of auth types in order of preference.
+## Make sure local is first, it will save headaches.
+## Valid values: local, ldap, radius, cas
+authMethod = ["local"]
 
-# [auth.ldap]
+## List of usernames who are administrative users. Does not matter what type
+## of authentication is used. It's soley based on username.
+adminUsers = ["admin"]
+
+## List of usernames who are helpdesk (read-only admin) users. Does not matter what type
+## of authentication is used. It's soley based on username.
+helpDeskUsers = ["helpdesk"]
+
+## LDAP authentication settings
+[auth.ldap]
+## Is the server an Active Directory
 # useAD = true
+
+## Active Directory domain name
 # domainName = "example.com"
+
+## Currently on the first server in the list is used
 # servers = ["127.0.0.1"]
-# useTLS = true
-#
-# # Below LDAP settings for non-AD environments only
+
+## Verify TLS certificate on server
+# verifyTLSCert = false
+
+## Below LDAP settings for non-AD environments only - Not implemented yet
 # baseDN = ""
 # bindDN = ""
 # bindPassword = ""
 # userFilter = ""
 # groupFilter = ""
-#
-# [auth.radius]
+
+## RADIUS authentication settings
+[auth.radius]
+## List of RADIUS servers to try, currently only uses the first server
 # servers = [""]
+
+## Authentication port
 # port = 1812
+
+## RADIUS secret
 # secret = ""
-#
-# [auth.cas]
+
+## CAS authentication settings
+[auth.cas]
+## CAS server URI
 # server = ""
 
 [dhcp]
-#enabled = false
-#configFile = "config/dhcp.conf"
+## Enable integrated DHCP server
+# enabled = false
+
+## DHCP configuration file
+# configFile = "config/dhcp.conf"

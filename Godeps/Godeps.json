@@ -96,6 +96,10 @@
 			"Rev": "b6fdb7d8a4ccefede406f8fe0f017fb58265054c"
 		},
 		{
+			"ImportPath": "golang.org/x/net/netutil",
+			"Rev": "b6fdb7d8a4ccefede406f8fe0f017fb58265054c"
+		},
+		{
 			"ImportPath": "gopkg.in/asn1-ber.v1",
 			"Comment": "v1.1",
 			"Rev": "4e86f4367175e39f69d9358a5f17b4dda270378d"
@@ -104,6 +108,11 @@
 			"ImportPath": "gopkg.in/ldap.v2",
 			"Comment": "v2.2.2",
 			"Rev": "a3bce49e0d824978c01ce29eb00d0a2b72749b25"
+		},
+		{
+			"ImportPath": "gopkg.in/tylerb/graceful.v1",
+			"Comment": "v1.2.5",
+			"Rev": "9a3d4236b03bb5d26f7951134d248f9d5510d599"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
