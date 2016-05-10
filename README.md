@@ -15,7 +15,8 @@ TL;DR -
 3. Copy `config/config.sample.toml` to `config/config.toml`
 4. Copy `config/dhcp-config.sample.conf` to `config/dhcp.conf`
 5. Edit the configurations as needed. See the related documentation for each format.
-6. Start Packet Guardian
+6. Setup the database
+7. Start Packet Guardian
 
 TL;DR Code -
 
@@ -28,6 +29,7 @@ $ cp config.sample.toml config.toml
 $ vim config.toml
 $ cp dhcp-config.sample.conf dhcp.conf
 $ vim dhcp.conf
+$ sqlite3 database.sqlite3 < db-schema-sqlite.sql
 $ cd ..
 $ bin/pg -c config/config.toml
 ```
