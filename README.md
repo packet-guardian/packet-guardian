@@ -19,17 +19,17 @@ TL;DR -
 
 TL;DR Code -
 
-```shell
-# cd /opt
-# wget [URI to github download]
-# tar -xzf pg-[version].tar.gz
-# cd packet-guardian/config
-# cp config.sample.toml config.toml
-# vim config.toml
-# cp dhcp-config.sample.conf dhcp.conf
-# vim dhcp.conf
-# cd ..
-# bin/pg -c config/config.toml
+```bash
+$ cd /opt
+$ wget [URI to github download]
+$ tar -xzf pg-[version].tar.gz
+$ cd packet-guardian/config
+$ cp config.sample.toml config.toml
+$ vim config.toml
+$ cp dhcp-config.sample.conf dhcp.conf
+$ vim dhcp.conf
+$ cd ..
+$ bin/pg -c config/config.toml
 ```
 
 Building From Source
