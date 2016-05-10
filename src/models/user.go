@@ -25,9 +25,11 @@ const (
 	UserDeviceLimitUnlimited UserDeviceLimit = 0
 )
 
+var globalDeviceExpiration *UserDeviceExpiration
+
 type UserDeviceExpiration struct {
 	Mode  UserExpiration
-	Value int64
+	Value int64 // Daily and Duration, time in seconds. Specific, unix epoch
 }
 
 func (e *UserDeviceExpiration) String() string {
@@ -48,23 +50,51 @@ func (e *UserDeviceExpiration) String() string {
 }
 
 func (e *UserDeviceExpiration) NextExpiration(env *common.Environment) time.Time {
-	if e.Mode == UserDeviceExpirationNever {
-		return time.Unix(0, 0)
-	} else if e.Mode == UserDeviceExpirationGlobal {
-		return time.Unix(0, 0) // TODO: Calculate global expiration
+	if e.Mode == UserDeviceExpirationGlobal {
+		if globalDeviceExpiration != nil {
+			return globalDeviceExpiration.NextExpiration(env)
+		}
+		// Build the global default, typically it's the most used mode
+		globalDeviceExpiration = &UserDeviceExpiration{} // Defaults to never
+		switch env.Config.Registration.DefaultDeviceExpirationType {
+		case "date":
+			d, err := time.ParseInLocation("2006-01-02", env.Config.Registration.DefaultDeviceExpiration, time.Local)
+			if err != nil {
+				env.Log.Error("Incorrect default device expiration date format")
+				break
+			}
+			globalDeviceExpiration.Value = d.Unix()
+		case "duration":
+			d, err := time.ParseDuration(env.Config.Registration.DefaultDeviceExpiration)
+			if err != nil {
+				env.Log.Error("Incorrect default device expiration duration format")
+				break
+			}
+			globalDeviceExpiration.Value = int64(d / time.Second)
+		case "daily":
+			secs, err := common.ParseTime(env.Config.Registration.DefaultDeviceExpiration)
+			if err != nil {
+				env.Log.Error("Incorrect default device expiration time format")
+				break
+			}
+			globalDeviceExpiration.Value = secs
+		}
+		return globalDeviceExpiration.NextExpiration(env)
 	} else if e.Mode == UserDeviceExpirationSpecific {
 		return time.Unix(e.Value, 0)
 	} else if e.Mode == UserDeviceExpirationDuration {
 		return time.Now().Add(time.Duration(e.Value) * time.Second)
-	} else {
+	} else if e.Mode == UserDeviceExpirationDaily {
 		now := time.Now()
 		year, month, day := now.Date()
 		bod := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
 		bod = bod.Add(time.Duration(e.Value) * time.Second)
-		if bod.Before(now) {
+		if bod.Before(now) { // If the time has passed today, rollover to tomorrow
 			bod = bod.Add(time.Duration(24) * time.Hour)
 		}
 		return bod
+	} else { // Default to never
+		return time.Unix(0, 0)
 	}
 }
 

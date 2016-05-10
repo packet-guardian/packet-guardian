@@ -29,10 +29,12 @@ type Config struct {
 		Password string
 	}
 	Registration struct {
-		RegistrationPolicyFile   string
-		AllowManualRegistrations bool
-		DefaultDeviceLimit       int
-		ManualRegPlatforms       []string
+		RegistrationPolicyFile      string
+		AllowManualRegistrations    bool
+		DefaultDeviceLimit          int
+		DefaultDeviceExpirationType string
+		DefaultDeviceExpiration     string
+		ManualRegPlatforms          []string
 	}
 	Webserver struct {
 		Address             string
@@ -133,6 +135,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	// Registration
 	c.Registration.RegistrationPolicyFile = setStringOrDefault(c.Registration.RegistrationPolicyFile, "config/policy.txt")
+	c.Registration.DefaultDeviceExpirationType = setStringOrDefault(c.Registration.DefaultDeviceExpirationType, "never")
 
 	// Webserver
 	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 8080)

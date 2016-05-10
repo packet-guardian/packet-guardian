@@ -208,7 +208,7 @@ func NewLogger(c *Config, name string) *Logger {
 	logger.AddHandler("stdout", sh)
 	logger.AddHandler("file", fh)
 
-	if level, ok := logLevels[c.Logging.Level]; ok {
+	if level, ok := logLevels[strings.ToLower(c.Logging.Level)]; ok {
 		sh.SetMinLevel(level)
 		fh.SetMinLevel(level)
 	}
