@@ -26,7 +26,7 @@ func (a *Auth) LoginHandler(w http.ResponseWriter, r *http.Request) {
 func (a *Auth) showLoginPage(w http.ResponseWriter, r *http.Request) {
 	loggedin := a.e.Sessions.GetSession(r).GetBool("loggedin", false)
 	if loggedin {
-		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 	a.e.Views.NewView("login", r).Render(w, nil)
@@ -38,6 +38,7 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	if auth.LoginUser(r, w) {
 		resp.Message = ""
 		resp.WriteResponse(w, http.StatusNoContent)
+		return
 	}
 	resp.WriteResponse(w, http.StatusUnauthorized)
 }

@@ -43,10 +43,6 @@ func main() {
 	e.Log = common.NewLogger(e.Config, "dhcp")
 	e.Log.Debugf("Configuration loaded from %s", configFile)
 
-	if dev {
-		e.Log.Debug("Packet Guardian DHCP running in DEVELOPMENT mode")
-	}
-
 	e.DB, err = common.NewDatabaseAccessor(e.Config)
 	if err != nil {
 		e.Log.Fatalf("Error loading database: %s", err.Error())

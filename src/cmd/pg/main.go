@@ -67,10 +67,6 @@ func main() {
 	e.Log = common.NewLogger(e.Config, "app")
 	e.Log.Debugf("Configuration loaded from %s", configFile)
 
-	if dev {
-		e.Log.Debug("Packet Guardian running in DEVELOPMENT mode")
-	}
-
 	e.Sessions, err = common.NewSessionStore(e.Config)
 	if err != nil {
 		e.Log.Fatalf("Error loading session store: %s", err.Error())
