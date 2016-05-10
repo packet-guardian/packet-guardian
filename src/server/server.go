@@ -4,9 +4,12 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/dragonrider23/verbose"
 	"github.com/onesimus-systems/packet-guardian/src/common"
+
+	"gopkg.in/tylerb/graceful.v1"
 )
 
 type Server struct {
@@ -47,10 +50,13 @@ func (s *Server) startRedirector() {
 		"address": s.address,
 		"port":    s.httpPort,
 	}).Debug()
-	s.e.Log.Critical(http.ListenAndServe(
-		s.address+":"+s.httpPort,
-		http.HandlerFunc(s.redirectToHttps),
-	))
+	srv := &graceful.Server{
+		Timeout: 1 * time.Second,
+		Server:  &http.Server{Addr: s.address + ":" + s.httpPort, Handler: http.HandlerFunc(s.redirectToHttps)},
+	}
+	if err := srv.ListenAndServe(); err != nil {
+		s.e.Log.Fatal(err)
+	}
 }
 
 func (s *Server) startHttp() {
@@ -58,10 +64,13 @@ func (s *Server) startHttp() {
 		"address": s.address,
 		"port":    s.httpPort,
 	}).Debug()
-	s.e.Log.Fatal(http.ListenAndServe(
-		s.address+":"+s.httpPort,
-		s.routes,
-	))
+	srv := &graceful.Server{
+		Timeout: 5 * time.Second,
+		Server:  &http.Server{Addr: s.address + ":" + s.httpPort, Handler: s.routes},
+	}
+	if err := srv.ListenAndServe(); err != nil {
+		s.e.Log.Fatal(err)
+	}
 }
 
 func (s *Server) startHttps() {
@@ -69,12 +78,17 @@ func (s *Server) startHttps() {
 		"address": s.address,
 		"port":    s.httpsPort,
 	}).Debug()
-	s.e.Log.Fatal(http.ListenAndServeTLS(
-		s.address+":"+s.httpsPort,
+
+	srv := &graceful.Server{
+		Timeout: 5 * time.Second,
+		Server:  &http.Server{Addr: s.address + ":" + s.httpsPort, Handler: s.routes},
+	}
+	if err := srv.ListenAndServeTLS(
 		s.e.Config.Webserver.TLSCertFile,
 		s.e.Config.Webserver.TLSKeyFile,
-		s.routes,
-	))
+	); err != nil {
+		s.e.Log.Fatal(err)
+	}
 }
 
 func (s *Server) redirectToHttps(w http.ResponseWriter, r *http.Request) {
