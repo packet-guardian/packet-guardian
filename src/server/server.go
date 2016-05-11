@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dragonrider23/verbose"
+	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 
 	"gopkg.in/tylerb/graceful.v1"

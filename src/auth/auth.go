@@ -3,7 +3,7 @@ package auth
 import (
 	"net/http"
 
-	"github.com/dragonrider23/verbose"
+	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/models"
 )

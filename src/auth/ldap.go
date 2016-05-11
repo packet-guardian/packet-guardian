@@ -3,8 +3,8 @@ package auth
 import (
 	"net/http"
 
-	ldapc "github.com/dragonrider23/go-ldap-client"
-	"github.com/dragonrider23/verbose"
+	ldapc "github.com/lfkeitel/go-ldap-client"
+	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/models"
 	"gopkg.in/ldap.v2"

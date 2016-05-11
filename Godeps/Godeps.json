@@ -16,11 +16,11 @@
 			"Rev": "5f29a22520453e33c1f5af6dbee4bcbe804646e8"
 		},
 		{
-			"ImportPath": "github.com/dragonrider23/go-ldap-client",
+			"ImportPath": "github.com/lfkeitel/go-ldap-client",
 			"Rev": "b33c09cb02f289fe666b7f45c722273ad73c7a4b"
 		},
 		{
-			"ImportPath": "github.com/dragonrider23/verbose",
+			"ImportPath": "github.com/lfkeitel/verbose",
 			"Comment": "v2.0.0-1-g1a7ae87",
 			"Rev": "1a7ae878500a7c16b998555a0f946093353f660b"
 		},

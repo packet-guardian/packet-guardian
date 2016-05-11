@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/context"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 
-	"github.com/dragonrider23/verbose"
+	"github.com/lfkeitel/verbose"
 )
 
 // Environment holds "global" application information such as a database connection,
