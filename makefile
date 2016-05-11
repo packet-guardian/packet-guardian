@@ -4,7 +4,7 @@ VERSION?=unversioned
 
 default: build
 
-build: vet test
+build: test
 	go build -v -o ./bin/pg ./src/cmd/pg
 
 clean:
@@ -33,7 +33,7 @@ doc:
 fmt:
 	go fmt ./src/...
 
-install: vet
+install: test
 	go install -v ./src/cmd/pg
 
 # https://github.com/golang/lint
@@ -44,7 +44,7 @@ lint:
 run: build
 	-./bin/pg -d -c=$(CONFIG)
 
-test:
+test: vet
 	go test ./src/...
 
 vet:

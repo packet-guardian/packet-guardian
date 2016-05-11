@@ -75,10 +75,10 @@ manualRegPlatforms = []
 address = ""
 
 ## Plain HTTP port to listen on
-httpPort = 8080
+httpPort = 80
 
-## Encrypted HTTP port to listen on
-httpsPort = 1443
+## Encrypted HTTP port to listen on, if the TLS settings are blank, HTTPS will not start
+httpsPort = 443
 
 ## TLS Certificate, must be concatentated with all intermediate certificates
 # TLSCertFile = ""
@@ -96,7 +96,7 @@ sessionName = "packet-guardian"
 sessionsDir = "sessions"
 
 # This is the authentication key for web sessions. Make sure this is unique and protected.
-# sessionsAuthKey = ""
+sessionsAuthKey = "change me please"
 
 # Key to use when encrypting session data server-side. Optional.
 # Should be 16, 24, or 32 characters long.
