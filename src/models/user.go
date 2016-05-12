@@ -132,6 +132,8 @@ func NewUser(e *common.Environment) *User {
 		e:                e,
 		DeviceLimit:      UserDeviceLimitGlobal,
 		DeviceExpiration: &UserDeviceExpiration{Mode: UserDeviceExpirationGlobal},
+		ValidStart:       time.Unix(0, 0),
+		ValidEnd:         time.Unix(0, 0),
 		ValidForever:     true,
 		CanManage:        true,
 		isAdmin:          -1,
@@ -385,7 +387,7 @@ func (u *User) saveNew() error {
 
 	sql := `INSERT INTO "user" ("username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "valid_forever", "valid_start", "valid_end") VALUES (?,?,?,?,?,?,?,?,?)`
 
-	_, err := u.e.DB.Exec(
+	result, err := u.e.DB.Exec(
 		sql,
 		u.Username,
 		u.Password,
@@ -400,6 +402,8 @@ func (u *User) saveNew() error {
 	if err != nil {
 		return err
 	}
+	id, _ := result.LastInsertId()
+	u.ID = int(id)
 	return u.writeToBlacklist()
 }
 

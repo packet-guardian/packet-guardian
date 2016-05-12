@@ -18,16 +18,16 @@ const (
 
 var (
 	userAgentRegex  = regexp.MustCompile(`^Mozilla\/\d\.0 \((.*?)\)`)
-	macVersionRegex = regexp.MustCompile(`(\d{1,2}_\d{1,2}(?:_\d{1,2})?)`)
+	macVersionRegex = regexp.MustCompile(`(\d{1,2}[_\.]\d{1,2}(?:[_\.]\d{1,2})?)`)
 	// The trailing underscore is to make each key 5 characters long
 	osXVersionNames = map[string]string{
-		"10_5_": "Leopard",
-		"10_6_": "Snow Leopard",
-		"10_7_": "Lion",
-		"10_8_": "Mountain Lion",
-		"10_9_": "Mavericks",
-		"10_10": "Yosemite",
-		"10_11": "El Capitan",
+		"10.5.": "Leopard",
+		"10.6.": "Snow Leopard",
+		"10.7.": "Lion",
+		"10.8.": "Mountain Lion",
+		"10.9.": "Mavericks",
+		"10.10": "Yosemite",
+		"10.11": "El Capitan",
 	}
 
 	windowsVersionNames = map[string]string{
@@ -113,6 +113,8 @@ func ParseUserAgent(ua string) string {
 		parsedUA = parseiOSUA(parts)
 	} else if parts[0] == "X11" {
 		parsedUA = parseLinuxUA(parts)
+	} else if parts[0] == "Linux" {
+		parsedUA = parseAndroidUA(parts)
 	}
 
 	return parsedUA
@@ -133,6 +135,17 @@ func parseWindowsUA(ua []string) string {
 		}
 	}
 
+	return uStr
+}
+
+func parseAndroidUA(ua []string) string {
+	uStr := "Android"
+	for _, s := range ua {
+		if strings.HasPrefix(s, "Android") {
+			uStr = s
+			break
+		}
+	}
 	return uStr
 }
 
@@ -161,18 +174,24 @@ func parseMacUA(ua []string) string {
 	}
 	verStr := ""
 	for _, uaPart := range ua {
-		if strings.HasPrefix(uaPart, "Intel") {
+		if strings.HasPrefix(uaPart, "Intel") && len(verStr) >= 15 {
 			verStr = uaPart[15:]
 			break
-		} else if strings.HasPrefix(uaPart, "PPC") {
+		} else if strings.HasPrefix(uaPart, "PPC") && len(verStr) >= 13 {
 			verStr = uaPart[13:]
 			break
 		}
 	}
 	if verStr != "" {
-		uStr = "Mac OS X " + strings.Replace(verStr, "_", ".", -1)
-		if name, ok := osXVersionNames[verStr[:5]]; ok {
-			uStr += " (" + name + ")"
+		verStr = strings.Replace(verStr, "_", ".", -1)
+		uStr = "Mac OS X " + verStr
+		if len(verStr) >= 4 {
+			if len(verStr) == 4 {
+				verStr += "."
+			}
+			if name, ok := osXVersionNames[verStr[:5]]; ok {
+				uStr += " (" + name + ")"
+			}
 		}
 	}
 	return uStr

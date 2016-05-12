@@ -168,7 +168,7 @@ func (d *Device) saveNew() error {
 
 	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted", "description") VALUES (?,?,?,?,?,?,?,?,?)`
 
-	_, err := d.e.DB.Exec(
+	result, err := d.e.DB.Exec(
 		sql,
 		d.MAC.String(),
 		d.Username,
@@ -180,6 +180,8 @@ func (d *Device) saveNew() error {
 		d.IsBlacklisted,
 		d.Description,
 	)
+	id, _ := result.LastInsertId()
+	d.ID = int(id)
 	return err
 }
 
