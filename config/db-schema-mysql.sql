@@ -9,7 +9,8 @@ CREATE TABLE "device" (
     "expires" INTEGER DEFAULT 0,
     "date_registered" INTEGER NOT NULL,
     "user_agent" TEXT,
-    "blacklisted" INTEGER DEFAULT 0
+    "blacklisted" INTEGER DEFAULT 0,
+    "description" TEXT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
 DROP TABLE IF EXISTS "user";

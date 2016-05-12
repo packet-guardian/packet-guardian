@@ -8,7 +8,8 @@ $.onReady(function () {
         regBtnEnabled = false;
         var data = {
             "username": "",
-            "mac-address": ""
+            "mac-address": "",
+            "description": $('[name=dev-desc]').value()
         };
 
         // It's not guaranteed that all fields will be shown
@@ -40,7 +41,7 @@ $.onReady(function () {
             if (data.platform === "") { return; }
         }
 
-        if (data.password !== "") { // Need to login first
+        if (data.password) { // Need to login first
             $.post('/login', {"username": data.username, "password": data.password}, function(resp, req) {
                 delete(data.password);
                 registerDevice(data);

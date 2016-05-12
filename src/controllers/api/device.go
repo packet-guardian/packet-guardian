@@ -130,6 +130,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Fill in device information
 	device.Username = formUser.Username
+	device.Description = r.FormValue("description")
 	device.RegisteredFrom = ip
 	device.Platform = platform
 	device.Expires = formUser.DeviceExpiration.NextExpiration(d.e)

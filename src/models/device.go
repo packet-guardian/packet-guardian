@@ -14,6 +14,7 @@ type Device struct {
 	ID             int
 	MAC            net.HardwareAddr
 	Username       string
+	Description    string
 	RegisteredFrom net.IP
 	Platform       string
 	Expires        time.Time
@@ -72,7 +73,7 @@ func SearchDevicesByField(e *common.Environment, field, pattern string) ([]*Devi
 }
 
 func getDevicesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Device, error) {
-	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted" FROM "device" ` + where
+	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted", "description" FROM "device" ` + where
 
 	rows, err := e.DB.Query(sql, values...)
 	if err != nil {
@@ -90,6 +91,7 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 		var dateRegistered int64
 		var ua string
 		var blacklisted bool
+		var description string
 
 		err := rows.Scan(
 			&id,
@@ -101,6 +103,7 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 			&dateRegistered,
 			&ua,
 			&blacklisted,
+			&description,
 		)
 		if err != nil {
 			continue
@@ -113,6 +116,7 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 			ID:             id,
 			MAC:            mac,
 			Username:       username,
+			Description:    description,
 			RegisteredFrom: net.ParseIP(registeredFrom),
 			Platform:       platform,
 			Expires:        time.Unix(expires, 0),
@@ -139,7 +143,7 @@ func (d *Device) Save() error {
 }
 
 func (d *Device) updateExisting() error {
-	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "blacklisted" = ? WHERE "id" = ?`
+	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "blacklisted" = ?, "description" = ? WHERE "id" = ?`
 
 	_, err := d.e.DB.Exec(
 		sql,
@@ -151,6 +155,7 @@ func (d *Device) updateExisting() error {
 		d.DateRegistered.Unix(),
 		d.UserAgent,
 		d.IsBlacklisted,
+		d.Description,
 		d.ID,
 	)
 	return err
@@ -161,7 +166,7 @@ func (d *Device) saveNew() error {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted") VALUES (?,?,?,?,?,?,?,?)`
+	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted", "description") VALUES (?,?,?,?,?,?,?,?,?)`
 
 	_, err := d.e.DB.Exec(
 		sql,
@@ -173,6 +178,7 @@ func (d *Device) saveNew() error {
 		d.DateRegistered.Unix(),
 		d.UserAgent,
 		d.IsBlacklisted,
+		d.Description,
 	)
 	return err
 }

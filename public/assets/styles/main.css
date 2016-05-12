@@ -77,6 +77,12 @@ header img {
     background: linear-gradient(to bottom, #0083A8, #007899);
 }
 
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .main {
     min-height: calc(100% - 220px);
 }

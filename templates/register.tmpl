@@ -24,6 +24,10 @@
             {{else if eq .type "admin"}}
                 {{template "reg-admin-man" .}}
             {{end}}
+            <p>
+                <label for="dev-desc">Device Description (optional):</label>
+                <input type="text" name="dev-desc">
+            </p>
         </fieldset>
 
         <div class="reg-policy">
