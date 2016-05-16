@@ -39,7 +39,7 @@
         {{else}}
         <table>
             <tr>
-                {{if $.sessionUser.IsAdmin}}<th>&nbsp;</th>{{end}}
+                {{if $.sessionUser.IsAdmin}}<th><input type="checkbox" name="dev-sel-all"></th>{{end}}
                 <th>MAC Address</th>
                 <th>User Agent</th>
                 <th>Description</th>
