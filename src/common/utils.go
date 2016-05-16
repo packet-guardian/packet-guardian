@@ -173,11 +173,11 @@ func parseMacUA(ua []string) string {
 		return uStr
 	}
 	verStr := ""
-	for _, uaPart := range ua {
-		if strings.HasPrefix(uaPart, "Intel") && len(verStr) >= 15 {
+	for _, uaPart := range ua[1:] { // The first is always "Macintosh"
+		if strings.HasPrefix(uaPart, "Intel") && len(uaPart) >= 15 {
 			verStr = uaPart[15:]
 			break
-		} else if strings.HasPrefix(uaPart, "PPC") && len(verStr) >= 13 {
+		} else if strings.HasPrefix(uaPart, "PPC") && len(uaPart) >= 13 {
 			verStr = uaPart[13:]
 			break
 		}
