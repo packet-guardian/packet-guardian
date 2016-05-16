@@ -38,7 +38,7 @@
         <tr>
             <td>{{if .IsBlacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
             <td><a href="/admin/manage/{{.Username}}">{{.Username}}</a></td>
-            <td class="not-important">{{.UserAgent}}</td>
+            <td class="truncate not-important"><span title="{{.UserAgent}}">{{.UserAgent}}</span></td>
             <td>{{.Platform}}</td>
             <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>
             <td class="not-important">{{.RegisteredFrom}}</td>

@@ -24,10 +24,6 @@
     font-size: 1.5em;
 }
 
-.truncate {
-    max-width: 15em;
-}
-
 button {
     font-weight: bold;
     padding: 5px 10px;

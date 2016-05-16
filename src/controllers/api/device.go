@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
@@ -204,4 +205,58 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	common.NewAPIResponse("Devices deleted successful", nil).WriteResponse(w, http.StatusNoContent)
+}
+
+func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
+	sessUser := models.GetUserFromContext(r)
+	if !sessUser.IsAdmin() {
+		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusForbidden)
+		return
+	}
+
+	username := r.FormValue("username")
+	if username == "" {
+		common.NewAPIResponse("Username required", nil).WriteResponse(w, http.StatusBadRequest)
+		return
+	}
+
+	devices := r.FormValue("macs")
+	if devices == "" {
+		common.NewAPIResponse("At least one MAC address is required required", nil).WriteResponse(w, http.StatusBadRequest)
+		return
+	}
+
+	devicesToReassign := strings.Split(devices, ",")
+	for _, devMacStr := range devicesToReassign {
+		devMacStr = strings.TrimSpace(devMacStr)
+		mac, err := net.ParseMAC(devMacStr)
+		if err != nil {
+			common.NewAPIResponse("Malformed MAC address "+devMacStr, nil).WriteResponse(w, http.StatusBadRequest)
+			return
+		}
+		dev, err := models.GetDeviceByMAC(d.e, mac)
+		if err != nil {
+			d.e.Log.Errorf("Error getting device: %s", err.Error())
+			common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
+			return
+		}
+		if dev.ID == 0 {
+			continue
+		}
+		originalUser := dev.Username
+		dev.Username = username
+		if err := dev.Save(); err != nil {
+			d.e.Log.Errorf("Error saving device: %s", err.Error())
+			common.NewAPIResponse("Error saving device", nil).WriteResponse(w, http.StatusInternalServerError)
+			return
+		}
+		d.e.Log.WithFields(verbose.Fields{
+			"adminUser":    sessUser.Username,
+			"assignedTo":   username,
+			"assignedFrom": originalUser,
+			"MAC":          mac.String(),
+		}).Info("Reassigned device to another user")
+	}
+
+	common.NewAPIResponse("Devices reassigned successfully", nil).WriteResponse(w, http.StatusOK)
 }

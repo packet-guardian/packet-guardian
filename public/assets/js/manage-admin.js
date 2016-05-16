@@ -55,12 +55,17 @@ $.onReady(function() {
         });
     }
 
-    function blacklistSelectedDevices(add) {
+    function getCheckedDevices() {
         var checked = $('.device-select:checked');
-        var devicesToRemove = [];
+        var devices = [];
         for (var i = 0; i < checked.length; i++) {
-            devicesToRemove.push(checked[i].value);
+            devices.push(checked[i].value);
         }
+        return devices;
+    }
+
+    function blacklistSelectedDevices(add) {
+        var devicesToRemove = getCheckedDevices();
         if (devicesToRemove.length === 0) {
             return;
         }
@@ -96,4 +101,17 @@ $.onReady(function() {
             }
         });
     }
+
+    $('[name=reassign-selected-btn]').click(function() {
+        var devices = getCheckedDevices();
+        var username = prompt("Reassign to user:");
+        if (devices.length === 0 || !username) {
+            return;
+        }
+        $.post("/api/device/reassign", {"username": username, "macs": devices.join(',')}, function() {
+            location.reload();
+        }, function() {
+            c.FlashMessage("Error blacklisting devices");
+        });
+    });
 });
