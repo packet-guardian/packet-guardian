@@ -81,6 +81,7 @@ header img {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 15em;
 }
 
 .main {

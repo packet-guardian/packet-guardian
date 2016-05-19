@@ -14,6 +14,7 @@
             {{if .sessionUser.IsAdmin}}
                 <button type="button" name="add-device-btn" data-admin="1">Add New Device</button>
                 {{if gt (len .devices) 0}}
+                <button type="button" name="reassign-selected-btn">Reassign Selected</button>
                 <button type="button" name="del-selected-btn">Delete Selected</button>
                 <button type="button" name="del-all-btn">Delete All</button>
                 {{end}}
@@ -38,7 +39,7 @@
         {{else}}
         <table>
             <tr>
-                {{if $.sessionUser.IsAdmin}}<th>&nbsp;</th>{{end}}
+                {{if $.sessionUser.IsAdmin}}<th><input type="checkbox" name="dev-sel-all"></th>{{end}}
                 <th>MAC Address</th>
                 <th>User Agent</th>
                 <th>Description</th>

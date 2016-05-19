@@ -58,4 +58,6 @@ $.onReady(function() {
             }
         });
     });
+
+    c.BindSelectAll('[name=dev-sel-all]', '.device-select');
 });

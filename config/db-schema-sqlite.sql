@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS "device";
 CREATE TABLE "device" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-    "mac" TEXT NOT NULL,
+    "mac" TEXT NOT NULL UNIQUE ON CONFLICT ROLLBACK,
     "username" TEXT NOT NULL,
     "registered_from" TEXT DEFAULT '',
     "platform" TEXT DEFAULT '',
@@ -15,7 +15,7 @@ CREATE TABLE "device" (
 DROP TABLE IF EXISTS "user";
 CREATE TABLE "user" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    "username" TEXT NOT NULL,
+    "username" TEXT NOT NULL UNIQUE ON CONFLICT ROLLBACK,
     "password" TEXT DEFAULT '',
     "device_limit" INTEGER DEFAULT (-1),
     "default_expiration" INTEGER DEFAULT (0),
@@ -38,7 +38,7 @@ CREATE TABLE "blacklist" (
 DROP TABLE IF EXISTS "lease";
 CREATE TABLE "lease" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    "ip" TEXT NOT NULL,
+    "ip" TEXT NOT NULL UNIQUE ON CONFLICT ROLLBACK,
     "mac" TEXT NOT NULL,
     "network" TEXT NOT NULL,
     "start" INTEGER NOT NULL,
