@@ -1,6 +1,9 @@
 $.onReady(function () {
     'use strict';
     var login = function() {
+        $('#login-btn').prop('disabled', true);
+        $('#login-btn').text("Logging in...");
+
         var data = {};
         data.username = $('[name=username]').value();
         data.password = $('[name=password]').value();
@@ -12,6 +15,8 @@ $.onReady(function () {
         $.post('/login', data, function(resp, req) {
             location.href = '/';
         }, function(req) {
+            $('#login-btn').text("Login >");
+            $('#login-btn').prop('disabled', false);
             if (req.status === 401) {
                 c.FlashMessage("Incorrect username or password");
             } else {
