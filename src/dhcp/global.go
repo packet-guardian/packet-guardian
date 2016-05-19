@@ -49,26 +49,26 @@ func (g *Global) GetLeaseTime(req time.Duration, registered bool) time.Duration 
 			return req
 		}
 		return g.Settings.MaxLeaseTime
-	} else {
-		if req == 0 {
-			if g.UnregisteredSettings.DefaultLeaseTime != 0 {
-				return g.UnregisteredSettings.DefaultLeaseTime
-			}
-			return g.Settings.DefaultLeaseTime
-		}
+	}
 
-		if g.UnregisteredSettings.MaxLeaseTime != 0 {
-			if req < g.UnregisteredSettings.MaxLeaseTime {
-				return req
-			}
-			return g.UnregisteredSettings.MaxLeaseTime
+	if req == 0 {
+		if g.UnregisteredSettings.DefaultLeaseTime != 0 {
+			return g.UnregisteredSettings.DefaultLeaseTime
 		}
+		return g.Settings.DefaultLeaseTime
+	}
 
-		if req < g.Settings.MaxLeaseTime {
+	if g.UnregisteredSettings.MaxLeaseTime != 0 {
+		if req < g.UnregisteredSettings.MaxLeaseTime {
 			return req
 		}
-		return g.Settings.MaxLeaseTime
+		return g.UnregisteredSettings.MaxLeaseTime
 	}
+
+	if req < g.Settings.MaxLeaseTime {
+		return req
+	}
+	return g.Settings.MaxLeaseTime
 }
 
 func (g *Global) GetOptions(registered bool) dhcp4.Options {

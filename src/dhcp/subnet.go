@@ -65,6 +65,7 @@ func (s *Subnet) GetOptions(registered bool) dhcp4.Options {
 			s.Settings.Options[c] = v
 		}
 	}
+	s.optionsCached = true
 	return s.Settings.Options
 }
 

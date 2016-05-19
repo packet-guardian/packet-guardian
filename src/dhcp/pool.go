@@ -79,6 +79,7 @@ func (p *Pool) GetOptions(registered bool) dhcp4.Options {
 			p.Settings.Options[c] = v
 		}
 	}
+	p.optionsCached = true
 	return p.Settings.Options
 }
 

@@ -69,40 +69,40 @@ func (n *Network) GetLeaseTime(req time.Duration, registered bool) time.Duration
 			return req
 		}
 		return n.Settings.MaxLeaseTime
-	} else {
-		if req == 0 {
-			if n.UnregisteredSettings.DefaultLeaseTime != 0 {
-				return n.UnregisteredSettings.DefaultLeaseTime
-			}
-			if n.Settings.DefaultLeaseTime != 0 {
-				return n.Settings.DefaultLeaseTime
-			}
-			// Save the result for later
-			n.Settings.DefaultLeaseTime = n.Global.GetLeaseTime(req, registered)
+	}
+
+	if req == 0 {
+		if n.UnregisteredSettings.DefaultLeaseTime != 0 {
+			return n.UnregisteredSettings.DefaultLeaseTime
+		}
+		if n.Settings.DefaultLeaseTime != 0 {
 			return n.Settings.DefaultLeaseTime
 		}
-
-		if n.UnregisteredSettings.MaxLeaseTime != 0 {
-			if req < n.UnregisteredSettings.MaxLeaseTime {
-				return req
-			}
-			return n.UnregisteredSettings.MaxLeaseTime
-		}
-		if n.Settings.MaxLeaseTime != 0 {
-			if req < n.Settings.MaxLeaseTime {
-				return req
-			}
-			return n.Settings.MaxLeaseTime
-		}
-
 		// Save the result for later
-		n.Settings.MaxLeaseTime = n.Global.GetLeaseTime(req, registered)
+		n.Settings.DefaultLeaseTime = n.Global.GetLeaseTime(req, registered)
+		return n.Settings.DefaultLeaseTime
+	}
 
+	if n.UnregisteredSettings.MaxLeaseTime != 0 {
+		if req < n.UnregisteredSettings.MaxLeaseTime {
+			return req
+		}
+		return n.UnregisteredSettings.MaxLeaseTime
+	}
+	if n.Settings.MaxLeaseTime != 0 {
 		if req < n.Settings.MaxLeaseTime {
 			return req
 		}
 		return n.Settings.MaxLeaseTime
 	}
+
+	// Save the result for later
+	n.Settings.MaxLeaseTime = n.Global.GetLeaseTime(req, registered)
+
+	if req < n.Settings.MaxLeaseTime {
+		return req
+	}
+	return n.Settings.MaxLeaseTime
 }
 
 func (n *Network) GetOptions(registered bool) dhcp4.Options {
