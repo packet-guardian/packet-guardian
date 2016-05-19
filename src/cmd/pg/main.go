@@ -94,7 +94,9 @@ func main() {
 		if err := handler.LoadLeases(); err != nil {
 			e.Log.WithField("ErrMsg", err).Fatal("Couldn't load leases")
 		}
-		go e.Log.Fatal(handler.ListenAndServe())
+		go func() {
+			e.Log.Fatal(handler.ListenAndServe())
+		}()
 	}
 
 	// Start web server

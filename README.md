@@ -115,3 +115,35 @@ must be a list of comma separated values. E.g: `option domain-name-server 10.1.0
 
 To specify multiple ranges in a single subnet, each range must be in its own pool.
 This is contrary to DHCPD where a single pool can contain multiple ranges.
+
+Using AppArmor
+--------------
+
+It's recommended to use AppArmor with Packet Guardian. AppArmor is a permissions
+enforcement system on Ubuntu. It's equivalent to SELinux in CentOS and Red Hat.
+An AppArmor profile has been included in the `config` directory. Here's how to
+get it set up (run as root):
+
+```bash
+$ cd /opt/packet-guardian
+$ cp config/apparmor.conf /etc/apparmor.d/opt.packet-guardian.bin.pg
+$ chown root:root /etc/apparmor.d/opt.packet-guardian.bin.pg
+$ aa-enforce /opt/packet-guardian/bin/pg
+```
+
+If you want to make sure everything is working correctly, you can use `aa-complain`
+instead of `aa-enforce` which will allow the application to do anything but complain
+if it's not following the profile. AppArmor messages will be shown in the syslog.
+
+Installing as a Service
+-----------------------
+
+Using Packet Guardian as a service makes it a lot easier to manage. In the `config`
+directory there is an upstart configuration file that can be used on Upstart
+capable systems. Here's how to install it (run all as sudo):
+
+1. Create a new user named `packetg`: `adduser -M packetg`
+2. Change ownership of application files: `chown -R packetg:packetg /opt/packet-guardian`
+3. Install service: `cd /opt/packet-guardian && cp config/upstart.conf /etc/init/pg.conf && chown root:root /etc/init/pg.conf`
+4. Allow the application to bind to ports: `setcap 'cap_net_bind_service=+ep' /opt/packet-guardian/bin/pg`
+5. Run application: `service pg start`

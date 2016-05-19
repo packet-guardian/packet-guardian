@@ -64,6 +64,8 @@ func parse(scan *bufio.Scanner, e *common.Environment) error {
 				case "limit":
 					if val == "unlimited" {
 						limit = models.UserDeviceLimitUnlimited
+					} else {
+						limit = models.UserDeviceLimitGlobal
 					}
 				}
 			}
