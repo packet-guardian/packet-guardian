@@ -210,7 +210,9 @@ func (p *parser) parseDHCPOption(opcode dhcp4.OptionCode, data []byte) ([]byte, 
 		}
 		return []byte(mask.To4()), nil
 	case dhcp4.OptionDomainName:
-		return data, nil
+		c := make([]byte, len(data))
+		copy(c, data)
+		return c, nil
 	case dhcp4.OptionBroadcastAddress:
 		broadcast := net.ParseIP(string(data))
 		if broadcast == nil {
