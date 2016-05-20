@@ -135,6 +135,10 @@ func DeleteAllDeviceForUser(e *common.Environment, u *User) error {
 	return err
 }
 
+func (d *Device) IsExpired() bool {
+	return time.Now().After(d.Expires)
+}
+
 func (d *Device) Save() error {
 	if d.ID == 0 {
 		return d.saveNew()
