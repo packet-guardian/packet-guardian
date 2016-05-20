@@ -146,7 +146,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 			"Username":    device.Username,
 		}).Notice("Blacklisted MAC got a lease")
 	}
-	registered := (device.ID != 0 || device.IsBlacklisted)
+	registered := (device.ID != 0 && !device.IsBlacklisted)
 
 	// Get network object that the relay IP belongs to
 	gatewayMutex.Lock()
@@ -237,7 +237,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 			"Username":    device.Username,
 		}).Notice("Blacklisted MAC renewed lease")
 	}
-	registered := (device.ID != 0 || device.IsBlacklisted)
+	registered := (device.ID != 0 && !device.IsBlacklisted)
 
 	network := config.SearchNetworksFor(reqIP)
 	if network == nil {
@@ -315,7 +315,7 @@ func (h *DHCPHandler) handleRelease(p dhcp4.Packet, msgType dhcp4.MessageType, o
 		}).Error("Error getting device")
 		return nil
 	}
-	registered := (device.ID != 0 || device.IsBlacklisted)
+	registered := (device.ID != 0 && !device.IsBlacklisted)
 
 	network := config.SearchNetworksFor(reqIP)
 	if network == nil {
