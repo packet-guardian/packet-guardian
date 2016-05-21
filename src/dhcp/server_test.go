@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"os"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/lfkeitel/verbose"
@@ -16,55 +17,36 @@ import (
 
 var testConfig = `
 global
-    option domain-name example.com
+	option domain-name example.com
 
-    server-identifier 10.0.0.1
+	server-identifier 10.0.0.1
 
-    registered
-        default-lease-time 86400
-        max-lease-time 86400
-        option domain-name-server 10.1.0.1, 10.1.0.2
-    end
+	registered
+		default-lease-time 86400
+		max-lease-time 86400
+		option domain-name-server 10.1.0.1, 10.1.0.2
+	end
 
-    unregistered
-        default-lease-time 360
-        max-lease-time 360
-        option domain-name-server 10.0.0.1
-    end
+	unregistered
+		default-lease-time 360
+		max-lease-time 360
+		option domain-name-server 10.0.0.1
+	end
 end
 
 network Network1
-    unregistered
-        subnet 10.0.1.0/24
-            range 10.0.1.10 10.0.1.200
-            option router 10.0.1.1
-        end
-    end
-    registered
-        subnet 10.0.2.0/24
-            range 10.0.2.10 10.0.2.200
-            option router 10.0.2.1
-        end
-    end
-end
-
-network Network2
-    unregistered
-        subnet 10.0.3.0/24
-            option router 10.0.3.1
-            range 10.0.3.20 10.0.3.200
-        end
-        subnet 10.0.4.0/24
-            range 10.0.4.10 10.0.4.200
-            option router 10.0.4.1
-        end
-    end
-    registered
-        subnet 10.0.5.0/24
-            range 10.0.5.10 10.0.5.200
-            option router 10.0.5.1
-        end
-    end
+	unregistered
+		subnet 10.0.1.0/24
+			range 10.0.1.10 10.0.1.200
+			option router 10.0.1.1
+		end
+	end
+	registered
+		subnet 10.0.2.0/24
+			range 10.0.2.10 10.0.2.200
+			option router 10.0.2.1
+		end
+	end
 end
 `
 
@@ -124,9 +106,11 @@ func setUpTest1(t *testing.T) *DHCPHandler {
 	// Setup environment
 	e := common.NewTestEnvironment()
 	e.DB = &common.DatabaseAccessor{DB: db}
-	stdout := verbose.NewStdoutHandler()
-	stdout.SetMinLevel(verbose.LogLevelDebug)
-	e.Log.AddHandler("stdout", stdout)
+	if os.Getenv("PG_TEST_LOG") != "" {
+		stdout := verbose.NewStdoutHandler()
+		stdout.SetMinLevel(verbose.LogLevelDebug)
+		e.Log.AddHandler("stdout", stdout)
+	}
 
 	// Setup Confuration
 	reader := strings.NewReader(testConfig)

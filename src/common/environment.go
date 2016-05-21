@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
 
 	"github.com/gorilla/context"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
@@ -188,11 +190,13 @@ var logLevels = map[string]verbose.LogLevel{
 type Logger struct {
 	*verbose.Logger
 	c *Config
+	timers map[string]time.Time
 }
 
 func NewEmptyLogger() *Logger {
 	return &Logger{
 		Logger: verbose.New("null"),
+		timers: make(map[string]time.Time),
 	}
 }
 
@@ -225,4 +229,17 @@ func NewLogger(c *Config, name string) *Logger {
 // This can be used to separate logs from different sub-systems.
 func (l *Logger) GetLogger(name string) *Logger {
 	return NewLogger(l.c, name)
+}
+
+func (l *Logger) StartTimer(name string) {
+	l.timers[name] = time.Now()
+}
+
+func (l *Logger) StopTimer(name string) {
+	t, ok := l.timers[name]
+	if !ok {
+		return
+	}
+	l.Debugf("Timer %s duration %s", name, time.Since(t).String())
+	delete(l.timers, name)
 }
