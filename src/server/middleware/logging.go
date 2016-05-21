@@ -44,7 +44,14 @@ func Logging(e *common.Environment, next http.Handler) http.Handler {
 			status:         200,
 			startTime:      time.Now(),
 		}
+
 		next.ServeHTTP(newW, r)
+
+		if r.TLS != nil {
+			// If the server is running on TLS, tell the client to prefer it
+			w.Header().Add("Strict-Transport-Security", "max-age=63072000;")
+		}
+
 		e.Log.GetLogger("server").Infof(
 			"%s %s \"%s\" %d %d %s",
 			r.RemoteAddr,
