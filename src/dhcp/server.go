@@ -101,11 +101,11 @@ func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, optio
 	var response dhcp4.Packet
 	switch msgType {
 	case dhcp4.Discover:
-		response = h.handleDiscover(p, msgType, options)
+		response = h.handleDiscover(p, options)
 	case dhcp4.Request:
-		response = h.handleRequest(p, msgType, options)
+		response = h.handleRequest(p, options)
 	case dhcp4.Release:
-		response = h.handleRelease(p, msgType, options)
+		response = h.handleRelease(p, options)
 	case dhcp4.Decline:
 		//return h.handleDecline(p, msgType, options)
 		//TODO: Mark address as abandoned
@@ -122,7 +122,7 @@ func (h *DHCPHandler) readOnlyFilter(p dhcp4.Packet) dhcp4.Packet {
 }
 
 // Handle DHCP DISCOVER messages
-func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
+func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp4.Packet {
 	// Don't respond to requests on the same subnet
 	if p.GIAddr().Equal(net.IPv4zero) {
 		return nil
@@ -146,7 +146,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 			"Username":    device.Username,
 		}).Notice("Blacklisted MAC got a lease")
 	}
-	registered := (device.ID != 0 && !device.IsBlacklisted)
+	registered := (device.ID != 0 && !device.IsBlacklisted && !device.IsExpired())
 
 	// Get network object that the relay IP belongs to
 	gatewayMutex.Lock()
@@ -180,6 +180,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 	h.e.Log.WithFields(verbose.Fields{
 		"Lease IP":   lease.IP.String(),
 		"Client MAC": p.CHAddr().String(),
+		"Registered": registered,
 	}).Info("Offering lease to client")
 
 	// Set temporary offered flag and end time
@@ -205,7 +206,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, msgType dhcp4.MessageType, 
 }
 
 // Handle DHCP REQUEST messages
-func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
+func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4.Packet {
 	if server, ok := options[dhcp4.OptionServerIdentifier]; ok && !net.IP(server).Equal(config.Global.ServerIdentifier) {
 		return nil // Message not for this dhcp server
 	}
@@ -237,7 +238,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 			"Username":    device.Username,
 		}).Notice("Blacklisted MAC renewed lease")
 	}
-	registered := (device.ID != 0 && !device.IsBlacklisted)
+	registered := (device.ID != 0 && !device.IsBlacklisted && !device.IsExpired())
 
 	network := config.SearchNetworksFor(reqIP)
 	if network == nil {
@@ -300,7 +301,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, msgType dhcp4.MessageType, o
 }
 
 // Handle DHCP RELEASE messages
-func (h *DHCPHandler) handleRelease(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
+func (h *DHCPHandler) handleRelease(p dhcp4.Packet, options dhcp4.Options) dhcp4.Packet {
 	reqIP := p.CIAddr()
 	if reqIP == nil || reqIP.Equal(net.IPv4zero) {
 		return nil
@@ -315,7 +316,7 @@ func (h *DHCPHandler) handleRelease(p dhcp4.Packet, msgType dhcp4.MessageType, o
 		}).Error("Error getting device")
 		return nil
 	}
-	registered := (device.ID != 0 && !device.IsBlacklisted)
+	registered := (device.ID != 0 && !device.IsBlacklisted && !device.IsExpired())
 
 	network := config.SearchNetworksFor(reqIP)
 	if network == nil {
