@@ -39,7 +39,7 @@ install: test
 # https://github.com/golang/lint
 # go get github.com/golang/lint/golint
 lint:
-	golint ./src
+	golint ./src/...
 
 run: build
 	-./bin/pg -d -c=$(CONFIG)
