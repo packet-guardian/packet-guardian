@@ -186,7 +186,7 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 		var id int
 		var username string
 		var password string
-		var deviceLimit UserDeviceLimit
+		var deviceLimit int
 		var defaultExpiration int64
 		var expirationType UserExpiration
 		var canManage bool
@@ -215,7 +215,7 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 			ID:           id,
 			Username:     username,
 			HasPassword:  (password != ""),
-			DeviceLimit:  deviceLimit,
+			DeviceLimit:  UserDeviceLimit(deviceLimit),
 			ValidStart:   time.Unix(validStart, 0),
 			ValidEnd:     time.Unix(validEnd, 0),
 			ValidForever: validForever,
