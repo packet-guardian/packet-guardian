@@ -1,6 +1,8 @@
 Packet Guardian
 ---------------
 
+[![Build Status](https://travis-ci.org/onesimus-systems/packet-guardian.svg?branch=master)](https://travis-ci.org/onesimus-systems/packet-guardian)
+
 Packet Guardian is an easy to setup and use captive portal for wired or wireless networks.
 It works in conjunction with a local DNS server and integrated DHCP server to redirect
 clients to a registration page.
