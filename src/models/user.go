@@ -188,7 +188,7 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 		var password string
 		var deviceLimit int
 		var defaultExpiration int64
-		var expirationType UserExpiration
+		var expirationType int
 		var canManage bool
 		var validForever bool
 		var validStart int64
@@ -224,7 +224,7 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 			isHelpDesk:   -1,
 		}
 		user.DeviceExpiration = &UserDeviceExpiration{
-			Mode:  expirationType,
+			Mode:  UserExpiration(expirationType),
 			Value: defaultExpiration,
 		}
 		results = append(results, user)
