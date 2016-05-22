@@ -4,6 +4,11 @@ go:
     - 1.6
     - tip
 
+matrix:
+    include:
+        - go: 1.5
+          env: GO15VENDOREXPERIMENT=1
+
 branches:
     only:
         - master
