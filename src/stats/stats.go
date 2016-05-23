@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"strings"
 	"time"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
@@ -30,6 +31,8 @@ func GetLeaseStats(e *common.Environment) LeaseStats {
 		if err := rows.Scan(&network, &registered, &count); err != nil {
 			continue
 		}
+
+		network = strings.Title(network)
 
 		if _, ok := counts[network]; !ok {
 			counts[network] = &NetworkStats{}

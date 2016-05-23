@@ -49,6 +49,7 @@ func (h *DHCPHandler) LoadLeases() error {
 	if err != nil {
 		return err
 	}
+
 	if leases == nil {
 		return nil
 	}
@@ -278,7 +279,13 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4
 	if ci, ok := options[dhcp4.OptionHostName]; ok {
 		lease.Hostname = string(ci)
 	}
-	lease.Save()
+	if err := lease.Save(); err != nil {
+		h.e.Log.WithFields(verbose.Fields{
+			"Client MAC": p.CHAddr().String(),
+			"Error":      err,
+		}).Error("Error saving lease")
+		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, config.Global.ServerIdentifier, nil, 0, nil))
+	}
 	leaseOptions := lease.Pool.GetOptions(registered)
 
 	h.e.Log.WithFields(verbose.Fields{
@@ -346,6 +353,11 @@ func (h *DHCPHandler) handleRelease(p dhcp4.Packet, options dhcp4.Options) dhcp4
 	}).Info("Releasing lease")
 	lease.Start = time.Unix(1, 0)
 	lease.End = time.Unix(1, 0)
-	lease.Save()
+	if err := lease.Save(); err != nil {
+		h.e.Log.WithFields(verbose.Fields{
+			"Client MAC": p.CHAddr().String(),
+			"Error":      err,
+		}).Error("Error saving lease")
+	}
 	return nil
 }

@@ -7,10 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
-	"os"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/lfkeitel/verbose"
 	d4 "github.com/onesimus-systems/dhcp4"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
@@ -50,19 +48,6 @@ network Network1
 end
 `
 
-var deviceTableRows = []string{
-	"id",
-	"mac",
-	"username",
-	"registered_from",
-	"platform",
-	"expires",
-	"date_registered",
-	"user_agent",
-	"blacklisted",
-	"description",
-}
-
 var m sqlmock.Sqlmock
 
 func setUpTest1(t *testing.T) *DHCPHandler {
@@ -72,17 +57,17 @@ func setUpTest1(t *testing.T) *DHCPHandler {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
-	rows := sqlmock.NewRows(deviceTableRows).AddRow(
+	rows := sqlmock.NewRows(common.DeviceTableRows).AddRow(
 		1, "12:34:56:12:34:56", "", "", "", time.Now().Add(time.Duration(15)*time.Second).Unix(), 0, "", false, "",
 	)
 
-	rows2 := sqlmock.NewRows(deviceTableRows).AddRow(
+	rows2 := sqlmock.NewRows(common.DeviceTableRows).AddRow(
 		1, "12:34:56:12:34:56", "", "", "", time.Now().Add(time.Duration(15)*time.Second).Unix(), 0, "", false, "",
 	)
 
-	rows3 := sqlmock.NewRows(deviceTableRows)
+	rows3 := sqlmock.NewRows(common.DeviceTableRows)
 
-	rows4 := sqlmock.NewRows(deviceTableRows)
+	rows4 := sqlmock.NewRows(common.DeviceTableRows)
 
 	mock.ExpectQuery("SELECT .*? FROM \"device\"").
 		WithArgs("12:34:56:12:34:56").
@@ -91,6 +76,9 @@ func setUpTest1(t *testing.T) *DHCPHandler {
 	mock.ExpectQuery("SELECT .*? FROM \"device\"").
 		WithArgs("12:34:56:12:34:56").
 		WillReturnRows(rows2)
+
+	mock.ExpectExec("INSERT INTO \"lease\"").
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	mock.ExpectQuery("SELECT .*? FROM \"device\"").
 		WithArgs("12:34:56:12:34:56").
@@ -101,16 +89,11 @@ func setUpTest1(t *testing.T) *DHCPHandler {
 		WillReturnRows(rows4)
 
 	mock.ExpectExec("INSERT INTO \"lease\"").
-		WillReturnResult(sqlmock.NewResult(1, 1))
+		WillReturnResult(sqlmock.NewResult(2, 1))
 
 	// Setup environment
 	e := common.NewTestEnvironment()
 	e.DB = &common.DatabaseAccessor{DB: db}
-	if os.Getenv("PG_TEST_LOG") != "" {
-		stdout := verbose.NewStdoutHandler()
-		stdout.SetMinLevel(verbose.LogLevelDebug)
-		e.Log.AddHandler("stdout", stdout)
-	}
 
 	// Setup Confuration
 	reader := strings.NewReader(testConfig)

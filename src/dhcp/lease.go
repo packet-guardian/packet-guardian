@@ -53,7 +53,7 @@ func GetAllLeases(e *common.Environment) ([]*Lease, error) {
 }
 
 func getLeasesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Lease, error) {
-	sql := `SELECT "id", "ip", "mac", "network", "start", "end", "hostname", "abandoned", "regisered" FROM "lease" ` + where
+	sql := `SELECT "id", "ip", "mac", "network", "start", "end", "hostname", "abandoned", "registered" FROM "lease" ` + where
 
 	rows, err := e.DB.Query(sql, values...)
 	if err != nil {
@@ -84,6 +84,7 @@ func getLeasesFromDatabase(e *common.Environment, where string, values ...interf
 			&registered,
 		)
 		if err != nil {
+			e.Log.WithField("Err", err).Error("Failed to scan lease into struct")
 			continue
 		}
 
@@ -118,18 +119,15 @@ func (l *Lease) Save() error {
 }
 
 func (l *Lease) updateLease() error {
-	sql := `UPDATE "lease" SET "ip" = ?, "mac" = ?, "network" = ?, "start" = ?, "end" = ?, "hostname" = ?, "abandoned" = ?, "registered" = ? WHERE "id" = ?`
+	sql := `UPDATE "lease" SET "mac" = ?, "start" = ?, "end" = ?, "hostname" = ?, "abandoned" = ? WHERE "id" = ?`
 
 	_, err := l.e.DB.Exec(
 		sql,
-		l.IP.String(),
 		l.MAC.String(),
-		l.Network,
 		l.Start.Unix(),
 		l.End.Unix(),
 		l.Hostname,
 		l.IsAbandoned,
-		l.Registered,
 		l.ID,
 	)
 	return err

@@ -101,10 +101,6 @@ func apiRouter(e *common.Environment) http.Handler {
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
-	e := common.GetEnvironmentFromContext(r)
-	ip := strings.Split(r.RemoteAddr, ":")[0]
-	reg, _ := dhcp.IsRegisteredByIP(e, net.ParseIP(ip))
-
 	if auth.IsLoggedIn(r) {
 		sessionUser := models.GetUserFromContext(r)
 		if sessionUser.IsHelpDesk() || sessionUser.IsAdmin() {
@@ -113,6 +109,13 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		}
 		return
+	}
+
+	e := common.GetEnvironmentFromContext(r)
+	ip := strings.Split(r.RemoteAddr, ":")[0]
+	reg, err := dhcp.IsRegisteredByIP(e, net.ParseIP(ip))
+	if err != nil {
+		e.Log.WithField("Err", err).Error("Couldn't get registration status")
 	}
 
 	if reg {

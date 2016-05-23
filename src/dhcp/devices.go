@@ -21,8 +21,8 @@ func IsRegistered(e *common.Environment, mac net.HardwareAddr) (bool, error) {
 // IsRegisteredByIP will return false if an error occurs as well as the error itself.
 func IsRegisteredByIP(e *common.Environment, ip net.IP) (bool, error) {
 	lease, err := GetLeaseByIP(e, ip)
-	if err != nil || lease.MAC == nil {
+	if err != nil {
 		return false, err
 	}
-	return IsRegistered(e, lease.MAC)
+	return lease.Registered, nil
 }

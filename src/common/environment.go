@@ -41,11 +41,17 @@ func NewEnvironment(t EnvironmentEnv) *Environment {
 }
 
 func NewTestEnvironment() *Environment {
-	return &Environment{
+	e := &Environment{
 		Config: NewEmptyConfig(),
 		Log:    NewEmptyLogger(),
 		Env:    EnvTesting,
 	}
+	if os.Getenv("PG_TEST_LOG") != "" {
+		stdout := verbose.NewStdoutHandler()
+		stdout.SetMinLevel(verbose.LogLevelDebug)
+		e.Log.AddHandler("stdout", stdout)
+	}
+	return e
 }
 
 func GetEnvironmentFromContext(r *http.Request) *Environment {
