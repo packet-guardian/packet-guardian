@@ -49,6 +49,10 @@ var userAgents = [...]test{
 		expected: "Ubuntu",
 	},
 	test{
+		ua:       "Mozilla/5.0 (Fedora; Linux x86_64) AppleWebKit/602.1 (KHTML, like Gecko) Version/8.0 Safari/602.1",
+		expected: "Fedora",
+	},
+	test{
 		ua:       "Mozilla/5.0 (X11; CrOS i686 12.0.742.91) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.93 Safari/534.30",
 		expected: "Chromium OS",
 	},
@@ -63,6 +67,10 @@ var userAgents = [...]test{
 	test{
 		ua:       "Mozilla/5.0 (Linux; U; Android 2.3; en-us) AppleWebKit/999+ (KHTML, like Gecko) Safari/999.9",
 		expected: "Android 2.3",
+	},
+	test{
+		ua:       "Mozilla/5.0 (Android 5.1.1; Tablet; rv:46.0) Gecko/46.0 Firefox/46.0",
+		expected: "Android 5.1.1",
 	},
 }
 
