@@ -27,6 +27,12 @@ func CheckAPI(next http.Handler) http.Handler {
 			return
 		}
 
+		// The device handler checks for appropiate pernissions
+		if strings.HasPrefix(r.URL.Path, "/api/device") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		u := models.GetUserFromContext(r)
 		// Only admin and helpdesk users may proceed
 		if !u.IsAdmin() && !u.IsHelpDesk() {
