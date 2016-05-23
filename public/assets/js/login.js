@@ -29,6 +29,12 @@ $.onReady(function () {
         login();
     });
 
+    $('[name=username]').keyup(function(e) {
+        if (e.keyCode === 13) {
+            login();
+        }
+    });
+
     $('[name=password]').keyup(function(e) {
         if (e.keyCode === 13) {
             login();

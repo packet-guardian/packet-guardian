@@ -2,10 +2,8 @@
 /*globals $*/
 $.onReady(function () {
     'use strict';
-    var regBtnEnabled = true;
     var register = function () {
-        if (!regBtnEnabled) { return; }
-        regBtnEnabled = false;
+        disableRegBtn();
         var data = {
             "username": "",
             "mac-address": "",
@@ -18,27 +16,27 @@ $.onReady(function () {
         if (username.length !== 0) {
             data.username = username.value();
         }
-        if (data.username === "") { return; } // Required
+        if (data.username === "") { enableRegBtn(); return; } // Required
 
         // The password box will only show if the user isn't logged in
         var password = $('[name=password]');
         if (password.length !== 0) {
             data.password = password.value();
-            if (data.password === "") { return; }
+            if (data.password === "") { enableRegBtn(); return; }
         }
 
         // The mac-address field will only show for a manual registration
         var mac = $('[name=mac-address]');
         if (mac.length !== 0) {
             data["mac-address"] = mac.value();
-            if (data["mac-address"] === "") { return; }
+            if (data["mac-address"] === "") { enableRegBtn(); return; }
         }
 
         // The platform field will only show for a manual registration
         var platform = $('[name=platform]');
         if (platform.length !== 0) {
             data.platform = platform.value();
-            if (data.platform === "") { return; }
+            if (data.platform === "") { enableRegBtn(); return; }
         }
 
         if (data.password) { // Need to login first
@@ -47,7 +45,7 @@ $.onReady(function () {
                 registerDevice(data);
             }, function(req) {
                 window.scrollTo(0, 0);
-                regBtnEnabled = true;
+                enableRegBtn();
                 if (req.status === 401) {
                     c.FlashMessage("Incorrect username or password");
                 } else {
@@ -58,6 +56,16 @@ $.onReady(function () {
             registerDevice(data);
         }
     };
+
+    function disableRegBtn() {
+        $('#register-btn').prop('disabled', true);
+        $('#register-btn').text("Registering...");
+    }
+
+    function enableRegBtn() {
+        $('#register-btn').text("Register >");
+        $('#register-btn').prop('disabled', false);
+    }
 
     function registerDevice(data) {
         $.post('/api/device', data, function(resp, req) {
@@ -74,8 +82,8 @@ $.onReady(function () {
             $('#suc-msg-manual').show();
             setTimeout(function() { location.href = resp.Data.Location; }, 3000);
         }, function (req) {
-            regBtnEnabled = true;
-            window.scrollTo(0, 0);
+            sleep(2000);
+            enableRegBtn();
             switch(req.status) {
                 case 400:
                 case 409:
