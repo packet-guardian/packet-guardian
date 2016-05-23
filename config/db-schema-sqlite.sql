@@ -9,7 +9,8 @@ CREATE TABLE "device" (
     "date_registered" INTEGER NOT NULL,
     "user_agent" TEXT DEFAULT '',
     "blacklisted" INTEGER DEFAULT (0),
-    "description" TEXT DEFAULT ''
+    "description" TEXT DEFAULT '',
+    "last_seen" INT NOT NULL
 );
 
 DROP TABLE IF EXISTS "user";

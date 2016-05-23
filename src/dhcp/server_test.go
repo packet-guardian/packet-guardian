@@ -3,6 +3,8 @@ package dhcp
 import (
 	"bufio"
 	"bytes"
+	"database/sql/driver"
+	"fmt"
 	"net"
 	"strings"
 	"testing"
@@ -50,7 +52,16 @@ end
 
 var m sqlmock.Sqlmock
 
+type timeChecker struct{}
+
+func (t timeChecker) Match(v driver.Value) bool {
+	fmt.Printf("%v\n", v)
+	return (v.(int64) > 0)
+}
+
 func setUpTest1(t *testing.T) *DHCPHandler {
+
+	t.Log("Hello")
 	// Set up mock database
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -58,16 +69,12 @@ func setUpTest1(t *testing.T) *DHCPHandler {
 	}
 
 	rows := sqlmock.NewRows(common.DeviceTableRows).AddRow(
-		1, "12:34:56:12:34:56", "", "", "", time.Now().Add(time.Duration(15)*time.Second).Unix(), 0, "", false, "",
+		1, "12:34:56:12:34:56", "testUser", "192.168.1.1", "", time.Now().Add(time.Duration(15)*time.Second).Unix(), 0, "", false, "", 0,
 	)
 
 	rows2 := sqlmock.NewRows(common.DeviceTableRows).AddRow(
-		1, "12:34:56:12:34:56", "", "", "", time.Now().Add(time.Duration(15)*time.Second).Unix(), 0, "", false, "",
+		1, "12:34:56:12:34:56", "testUser", "192.168.1.1", "", time.Now().Add(time.Duration(15)*time.Second).Unix(), 0, "", false, "", 0,
 	)
-
-	rows3 := sqlmock.NewRows(common.DeviceTableRows)
-
-	rows4 := sqlmock.NewRows(common.DeviceTableRows)
 
 	mock.ExpectQuery("SELECT .*? FROM \"device\"").
 		WithArgs("12:34:56:12:34:56").
@@ -80,13 +87,19 @@ func setUpTest1(t *testing.T) *DHCPHandler {
 	mock.ExpectExec("INSERT INTO \"lease\"").
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	mock.ExpectQuery("SELECT .*? FROM \"device\"").
-		WithArgs("12:34:56:12:34:56").
-		WillReturnRows(rows3)
+	mock.ExpectExec("UPDATE \"device\"").
+		WithArgs(
+			"12:34:56:12:34:56", "testUser", "192.168.1.1", "", sqlmock.AnyArg(), 0, "", false, "", timeChecker{}, 1,
+		).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	mock.ExpectQuery("SELECT .*? FROM \"device\"").
 		WithArgs("12:34:56:12:34:56").
-		WillReturnRows(rows4)
+		WillReturnRows(sqlmock.NewRows(common.DeviceTableRows))
+
+	mock.ExpectQuery("SELECT .*? FROM \"device\"").
+		WithArgs("12:34:56:12:34:56").
+		WillReturnRows(sqlmock.NewRows(common.DeviceTableRows))
 
 	mock.ExpectExec("INSERT INTO \"lease\"").
 		WillReturnResult(sqlmock.NewResult(2, 1))

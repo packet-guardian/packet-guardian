@@ -21,6 +21,7 @@ type Device struct {
 	DateRegistered time.Time
 	UserAgent      string
 	IsBlacklisted  bool
+	LastSeen       time.Time
 }
 
 func NewDevice(e *common.Environment) *Device {
@@ -73,7 +74,7 @@ func SearchDevicesByField(e *common.Environment, field, pattern string) ([]*Devi
 }
 
 func getDevicesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Device, error) {
-	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted", "description" FROM "device" ` + where
+	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted", "description", "last_seen" FROM "device" ` + where
 
 	rows, err := e.DB.Query(sql, values...)
 	if err != nil {
@@ -92,6 +93,7 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 		var ua string
 		var blacklisted bool
 		var description string
+		var lastSeen int64
 
 		err := rows.Scan(
 			&id,
@@ -104,6 +106,7 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 			&ua,
 			&blacklisted,
 			&description,
+			&lastSeen,
 		)
 		if err != nil {
 			continue
@@ -123,6 +126,7 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 			DateRegistered: time.Unix(dateRegistered, 0),
 			UserAgent:      ua,
 			IsBlacklisted:  blacklisted,
+			LastSeen:       time.Unix(lastSeen, 0),
 		}
 		results = append(results, device)
 	}
@@ -147,7 +151,7 @@ func (d *Device) Save() error {
 }
 
 func (d *Device) updateExisting() error {
-	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "blacklisted" = ?, "description" = ? WHERE "id" = ?`
+	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "blacklisted" = ?, "description" = ?, "last_seen" = ? WHERE "id" = ?`
 
 	_, err := d.e.DB.Exec(
 		sql,
@@ -160,6 +164,7 @@ func (d *Device) updateExisting() error {
 		d.UserAgent,
 		d.IsBlacklisted,
 		d.Description,
+		d.LastSeen.Unix(),
 		d.ID,
 	)
 	return err
@@ -170,7 +175,7 @@ func (d *Device) saveNew() error {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted", "description") VALUES (?,?,?,?,?,?,?,?,?)`
+	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted", "description", "last_seen") VALUES (?,?,?,?,?,?,?,?,?,?)`
 
 	result, err := d.e.DB.Exec(
 		sql,
@@ -183,6 +188,7 @@ func (d *Device) saveNew() error {
 		d.UserAgent,
 		d.IsBlacklisted,
 		d.Description,
+		d.LastSeen.Unix(),
 	)
 	id, _ := result.LastInsertId()
 	d.ID = int(id)

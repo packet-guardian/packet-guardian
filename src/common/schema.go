@@ -17,6 +17,7 @@ var (
 		"user_agent",
 		"blacklisted",
 		"description",
+		"last_seen",
 	}
 
 	LeaseTableCols = []string{

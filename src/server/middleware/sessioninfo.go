@@ -17,6 +17,12 @@ func SetSessionInfo(e *common.Environment, next http.Handler) http.Handler {
 		common.SetSessionToContext(r, session)
 		common.SetEnvironmentToContext(r, e)
 		models.SetUserToContext(r, sessionUser)
+
+		// If running behind a proxy, set the RemoteAddr to the real address
+		if r.Header.Get("X-Real-IP") != "" {
+			r.RemoteAddr = r.Header.Get("X-Real-IP")
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }

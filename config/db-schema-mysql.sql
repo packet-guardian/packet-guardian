@@ -10,7 +10,8 @@ CREATE TABLE "device" (
     "date_registered" INTEGER NOT NULL,
     "user_agent" TEXT,
     "blacklisted" INTEGER DEFAULT 0,
-    "description" TEXT
+    "description" TEXT,
+    "last_seen" INTEGER NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
 DROP TABLE IF EXISTS "user";

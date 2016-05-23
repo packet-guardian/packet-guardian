@@ -136,6 +136,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	device.Platform = platform
 	device.Expires = formUser.DeviceExpiration.NextExpiration(d.e)
 	device.DateRegistered = time.Now()
+	device.LastSeen = time.Now()
 	if !manual {
 		device.UserAgent = r.UserAgent()
 	} else {

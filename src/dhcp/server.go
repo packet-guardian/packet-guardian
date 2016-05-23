@@ -297,6 +297,14 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4
 		"Hostname":     lease.Hostname,
 	}).Info("Acknowledging request")
 
+	if device.ID != 0 {
+		device.LastSeen = time.Now()
+		if err := device.Save(); err != nil {
+			// We won't consider this a critical error, still give out the lease
+			h.e.Log.WithField("Err", err).Error("Failed updating device last_seen attribute")
+		}
+	}
+
 	return h.readOnlyFilter(dhcp4.ReplyPacket(
 		p,
 		dhcp4.ACK,
