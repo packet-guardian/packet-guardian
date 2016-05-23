@@ -36,7 +36,7 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	r.PathPrefix("/api").Handler(apiRouter(e))
 
 	// Development Routes
-	if e.Dev {
+	if e.IsDev() {
 		devController := controllers.NewDevController(e)
 		s := r.PathPrefix("/dev").Subrouter()
 		s.HandleFunc("/reloadtemp", devController.ReloadTemplates).Methods("GET")

@@ -59,7 +59,10 @@ func main() {
 	}
 
 	var err error
-	e := common.NewEnvironment(dev)
+	e := common.NewEnvironment(common.EnvProd)
+	if dev {
+		e.Env = common.EnvDev
+	}
 
 	e.Config, err = common.NewConfig(configFile)
 	if err != nil {

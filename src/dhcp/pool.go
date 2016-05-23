@@ -13,6 +13,8 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 
+var r = regexp.MustCompile(`\d+ bytes from .*`)
+
 type Pool struct {
 	RangeStart    net.IP
 	RangeEnd      net.IP
@@ -117,7 +119,7 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 		l := NewLease(e)
 		// All known leases have already been checked, which means if this IP
 		// is in use, we didn't do it. Mark as abandoned.
-		if isIPInUse(next) {
+		if !e.IsTesting() && isIPInUse(next) {
 			e.Log.WithFields(verbose.Fields{
 				"IP": next.String(),
 			}).Notice("Abandoned IP")
@@ -155,22 +157,19 @@ func (p *Pool) Print() {
 // method to do ICMP probes. Right now abandonment checks will be disabled in
 // Windows machines.
 func isIPInUse(host net.IP) bool {
+	count := "-c"
+	wait := "2"
 	if runtime.GOOS == "windows" {
-		return false
+		count = "-n"
+		wait = "2000"
 	}
 
-	six := ""
-	if host.To4() == nil {
-		six = "6"
-	}
-	// -c: packet count, -w: timeout in seconds
-	out, err := exec.Command("ping"+six, "-c", "1", "-w", "3", "--", host.String()).Output()
+	// -c/-n: packet count, -w: timeout in seconds
+	out, err := exec.Command("ping", count, "1", "-w", wait, host.String()).Output()
 	if err != nil {
 		return false
 	}
-	r, _ := regexp.Compile(`\d+ bytes from .*`)
-	line := r.Find(out)
-	return (line != nil)
+	return (r.Find(out) != nil)
 }
 
 func (p *Pool) PrintLeases() {

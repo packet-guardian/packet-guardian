@@ -11,11 +11,18 @@ import (
 	"strings"
 	"time"
 
-
 	"github.com/gorilla/context"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 
 	"github.com/lfkeitel/verbose"
+)
+
+type EnvironmentEnv string
+
+const (
+	EnvTesting EnvironmentEnv = "testing"
+	EnvProd    EnvironmentEnv = "production"
+	EnvDev     EnvironmentEnv = "development"
 )
 
 // Environment holds "global" application information such as a database connection,
@@ -25,18 +32,19 @@ type Environment struct {
 	DB       *DatabaseAccessor
 	Config   *Config
 	Views    *Views
-	Dev      bool
+	Env      EnvironmentEnv
 	Log      *Logger
 }
 
-func NewEnvironment(dev bool) *Environment {
-	return &Environment{Dev: dev}
+func NewEnvironment(t EnvironmentEnv) *Environment {
+	return &Environment{Env: t}
 }
 
 func NewTestEnvironment() *Environment {
 	return &Environment{
 		Config: NewEmptyConfig(),
 		Log:    NewEmptyLogger(),
+		Env:    EnvTesting,
 	}
 }
 
@@ -49,6 +57,18 @@ func GetEnvironmentFromContext(r *http.Request) *Environment {
 
 func SetEnvironmentToContext(r *http.Request, e *Environment) {
 	context.Set(r, SessionEnvKey, e)
+}
+
+func (e *Environment) IsTesting() bool {
+	return (e.Env == EnvTesting)
+}
+
+func (e *Environment) IsProd() bool {
+	return (e.Env == EnvProd)
+}
+
+func (e *Environment) IsDev() bool {
+	return (e.Env == EnvDev)
 }
 
 type DatabaseAccessor struct {
@@ -189,7 +209,7 @@ var logLevels = map[string]verbose.LogLevel{
 
 type Logger struct {
 	*verbose.Logger
-	c *Config
+	c      *Config
 	timers map[string]time.Time
 }
 

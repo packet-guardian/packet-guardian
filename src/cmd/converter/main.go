@@ -31,7 +31,7 @@ func main() {
 	}
 
 	var err error
-	e := common.NewEnvironment(false)
+	e := common.NewEnvironment(common.EnvProd)
 	fmt.Println("/*")
 	e.Config, err = common.NewConfig(configFile)
 	if err != nil {
