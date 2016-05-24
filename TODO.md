@@ -13,11 +13,12 @@ Here's a list of TODO items:
         - [ ] Auth
         - [ ] Dev
         - [ ] Manager
-    - [ ] DHCP server
+    - [\] DHCP server
     - [ ] Models
         - [ ] User
         - [ ] Device
-    - [ ] Server Middleware
+    - [\] Server
+        - [ ] Middleware
 - [ ] Remove inactive devices after x duration
 - [ ] Guest self registration
     - [ ] Text message with auth code (interface)
