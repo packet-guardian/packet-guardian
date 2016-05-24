@@ -54,6 +54,8 @@ func parse(scan *bufio.Scanner, e *common.Environment) error {
 				case "expiration":
 					if val == "global" {
 						devExp = &models.UserDeviceExpiration{Mode: models.UserDeviceExpirationGlobal}
+					} else if val == "rolling" {
+						devExp = &models.UserDeviceExpiration{Mode: models.UserDeviceExpirationRolling}
 					} else {
 						devExp = &models.UserDeviceExpiration{Mode: models.UserDeviceExpirationNever}
 					}

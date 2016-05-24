@@ -78,7 +78,8 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		user.DeviceExpiration.Mode = models.UserExpiration(expType)
 		if user.DeviceExpiration.Mode == models.UserDeviceExpirationGlobal ||
-			user.DeviceExpiration.Mode == models.UserDeviceExpirationNever {
+			user.DeviceExpiration.Mode == models.UserDeviceExpirationNever ||
+			user.DeviceExpiration.Mode == models.UserDeviceExpirationRolling {
 			user.DeviceExpiration.Value = 0
 		} else if user.DeviceExpiration.Mode == models.UserDeviceExpirationSpecific {
 			t, err := time.Parse(common.TimeFormat, devExpiration)

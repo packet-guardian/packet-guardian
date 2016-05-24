@@ -17,6 +17,12 @@
 ## Example: wifi.example.com  OR  wifi.example.com:5000
 # siteDomainName = ""
 
+## This is the time between wake ups for the job scheduler. When the appliacation first
+## starts, it will wait this long, perform tasks, and then wait again. The format
+## uses Go's time.Duration format. E.g. 1h = 1 hour, 30m = 30 minutes. If an invalid
+## value is used, it will default to 1h.
+# jobSchedulerWakeUp = "1h"
+
 [logging]
 ## Enable or disable normal application logging.
 enabled = true
@@ -57,8 +63,13 @@ allowManualRegistrations = true
 ## Default number of devices for per user. 0 means unlimited.
 defaultDeviceLimit = 0
 
-## The type of device expiration. Valid values: never, date, duration, daily
-defaultDeviceExpirationType = "never"
+## The type of device expiration. Valid values: never, date, duration, daily, rolling
+defaultDeviceExpirationType = "rolling"
+
+## This is the length of time a device must be inactive to be purged from
+## the database on a rolling release. It uses Go's time.Duration syntax.
+## E.g. 1h = 1 hour, 30m = 30 minutes. Default is 6 months (4380h)
+# rollingExpirationLength = "4380h"
 
 ## The value for the device expiration type.
 ## date - Specific date in yyyy-mm-dd format

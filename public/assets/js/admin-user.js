@@ -8,7 +8,8 @@ $.onReady(function () {
         "global": 1,
         "specific": 2,
         "duration": 3,
-        "daily": 4
+        "daily": 4,
+        "rolling": 5
     };
 
     // Device limit select box init
@@ -77,7 +78,9 @@ $.onReady(function () {
 
     $('[name=dev-exp-sel]').change(function(e) {
         var self = $(e.target);
-        if (self.value() === "specific" || self.value() === "daily" || self.value() === "duration") {
+        if (self.value() === "specific" ||
+            self.value() === "daily" ||
+            self.value() === "duration") {
             $("[name=device-expiration]").prop("disabled", false);
         } else {
             $("[name=device-expiration]").prop("disabled", true);
@@ -176,8 +179,7 @@ $.onReady(function () {
             ('0' + date.getDate()).slice(-2);
 
         var timeStr = ('0' + date.getHours()).slice(-2) + ':' +
-            ('0' + (date.getMinutes())).slice(-2) + ':' +
-            ('0' + (date.getSeconds())).slice(-2);
+            ('0' + (date.getMinutes())).slice(-2);
         $(el).value(dateStr+" "+timeStr);
     }
 });

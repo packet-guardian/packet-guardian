@@ -11,6 +11,7 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/server"
+	"github.com/onesimus-systems/packet-guardian/src/tasks"
 )
 
 const (
@@ -112,6 +113,8 @@ func main() {
 			e.Log.Fatal(handler.ListenAndServe())
 		}()
 	}
+
+	go tasks.StartTaskScheduler(e)
 
 	// Start web server
 	server.NewServer(e, server.LoadRoutes(e)).Run()

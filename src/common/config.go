@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/naoina/toml"
 )
@@ -12,9 +13,10 @@ import (
 type Config struct {
 	sourceFile string
 	Core       struct {
-		SiteTitle       string
-		SiteCompanyName string
-		SiteDomainName  string
+		SiteTitle          string
+		SiteCompanyName    string
+		SiteDomainName     string
+		JobSchedulerWakeUp string
 	}
 	Logging struct {
 		Enabled    bool
@@ -33,6 +35,7 @@ type Config struct {
 		AllowManualRegistrations    bool
 		DefaultDeviceLimit          int
 		DefaultDeviceExpirationType string
+		RollingExpirationLength     string
 		DefaultDeviceExpiration     string
 		ManualRegPlatforms          []string
 	}
@@ -124,6 +127,10 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	// Core
 	c.Core.SiteTitle = setStringOrDefault(c.Core.SiteTitle, "Packet Guardian")
+	c.Core.JobSchedulerWakeUp = setStringOrDefault(c.Core.JobSchedulerWakeUp, "1h")
+	if _, err := time.ParseDuration(c.Core.JobSchedulerWakeUp); err != nil {
+		c.Core.JobSchedulerWakeUp = "1h"
+	}
 
 	// Logging
 	c.Logging.Level = setStringOrDefault(c.Logging.Level, "notice")
@@ -135,7 +142,11 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	// Registration
 	c.Registration.RegistrationPolicyFile = setStringOrDefault(c.Registration.RegistrationPolicyFile, "config/policy.txt")
-	c.Registration.DefaultDeviceExpirationType = setStringOrDefault(c.Registration.DefaultDeviceExpirationType, "never")
+	c.Registration.DefaultDeviceExpirationType = setStringOrDefault(c.Registration.DefaultDeviceExpirationType, "rolling")
+	c.Registration.RollingExpirationLength = setStringOrDefault(c.Registration.RollingExpirationLength, "4380h")
+	if _, err := time.ParseDuration(c.Registration.RollingExpirationLength); err != nil {
+		c.Registration.RollingExpirationLength = "4380h"
+	}
 
 	// Webserver
 	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 8080)

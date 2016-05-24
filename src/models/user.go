@@ -20,6 +20,7 @@ const (
 	UserDeviceExpirationSpecific UserExpiration = 2
 	UserDeviceExpirationDuration UserExpiration = 3
 	UserDeviceExpirationDaily    UserExpiration = 4
+	UserDeviceExpirationRolling  UserExpiration = 5
 
 	UserDeviceLimitGlobal    UserDeviceLimit = -1
 	UserDeviceLimitUnlimited UserDeviceLimit = 0
@@ -37,6 +38,8 @@ func (e *UserDeviceExpiration) String() string {
 		return "Never"
 	} else if e.Mode == UserDeviceExpirationGlobal {
 		return "Global"
+	} else if e.Mode == UserDeviceExpirationRolling {
+		return "Rolling"
 	} else if e.Mode == UserDeviceExpirationSpecific {
 		return time.Unix(e.Value, 0).Format(common.TimeFormat)
 	} else if e.Mode == UserDeviceExpirationDuration {
@@ -93,6 +96,8 @@ func (e *UserDeviceExpiration) NextExpiration(env *common.Environment) time.Time
 			bod = bod.Add(time.Duration(24) * time.Hour)
 		}
 		return bod
+	} else if e.Mode == UserDeviceExpirationRolling {
+		return time.Unix(1, 0)
 	} else { // Default to never
 		return time.Unix(0, 0)
 	}
