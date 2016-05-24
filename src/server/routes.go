@@ -57,10 +57,11 @@ func LoadRoutes(e *common.Environment) http.Handler {
 		e.Log.Debug("Profiling enabled")
 	}
 
-	h := mid.Cache(e, r)         // Set cache headers if needed
-	h = mid.SetSessionInfo(e, h) // Adds Environment and user information to requet context
-	h = mid.Logging(e, h)        // Logging
-	h = mid.Panic(e, h)          // Panic catcher
+	h := mid.BlacklistCheck(e, r) // Enforce a blacklist check
+	h = mid.Cache(e, h)           // Set cache headers if needed
+	h = mid.SetSessionInfo(e, h)  // Adds Environment and user information to requet context
+	h = mid.Logging(e, h)         // Logging
+	h = mid.Panic(e, h)           // Panic catcher
 
 	return h
 }
@@ -112,8 +113,8 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	e := common.GetEnvironmentFromContext(r)
-	ip := strings.Split(r.RemoteAddr, ":")[0]
-	reg, err := dhcp.IsRegisteredByIP(e, net.ParseIP(ip))
+	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
+	reg, err := dhcp.IsRegisteredByIP(e, ip)
 	if err != nil {
 		e.Log.WithField("Err", err).Error("Couldn't get registration status")
 	}

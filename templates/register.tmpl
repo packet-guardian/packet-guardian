@@ -14,6 +14,7 @@
 
 <div class="register-box">
     <form>
+        {{if ne .type "man-not-allowed"}}
         <fieldset>
             {{if eq .type "na-auto"}}
                 {{template "reg-non-admin-auto" .}}
@@ -42,6 +43,11 @@
         <p class="reg-btn">
             <button id="register-btn" type="button">Register &gt;</button>
         </p>
+        {{else}}
+        <h2 style="text-align: center;">
+            Manual registrations are not allowed
+        </h2>
+        {{end}}
     </form>
 </div>
 {{template "footer" dict "js" (list "register")}}

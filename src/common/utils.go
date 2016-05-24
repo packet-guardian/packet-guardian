@@ -111,6 +111,8 @@ func ParseUserAgent(ua string) string {
 		parsedUA = parseMacUA(parts)
 	} else if strings.HasPrefix(parts[0], "iP") { // iPad, iPhone, iPod
 		parsedUA = parseiOSUA(parts)
+	} else if strings.Index(ua, "Kindle") != -1 {
+		parsedUA = "Kindle"
 	} else if parts[0] == "X11" {
 		parsedUA = parseLinuxUA(parts)
 	} else if parts[0] == "Linux" || strings.HasPrefix(parts[0], "Android") {

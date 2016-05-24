@@ -1,0 +1,7 @@
+{{define "blacklisted"}}
+{{template "header" dict "css" (list "") "main" . "pageTitle" "Cannot Register Device"}}
+<h2 style="text-align: center;">
+    This device cannot be registered on the network. Please contact the IT Help Desk.
+</h2>
+{{template "footer" dict "js" (list "")}}
+{{end}}

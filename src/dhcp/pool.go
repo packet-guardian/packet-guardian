@@ -90,6 +90,8 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 
 	// Find an expired current lease over a week old
 	weekInSecs := time.Duration(604800) * time.Second
+	// Find an unregistered lease over two hours old
+	twoHours := time.Duration(2) * time.Hour
 	for _, l := range p.Leases {
 		if l.IsAbandoned { // IP in use by a device we don't know about
 			continue
@@ -101,7 +103,10 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 			l.Offered = false
 			return l
 		}
-		if l.End.Add(weekInSecs).Before(now) { // Lease expired a week ago
+		if !l.Registered && l.End.Add(twoHours).Before(now) { // Unregisted lease expired two hours ago
+			return l
+		}
+		if l.Registered && l.End.Add(weekInSecs).Before(now) { // Lease expired a week ago
 			return l
 		}
 	}
@@ -137,7 +142,9 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 		return l
 	}
 
-	// No free leases, no existing leases, check Abandoned leases
+	// No free leases, no exising leases a week old, find the longest expired lease
+
+	// Still no leases, check abandoned leases
 	// TODO: Create abandoned recollection
 	return nil
 }

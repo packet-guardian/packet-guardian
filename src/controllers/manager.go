@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/onesimus-systems/packet-guardian/src/auth"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
@@ -18,6 +19,7 @@ const (
 	nonAdminManReg        = "na-man"
 	nonAdminManRegNologin = "na-man-nologin"
 	adminReg              = "admin"
+	manualNotAllowed      = "man-not-allowed"
 )
 
 type Manager struct {
@@ -30,10 +32,8 @@ func NewManagerController(e *common.Environment) *Manager {
 
 func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
-	session := common.GetSessionFromContext(r)
-	flash := ""
 	man := (r.FormValue("manual") == "1")
-	loggedIn := session.GetBool("loggedin")
+	loggedIn := auth.IsLoggedIn(r)
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 	reg, _ := dhcp.IsRegisteredByIP(m.e, ip)
 	if !man && reg {
@@ -43,8 +43,8 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	formType := nonAdminAutoReg
 	if man {
-		if !m.e.Config.Registration.AllowManualRegistrations {
-			flash = "Manual registrations are not allowed"
+		if !m.e.Config.Registration.AllowManualRegistrations && !sessionUser.IsAdmin() {
+			formType = manualNotAllowed
 		} else {
 			formType = nonAdminManReg
 			if loggedIn {
@@ -57,26 +57,8 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	if r.FormValue("username") != "" && sessionUser.IsAdmin() {
 		username = r.FormValue("username")
 		formType = adminReg
-		flash = ""
 	}
 
-	// TODO: Don't show the registration page at all if blacklisted
-	if formType == nonAdminAutoReg {
-		lease, err := dhcp.GetLeaseByIP(m.e, ip)
-		if err == nil && lease.ID != 0 {
-			device, err := models.GetDeviceByMAC(m.e, lease.MAC)
-			if err != nil {
-				m.e.Log.Errorf("Error getting device for reg check: %s", err.Error())
-			} else {
-				if device.IsBlacklisted {
-					flash = "This device appears to be blacklisted"
-				}
-			}
-		}
-	}
-
-	session.AddFlash(flash)
-	session.Save(r, w)
 	data := map[string]interface{}{
 		"policy":   m.loadPolicyText(),
 		"type":     formType,
