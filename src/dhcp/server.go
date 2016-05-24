@@ -13,20 +13,22 @@ import (
 )
 
 var (
-	gatewayCache = map[string]*Network{}
-	gatewayMutex = sync.Mutex{}
-	config       *Config
+	config *Config
 )
 
 type DHCPHandler struct {
-	e  *common.Environment
-	ro bool
+	gatewayCache map[string]*Network
+	gatewayMutex sync.Mutex
+	e            *common.Environment
+	ro           bool
 }
 
 func NewDHCPServer(c *Config, e *common.Environment) *DHCPHandler {
 	config = c
 	return &DHCPHandler{
-		e: e,
+		e:            e,
+		gatewayCache: make(map[string]*Network),
+		gatewayMutex: sync.Mutex{},
 	}
 }
 
@@ -150,19 +152,19 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp
 	registered := (device.ID != 0 && !device.IsBlacklisted && !device.IsExpired())
 
 	// Get network object that the relay IP belongs to
-	gatewayMutex.Lock()
-	network, ok := gatewayCache[p.GIAddr().String()]
+	h.gatewayMutex.Lock()
+	network, ok := h.gatewayCache[p.GIAddr().String()]
 	if !ok {
 		// That gateway hasn't been seen before, find its network
 		network = config.SearchNetworksFor(p.GIAddr())
 		if network == nil {
-			gatewayMutex.Unlock()
+			h.gatewayMutex.Unlock()
 			return nil
 		}
 		// Add to cache for later
-		gatewayCache[p.GIAddr().String()] = network
+		h.gatewayCache[p.GIAddr().String()] = network
 	}
-	gatewayMutex.Unlock()
+	h.gatewayMutex.Unlock()
 
 	// Find an appropiate lease
 	lease := network.GetLeaseByMAC(device.MAC, registered)

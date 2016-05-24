@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"database/sql/driver"
-	"fmt"
 	"net"
 	"strings"
 	"testing"
@@ -48,6 +47,21 @@ network Network1
 		end
 	end
 end
+
+network Network2
+	unregistered
+		subnet 10.0.4.0/22
+			range 10.0.4.1 10.0.7.254
+			option router 10.0.4.1
+		end
+	end
+	registered
+		subnet 10.0.3.0/24
+			range 10.0.3.10 10.0.3.200
+			option router 10.0.3.1
+		end
+	end
+end
 `
 
 var m sqlmock.Sqlmock
@@ -55,13 +69,10 @@ var m sqlmock.Sqlmock
 type timeChecker struct{}
 
 func (t timeChecker) Match(v driver.Value) bool {
-	fmt.Printf("%v\n", v)
 	return (v.(int64) > 0)
 }
 
 func setUpTest1(t *testing.T) *DHCPHandler {
-
-	t.Log("Hello")
 	// Set up mock database
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -274,4 +285,58 @@ func checkOptions(p d4.Packet, ops d4.Options, t *testing.T) d4.Options {
 		}
 	}
 	return options
+}
+
+func BenchmarkDHCPDiscover(b *testing.B) {
+	// Set up mock database
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		b.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	// Setup environment
+	e := common.NewTestEnvironment()
+	e.DB = &common.DatabaseAccessor{DB: db}
+
+	// Setup Confuration
+	reader := strings.NewReader(testConfig)
+	c, err := newParser(bufio.NewScanner(reader)).parse()
+	if err != nil {
+		b.Fatalf("Test config failed parsing: %v", err)
+	}
+	server := NewDHCPServer(c, e)
+	pool := c.Networks["Network1"].Subnets[1].Pools[0] // Registered pool
+
+	// Create test request packet
+	mac, _ := net.ParseMAC("12:34:56:12:34:56")
+	opts := []d4.Option{
+		d4.Option{
+			Code:  d4.OptionParameterRequestList,
+			Value: []byte{0x1, 0x3, 0x6, 0xf, 0x23},
+		},
+	}
+	p := d4.RequestPacket(d4.Discover, mac, nil, nil, false, opts)
+	p.SetGIAddr(net.ParseIP("10.0.1.5"))
+	unixZero := time.Unix(0, 0)
+	expTime := time.Now().Add(time.Duration(100) * time.Second).Unix()
+
+	b.ResetTimer()
+	b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		rows := sqlmock.NewRows(common.DeviceTableRows).AddRow(
+			1, "12:34:56:12:34:56", "testUser", "192.168.1.1", "", expTime, 0, "", false, "", 0,
+		)
+		mock.ExpectQuery("SELECT .*? FROM \"device\"").
+			WithArgs("12:34:56:12:34:56").
+			WillReturnRows(rows)
+
+		b.StartTimer()
+		dp := server.ServeDHCP(p, d4.Discover, p.ParseOptions())
+		b.StopTimer()
+
+		if dp == nil {
+			b.Fatal("ServeDHCP returned nil")
+		}
+		pool.Leases["10.0.2.10"].End = unixZero
+	}
 }

@@ -22,7 +22,7 @@ type Pool struct {
 	optionsCached bool
 	Leases        map[string]*Lease // IP -> Lease
 	Subnet        *Subnet
-	nextStart     int
+	nextFreeStart int
 	ipsInPool     int
 }
 
@@ -112,7 +112,7 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 	}
 
 	// No candidates, find the next available lease
-	for i := p.nextStart; i < p.GetCountOfIPs(); i++ {
+	for i := p.nextFreeStart; i < p.GetCountOfIPs(); i++ {
 		next := dhcp4.IPAdd(p.RangeStart, i)
 		// Check if IP has a lease
 		_, ok := p.Leases[next.String()]
@@ -138,14 +138,44 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 		l.Pool = p
 		l.Registered = !p.Subnet.AllowUnknown
 		p.Leases[next.String()] = l
-		p.nextStart = i + 1
+		p.nextFreeStart = i + 1
 		return l
 	}
 
-	// No free leases, no exising leases a week old, find the longest expired lease
+	// No free leases, bring out the big guns
+	// Find the oldest expired lease
+	var longestExpiredLease *Lease
+	for _, l := range p.Leases {
+		if l.End.After(now) { // Skip active leases
+			continue
+		}
 
-	// Still no leases, check abandoned leases
-	// TODO: Create abandoned recollection
+		if longestExpiredLease == nil {
+			longestExpiredLease = l
+			continue
+		}
+
+		if l.End.Before(longestExpiredLease.End) {
+			longestExpiredLease = l
+		}
+	}
+
+	if longestExpiredLease != nil {
+		return longestExpiredLease
+	}
+
+	// Now we're getting desperate
+	// Check abandoned leases for availability
+	for _, l := range p.Leases {
+		if !l.IsAbandoned { // Skip non-abandoned leases
+			continue
+		}
+		if !isIPInUse(l.IP) {
+			return l
+		}
+	}
+
+	// We've exhausted all possibilities, admit defeat.
 	return nil
 }
 
