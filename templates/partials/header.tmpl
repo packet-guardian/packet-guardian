@@ -20,12 +20,14 @@
     </head>
     <body>
         <header>
-            <img src="/public/assets/images/logo.png">
-            {{if ne .main.config.Core.SiteTitle ""}}
-            <div class="header-title">
-                <a href="/">{{.main.config.Core.SiteTitle}}</a>
-            </div>
-            {{end}}
+            <a href="/">
+                <img src="/public/assets/images/logo.png">
+                {{if ne .main.config.Core.SiteTitle ""}}
+                <div class="header-title">
+                    {{.main.config.Core.SiteTitle}}
+                </div>
+                {{end}}
+            </a>
         </header>
         <div class="main">
             <div id="flashDiv" class="flash">
