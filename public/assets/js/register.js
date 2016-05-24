@@ -82,7 +82,7 @@ $.onReady(function () {
             $('#suc-msg-manual').show();
             setTimeout(function() { location.href = resp.Data.Location; }, 3000);
         }, function (req) {
-            sleep(2000);
+            window.scrollTo(0, 0);
             enableRegBtn();
             switch(req.status) {
                 case 400:
