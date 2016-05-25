@@ -88,8 +88,8 @@ func apiRouter(e *common.Environment) http.Handler {
 
 	deviceApiController := api.NewDeviceController(e)
 	r.HandleFunc("/api/device", deviceApiController.RegistrationHandler).Methods("POST")
-	r.HandleFunc("/api/device", deviceApiController.DeleteHandler).Methods("DELETE")
-	r.HandleFunc("/api/device/reassign", deviceApiController.ReassignHandler).Methods("POST")
+	r.HandleFunc("/api/device/{username}", deviceApiController.DeleteHandler).Methods("DELETE")
+	r.HandleFunc("/api/device/_reassign", deviceApiController.ReassignHandler).Methods("POST")
 
 	blacklistController := api.NewBlacklistController(e)
 	r.HandleFunc("/api/blacklist/user/{username}", blacklistController.BlacklistUserHandler).Methods("POST", "DELETE")

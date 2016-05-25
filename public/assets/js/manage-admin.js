@@ -73,6 +73,7 @@ $.onReady(function() {
     }
 
     function blacklistDevices(devices, add) {
+        devices = devices.join(',');
         if (add) {
             addDevicesToBlacklist(devices);
         } else {
@@ -108,7 +109,7 @@ $.onReady(function() {
         if (devices.length === 0 || !username) {
             return;
         }
-        $.post("/api/device/reassign", {"username": username, "macs": devices.join(',')}, function() {
+        $.post("/api/device/_reassign", {"username": username, "macs": devices.join(',')}, function() {
             location.reload();
         }, function() {
             c.FlashMessage("Error blacklisting devices");

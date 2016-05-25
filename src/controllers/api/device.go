@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
@@ -162,13 +163,18 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 	formUser := sessionUser
-	if r.FormValue("username") != sessionUser.Username {
+	username, ok := mux.Vars(r)["username"]
+	if !ok {
+		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
+		return
+	}
+	if username != sessionUser.Username {
 		if !sessionUser.IsAdmin() {
 			common.NewAPIResponse("Admin Error", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
 		var err error
-		formUser, err = models.GetUserByUsername(d.e, r.FormValue("username"))
+		formUser, err = models.GetUserByUsername(d.e, username)
 		if err != nil {
 			d.e.Log.Errorf("Error getting user: %s", err.Error())
 			common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
@@ -223,14 +229,14 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
 
 	devices := r.FormValue("macs")
 	if devices == "" {
-		common.NewAPIResponse("At least one MAC address is required required", nil).WriteResponse(w, http.StatusBadRequest)
+		common.NewAPIResponse("At least one MAC address is required", nil).WriteResponse(w, http.StatusBadRequest)
 		return
 	}
 
 	devicesToReassign := strings.Split(devices, ",")
 	for _, devMacStr := range devicesToReassign {
 		devMacStr = strings.TrimSpace(devMacStr)
-		mac, err := net.ParseMAC(devMacStr)
+		mac, err := common.FormatMacAddress(devMacStr)
 		if err != nil {
 			common.NewAPIResponse("Malformed MAC address "+devMacStr, nil).WriteResponse(w, http.StatusBadRequest)
 			return
@@ -241,7 +247,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
 			common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
-		if dev.ID == 0 {
+		if dev.ID == 0 { // Device doesn't exist
 			continue
 		}
 		originalUser := dev.Username

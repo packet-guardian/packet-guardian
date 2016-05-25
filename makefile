@@ -22,6 +22,7 @@ dist: build
 	@cp README.md dist/packet-guardian/
 	@mkdir dist/packet-guardian/bin
 	@cp bin/pg dist/packet-guardian/bin/pg
+	@mkdir dist/packet-guardian/sessions
 
 	(cd "dist"; tar -cz packet-guardian) > "dist/pg-dist-$(VERSION).tar.gz"
 
@@ -34,7 +35,7 @@ fmt:
 	go fmt ./src/...
 
 install: test
-	go install -v ./src/cmd/pg
+	GO_BIN=$(PWD)/bin go install -v ./src/cmd/pg
 
 # https://github.com/golang/lint
 # go get github.com/golang/lint/golint
