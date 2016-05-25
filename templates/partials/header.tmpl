@@ -21,7 +21,9 @@
     <body>
         <header>
             <a href="/">
-                <img src="/public/assets/images/logo.png">
+                <div class="logo-wrapper">
+                    <img src="/public/assets/images/logo.png">
+                </div>
                 {{if ne .main.config.Core.SiteTitle ""}}
                 <div class="header-title">
                     {{.main.config.Core.SiteTitle}}
