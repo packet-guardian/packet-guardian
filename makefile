@@ -35,7 +35,7 @@ fmt:
 	go fmt ./src/...
 
 install: test
-	GO_BIN=$(PWD)/bin go install -v ./src/cmd/pg
+	GOBIN=$(PWD)/bin go install -v ./src/cmd/pg
 
 # https://github.com/golang/lint
 # go get github.com/golang/lint/golint
