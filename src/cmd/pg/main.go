@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	version = "0.5.0"
+	version = "0.6.2"
 )
 
 var (
@@ -34,6 +34,7 @@ func init() {
 	flag.StringVar(&configFile, "c", "", "Configuration file path")
 	flag.BoolVar(&dev, "d", false, "Run in development mode")
 	flag.BoolVar(&verFlag, "version", false, "Display version information")
+	flag.BoolVar(&verFlag, "v", verFlag, "Display version information")
 	flag.BoolVar(&testConfig, "test", false, "Test main configuration")
 	flag.BoolVar(&testDHCPConf, "testd", false, "Test DHCP configuration only")
 }
@@ -126,7 +127,7 @@ func main() {
 
 func displayVersionInfo() {
 	fmt.Printf(`Packet Guardian - (C) 2016 Lee Keitel
-University of Southern Indiana
+Onesimus Systems
 
 Version: %s
 `, version)

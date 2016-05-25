@@ -9,7 +9,7 @@ body {
 }
 
 header {
-    height: 150px;
+    padding-bottom: 1em;
     background-color: #303030;
     background: linear-gradient(to bottom, #454545, #303030);
 }
@@ -22,14 +22,14 @@ header .header-title {
     margin-top: 10px;
 }
 
-.header-title a {
+header a {
     color: white;
     text-decoration: none;
 }
 
 header .logo-wrapper {
     display: inline-block;
-    height: 100%;
+    height: 100px;
     margin-left: 5%;
     /*background-color: white;*/
 }
@@ -114,7 +114,7 @@ footer .copyright {
     min-height: calc(100% - 140px);
 }
 
-@media (min-width: 550px) {
+@media (min-width: 900px) {
     header {
         position: relative;
         height: 100px;
@@ -129,5 +129,9 @@ footer .copyright {
         color: white;
         vertical-align: middle;
         margin-left: 2%;
+    }
+
+    header .logo-wrapper {
+        height: 100%;
     }
 }
