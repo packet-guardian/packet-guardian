@@ -1,3 +1,7 @@
+// This source file is part of the Packet Guardian project.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 /**
  * This application runs the Packet Guardian DHCP server as a separate process.
  * By default, the main PG binary will not run a DHCP server and it may be better
