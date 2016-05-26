@@ -2,7 +2,9 @@
 
 ## AppArmor
 
-It's recommended to use AppArmor with Packet Guardian. AppArmor is a permissions enforcement system on Ubuntu. It's equivalent to SELinux in CentOS and Red Hat. An base AppArmor profile has been included in the `config` directory. You may need to edit it depending on how you setup Packet Guardian. The file `apparmor.conf` assumes PG is installed in `/opt/packet-guardian`. The file `apparmor-ext.conf` assumes you've run the script `$REPO_DIR/install.sh` which spreads out the configuration and run files into their appropriate places in the file system. Use which ever is appropiate for your situation.
+If you used the script `$REPO_DIR/install.sh` this was done for you.
+
+It's recommended to use AppArmor with Packet Guardian. AppArmor is a permissions enforcement system on Ubuntu. It's equivalent to SELinux in CentOS and Red Hat. A base AppArmor profile has been included in the `config` directory. You may need to edit it depending on how you setup Packet Guardian. The file `apparmor.conf` assumes PG is installed in `/opt/packet-guardian`. The file `apparmor-ext.conf` assumes you've run the script `$REPO_DIR/install.sh` which spreads out the configuration and puts files into their appropriate places in the file system. Use which ever is appropriate for your situation.
 
 Here's how to get start (run as root):
 

@@ -6,7 +6,8 @@ SERVICE_FILE="/etc/init/pg.conf"
 LOG_DIR="/var/log/packet-guardian"
 DATA_DIR="/var/lib/packet-guardian"
 CONFIG_DIR="/etc/packet-guardian"
-APPARMOR_CONFIG_FILE="/etc/apparmor.d/opt.packet-guardian.bin.pg"
+APPARMOR_DIR="/etc/apparmor.d"
+APPARMOR_CONFIG_FILE="$APPARMOR_DIR/opt.packet-guardian.bin.pg"
 EXISTING=""
 
 # Check running as root
@@ -61,9 +62,10 @@ setcap 'cap_net_bind_service=+ep' $DST_DIR/bin/pg
 
 # Install apparmor profile if available
 if [[ $(which apparmor_status) ]]; then
+    mkdir -p $APPARMOR_DIR
+    cp config/apparmor.conf $APPARMOR_CONFIG_FILE
+    chown root:root $APPARMOR_CONFIG_FILE
     if [[ $(which aa-complain) ]]; then
-        cp config/apparmor.conf $APPARMOR_CONFIG_FILE
-        chown root:root $APPARMOR_CONFIG_FILE
         aa-complain $DST_DIR/bin/pg
     else
         echo "It appears AppArmor is installed but apparmor-utils is not."
