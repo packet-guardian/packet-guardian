@@ -63,6 +63,7 @@ func getLeasesFromDatabase(e *common.Environment, where string, values ...interf
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	var results []*Lease
 	for rows.Next() {

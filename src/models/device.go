@@ -84,6 +84,7 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	var results []*Device
 	for rows.Next() {

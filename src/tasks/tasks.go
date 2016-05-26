@@ -5,7 +5,6 @@
 package tasks
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -108,9 +107,7 @@ func cleanUpExpiredUsers(e *common.Environment) (string, error) {
 	now := time.Now()
 	sqlSel := `SELECT "username" FROM "user" WHERE "valid_forever" = 0 AND "valid_end" < ?`
 	rows, err := e.DB.Query(sqlSel, now.Unix())
-	if err == sql.ErrNoRows {
-		return "No users purged", nil
-	} else if err != nil {
+	if err != nil {
 		return "", err
 	}
 	defer rows.Close()
