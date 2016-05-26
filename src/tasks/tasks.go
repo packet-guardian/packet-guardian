@@ -74,7 +74,7 @@ func cleanUpOldDevices(e *common.Environment) (string, error) {
 	}
 	d = -d // This is how long ago a device was last seen, must be negative
 
-	sqlSel := `SELECT "mac" FROM "device" WHERE "expires" != 0 AND ("last_seen" < ? OR "expires" < ?)`
+	sqlSel := `SELECT "mac" FROM "device" WHERE "expires" != 0 AND ("last_seen" < ? OR ("expires" != 1 AND "expires" < ?))`
 	rows, err := e.DB.Query(sqlSel, now.Add(d).Unix(), now.Unix())
 	if err != nil {
 		return "", err
@@ -93,7 +93,7 @@ func cleanUpOldDevices(e *common.Environment) (string, error) {
 		return "No devices to purge", nil
 	}
 
-	sql := `DELETE FROM "device" WHERE "expires" != 0 AND ("last_seen" < ? OR "expires" < ?)`
+	sql := `DELETE FROM "device" WHERE "expires" != 0 AND ("last_seen" < ? OR ("expires" != 1 AND "expires" < ?)`
 	results, err := e.DB.Exec(sql, now.Add(d).Unix(), now.Unix())
 	if err != nil {
 		return "", err
