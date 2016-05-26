@@ -372,6 +372,7 @@ func (p *parser) parseSubnet(header []byte, allowUnknown bool) (*Subnet, error) 
 			if err != nil {
 				return nil, err
 			}
+			pool.Subnet = s
 			s.Pools = append(s.Pools, pool)
 			continue
 		} else if bytes.Equal(keyword, tokens[TkRange]) {
