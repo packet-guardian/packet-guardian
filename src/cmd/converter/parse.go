@@ -157,12 +157,13 @@ func parse(scan *bufio.Scanner, e *common.Environment) error {
 }
 
 func writeOutput() {
+	now := time.Now().Unix()
 	fmt.Println("PRAGMA synchronous = OFF;")
 	fmt.Println("PRAGMA journal_mode = MEMORY;")
 	fmt.Println("BEGIN TRANSACTION;")
 	for _, dev := range devices {
 		fmt.Printf(
-			`INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description") VALUES ('%s','%s','%s','%s','%d','%d','%s','%s');%s`,
+			`INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen") VALUES ('%s','%s','%s','%s','%d','%d','%s','%s','%d');%s`,
 			dev.MAC.String(),
 			dev.Username,
 			dev.RegisteredFrom.String(),
@@ -171,6 +172,7 @@ func writeOutput() {
 			dev.DateRegistered.Unix(),
 			dev.UserAgent,
 			dev.Description,
+			now,
 			"\n",
 		)
 	}
