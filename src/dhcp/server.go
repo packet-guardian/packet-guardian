@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// TODO: Clean up the handler functions. There's a lot of duplicated code that
+// could be extracted to a function.
+
 package dhcp
 
 import (
@@ -124,8 +127,7 @@ func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, optio
 	case dhcp4.Release:
 		response = h.handleRelease(p, options)
 	case dhcp4.Decline:
-		//return h.handleDecline(p, msgType, options)
-		//TODO: Mark address as abandoned
+		response = h.handleDecline(p, options)
 	}
 	return response
 }
@@ -391,6 +393,62 @@ func (h *DHCPHandler) handleRelease(p dhcp4.Packet, options dhcp4.Options) dhcp4
 		"Network":    network.Name,
 		"Registered": registered,
 	}).Info("Releasing lease")
+	lease.Start = time.Unix(1, 0)
+	lease.End = time.Unix(1, 0)
+	if err := lease.Save(); err != nil {
+		h.log.WithFields(verbose.Fields{
+			"Client MAC": p.CHAddr().String(),
+			"Error":      err,
+		}).Error("Error saving lease")
+	}
+	return nil
+}
+
+// Handle DHCP DECLINE messages
+func (h *DHCPHandler) handleDecline(p dhcp4.Packet, options dhcp4.Options) dhcp4.Packet {
+	reqIP := p.CIAddr()
+	if reqIP == nil || reqIP.Equal(net.IPv4zero) {
+		return nil
+	}
+
+	// Get a device object associated with the MAC
+	device, err := models.GetDeviceByMAC(h.e, p.CHAddr())
+	if err != nil {
+		h.log.WithFields(verbose.Fields{
+			"Client MAC": p.CHAddr().String(),
+			"Error":      err,
+		}).Error("Error getting device")
+		return nil
+	}
+	registered := (device.ID != 0 && !device.IsBlacklisted && !device.IsExpired())
+
+	network := config.SearchNetworksFor(reqIP)
+	if network == nil {
+		h.log.WithFields(verbose.Fields{
+			"Releasing IP": reqIP.String(),
+			"Registered":   registered,
+		}).Notice("Got a DECLINE for IP not in a scope")
+		return nil
+	}
+
+	lease := network.GetLeaseByIP(reqIP, registered)
+	if lease == nil || !bytes.Equal(lease.MAC, p.CHAddr()) {
+		h.log.WithFields(verbose.Fields{
+			"Declined IP": reqIP.String(),
+			"Client MAC":  p.CHAddr().String(),
+			"Lease MAC":   lease.MAC.String(),
+			"Network":     network.Name,
+			"Registered":  registered,
+		}).Notice("Client tried to decline lease not belonging to them")
+		return nil
+	}
+	h.log.WithFields(verbose.Fields{
+		"IP":         lease.IP.String(),
+		"Client MAC": lease.MAC.String(),
+		"Network":    network.Name,
+		"Registered": registered,
+	}).Notice("Abandoned lease")
+	lease.IsAbandoned = true
 	lease.Start = time.Unix(1, 0)
 	lease.End = time.Unix(1, 0)
 	if err := lease.Save(); err != nil {
