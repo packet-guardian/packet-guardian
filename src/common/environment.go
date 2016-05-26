@@ -50,6 +50,8 @@ func NewTestEnvironment() *Environment {
 		Log:    NewEmptyLogger(),
 		Env:    EnvTesting,
 	}
+	// Disable automatic logging, manually configure if needed
+	e.Log.c.Logging.Enabled = false
 	if os.Getenv("PG_TEST_LOG") != "" {
 		stdout := verbose.NewStdoutHandler()
 		stdout.SetMinLevel(verbose.LogLevelDebug)
@@ -227,6 +229,7 @@ func NewEmptyLogger() *Logger {
 	return &Logger{
 		Logger: verbose.New("null"),
 		timers: make(map[string]time.Time),
+		c:      &Config{},
 	}
 }
 
