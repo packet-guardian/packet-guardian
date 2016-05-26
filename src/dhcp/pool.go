@@ -116,7 +116,10 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 	// No candidates, find the next available lease
 	for i := p.nextFreeStart; i < p.GetCountOfIPs(); i++ {
 		next := dhcp4.IPAdd(p.RangeStart, i)
+		p.nextFreeStart = i + 1
+
 		// Check if IP has a lease
+		// Sanity check
 		_, ok := p.Leases[next.String()]
 		if ok {
 			continue
@@ -140,7 +143,6 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 		l.Pool = p
 		l.Registered = !p.Subnet.AllowUnknown
 		p.Leases[next.String()] = l
-		p.nextFreeStart = i + 1
 		return l
 	}
 
