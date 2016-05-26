@@ -87,6 +87,10 @@ func (h *DHCPHandler) LoadLeases() error {
 }
 
 func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options dhcp4.Options) dhcp4.Packet {
+	// There seemed to be some issues where the job scheduler never had a change to run.
+	// DHCP can be very chatty so we need to explicitly invoke the scheduler and let
+	// other go routines run.
+	runtime.Gosched()
 	defer func() {
 		if r := recover(); r != nil {
 			h.e.Log.Criticalf("Recovering from DHCP panic %s", r)
