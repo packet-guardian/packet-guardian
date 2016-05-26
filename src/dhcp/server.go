@@ -26,6 +26,7 @@ type DHCPHandler struct {
 	gatewayMutex sync.Mutex
 	e            *common.Environment
 	ro           bool
+	log          *common.Logger
 }
 
 func NewDHCPServer(c *Config, e *common.Environment) *DHCPHandler {
@@ -34,11 +35,12 @@ func NewDHCPServer(c *Config, e *common.Environment) *DHCPHandler {
 		e:            e,
 		gatewayCache: make(map[string]*Network),
 		gatewayMutex: sync.Mutex{},
+		log:          e.Log.GetLogger("dhcp"),
 	}
 }
 
 func (h *DHCPHandler) ListenAndServe() error {
-	h.e.Log.Info("Starting DHCP server...")
+	h.log.Info("Starting DHCP server...")
 	return dhcp4.ListenAndServe(h)
 }
 
@@ -78,7 +80,7 @@ func (h *DHCPHandler) LoadLeases() error {
 				}
 				lease.Pool = pool
 				pool.Leases[lease.IP.String()] = lease
-				h.e.Log.WithField("Address", lease.IP).Debug("Loaded lease")
+				h.log.WithField("Address", lease.IP).Debug("Loaded lease")
 				break subnetLoop
 			}
 		}
@@ -93,10 +95,10 @@ func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, optio
 	runtime.Gosched()
 	defer func() {
 		if r := recover(); r != nil {
-			h.e.Log.Criticalf("Recovering from DHCP panic %s", r)
+			h.log.Criticalf("Recovering from DHCP panic %s", r)
 			buf := make([]byte, 2048)
 			runtime.Stack(buf, false)
-			h.e.Log.Criticalf("Stack Trace: %s", string(buf))
+			h.log.Criticalf("Stack Trace: %s", string(buf))
 		}
 	}()
 	if msgType == dhcp4.Inform {
@@ -105,7 +107,7 @@ func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, optio
 
 	// Log every message
 	if server, ok := options[dhcp4.OptionServerIdentifier]; !ok || net.IP(server).Equal(config.Global.ServerIdentifier) {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Type":       msgType.String(),
 			"Client IP":  p.CIAddr().String(),
 			"Client MAC": p.CHAddr().String(),
@@ -146,7 +148,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp
 	// Get a device object associated with the MAC
 	device, err := models.GetDeviceByMAC(h.e, p.CHAddr())
 	if err != nil {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Client MAC": p.CHAddr().String(),
 			"Error":      err,
 		}).Error("Error getting device")
@@ -155,7 +157,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp
 
 	// Check device standing
 	if device.IsBlacklisted {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Client MAC":  p.CHAddr().String(),
 			"Relay Agent": p.GIAddr().String(),
 			"Username":    device.Username,
@@ -184,7 +186,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp
 		// Device doesn't have a recent lease, get a new one
 		lease = network.GetFreeLease(h.e, registered)
 		if lease == nil {
-			h.e.Log.WithFields(verbose.Fields{
+			h.log.WithFields(verbose.Fields{
 				"Network":    network.Name,
 				"Registered": registered,
 			}).Alert("No free leases available in network")
@@ -192,7 +194,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp
 		}
 	}
 
-	h.e.Log.WithFields(verbose.Fields{
+	h.log.WithFields(verbose.Fields{
 		"Lease IP":   lease.IP.String(),
 		"Client MAC": p.CHAddr().String(),
 		"Registered": registered,
@@ -238,7 +240,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4
 	// Get a device object associated with the MAC
 	device, err := models.GetDeviceByMAC(h.e, p.CHAddr())
 	if err != nil {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Client MAC": p.CHAddr().String(),
 			"Error":      err,
 		}).Error("Error getting device")
@@ -247,7 +249,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4
 
 	// Check device standing
 	if device.IsBlacklisted {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Client MAC":  p.CHAddr().String(),
 			"Relay Agent": p.GIAddr().String(),
 			"Username":    device.Username,
@@ -273,7 +275,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4
 	}
 
 	if network == nil {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Requested IP": reqIP.String(),
 			"Registered":   registered,
 		}).Notice("Got a REQUEST for IP not in a scope")
@@ -282,7 +284,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4
 
 	lease := network.GetLeaseByIP(reqIP, registered)
 	if lease == nil || lease.MAC == nil { // If it returns a new lease, the MAC is nil
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Requested IP": reqIP.String(),
 			"Client MAC":   p.CHAddr().String(),
 			"Network":      network.Name,
@@ -292,7 +294,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4
 	}
 
 	if !bytes.Equal(lease.MAC, p.CHAddr()) {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Requested IP": reqIP.String(),
 			"Client MAC":   p.CHAddr().String(),
 			"Lease MAC":    lease.MAC.String(),
@@ -310,7 +312,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4
 		lease.Hostname = string(ci)
 	}
 	if err := lease.Save(); err != nil {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Client MAC": p.CHAddr().String(),
 			"Error":      err,
 		}).Error("Error saving lease")
@@ -318,7 +320,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4
 	}
 	leaseOptions := lease.Pool.GetOptions(registered)
 
-	h.e.Log.WithFields(verbose.Fields{
+	h.log.WithFields(verbose.Fields{
 		"Requested IP": lease.IP.String(),
 		"Client MAC":   lease.MAC.String(),
 		"Duration":     leaseDur.String(),
@@ -331,7 +333,7 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4
 		device.LastSeen = time.Now()
 		if err := device.Save(); err != nil {
 			// We won't consider this a critical error, still give out the lease
-			h.e.Log.WithField("Err", err).Error("Failed updating device last_seen attribute")
+			h.log.WithField("Err", err).Error("Failed updating device last_seen attribute")
 		}
 	}
 
@@ -355,7 +357,7 @@ func (h *DHCPHandler) handleRelease(p dhcp4.Packet, options dhcp4.Options) dhcp4
 	// Get a device object associated with the MAC
 	device, err := models.GetDeviceByMAC(h.e, p.CHAddr())
 	if err != nil {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Client MAC": p.CHAddr().String(),
 			"Error":      err,
 		}).Error("Error getting device")
@@ -365,7 +367,7 @@ func (h *DHCPHandler) handleRelease(p dhcp4.Packet, options dhcp4.Options) dhcp4
 
 	network := config.SearchNetworksFor(reqIP)
 	if network == nil {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Releasing IP": reqIP.String(),
 			"Registered":   registered,
 		}).Notice("Got a RELEASE for IP not in a scope")
@@ -374,7 +376,7 @@ func (h *DHCPHandler) handleRelease(p dhcp4.Packet, options dhcp4.Options) dhcp4
 
 	lease := network.GetLeaseByIP(reqIP, registered)
 	if lease == nil || !bytes.Equal(lease.MAC, p.CHAddr()) {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Releasing IP": reqIP.String(),
 			"Client MAC":   p.CHAddr().String(),
 			"Lease MAC":    lease.MAC.String(),
@@ -383,7 +385,7 @@ func (h *DHCPHandler) handleRelease(p dhcp4.Packet, options dhcp4.Options) dhcp4
 		}).Notice("Client tried to release lease not belonging to them")
 		return nil
 	}
-	h.e.Log.WithFields(verbose.Fields{
+	h.log.WithFields(verbose.Fields{
 		"IP":         lease.IP.String(),
 		"Client MAC": lease.MAC.String(),
 		"Network":    network.Name,
@@ -392,7 +394,7 @@ func (h *DHCPHandler) handleRelease(p dhcp4.Packet, options dhcp4.Options) dhcp4
 	lease.Start = time.Unix(1, 0)
 	lease.End = time.Unix(1, 0)
 	if err := lease.Save(); err != nil {
-		h.e.Log.WithFields(verbose.Fields{
+		h.log.WithFields(verbose.Fields{
 			"Client MAC": p.CHAddr().String(),
 			"Error":      err,
 		}).Error("Error saving lease")
