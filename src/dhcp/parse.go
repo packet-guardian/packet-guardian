@@ -178,10 +178,10 @@ func (p *parser) parseGlobal() (*Global, error) {
 		}
 	}
 	if g.Settings.DefaultLeaseTime == 0 {
-		g.Settings.DefaultLeaseTime = time.Duration(604800) * time.Second // 1 Week
+		g.Settings.DefaultLeaseTime = time.Duration(12) * time.Hour // 12 hours
 	}
 	if g.Settings.MaxLeaseTime == 0 {
-		g.Settings.MaxLeaseTime = time.Duration(604800) * time.Second // 1 Week
+		g.Settings.MaxLeaseTime = time.Duration(12) * time.Hour // 12 hours
 	}
 	if g.UnregisteredSettings.FreeLeaseAfter == 0 {
 		g.UnregisteredSettings.FreeLeaseAfter = 3600 // 1 hour
