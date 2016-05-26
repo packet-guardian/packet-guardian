@@ -199,10 +199,10 @@ func (p *Pool) Print() {
 // Windows machines.
 func isIPInUse(host net.IP) bool {
 	count := "-c"
-	wait := "2"
+	wait := "1"
 	if runtime.GOOS == "windows" {
 		count = "-n"
-		wait = "2000"
+		wait = "500"
 	}
 
 	// -c/-n: packet count, -w: timeout in seconds

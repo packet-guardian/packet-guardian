@@ -7,6 +7,7 @@ package dhcp
 import (
 	"bytes"
 	"net"
+	"runtime"
 	"sync"
 	"time"
 
@@ -89,6 +90,9 @@ func (h *DHCPHandler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, optio
 	defer func() {
 		if r := recover(); r != nil {
 			h.e.Log.Criticalf("Recovering from DHCP panic %s", r)
+			buf := make([]byte, 2048)
+			runtime.Stack(buf, false)
+			h.e.Log.Criticalf("Stack Trace: %s", string(buf))
 		}
 	}()
 	if msgType == dhcp4.Inform {
@@ -193,7 +197,7 @@ func (h *DHCPHandler) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp
 	// Set temporary offered flag and end time
 	lease.Offered = true
 	lease.Start = time.Now()
-	lease.End = time.Now().Add(time.Duration(10) * time.Second) // Set a short end time so it's not offered to other clients
+	lease.End = time.Now().Add(time.Duration(30) * time.Second) // Set a short end time so it's not offered to other clients
 	// p.CHAddr() returns a slice. A slice is basically a pointer. A pointer is NOT the value.
 	// Copy the VALUE of the mac address into the lease, not the pointer. Otherwise you're gonna have a bad time.
 	lease.MAC = make([]byte, len(p.CHAddr()))
@@ -247,7 +251,23 @@ func (h *DHCPHandler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4
 	}
 	registered := (device.ID != 0 && !device.IsBlacklisted && !device.IsExpired())
 
-	network := config.SearchNetworksFor(reqIP)
+	var network *Network
+	// Get network object that the relay or client IP belongs to
+	if p.GIAddr().Equal(net.IPv4zero) {
+		// Coming directly from the client
+		network = config.SearchNetworksFor(reqIP)
+	} else {
+		// Coming from a relay
+		h.gatewayMutex.Lock()
+		var ok bool
+		network, ok = h.gatewayCache[p.GIAddr().String()]
+		h.gatewayMutex.Unlock()
+		if !ok {
+			// That gateway hasn't been seen before, it needs to go through DISCOVER
+			return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, config.Global.ServerIdentifier, nil, 0, nil))
+		}
+	}
+
 	if network == nil {
 		h.e.Log.WithFields(verbose.Fields{
 			"Requested IP": reqIP.String(),
