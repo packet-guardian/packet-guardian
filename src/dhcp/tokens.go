@@ -23,6 +23,7 @@ const (
 
 	TkServerIdentifier
 	TkRange
+	TkFreeLeaseAfter
 
 	beginSettings
 	TkOption
@@ -45,6 +46,7 @@ var tokens = [...][]byte{
 	TkMaxLeaseTime:     []byte("max-lease-time"),
 	TkServerIdentifier: []byte("server-identifier"),
 	TkRange:            []byte("range"),
+	TkFreeLeaseAfter:   []byte("free-lease-after"),
 }
 
 func isSetting(b []byte) bool {

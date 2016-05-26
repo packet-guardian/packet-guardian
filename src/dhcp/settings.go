@@ -15,6 +15,7 @@ type Settings struct {
 	Options          map[dhcp4.OptionCode][]byte
 	DefaultLeaseTime time.Duration
 	MaxLeaseTime     time.Duration
+	FreeLeaseAfter   int
 }
 
 func newSettingsBlock() *Settings {

@@ -140,6 +140,21 @@ func (p *parser) parseGlobal() (*Global, error) {
 			}
 			g.ServerIdentifier = ip
 			continue
+		} else if bytes.Equal(keyword, tokens[TkFreeLeaseAfter]) {
+			time, err := strconv.Atoi(string(lineParts[1]))
+			if err != nil {
+				return nil, newError(p.line, "invalid value for free-lease-after")
+			}
+
+			if mode == 1 {
+				g.RegisteredSettings.FreeLeaseAfter = time
+				continue
+			} else if mode == 2 {
+				g.UnregisteredSettings.FreeLeaseAfter = time
+				continue
+			}
+
+			return nil, newError(p.line, "free-lease-after can only be in a global registered or unregistered block")
 		} else if bytes.Equal(keyword, tokens[TkRegistered]) {
 			mode = 1
 			continue
@@ -158,6 +173,8 @@ func (p *parser) parseGlobal() (*Global, error) {
 			if err != nil {
 				return nil, err
 			}
+		} else {
+			return nil, newError(p.line, `unexpected "%s"`, keyword)
 		}
 	}
 	if g.Settings.DefaultLeaseTime == 0 {
@@ -165,6 +182,12 @@ func (p *parser) parseGlobal() (*Global, error) {
 	}
 	if g.Settings.MaxLeaseTime == 0 {
 		g.Settings.MaxLeaseTime = time.Duration(604800) * time.Second // 1 Week
+	}
+	if g.UnregisteredSettings.FreeLeaseAfter == 0 {
+		g.UnregisteredSettings.FreeLeaseAfter = 3600 // 1 hour
+	}
+	if g.RegisteredSettings.FreeLeaseAfter == 0 {
+		g.RegisteredSettings.FreeLeaseAfter = 604800 // 1 week
 	}
 	return g, nil
 }

@@ -92,10 +92,8 @@ func (p *Pool) GetOptions(registered bool) dhcp4.Options {
 func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 	now := time.Now()
 
-	// Find an expired current lease over a week old
-	weekInSecs := time.Duration(604800) * time.Second
-	// Find an unregistered lease over two hours old
-	twoHours := time.Duration(2) * time.Hour
+	regFreeTime := time.Duration(p.Subnet.Network.Global.RegisteredSettings.FreeLeaseAfter) * time.Second
+	unRegFreeTime := time.Duration(p.Subnet.Network.Global.UnregisteredSettings.FreeLeaseAfter) * time.Second
 	for _, l := range p.Leases {
 		if l.IsAbandoned { // IP in use by a device we don't know about
 			continue
@@ -107,10 +105,10 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 			l.Offered = false
 			return l
 		}
-		if !l.Registered && l.End.Add(twoHours).Before(now) { // Unregisted lease expired two hours ago
+		if !l.Registered && l.End.Add(unRegFreeTime).Before(now) { // Unregisted lease expired
 			return l
 		}
-		if l.Registered && l.End.Add(weekInSecs).Before(now) { // Lease expired a week ago
+		if l.Registered && l.End.Add(regFreeTime).Before(now) { // Registered lease expired
 			return l
 		}
 	}
