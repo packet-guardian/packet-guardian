@@ -150,12 +150,14 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		user.CanManage = (canManage == "1")
 	}
 
+	newUser := (user.ID == 0) // A user get's an ID when it's saved
+
 	if err := user.Save(); err != nil {
 		u.e.Log.Errorf("Error saving user: %s", err.Error())
 		common.NewAPIResponse("Error saving user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	if user.ID == 0 {
+	if newUser {
 		u.e.Log.Infof("Admin %s created user %s", models.GetUserFromContext(r).Username, user.Username)
 		common.NewAPIResponse("User created successfully", nil).WriteResponse(w, http.StatusNoContent)
 		return

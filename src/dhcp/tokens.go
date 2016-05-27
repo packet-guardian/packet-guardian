@@ -10,41 +10,43 @@ import (
 	"github.com/onesimus-systems/dhcp4"
 )
 
-type Token int
+type token int
 
 const (
-	TkEnd Token = iota
-	TkGlobal
-	TkNetwork
-	TkSubnet
-	TkPool
-	TkRegistered
-	TkUnregistered
+	tkEnd token = iota
+	tkGlobal
+	tkNetwork
+	tkSubnet
+	tkPool
+	tkRegistered
+	tkUnregistered
 
-	TkServerIdentifier
-	TkRange
+	tkServerIdentifier
+	tkRange
+	tkFreeLeaseAfter
 
 	beginSettings
-	TkOption
-	TkDefaultLeaseTime
-	TkMaxLeaseTime
+	tkOption
+	tkDefaultLeaseTime
+	tkMaxLeaseTime
 	endSettings
 )
 
 var tokens = [...][]byte{
-	TkEnd:          []byte("end"),
-	TkGlobal:       []byte("global"),
-	TkNetwork:      []byte("network"),
-	TkSubnet:       []byte("subnet"),
-	TkPool:         []byte("pool"),
-	TkRegistered:   []byte("registered"),
-	TkUnregistered: []byte("unregistered"),
+	tkEnd:          []byte("end"),
+	tkGlobal:       []byte("global"),
+	tkNetwork:      []byte("network"),
+	tkSubnet:       []byte("subnet"),
+	tkPool:         []byte("pool"),
+	tkRegistered:   []byte("registered"),
+	tkUnregistered: []byte("unregistered"),
 
-	TkOption:           []byte("option"),
-	TkDefaultLeaseTime: []byte("default-lease-time"),
-	TkMaxLeaseTime:     []byte("max-lease-time"),
-	TkServerIdentifier: []byte("server-identifier"),
-	TkRange:            []byte("range"),
+	tkOption:           []byte("option"),
+	tkDefaultLeaseTime: []byte("default-lease-time"),
+	tkMaxLeaseTime:     []byte("max-lease-time"),
+	tkServerIdentifier: []byte("server-identifier"),
+	tkRange:            []byte("range"),
+	tkFreeLeaseAfter:   []byte("free-lease-after"),
 }
 
 func isSetting(b []byte) bool {

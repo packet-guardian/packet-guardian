@@ -19,84 +19,82 @@ import (
 
 var r = regexp.MustCompile(`\d+ bytes from .*`)
 
-type Pool struct {
-	RangeStart    net.IP
-	RangeEnd      net.IP
-	Settings      *Settings
+type pool struct {
+	rangeStart    net.IP
+	rangeEnd      net.IP
+	settings      *settings
 	optionsCached bool
-	Leases        map[string]*Lease // IP -> Lease
-	Subnet        *Subnet
+	leases        map[string]*Lease // IP -> Lease
+	subnet        *subnet
 	nextFreeStart int
 	ipsInPool     int
 }
 
-func newPool() *Pool {
-	return &Pool{
-		Settings: newSettingsBlock(),
-		Leases:   make(map[string]*Lease),
+func newPool() *pool {
+	return &pool{
+		settings: newSettingsBlock(),
+		leases:   make(map[string]*Lease),
 	}
 }
 
-func (p *Pool) GetCountOfIPs() int {
+func (p *pool) getCountOfIPs() int {
 	if p.ipsInPool == 0 {
-		p.ipsInPool = dhcp4.IPRange(p.RangeStart, p.RangeEnd)
+		p.ipsInPool = dhcp4.IPRange(p.rangeStart, p.rangeEnd)
 	}
 	return p.ipsInPool
 }
 
-// GetLeaseTime returns the lease time given the requested time req and if the client is registered.
+// getLeaseTime returns the lease time given the requested time req and if the client is registered.
 // If req is 0 then the default lease time is returned. Otherwise it will return the lower of
 // req and the maximum lease time. If the pool does not have an explicitly set duration for either,
-// it will get the duration from its Subnet.
-func (p *Pool) GetLeaseTime(req time.Duration, registered bool) time.Duration {
+// it will get the duration from its subnet.
+func (p *pool) getLeaseTime(req time.Duration, registered bool) time.Duration {
 	if req == 0 {
-		if p.Settings.DefaultLeaseTime != 0 {
-			return p.Settings.DefaultLeaseTime
+		if p.settings.defaultLeaseTime != 0 {
+			return p.settings.defaultLeaseTime
 		}
 		// Save the result for later
-		p.Settings.DefaultLeaseTime = p.Subnet.GetLeaseTime(req, registered)
-		return p.Settings.DefaultLeaseTime
+		p.settings.defaultLeaseTime = p.subnet.getLeaseTime(req, registered)
+		return p.settings.defaultLeaseTime
 	}
 
-	if p.Settings.MaxLeaseTime != 0 {
-		if req < p.Settings.MaxLeaseTime {
+	if p.settings.maxLeaseTime != 0 {
+		if req < p.settings.maxLeaseTime {
 			return req
 		}
-		return p.Settings.MaxLeaseTime
+		return p.settings.maxLeaseTime
 	}
 
 	// Save the result for later
-	p.Settings.MaxLeaseTime = p.Subnet.GetLeaseTime(req, registered)
+	p.settings.maxLeaseTime = p.subnet.getLeaseTime(req, registered)
 
-	if req < p.Settings.MaxLeaseTime {
+	if req < p.settings.maxLeaseTime {
 		return req
 	}
-	return p.Settings.MaxLeaseTime
+	return p.settings.maxLeaseTime
 }
 
-func (p *Pool) GetOptions(registered bool) dhcp4.Options {
+func (p *pool) getOptions(registered bool) dhcp4.Options {
 	if p.optionsCached {
-		return p.Settings.Options
+		return p.settings.options
 	}
 
-	higher := p.Subnet.GetOptions(registered)
+	higher := p.subnet.getOptions(registered)
 	for c, v := range higher {
-		if _, ok := p.Settings.Options[c]; !ok {
-			p.Settings.Options[c] = v
+		if _, ok := p.settings.options[c]; !ok {
+			p.settings.options[c] = v
 		}
 	}
 	p.optionsCached = true
-	return p.Settings.Options
+	return p.settings.options
 }
 
-func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
+func (p *pool) getFreeLease(e *common.Environment) *Lease {
 	now := time.Now()
 
-	// Find an expired current lease over a week old
-	weekInSecs := time.Duration(604800) * time.Second
-	// Find an unregistered lease over two hours old
-	twoHours := time.Duration(2) * time.Hour
-	for _, l := range p.Leases {
+	regFreeTime := time.Duration(p.subnet.network.global.registeredSettings.freeLeaseAfter) * time.Second
+	unRegFreeTime := time.Duration(p.subnet.network.global.unregisteredSettings.freeLeaseAfter) * time.Second
+	for _, l := range p.leases {
 		if l.IsAbandoned { // IP in use by a device we don't know about
 			continue
 		}
@@ -107,25 +105,28 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 			l.Offered = false
 			return l
 		}
-		if !l.Registered && l.End.Add(twoHours).Before(now) { // Unregisted lease expired two hours ago
+		if !l.Registered && l.End.Add(unRegFreeTime).Before(now) { // Unregisted lease expired
 			return l
 		}
-		if l.Registered && l.End.Add(weekInSecs).Before(now) { // Lease expired a week ago
+		if l.Registered && l.End.Add(regFreeTime).Before(now) { // Registered lease expired
 			return l
 		}
 	}
 
 	// No candidates, find the next available lease
-	for i := p.nextFreeStart; i < p.GetCountOfIPs(); i++ {
-		next := dhcp4.IPAdd(p.RangeStart, i)
+	for i := p.nextFreeStart; i < p.getCountOfIPs(); i++ {
+		next := dhcp4.IPAdd(p.rangeStart, i)
+		p.nextFreeStart = i + 1
+
 		// Check if IP has a lease
-		_, ok := p.Leases[next.String()]
+		// Sanity check
+		_, ok := p.leases[next.String()]
 		if ok {
 			continue
 		}
 
 		// IP has no lease with it
-		l := NewLease(e)
+		l := newLease(e)
 		// All known leases have already been checked, which means if this IP
 		// is in use, we didn't do it. Mark as abandoned.
 		if !e.IsTesting() && isIPInUse(next) {
@@ -138,18 +139,17 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 
 		// Set IP and pool, add to leases map, return
 		l.IP = next
-		l.Network = p.Subnet.Network.Name
-		l.Pool = p
-		l.Registered = !p.Subnet.AllowUnknown
-		p.Leases[next.String()] = l
-		p.nextFreeStart = i + 1
+		l.Network = p.subnet.network.name
+		l.pool = p
+		l.Registered = !p.subnet.allowUnknown
+		p.leases[next.String()] = l
 		return l
 	}
 
 	// No free leases, bring out the big guns
 	// Find the oldest expired lease
 	var longestExpiredLease *Lease
-	for _, l := range p.Leases {
+	for _, l := range p.leases {
 		if l.End.After(now) { // Skip active leases
 			continue
 		}
@@ -170,7 +170,7 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 
 	// Now we're getting desperate
 	// Check abandoned leases for availability
-	for _, l := range p.Leases {
+	for _, l := range p.leases {
 		if !l.IsAbandoned { // Skip non-abandoned leases
 			continue
 		}
@@ -183,14 +183,14 @@ func (p *Pool) GetFreeLease(e *common.Environment) *Lease {
 	return nil
 }
 
-func (p *Pool) Includes(ip net.IP) bool {
-	return dhcp4.IPInRange(p.RangeStart, p.RangeEnd, ip)
+func (p *pool) includes(ip net.IP) bool {
+	return dhcp4.IPInRange(p.rangeStart, p.rangeEnd, ip)
 }
 
-func (p *Pool) Print() {
-	fmt.Printf("\n---Pool %s - %s---\n", p.RangeStart.String(), p.RangeEnd.String())
-	fmt.Println("Pool Settings")
-	p.Settings.Print()
+func (p *pool) print() {
+	fmt.Printf("\n---Pool %s - %s---\n", p.rangeStart.String(), p.rangeEnd.String())
+	fmt.Println("Pool settings")
+	p.settings.Print()
 }
 
 // isIPInUse will use the system ping utility to determine if an IP is in use.
@@ -199,10 +199,10 @@ func (p *Pool) Print() {
 // Windows machines.
 func isIPInUse(host net.IP) bool {
 	count := "-c"
-	wait := "2"
+	wait := "1"
 	if runtime.GOOS == "windows" {
 		count = "-n"
-		wait = "2000"
+		wait = "500"
 	}
 
 	// -c/-n: packet count, -w: timeout in seconds
@@ -213,8 +213,8 @@ func isIPInUse(host net.IP) bool {
 	return (r.Find(out) != nil)
 }
 
-func (p *Pool) PrintLeases() {
-	for _, l := range p.Leases {
+func (p *pool) printLeases() {
+	for _, l := range p.leases {
 		fmt.Printf("%+v\n", l)
 	}
 }

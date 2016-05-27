@@ -26,6 +26,7 @@ func GetLeaseStats(e *common.Environment) LeaseStats {
 		e.Log.WithField("ErrMsg", err).Error("SQL statement failed")
 		return nil
 	}
+	defer rows.Close()
 	counts := make(LeaseStats)
 	for rows.Next() {
 		var network string

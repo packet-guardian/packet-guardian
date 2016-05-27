@@ -1,4 +1,4 @@
-.PHONY: build clean doc fmt install lint run test vet vendor_cleanup vendor_update vendor_updateall vendor_save vendor_saveall
+.PHONY: build clean doc fmt install lint test vet vendor_cleanup vendor_update vendor_updateall vendor_save vendor_saveall
 
 VERSION?=unversioned
 
@@ -6,6 +6,7 @@ default: build
 
 build: test
 	go build -v -o ./bin/pg ./src/cmd/pg
+	go build -v -o ./bin/dhcp ./src/cmd/dhcp
 
 clean:
 	rm -rf ./bin/*
@@ -18,10 +19,17 @@ dist: build
 	@cp -R config dist/packet-guardian/
 	@cp -R public dist/packet-guardian/
 	@cp -R templates dist/packet-guardian/
+
 	@cp LICENSE dist/packet-guardian/
 	@cp README.md dist/packet-guardian/
+	@cp Dockerfile dist/packet-guardian/
+	@cp install.sh dist/packet-guardian/
+	@cp uninstall.sh dist/packet-guardian/
+
 	@mkdir dist/packet-guardian/bin
 	@cp bin/pg dist/packet-guardian/bin/pg
+	@cp bin/dhcp dist/packet-guardian/bin/dhcp
+
 	@mkdir dist/packet-guardian/sessions
 
 	(cd "dist"; tar -cz packet-guardian) > "dist/pg-dist-$(VERSION).tar.gz"
@@ -35,15 +43,13 @@ fmt:
 	go fmt ./src/...
 
 install: test
-	GO_BIN=$(PWD)/bin go install -v ./src/cmd/pg
+	GOBIN=$(PWD)/bin go install -v ./src/cmd/pg
+	GOBIN=$(PWD)/bin go install -v ./src/cmd/dhcp
 
 # https://github.com/golang/lint
 # go get github.com/golang/lint/golint
 lint:
 	golint ./src/...
-
-run: build
-	-./bin/pg -d -c=$(CONFIG)
 
 test: vet
 ifdef verbose

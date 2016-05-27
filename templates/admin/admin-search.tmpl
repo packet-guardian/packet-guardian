@@ -44,6 +44,8 @@
             <td class="not-important">{{.RegisteredFrom}}</td>
             {{if eq .Expires.Unix 0}}
             <td>Never</td>
+            {{else if eq .Expires.Unix 1}}
+            <td>Rolling</td>
             {{else}}
             <td>{{.Expires.Format "2006-01-02 15:04"}}</td>
             {{end}}

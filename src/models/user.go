@@ -189,6 +189,7 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	var results []*User
 	for rows.Next() {

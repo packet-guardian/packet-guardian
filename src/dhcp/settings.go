@@ -11,23 +11,24 @@ import (
 	"github.com/onesimus-systems/dhcp4"
 )
 
-type Settings struct {
-	Options          map[dhcp4.OptionCode][]byte
-	DefaultLeaseTime time.Duration
-	MaxLeaseTime     time.Duration
+type settings struct {
+	options          map[dhcp4.OptionCode][]byte
+	defaultLeaseTime time.Duration
+	maxLeaseTime     time.Duration
+	freeLeaseAfter   int
 }
 
-func newSettingsBlock() *Settings {
-	return &Settings{
-		Options: make(map[dhcp4.OptionCode][]byte),
+func newSettingsBlock() *settings {
+	return &settings{
+		options: make(map[dhcp4.OptionCode][]byte),
 	}
 }
 
-func (s *Settings) Print() {
-	fmt.Printf("Default Lease Time: %s\n", s.DefaultLeaseTime.String())
-	fmt.Printf("Max Lease Time: %s\n", s.MaxLeaseTime.String())
+func (s *settings) Print() {
+	fmt.Printf("Default Lease Time: %s\n", s.defaultLeaseTime.String())
+	fmt.Printf("Max Lease Time: %s\n", s.maxLeaseTime.String())
 	fmt.Println("-DHCP Options-")
-	for c, v := range s.Options {
+	for c, v := range s.options {
 		fmt.Printf("%s: %v\n", c.String(), v)
 	}
 }

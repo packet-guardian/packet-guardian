@@ -15,6 +15,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/dhcp"
@@ -22,23 +25,36 @@ import (
 
 var (
 	configFile string
-	dhcpConfig string
 	dev        bool
+	testConfig bool
 )
 
 func init() {
-	flag.StringVar(&configFile, "pc", "", "Packet Guardian configuration file")
-	flag.StringVar(&dhcpConfig, "dc", "", "DHCP configuration file")
+	flag.StringVar(&configFile, "c", "", "Configuration file")
 	flag.BoolVar(&dev, "d", false, "Run in development mode")
+	flag.BoolVar(&testConfig, "t", false, "Test DHCP config")
 }
 
 func main() {
 	flag.Parse()
 
+	if testConfig {
+		testDHCPConfig()
+		return
+	}
+
 	var err error
 	e := common.NewEnvironment(common.EnvProd)
 	if dev {
 		e.Env = common.EnvDev
+	}
+
+	if configFile == "" || !common.FileExists(configFile) {
+		configFile = common.FindConfigFile()
+	}
+	if configFile == "" {
+		fmt.Println("No configuration file found")
+		os.Exit(1)
 	}
 
 	e.Config, err = common.NewConfig(configFile)
@@ -50,13 +66,26 @@ func main() {
 	e.Log = common.NewLogger(e.Config, "dhcp")
 	e.Log.Debugf("Configuration loaded from %s", configFile)
 
+	if !common.FileExists(e.Config.DHCP.ConfigFile) {
+		e.Log.Fatalf("DHCP configuration file not found: %s", e.Config.DHCP.ConfigFile)
+	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func(e *common.Environment) {
+		<-c
+		e.Log.Notice("Shutting down...")
+		time.Sleep(2)
+		os.Exit(0)
+	}(e)
+
 	e.DB, err = common.NewDatabaseAccessor(e.Config)
 	if err != nil {
 		e.Log.Fatalf("Error loading database: %s", err.Error())
 	}
 	e.Log.Debugf("Using %s database at %s", e.Config.Database.Type, e.Config.Database.Address)
 
-	dhcpConfig, err := dhcp.ParseFile(dhcpConfig)
+	dhcpConfig, err := dhcp.ParseFile(e.Config.DHCP.ConfigFile)
 	if err != nil {
 		e.Log.WithField("ErrMsg", err).Fatal("Error loading DHCP configuration")
 	}
@@ -66,4 +95,14 @@ func main() {
 		e.Log.WithField("ErrMsg", err).Fatal("Couldn't load leases")
 	}
 	e.Log.Fatal(handler.ListenAndServe())
+}
+
+func testDHCPConfig() {
+	_, err := dhcp.ParseFile(configFile)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Configuration looks good")
 }

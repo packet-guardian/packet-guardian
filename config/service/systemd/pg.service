@@ -1,0 +1,21 @@
+[Unit]
+Description=Packet Guardian - Captive Portal
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Environment=PG_CONFIG=/etc/packet-guardian/config-pg.toml
+Type=simple
+Restart=on-failure
+
+User=packetg
+Group=packetg
+WorkingDirectory=/opt/packet-guardian
+
+StandardOutput=journal
+StandardError=inherit
+
+ExecStart=/opt/packet-guardian/bin/pg
+
+[Install]
+WantedBy=multi-user.target

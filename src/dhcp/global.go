@@ -12,104 +12,104 @@ import (
 	"github.com/onesimus-systems/dhcp4"
 )
 
-type Global struct {
-	ServerIdentifier     net.IP
-	Settings             *Settings
-	RegisteredSettings   *Settings
+type global struct {
+	serverIdentifier     net.IP
+	settings             *settings
+	registeredSettings   *settings
 	regOptionsCached     bool
-	UnregisteredSettings *Settings
+	unregisteredSettings *settings
 	unregOptionsCached   bool
 }
 
-func newGlobal() *Global {
-	return &Global{
-		Settings:             newSettingsBlock(),
-		RegisteredSettings:   newSettingsBlock(),
-		UnregisteredSettings: newSettingsBlock(),
+func newGlobal() *global {
+	return &global{
+		settings:             newSettingsBlock(),
+		registeredSettings:   newSettingsBlock(),
+		unregisteredSettings: newSettingsBlock(),
 	}
 }
 
 // GetLeaseTime returns the lease time given the requested time req and if the client is registered.
 // If req is 0 then the default lease time is returned. Otherwise it will return the lower of
 // req and the maximum lease time. If a duration is not set for either, they will both be 1 week.
-func (g *Global) GetLeaseTime(req time.Duration, registered bool) time.Duration {
+func (g *global) getLeaseTime(req time.Duration, registered bool) time.Duration {
 	// TODO: Clean this up
 	if registered {
 		if req == 0 {
-			if g.RegisteredSettings.DefaultLeaseTime != 0 {
-				return g.RegisteredSettings.DefaultLeaseTime
+			if g.registeredSettings.defaultLeaseTime != 0 {
+				return g.registeredSettings.defaultLeaseTime
 			}
-			return g.Settings.DefaultLeaseTime
+			return g.settings.defaultLeaseTime
 		}
 
-		if g.RegisteredSettings.MaxLeaseTime != 0 {
-			if req < g.RegisteredSettings.MaxLeaseTime {
+		if g.registeredSettings.maxLeaseTime != 0 {
+			if req < g.registeredSettings.maxLeaseTime {
 				return req
 			}
-			return g.RegisteredSettings.MaxLeaseTime
+			return g.registeredSettings.maxLeaseTime
 		}
 
-		if req < g.Settings.MaxLeaseTime {
+		if req < g.settings.maxLeaseTime {
 			return req
 		}
-		return g.Settings.MaxLeaseTime
+		return g.settings.maxLeaseTime
 	}
 
 	if req == 0 {
-		if g.UnregisteredSettings.DefaultLeaseTime != 0 {
-			return g.UnregisteredSettings.DefaultLeaseTime
+		if g.unregisteredSettings.defaultLeaseTime != 0 {
+			return g.unregisteredSettings.defaultLeaseTime
 		}
-		return g.Settings.DefaultLeaseTime
+		return g.settings.defaultLeaseTime
 	}
 
-	if g.UnregisteredSettings.MaxLeaseTime != 0 {
-		if req < g.UnregisteredSettings.MaxLeaseTime {
+	if g.unregisteredSettings.maxLeaseTime != 0 {
+		if req < g.unregisteredSettings.maxLeaseTime {
 			return req
 		}
-		return g.UnregisteredSettings.MaxLeaseTime
+		return g.unregisteredSettings.maxLeaseTime
 	}
 
-	if req < g.Settings.MaxLeaseTime {
+	if req < g.settings.maxLeaseTime {
 		return req
 	}
-	return g.Settings.MaxLeaseTime
+	return g.settings.maxLeaseTime
 }
 
-func (g *Global) GetOptions(registered bool) dhcp4.Options {
+func (g *global) getOptions(registered bool) dhcp4.Options {
 	if registered && g.regOptionsCached {
-		return g.RegisteredSettings.Options
+		return g.registeredSettings.options
 	} else if !registered && g.unregOptionsCached {
-		return g.UnregisteredSettings.Options
+		return g.unregisteredSettings.options
 	}
 
 	if registered {
 		// Merge "global" settings into registered settings
-		for c, v := range g.Settings.Options {
-			if _, ok := g.RegisteredSettings.Options[c]; !ok {
-				g.RegisteredSettings.Options[c] = v
+		for c, v := range g.settings.options {
+			if _, ok := g.registeredSettings.options[c]; !ok {
+				g.registeredSettings.options[c] = v
 			}
 		}
 		g.regOptionsCached = true
-		return g.RegisteredSettings.Options
+		return g.registeredSettings.options
 	}
 
 	// Merge network "global" settings into unregistered settings
-	for c, v := range g.Settings.Options {
-		if _, ok := g.UnregisteredSettings.Options[c]; !ok {
-			g.UnregisteredSettings.Options[c] = v
+	for c, v := range g.settings.options {
+		if _, ok := g.unregisteredSettings.options[c]; !ok {
+			g.unregisteredSettings.options[c] = v
 		}
 	}
 	g.unregOptionsCached = true
-	return g.UnregisteredSettings.Options
+	return g.unregisteredSettings.options
 }
 
-func (g *Global) Print() {
+func (g *global) print() {
 	fmt.Println("\n---Global Configuration---")
-	fmt.Printf("Server Identifier: %s\n", g.ServerIdentifier.String())
+	fmt.Printf("Server Identifier: %s\n", g.serverIdentifier.String())
 	fmt.Println("\n--Global Settings--")
-	g.Settings.Print()
+	g.settings.Print()
 	fmt.Println("\n--Global Registered Settings--")
-	g.RegisteredSettings.Print()
+	g.registeredSettings.Print()
 	fmt.Println("\n--Global Unregistered Settings--")
-	g.UnregisteredSettings.Print()
+	g.unregisteredSettings.Print()
 }

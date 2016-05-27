@@ -4,6 +4,8 @@ go:
     - tip
 
 matrix:
+    allow_failures:
+        - go: tip
     include:
         - go: 1.5
           env: GO15VENDOREXPERIMENT=1
