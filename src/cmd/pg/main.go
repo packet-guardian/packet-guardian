@@ -14,21 +14,19 @@ import (
 	"time"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/server"
 	"github.com/onesimus-systems/packet-guardian/src/tasks"
 )
 
 const (
-	version = "0.6.2"
+	version = "0.7.0"
 )
 
 var (
-	configFile   string
-	dev          bool
-	verFlag      bool
-	testConfig   bool
-	testDHCPConf bool
+	configFile string
+	dev        bool
+	verFlag    bool
+	testConfig bool
 )
 
 func init() {
@@ -36,8 +34,7 @@ func init() {
 	flag.BoolVar(&dev, "d", false, "Run in development mode")
 	flag.BoolVar(&verFlag, "version", false, "Display version information")
 	flag.BoolVar(&verFlag, "v", verFlag, "Display version information")
-	flag.BoolVar(&testConfig, "test", false, "Test main configuration")
-	flag.BoolVar(&testDHCPConf, "testd", false, "Test DHCP configuration only")
+	flag.BoolVar(&testConfig, "t", false, "Test main configuration")
 }
 
 func main() {
@@ -51,7 +48,9 @@ func main() {
 		return
 	}
 
-	configFile = findConfigFile()
+	if configFile == "" || !common.FileExists(configFile) {
+		configFile = common.FindConfigFile()
+	}
 	if configFile == "" {
 		fmt.Println("No configuration file found")
 		os.Exit(1)
@@ -59,11 +58,6 @@ func main() {
 
 	if testConfig {
 		testMainConfig()
-		return
-	}
-
-	if testDHCPConf {
-		testDHCPConfig()
 		return
 	}
 
@@ -106,22 +100,6 @@ func main() {
 		e.Log.Fatalf("Error loading frontend templates: %s", err.Error())
 	}
 
-	// Start DHCP server
-	if e.Config.DHCP.Enabled {
-		dhcpConfig, err := dhcp.ParseFile(e.Config.DHCP.ConfigFile)
-		if err != nil {
-			e.Log.WithField("ErrMsg", err).Fatal("Failed loading DHCP config")
-		}
-
-		handler := dhcp.NewDHCPServer(dhcpConfig, e)
-		if err := handler.LoadLeases(); err != nil {
-			e.Log.WithField("ErrMsg", err).Fatal("Couldn't load leases")
-		}
-		go func() {
-			e.Log.Fatal(handler.ListenAndServe())
-		}()
-	}
-
 	go tasks.StartTaskScheduler(e)
 
 	// Start web server
@@ -136,39 +114,11 @@ Version: %s
 `, version)
 }
 
-func findConfigFile() string {
-	// Find a configuration file if one wasn't given
-	if configFile != "" && common.FileExists(configFile) {
-		return configFile
-	}
-
-	if os.Getenv("PG_CONFIG") != "" && common.FileExists(os.Getenv("PG_CONFIG")) {
-		return os.Getenv("PG_CONFIG")
-	} else if common.FileExists("./config.toml") {
-		return "./config.toml"
-	} else if common.FileExists(os.ExpandEnv("$HOME/.pg/config.toml")) {
-		return os.ExpandEnv("$HOME/.pg/config.toml")
-	} else if common.FileExists("/etc/packet-guardian/config.toml") {
-		return "/etc/packet-guardian/config.toml"
-	}
-	return ""
-}
-
 func testMainConfig() {
 	_, err := common.NewConfig(configFile)
 	if err != nil {
 		fmt.Printf("Error loading configuration: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Configuration looks good")
-}
-
-func testDHCPConfig() {
-	_, err := dhcp.ParseFile(configFile)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
-
 	fmt.Println("Configuration looks good")
 }

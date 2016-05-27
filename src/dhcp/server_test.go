@@ -76,7 +76,7 @@ func (t timeChecker) Match(v driver.Value) bool {
 	return (v.(int64) > 0)
 }
 
-func setUpTest1(t *testing.T) *DHCPHandler {
+func setUpTest1(t *testing.T) *Handler {
 	// Set up mock database
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -309,7 +309,7 @@ func BenchmarkDHCPDiscover(b *testing.B) {
 		b.Fatalf("Test config failed parsing: %v", err)
 	}
 	server := NewDHCPServer(c, e)
-	pool := c.Networks["Network1"].Subnets[1].Pools[0] // Registered pool
+	pool := c.networks["Network1"].subnets[1].pools[0] // Registered pool
 
 	// Create test request packet
 	mac, _ := net.ParseMAC("12:34:56:12:34:56")
@@ -341,6 +341,6 @@ func BenchmarkDHCPDiscover(b *testing.B) {
 		if dp == nil {
 			b.Fatal("ServeDHCP returned nil")
 		}
-		pool.Leases["10.0.2.10"].End = unixZero
+		pool.leases["10.0.2.10"].End = unixZero
 	}
 }

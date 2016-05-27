@@ -82,9 +82,23 @@ type Config struct {
 		}
 	}
 	DHCP struct {
-		Enabled    bool
 		ConfigFile string
 	}
+}
+
+func FindConfigFile() string {
+	if os.Getenv("PG_CONFIG") != "" && FileExists(os.Getenv("PG_CONFIG")) {
+		return os.Getenv("PG_CONFIG")
+	} else if FileExists("./config.toml") {
+		return "./config.toml"
+	} else if FileExists("./config/config.toml") {
+		return "./config/config.toml"
+	} else if FileExists(os.ExpandEnv("$HOME/.pg/config.toml")) {
+		return os.ExpandEnv("$HOME/.pg/config.toml")
+	} else if FileExists("/etc/packet-guardian/config.toml") {
+		return "/etc/packet-guardian/config.toml"
+	}
+	return ""
 }
 
 func NewEmptyConfig() *Config {

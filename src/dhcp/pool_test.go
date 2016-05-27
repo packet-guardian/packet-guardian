@@ -25,15 +25,15 @@ func TestIPGiveOut(t *testing.T) {
 		t.Fatalf("Test config failed parsing: %v", err)
 	}
 
-	pool := c.Networks["Network1"].Subnets[0].Pools[0]
-	lease := pool.GetFreeLease(e)
+	pool := c.networks["Network1"].subnets[0].pools[0]
+	lease := pool.getFreeLease(e)
 	if !bytes.Equal(lease.IP.To4(), []byte{0xa, 0x0, 0x1, 0xa}) {
 		t.Errorf("Incorrect lease. Expected %v, got %v", []byte{0xa, 0x0, 0x2, 0xa}, lease.IP)
 	}
 	lease.End = time.Now().Add(time.Duration(10) * time.Second)
 
 	// Test next lease is given
-	lease = pool.GetFreeLease(e)
+	lease = pool.getFreeLease(e)
 	if !bytes.Equal(lease.IP.To4(), []byte{0xa, 0x0, 0x1, 0xb}) {
 		t.Errorf("Incorrect lease. Expected %v, got %v", []byte{0xa, 0x0, 0x2, 0xb}, lease.IP)
 	}
@@ -58,10 +58,10 @@ func benchmarkPool(name string, b *testing.B) {
 		b.Fatalf("Test config failed parsing: %v", err)
 	}
 
-	pool := c.Networks[name].Subnets[0].Pools[0]
+	pool := c.networks[name].subnets[0].pools[0]
 	// Burn through all but the last lease
-	for i := 0; i < pool.GetCountOfIPs()-1; i++ {
-		lease := pool.GetFreeLease(e)
+	for i := 0; i < pool.getCountOfIPs()-1; i++ {
+		lease := pool.getFreeLease(e)
 		if lease == nil {
 			b.FailNow()
 		}
@@ -70,7 +70,7 @@ func benchmarkPool(name string, b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		lease := pool.GetFreeLease(e)
+		lease := pool.getFreeLease(e)
 		if lease == nil {
 			b.Fatal("Lease is nil")
 		}

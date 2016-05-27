@@ -16,6 +16,9 @@ import (
 	"github.com/onesimus-systems/dhcp4"
 )
 
+// ParseFile takes the file name to a configuration file.
+// It will attempt to parse the file using the PG-DHCP configuration
+// format. If an error occures config will be nil.
 func ParseFile(path string) (*Config, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -82,29 +85,29 @@ func (p *parser) parse() (*Config, error) {
 		lineParts := bytes.SplitN(line, []byte(" "), 2)
 		keyword := lineParts[0]
 
-		if bytes.Equal(keyword, tokens[TkGlobal]) {
-			if p.c.Global != nil {
+		if bytes.Equal(keyword, tokens[tkGlobal]) {
+			if p.c.global != nil {
 				return nil, newError(p.line, "unexpected 'global'")
 			}
-			if len(p.c.Networks) > 0 {
+			if len(p.c.networks) > 0 {
 				return nil, newError(p.line, "global settings must come before network settings")
 			}
 			gc, err := p.parseGlobal()
 			if err != nil {
 				return nil, err
 			}
-			p.c.Global = gc
+			p.c.global = gc
 			continue
-		} else if bytes.Equal(keyword, tokens[TkNetwork]) {
-			if p.c.Global == nil {
-				p.c.Global = newGlobal()
+		} else if bytes.Equal(keyword, tokens[tkNetwork]) {
+			if p.c.global == nil {
+				p.c.global = newGlobal()
 			}
 			net, err := p.parseNetwork(lineParts[1])
 			if err != nil {
 				return nil, err
 			}
-			net.Global = p.c.Global
-			p.c.Networks[net.Name] = net
+			net.global = p.c.global
+			p.c.networks[net.name] = net
 			continue
 		} else {
 			return nil, newError(p.line, `unexpected "%s"`, keyword)
@@ -114,7 +117,7 @@ func (p *parser) parse() (*Config, error) {
 	return p.c, p.s.Err()
 }
 
-func (p *parser) parseGlobal() (*Global, error) {
+func (p *parser) parseGlobal() (*global, error) {
 	g := newGlobal()
 	// Modes: 0 Global, 1 Global registered, 2 Global unregistered
 	mode := 0
@@ -127,48 +130,48 @@ func (p *parser) parseGlobal() (*Global, error) {
 		lineParts := bytes.SplitN(line, []byte(" "), 2)
 		keyword := lineParts[0]
 
-		if bytes.Equal(keyword, tokens[TkEnd]) {
+		if bytes.Equal(keyword, tokens[tkEnd]) {
 			if mode != 0 {
 				mode = 0
 				continue
 			}
 			break
-		} else if bytes.Equal(keyword, tokens[TkServerIdentifier]) {
+		} else if bytes.Equal(keyword, tokens[tkServerIdentifier]) {
 			ip := net.ParseIP(string(lineParts[1]))
 			if ip == nil {
 				return nil, newError(p.line, `invalid IP address '%s'`, lineParts[1])
 			}
-			g.ServerIdentifier = ip
+			g.serverIdentifier = ip
 			continue
-		} else if bytes.Equal(keyword, tokens[TkFreeLeaseAfter]) {
+		} else if bytes.Equal(keyword, tokens[tkFreeLeaseAfter]) {
 			time, err := strconv.Atoi(string(lineParts[1]))
 			if err != nil {
 				return nil, newError(p.line, "invalid value for free-lease-after")
 			}
 
 			if mode == 1 {
-				g.RegisteredSettings.FreeLeaseAfter = time
+				g.registeredSettings.freeLeaseAfter = time
 				continue
 			} else if mode == 2 {
-				g.UnregisteredSettings.FreeLeaseAfter = time
+				g.unregisteredSettings.freeLeaseAfter = time
 				continue
 			}
 
 			return nil, newError(p.line, "free-lease-after can only be in a global registered or unregistered block")
-		} else if bytes.Equal(keyword, tokens[TkRegistered]) {
+		} else if bytes.Equal(keyword, tokens[tkRegistered]) {
 			mode = 1
 			continue
-		} else if bytes.Equal(keyword, tokens[TkUnregistered]) {
+		} else if bytes.Equal(keyword, tokens[tkUnregistered]) {
 			mode = 2
 			continue
 		} else if isSetting(keyword) {
 			var err error
 			if mode == 1 {
-				err = p.parseSetting(line, g.RegisteredSettings)
+				err = p.parseSetting(line, g.registeredSettings)
 			} else if mode == 2 {
-				err = p.parseSetting(line, g.UnregisteredSettings)
+				err = p.parseSetting(line, g.unregisteredSettings)
 			} else {
-				err = p.parseSetting(line, g.Settings)
+				err = p.parseSetting(line, g.settings)
 			}
 			if err != nil {
 				return nil, err
@@ -177,26 +180,26 @@ func (p *parser) parseGlobal() (*Global, error) {
 			return nil, newError(p.line, `unexpected "%s"`, keyword)
 		}
 	}
-	if g.Settings.DefaultLeaseTime == 0 {
-		g.Settings.DefaultLeaseTime = time.Duration(12) * time.Hour // 12 hours
+	if g.settings.defaultLeaseTime == 0 {
+		g.settings.defaultLeaseTime = time.Duration(12) * time.Hour // 12 hours
 	}
-	if g.Settings.MaxLeaseTime == 0 {
-		g.Settings.MaxLeaseTime = time.Duration(12) * time.Hour // 12 hours
+	if g.settings.maxLeaseTime == 0 {
+		g.settings.maxLeaseTime = time.Duration(12) * time.Hour // 12 hours
 	}
-	if g.UnregisteredSettings.FreeLeaseAfter == 0 {
-		g.UnregisteredSettings.FreeLeaseAfter = 3600 // 1 hour
+	if g.unregisteredSettings.freeLeaseAfter == 0 {
+		g.unregisteredSettings.freeLeaseAfter = 3600 // 1 hour
 	}
-	if g.RegisteredSettings.FreeLeaseAfter == 0 {
-		g.RegisteredSettings.FreeLeaseAfter = 604800 // 1 week
+	if g.registeredSettings.freeLeaseAfter == 0 {
+		g.registeredSettings.freeLeaseAfter = 604800 // 1 week
 	}
 	return g, nil
 }
 
-func (p *parser) parseSetting(line []byte, s *Settings) error {
+func (p *parser) parseSetting(line []byte, s *settings) error {
 	lineParts := bytes.SplitN(line, []byte(" "), 2)
 	keyword := lineParts[0]
 
-	if bytes.Equal(keyword, tokens[TkOption]) {
+	if bytes.Equal(keyword, tokens[tkOption]) {
 		lineParts := bytes.SplitN(lineParts[1], []byte(" "), 2)
 		if len(lineParts) < 2 {
 			return newError(p.line, `option %s has no value`, lineParts[1])
@@ -209,19 +212,19 @@ func (p *parser) parseSetting(line []byte, s *Settings) error {
 		if err != nil {
 			return err
 		}
-		s.Options[oc] = data
-	} else if bytes.Equal(keyword, tokens[TkDefaultLeaseTime]) {
+		s.options[oc] = data
+	} else if bytes.Equal(keyword, tokens[tkDefaultLeaseTime]) {
 		i, err := strconv.Atoi(string(lineParts[1]))
 		if err != nil {
 			return newError(p.line, `invalid seconds amount: %s`, lineParts[1])
 		}
-		s.DefaultLeaseTime = time.Duration(i) * time.Second
-	} else if bytes.Equal(keyword, tokens[TkMaxLeaseTime]) {
+		s.defaultLeaseTime = time.Duration(i) * time.Second
+	} else if bytes.Equal(keyword, tokens[tkMaxLeaseTime]) {
 		i, err := strconv.Atoi(string(lineParts[1]))
 		if err != nil {
 			return newError(p.line, `invalid seconds amount: %s`, lineParts[1])
 		}
-		s.MaxLeaseTime = time.Duration(i) * time.Second
+		s.maxLeaseTime = time.Duration(i) * time.Second
 	} else {
 		return newError(p.line, `unexpected "%s"`, keyword)
 	}
@@ -283,7 +286,7 @@ func (p *parser) parseDHCPOption(opcode dhcp4.OptionCode, data []byte) ([]byte, 
 	return data, nil
 }
 
-func (p *parser) parseSettingBlock() (*Settings, error) {
+func (p *parser) parseSettingBlock() (*settings, error) {
 	s := newSettingsBlock()
 	for {
 		line := p.nextLine()
@@ -291,7 +294,7 @@ func (p *parser) parseSettingBlock() (*Settings, error) {
 			break
 		}
 
-		if bytes.Equal(line, tokens[TkEnd]) {
+		if bytes.Equal(line, tokens[tkEnd]) {
 			break
 		}
 
@@ -302,7 +305,7 @@ func (p *parser) parseSettingBlock() (*Settings, error) {
 	return s, nil
 }
 
-func (p *parser) parseNetwork(header []byte) (*Network, error) {
+func (p *parser) parseNetwork(header []byte) (*network, error) {
 	if len(header) == 0 {
 		return nil, newError(p.line, "network block requires a name")
 	}
@@ -318,7 +321,7 @@ func (p *parser) parseNetwork(header []byte) (*Network, error) {
 		lineParts := bytes.SplitN(line, []byte(" "), 2)
 		keyword := lineParts[0]
 
-		if bytes.Equal(keyword, tokens[TkEnd]) {
+		if bytes.Equal(keyword, tokens[tkEnd]) {
 			if mode != 0 {
 				mode = 0
 				continue
@@ -327,23 +330,23 @@ func (p *parser) parseNetwork(header []byte) (*Network, error) {
 		} else if isSetting(keyword) {
 			var err error
 			if mode == 1 {
-				err = p.parseSetting(line, n.RegisteredSettings)
+				err = p.parseSetting(line, n.registeredSettings)
 			} else if mode == 2 {
-				err = p.parseSetting(line, n.UnregisteredSettings)
+				err = p.parseSetting(line, n.unregisteredSettings)
 			} else {
-				err = p.parseSetting(line, n.Settings)
+				err = p.parseSetting(line, n.settings)
 			}
 			if err != nil {
 				return nil, err
 			}
 			continue
-		} else if bytes.Equal(keyword, tokens[TkRegistered]) {
+		} else if bytes.Equal(keyword, tokens[tkRegistered]) {
 			mode = 1
 			continue
-		} else if bytes.Equal(keyword, tokens[TkUnregistered]) {
+		} else if bytes.Equal(keyword, tokens[tkUnregistered]) {
 			mode = 2
 			continue
-		} else if bytes.Equal(keyword, tokens[TkSubnet]) {
+		} else if bytes.Equal(keyword, tokens[tkSubnet]) {
 			if mode == 0 {
 				return nil, newError(p.line, "subnet must be in a registered or unregistered block")
 			}
@@ -354,8 +357,8 @@ func (p *parser) parseNetwork(header []byte) (*Network, error) {
 			if err != nil {
 				return nil, err
 			}
-			sub.Network = n
-			n.Subnets = append(n.Subnets, sub)
+			sub.network = n
+			n.subnets = append(n.subnets, sub)
 		} else {
 			return nil, newError(p.line, `unknown identifier %s`, keyword)
 		}
@@ -363,7 +366,7 @@ func (p *parser) parseNetwork(header []byte) (*Network, error) {
 	return n, nil
 }
 
-func (p *parser) parseSubnet(header []byte, allowUnknown bool) (*Subnet, error) {
+func (p *parser) parseSubnet(header []byte, allowUnknown bool) (*subnet, error) {
 	if len(header) == 0 {
 		return nil, newError(p.line, "subnet block must have a CIDR formatted network")
 	}
@@ -372,8 +375,8 @@ func (p *parser) parseSubnet(header []byte, allowUnknown bool) (*Subnet, error) 
 	if err != nil {
 		return nil, newError(p.line, `invalid CIDR formatted network: %s`, header)
 	}
-	s.Net = sub
-	s.AllowUnknown = allowUnknown
+	s.net = sub
+	s.allowUnknown = allowUnknown
 	for {
 		line := p.nextLine()
 		if line == nil {
@@ -383,22 +386,22 @@ func (p *parser) parseSubnet(header []byte, allowUnknown bool) (*Subnet, error) 
 		lineParts := bytes.Split(line, []byte(" "))
 		keyword := lineParts[0]
 
-		if bytes.Equal(keyword, tokens[TkEnd]) {
+		if bytes.Equal(keyword, tokens[tkEnd]) {
 			break
 		} else if isSetting(keyword) {
-			if err := p.parseSetting(line, s.Settings); err != nil {
+			if err := p.parseSetting(line, s.settings); err != nil {
 				return nil, err
 			}
 			continue
-		} else if bytes.Equal(keyword, tokens[TkPool]) {
+		} else if bytes.Equal(keyword, tokens[tkPool]) {
 			pool, err := p.parsePool(nil, nil)
 			if err != nil {
 				return nil, err
 			}
-			pool.Subnet = s
-			s.Pools = append(s.Pools, pool)
+			pool.subnet = s
+			s.pools = append(s.pools, pool)
 			continue
-		} else if bytes.Equal(keyword, tokens[TkRange]) {
+		} else if bytes.Equal(keyword, tokens[tkRange]) {
 			// Implict pool section. The range keyword start an implict pool
 			// All subsequent lines will be consumed by the pool
 			if len(lineParts) != 3 {
@@ -408,30 +411,30 @@ func (p *parser) parseSubnet(header []byte, allowUnknown bool) (*Subnet, error) 
 			if err != nil {
 				return nil, err
 			}
-			pool.Subnet = s
-			s.Pools = append(s.Pools, pool)
+			pool.subnet = s
+			s.pools = append(s.pools, pool)
 			break
 		} else {
 			return nil, newError(p.line, `unknown keyword "%s"`, keyword)
 		}
 	}
-	if _, ok := s.Settings.Options[dhcp4.OptionSubnetMask]; !ok {
-		s.Settings.Options[dhcp4.OptionSubnetMask] = []byte(s.Net.Mask)
+	if _, ok := s.settings.options[dhcp4.OptionSubnetMask]; !ok {
+		s.settings.options[dhcp4.OptionSubnetMask] = []byte(s.net.Mask)
 	}
 	return s, nil
 }
 
-func (p *parser) parsePool(rangeStart, rangeEnd []byte) (*Pool, error) {
+func (p *parser) parsePool(rangeStart, rangeEnd []byte) (*pool, error) {
 	pool := newPool()
 	if rangeStart != nil {
-		pool.RangeStart = net.ParseIP(string(rangeStart))
-		if pool.RangeStart == nil {
+		pool.rangeStart = net.ParseIP(string(rangeStart))
+		if pool.rangeStart == nil {
 			return nil, newError(p.line, `invalid range start "%s"`, rangeStart)
 		}
 	}
 	if rangeEnd != nil {
-		pool.RangeEnd = net.ParseIP(string(rangeEnd))
-		if pool.RangeEnd == nil {
+		pool.rangeEnd = net.ParseIP(string(rangeEnd))
+		if pool.rangeEnd == nil {
 			return nil, newError(p.line, `invalid range start "%s"`, rangeEnd)
 		}
 	}
@@ -444,25 +447,25 @@ func (p *parser) parsePool(rangeStart, rangeEnd []byte) (*Pool, error) {
 		lineParts := bytes.Split(line, []byte(" "))
 		keyword := lineParts[0]
 
-		if bytes.Equal(keyword, tokens[TkEnd]) {
+		if bytes.Equal(keyword, tokens[tkEnd]) {
 			break
 		} else if isSetting(keyword) {
-			if err := p.parseSetting(line, pool.Settings); err != nil {
+			if err := p.parseSetting(line, pool.settings); err != nil {
 				return nil, err
 			}
 			continue
-		} else if bytes.Equal(keyword, tokens[TkRange]) {
+		} else if bytes.Equal(keyword, tokens[tkRange]) {
 			if len(lineParts) != 3 {
 				return nil, newError(p.line, "range requires a start and an end")
 			}
 
-			pool.RangeStart = net.ParseIP(string(lineParts[1]))
-			if pool.RangeStart == nil {
+			pool.rangeStart = net.ParseIP(string(lineParts[1]))
+			if pool.rangeStart == nil {
 				return nil, newError(p.line, `invalid range start "%s"`, lineParts[1])
 			}
 
-			pool.RangeEnd = net.ParseIP(string(lineParts[2]))
-			if pool.RangeEnd == nil {
+			pool.rangeEnd = net.ParseIP(string(lineParts[2]))
+			if pool.rangeEnd == nil {
 				return nil, newError(p.line, `invalid range start "%s"`, lineParts[2])
 			}
 		} else {

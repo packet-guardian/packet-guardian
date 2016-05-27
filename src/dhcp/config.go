@@ -9,28 +9,29 @@ import (
 	"net"
 )
 
+// A Config is the parsed object generated from a PG-DHCP configuration file.
 type Config struct {
-	Global   *Global
-	Networks map[string]*Network
+	global   *global
+	networks map[string]*network
 }
 
 func newConfig() *Config {
 	return &Config{
-		Networks: make(map[string]*Network),
+		networks: make(map[string]*network),
 	}
 }
 
-func (c *Config) Print() {
+func (c *Config) print() {
 	fmt.Println("DHCP Configuration")
-	c.Global.Print()
-	for _, n := range c.Networks {
-		n.Print()
+	c.global.print()
+	for _, n := range c.networks {
+		n.print()
 	}
 }
 
-func (c *Config) SearchNetworksFor(ip net.IP) *Network {
-	for _, network := range c.Networks {
-		if network.Includes(ip) {
+func (c *Config) searchNetworksFor(ip net.IP) *network {
+	for _, network := range c.networks {
+		if network.includes(ip) {
 			return network
 		}
 	}

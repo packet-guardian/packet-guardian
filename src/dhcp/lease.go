@@ -11,8 +11,11 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 
+// A Lease represents a single DHCP lease in a pool. It is bound to a particular
+// pool and network.
 type Lease struct {
 	e           *common.Environment
+	pool        *pool
 	ID          int
 	IP          net.IP
 	MAC         net.HardwareAddr
@@ -22,36 +25,52 @@ type Lease struct {
 	Hostname    string
 	IsAbandoned bool
 	Offered     bool
-	Pool        *Pool
 	Registered  bool
 }
 
-func NewLease(e *common.Environment) *Lease {
+func newLease(e *common.Environment) *Lease {
 	return &Lease{e: e}
 }
 
+// IsRegisteredByIP checks if an IP is leased to a registered MAC address.
+// It will return false if an error occurs as well as the error itself.
+func IsRegisteredByIP(e *common.Environment, ip net.IP) (bool, error) {
+	lease, err := GetLeaseByIP(e, ip)
+	if err != nil {
+		return false, err
+	}
+	return lease.Registered, nil
+}
+
+// GetLeaseByMAC returns a Lease given the mac address. This method will always return
+// a Lease. Make sure to check if error is nil. If a new lease object was created
+// it will have an ID = 0.
 func GetLeaseByMAC(e *common.Environment, mac net.HardwareAddr) (*Lease, error) {
 	sql := "WHERE \"mac\" = ?"
 	leases, err := getLeasesFromDatabase(e, sql, mac.String())
 	if leases == nil || len(leases) == 0 {
-		lease := NewLease(e)
+		lease := newLease(e)
 		lease.MAC = mac
 		return lease, err
 	}
 	return leases[0], nil
 }
 
+// GetLeaseByIP returns a Lease given the IP address. This method will always return
+// a Lease. Make sure to check if error is nil. If a new lease object was created
+// it will have an ID = 0.
 func GetLeaseByIP(e *common.Environment, ip net.IP) (*Lease, error) {
 	sql := "WHERE \"ip\" = ?"
 	leases, err := getLeasesFromDatabase(e, sql, ip.String())
 	if leases == nil || len(leases) == 0 {
-		lease := NewLease(e)
+		lease := newLease(e)
 		lease.IP = ip
 		return lease, err
 	}
 	return leases[0], nil
 }
 
+// GetAllLeases will return a slice of all leases in the database.
 func GetAllLeases(e *common.Environment) ([]*Lease, error) {
 	return getLeasesFromDatabase(e, "")
 }
@@ -112,11 +131,12 @@ func getLeasesFromDatabase(e *common.Environment, where string, values ...interf
 	return results, nil
 }
 
+// IsFree determines if the lease is expired and available for use
 func (l *Lease) IsFree() bool {
 	return (l.ID == 0 || time.Now().After(l.End))
 }
 
-func (l *Lease) Save() error {
+func (l *Lease) save() error {
 	if l.ID == 0 {
 		return l.insertLease()
 	}
@@ -160,7 +180,7 @@ func (l *Lease) insertLease() error {
 	return nil
 }
 
-func (l *Lease) Delete() error {
+func (l *Lease) delete() error {
 	if l.ID == 0 {
 		return nil
 	}

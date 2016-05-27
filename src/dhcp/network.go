@@ -14,23 +14,23 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 
-type Network struct {
-	Global               *Global
-	Name                 string
-	Settings             *Settings
-	RegisteredSettings   *Settings
+type network struct {
+	global               *global
+	name                 string
+	settings             *settings
+	registeredSettings   *settings
 	regOptionsCached     bool
-	UnregisteredSettings *Settings
+	unregisteredSettings *settings
 	unregOptionsCached   bool
-	Subnets              []*Subnet
+	subnets              []*subnet
 }
 
-func newNetwork(name string) *Network {
-	return &Network{
-		Name:                 name,
-		Settings:             newSettingsBlock(),
-		RegisteredSettings:   newSettingsBlock(),
-		UnregisteredSettings: newSettingsBlock(),
+func newNetwork(name string) *network {
+	return &network{
+		name:                 name,
+		settings:             newSettingsBlock(),
+		registeredSettings:   newSettingsBlock(),
+		unregisteredSettings: newSettingsBlock(),
 	}
 }
 
@@ -38,146 +38,146 @@ func newNetwork(name string) *Network {
 // If req is 0 then the default lease time is returned. Otherwise it will return the lower of
 // req and the maximum lease time. If the network does not have an explicitly set duration for either,
 // it will get the duration from Global.
-func (n *Network) GetLeaseTime(req time.Duration, registered bool) time.Duration {
+func (n *network) getLeaseTime(req time.Duration, registered bool) time.Duration {
 	// TODO: Clean this up
 	if registered {
 		if req == 0 {
-			if n.RegisteredSettings.DefaultLeaseTime != 0 {
-				return n.RegisteredSettings.DefaultLeaseTime
+			if n.registeredSettings.defaultLeaseTime != 0 {
+				return n.registeredSettings.defaultLeaseTime
 			}
-			if n.Settings.DefaultLeaseTime != 0 {
-				return n.Settings.DefaultLeaseTime
+			if n.settings.defaultLeaseTime != 0 {
+				return n.settings.defaultLeaseTime
 			}
 			// Save the result for later
-			n.RegisteredSettings.DefaultLeaseTime = n.Global.GetLeaseTime(req, registered)
-			return n.RegisteredSettings.DefaultLeaseTime
+			n.registeredSettings.defaultLeaseTime = n.global.getLeaseTime(req, registered)
+			return n.registeredSettings.defaultLeaseTime
 		}
 
-		if n.RegisteredSettings.MaxLeaseTime != 0 {
-			if req < n.RegisteredSettings.MaxLeaseTime {
+		if n.registeredSettings.maxLeaseTime != 0 {
+			if req < n.registeredSettings.maxLeaseTime {
 				return req
 			}
-			return n.RegisteredSettings.MaxLeaseTime
+			return n.registeredSettings.maxLeaseTime
 		}
-		if n.Settings.MaxLeaseTime != 0 {
-			if req < n.Settings.MaxLeaseTime {
+		if n.settings.maxLeaseTime != 0 {
+			if req < n.settings.maxLeaseTime {
 				return req
 			}
-			return n.Settings.MaxLeaseTime
+			return n.settings.maxLeaseTime
 		}
 
 		// Save the result for later
-		n.RegisteredSettings.MaxLeaseTime = n.Global.GetLeaseTime(req, registered)
+		n.registeredSettings.maxLeaseTime = n.global.getLeaseTime(req, registered)
 
-		if req < n.RegisteredSettings.MaxLeaseTime {
+		if req < n.registeredSettings.maxLeaseTime {
 			return req
 		}
-		return n.RegisteredSettings.MaxLeaseTime
+		return n.registeredSettings.maxLeaseTime
 	}
 
 	if req == 0 {
-		if n.UnregisteredSettings.DefaultLeaseTime != 0 {
-			return n.UnregisteredSettings.DefaultLeaseTime
+		if n.unregisteredSettings.defaultLeaseTime != 0 {
+			return n.unregisteredSettings.defaultLeaseTime
 		}
-		if n.Settings.DefaultLeaseTime != 0 {
-			return n.Settings.DefaultLeaseTime
+		if n.settings.defaultLeaseTime != 0 {
+			return n.settings.defaultLeaseTime
 		}
 		// Save the result for later
-		n.UnregisteredSettings.DefaultLeaseTime = n.Global.GetLeaseTime(req, registered)
-		return n.UnregisteredSettings.DefaultLeaseTime
+		n.unregisteredSettings.defaultLeaseTime = n.global.getLeaseTime(req, registered)
+		return n.unregisteredSettings.defaultLeaseTime
 	}
 
-	if n.UnregisteredSettings.MaxLeaseTime != 0 {
-		if req < n.UnregisteredSettings.MaxLeaseTime {
+	if n.unregisteredSettings.maxLeaseTime != 0 {
+		if req < n.unregisteredSettings.maxLeaseTime {
 			return req
 		}
-		return n.UnregisteredSettings.MaxLeaseTime
+		return n.unregisteredSettings.maxLeaseTime
 	}
-	if n.Settings.MaxLeaseTime != 0 {
-		if req < n.Settings.MaxLeaseTime {
+	if n.settings.maxLeaseTime != 0 {
+		if req < n.settings.maxLeaseTime {
 			return req
 		}
-		return n.Settings.MaxLeaseTime
+		return n.settings.maxLeaseTime
 	}
 
 	// Save the result for later
-	n.UnregisteredSettings.MaxLeaseTime = n.Global.GetLeaseTime(req, registered)
+	n.unregisteredSettings.maxLeaseTime = n.global.getLeaseTime(req, registered)
 
-	if req < n.UnregisteredSettings.MaxLeaseTime {
+	if req < n.unregisteredSettings.maxLeaseTime {
 		return req
 	}
-	return n.UnregisteredSettings.MaxLeaseTime
+	return n.unregisteredSettings.maxLeaseTime
 }
 
-func (n *Network) GetOptions(registered bool) dhcp4.Options {
+func (n *network) getOptions(registered bool) dhcp4.Options {
 	if registered && n.regOptionsCached {
-		return n.RegisteredSettings.Options
+		return n.registeredSettings.options
 	} else if !registered && n.unregOptionsCached {
-		return n.UnregisteredSettings.Options
+		return n.unregisteredSettings.options
 	}
 
-	higher := n.Global.GetOptions(registered)
+	higher := n.global.getOptions(registered)
 	if registered {
 		// Merge network "global" setting into registered settings
-		for c, v := range n.Settings.Options {
-			if _, ok := n.RegisteredSettings.Options[c]; !ok {
-				n.RegisteredSettings.Options[c] = v
+		for c, v := range n.settings.options {
+			if _, ok := n.registeredSettings.options[c]; !ok {
+				n.registeredSettings.options[c] = v
 			}
 		}
 		// Merge Global setting into registered setting
 		for c, v := range higher {
-			if _, ok := n.RegisteredSettings.Options[c]; !ok {
-				n.RegisteredSettings.Options[c] = v
+			if _, ok := n.registeredSettings.options[c]; !ok {
+				n.registeredSettings.options[c] = v
 			}
 		}
 		n.regOptionsCached = true
-		return n.RegisteredSettings.Options
+		return n.registeredSettings.options
 	}
 
 	// Merge network "global" setting into unregistered settings
-	for c, v := range n.Settings.Options {
-		if _, ok := n.UnregisteredSettings.Options[c]; !ok {
-			n.UnregisteredSettings.Options[c] = v
+	for c, v := range n.settings.options {
+		if _, ok := n.unregisteredSettings.options[c]; !ok {
+			n.unregisteredSettings.options[c] = v
 		}
 	}
 	// Merge Global setting into unregistered setting
 	for c, v := range higher {
-		if _, ok := n.UnregisteredSettings.Options[c]; !ok {
-			n.UnregisteredSettings.Options[c] = v
+		if _, ok := n.unregisteredSettings.options[c]; !ok {
+			n.unregisteredSettings.options[c] = v
 		}
 	}
 	n.unregOptionsCached = true
-	return n.UnregisteredSettings.Options
+	return n.unregisteredSettings.options
 }
 
-func (n *Network) Includes(ip net.IP) bool {
-	for _, s := range n.Subnets {
-		if s.Includes(ip) {
+func (n *network) includes(ip net.IP) bool {
+	for _, s := range n.subnets {
+		if s.includes(ip) {
 			return true
 		}
 	}
 	return false
 }
 
-func (n *Network) GetFreeLease(e *common.Environment, registered bool) *Lease {
-	for _, s := range n.Subnets {
-		if s.AllowUnknown == registered {
+func (n *network) getFreeLease(e *common.Environment, registered bool) *Lease {
+	for _, s := range n.subnets {
+		if s.allowUnknown == registered {
 			continue
 		}
-		if l := s.GetFreeLease(e); l != nil {
+		if l := s.getFreeLease(e); l != nil {
 			return l
 		}
 	}
 	return nil
 }
 
-func (n *Network) GetLeaseByMAC(mac net.HardwareAddr, registered bool) *Lease {
-	for _, s := range n.Subnets {
-		if s.AllowUnknown == registered {
+func (n *network) getLeaseByMAC(mac net.HardwareAddr, registered bool) *Lease {
+	for _, s := range n.subnets {
+		if s.allowUnknown == registered {
 			continue
 		}
-		for _, p := range s.Pools {
-			for _, l := range p.Leases {
+		for _, p := range s.pools {
+			for _, l := range p.leases {
 				if bytes.Equal(l.MAC, mac) {
 					return l
 				}
@@ -187,13 +187,13 @@ func (n *Network) GetLeaseByMAC(mac net.HardwareAddr, registered bool) *Lease {
 	return nil
 }
 
-func (n *Network) GetLeaseByIP(ip net.IP, registered bool) *Lease {
-	for _, s := range n.Subnets {
-		if s.AllowUnknown == registered {
+func (n *network) getLeaseByIP(ip net.IP, registered bool) *Lease {
+	for _, s := range n.subnets {
+		if s.allowUnknown == registered {
 			continue
 		}
-		for _, p := range s.Pools {
-			if l, ok := p.Leases[ip.String()]; ok {
+		for _, p := range s.pools {
+			if l, ok := p.leases[ip.String()]; ok {
 				return l
 			}
 		}
@@ -201,16 +201,16 @@ func (n *Network) GetLeaseByIP(ip net.IP, registered bool) *Lease {
 	return nil
 }
 
-func (n *Network) Print() {
-	fmt.Printf("\n---Network Configuration - %s---\n", n.Name)
+func (n *network) print() {
+	fmt.Printf("\n---Network Configuration - %s---\n", n.name)
 	fmt.Println("\n--Network Settings--")
-	n.Settings.Print()
+	n.settings.Print()
 	fmt.Println("\n--Network Registered Settings--")
-	n.RegisteredSettings.Print()
+	n.registeredSettings.Print()
 	fmt.Println("\n--Network Unregistered Settings--")
-	n.UnregisteredSettings.Print()
+	n.unregisteredSettings.Print()
 	fmt.Println("\n--Subnets in network--")
-	for _, s := range n.Subnets {
-		s.Print()
+	for _, s := range n.subnets {
+		s.print()
 	}
 }
