@@ -36,14 +36,14 @@ level = "notice"
 
 ## File path or directory to store log files. If a directory is given, each log level
 ## will be outputted to its own file.
-path = "logs/pg.log"
+path = "/var/log/packet-guardian/pg.log"
 
 [database]
 ## Supported database types are: sqlite
 type = "sqlite"
 
 ## The address, socket, or filename of the database
-address = "config/database.sqlite3"
+address = "/var/lib/packet-guardian/database.sqlite3"
 
 ## Username of database
 # username = ""
@@ -54,7 +54,7 @@ address = "config/database.sqlite3"
 [registration]
 ## The file containing the policy text that's shown on the registration page
 ## HTML is allowed in the file. An empty line denotes a new paragraph
-registrationPolicyFile = "config/policy.txt"
+registrationPolicyFile = "/etc/packet-guardian/policy.txt"
 
 ## Whether or not manual registrations are permitted. An admin can always
 ## manually register a device, regardless of this setting.
@@ -83,7 +83,7 @@ manualRegPlatforms = []
 
 [webserver]
 ## IP address to listen on. Leave blank to listen on all addresses.
-address = ""
+address = "127.0.0.1"
 
 ## Plain HTTP port to listen on
 httpPort = 80
@@ -163,10 +163,3 @@ helpDeskUsers = ["helpdesk"]
 [auth.cas]
 ## CAS server URI
 # server = ""
-
-[dhcp]
-## Enable integrated DHCP server
-# enabled = false
-
-## DHCP configuration file
-# configFile = "config/dhcp.conf"

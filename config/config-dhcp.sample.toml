@@ -1,0 +1,34 @@
+## Packet Guardian - DHCP Configuration File
+#
+# This configuration file is specifically for the DHCP piece of Packet Guardian.
+# It much smaller then the main application as it only needs logging, database,
+# and the main DHCP configuration file.
+
+[logging]
+## Enable or disable normal application logging.
+enabled = true
+
+## Lowest level to log. Recommended to be information in dev/testing and notice in prod.
+## Standard syslog levels plus fatal.
+level = "notice"
+
+## File path or directory to store log files. If a directory is given, each log level
+## will be outputted to its own file.
+path = "/var/log/packet-guardian/dhcp.log"
+
+[database]
+## Supported database types are: sqlite
+type = "sqlite"
+
+## The address, socket, or filename of the database
+address = "/var/lib/packet-guardian/database.sqlite3"
+
+## Username of database
+# username = ""
+
+## Password of database
+# password = ""
+
+[dhcp]
+## DHCP configuration file
+configFile = "/etc/packet-guardian/dhcp.conf"

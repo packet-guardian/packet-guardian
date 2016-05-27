@@ -19,11 +19,17 @@ dist: build
 	@cp -R config dist/packet-guardian/
 	@cp -R public dist/packet-guardian/
 	@cp -R templates dist/packet-guardian/
+
 	@cp LICENSE dist/packet-guardian/
 	@cp README.md dist/packet-guardian/
+	@cp Dockerfile dist/packet-guardian/
+	@cp install.sh dist/packet-guardian/
+	@cp uninstall.sh dist/packet-guardian/
+
 	@mkdir dist/packet-guardian/bin
 	@cp bin/pg dist/packet-guardian/bin/pg
 	@cp bin/dhcp dist/packet-guardian/bin/dhcp
+
 	@mkdir dist/packet-guardian/sessions
 
 	(cd "dist"; tar -cz packet-guardian) > "dist/pg-dist-$(VERSION).tar.gz"

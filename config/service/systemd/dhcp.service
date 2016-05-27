@@ -1,0 +1,21 @@
+[Unit]
+Description=Packet Guardian - DHCP Server
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Environment=PG_CONFIG=/etc/packet-guardian/config-dhcp.toml
+Type=simple
+Restart=on-failure
+
+User=packetg
+Group=packetg
+WorkingDirectory=/opt/packet-guardian
+
+StandardOutput=journal
+StandardError=inherit
+
+ExecStart=/opt/packet-guardian/bin/dhcp
+
+[Install]
+WantedBy=multi-user.target
