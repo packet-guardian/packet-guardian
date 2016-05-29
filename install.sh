@@ -15,19 +15,25 @@ DATA_DIR="/var/lib/packet-guardian"
 CONFIG_DIR="/etc/packet-guardian"
 APPARMOR_DIR="/etc/apparmor.d"
 
-which systemctl >/dev/null 2>&1
-SYSTEMD=$?
-which apparmor_status >/dev/null 2>&1
-APPARMOR_INSTALLED=$?
-which aa-complain >/dev/null 2>&1
-APPARMOR_UTILS_INSTALLED=$?
+SYSTEMD=""
+APPARMOR_INSTALLED=""
+APPARMOR_UTILS_INSTALLED=""
+
+if which systemctl >/dev/null 2>&1; then
+    SYSTEMD="t"
+fi
+if which apparmor_status >/dev/null 2>&1; then
+    APPARMOR_INSTALLED="t"
+fi
+if which complain >/dev/null 2>&1; then
+    APPARMOR_UTILS_INSTALLED="t"
+fi
 
 stopService() {
     echo "Stopping any running instances"
-    if [[ $SYSTEMD ]]; then
+    if [[ -n $SYSTEMD ]]; then
         systemctl stop pg-dhcp >/dev/null 2>&1
         systemctl stop pg >/dev/null 2>&1
-        systemctl daemon-reload
     else
         service pg-dhcp stop >/dev/null 2>&1
         service pg stop >/dev/null 2>&1
@@ -43,14 +49,20 @@ confirm() {
     fi
 }
 
+installed() {
+    test -f $DATA_DIR/.installed
+    return $?
+}
+
 installService() {
     cd $APP_DIR
-    if [[ $SYSTEMD ]]; then
+    if [[ -n $SYSTEMD ]]; then
         echo "Installing Systemd Service"
         cp config/service/systemd/pg.service $SYSTEMD_SERVICE_DIR/pg.service
         cp config/service/systemd/dhcp.service $SYSTEMD_SERVICE_DIR/pg-dhcp.service
         chown root:root $SYSTEMD_SERVICE_DIR/pg.service
         chown root:root $SYSTEMD_SERVICE_DIR/pg-dhcp.service
+        systemctl daemon-reload
         systemctl enable pg.service
         systemctl enable pg-dhcp.service
     else
@@ -70,14 +82,14 @@ setKernalPermissions() {
 
 installAppArmorProfile() {
     # Install apparmor profile if available
-    if [[ $APPARMOR_INSTALLED ]]; then
+    if [[ -n $APPARMOR_INSTALLED ]]; then
         echo "Installing AppArmor profile"
         mkdir -p $APPARMOR_DIR
         cp config/apparmor/pg/apparmor-ext.conf $APPARMOR_DIR/opt.packet-guardian.bin.pg
         cp config/apparmor/dhcp/apparmor-ext.conf $APPARMOR_DIR/opt.packet-guardian.bin.dhcp
         chown root:root $APPARMOR_DIR/opt.packet-guardian.bin.pg
         chown root:root $APPARMOR_DIR/opt.packet-guardian.bin.dhcp
-        if [[ $APPARMOR_UTILS_INSTALLED ]]; then
+        if [[ -n $APPARMOR_UTILS_INSTALLED ]]; then
             aa-complain $APP_DIR/bin/pg
             aa-complain $APP_DIR/bin/dhcp
         else
@@ -92,13 +104,22 @@ installAppArmorProfile() {
     fi
 }
 
+setPermissions() {
+    chown -R packetg:packetg $APP_DIR
+    chown -R packetg:packetg $LOG_DIR
+    chown -R packetg:packetg $DATA_DIR
+    chown -R root:packetg $CONFIG_DIR
+}
+
 upgrade() {
-    if [[ ! -f $DATA_DIR/.installed ]]; then
+    if ! installed; then
         echo "It appears Packet Guardian is not installed."
         echo "Please install Packet Guardian before trying to upgrade."
         echo
         exit 1
     fi
+
+    cd /opt
 
     if [[ ! -d $APP_DIR ]]; then
         echo "It appears Packet Guardian is not installed."
@@ -115,15 +136,24 @@ upgrade() {
     stopService
 
     echo "Extracting new version"
-    cd /opt
     tar -xzf $SRC_TAR
     chown -R packetg:packetg $APP_DIR
 
+    echo "Copying configuration files"
+    cp $APP_DIR/config/config-dhcp.sample.toml $CONFIG_DIR
+    cp $APP_DIR/config/config-pg.sample.toml $CONFIG_DIR
+    cp $APP_DIR/config/config-dhcp.sample.toml $CONFIG_DIR/config-dhcp.toml.dist
+    cp $APP_DIR/config/config-pg.sample.toml $CONFIG_DIR/config-pg.toml.dist
+    cp $APP_DIR/config/dhcp-config.sample.toml $CONFIG_DIR
+    cp $APP_DIR/config/policy.txt $CONFIG_DIR/policy.txt.dist
+
+    # Perform any necessary SQL migrations
+    # sqlite3 $DATA_DIR/database.sqlite3 < $APP_DIR/config/db-schema-sqlite.sql
+
+    setPermissions
     installService
     setKernalPermissions
     installAppArmorProfile
-
-    # Perform database migrations
 
     echo
     echo "Packet Guardian is now upgraded"
@@ -131,8 +161,8 @@ upgrade() {
     echo "for new options and release notes."
     echo "When you're ready, start Packet Guardian using:"
     echo
-    echo "service pg start"
-    echo "service pg-dhcp start"
+    echo "service pg start OR systemctl start pg"
+    echo "service pg-dhcp start OR systemctl start pg-dhcp"
     echo
 }
 
@@ -145,7 +175,7 @@ install() {
         exit 1
     fi
 
-    if [[ -f $DATA_DIR/.installed ]]; then
+    if installed; then
         echo "It appears Packet Guardian is already installed."
         confirm "This will overwrite all configuration files. Are you sure?"
     fi
@@ -155,10 +185,6 @@ install() {
     if [[ $? -ne 0 ]]; then
         useradd -M packetg
     fi
-
-    installService
-    setKernalPermissions
-    installAppArmorProfile
 
     echo "Creating data directories"
     mkdir -p $LOG_DIR
@@ -174,10 +200,10 @@ install() {
 
     sqlite3 $DATA_DIR/database.sqlite3 < $APP_DIR/config/db-schema-sqlite.sql
 
-    chown -R packetg:packetg $APP_DIR
-    chown -R packetg:packetg $LOG_DIR
-    chown -R packetg:packetg $DATA_DIR
-    chown -R root:packetg $CONFIG_DIR
+    setPermissions
+    installService
+    setKernalPermissions
+    installAppArmorProfile
 
     touch $DATA_DIR/.installed
 
@@ -186,8 +212,8 @@ install() {
     echo "Please edit the configurations to your"
     echo "liking and them run using:"
     echo
-    echo "service pg start"
-    echo "service pg-dhcp start"
+    echo "service pg start OR systemctl start pg"
+    echo "service pg-dhcp start OR systemctl start pg-dhcp"
     echo
 }
 

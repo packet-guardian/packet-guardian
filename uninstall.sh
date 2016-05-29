@@ -14,10 +14,15 @@ DATA_DIR="/var/lib/packet-guardian"
 CONFIG_DIR="/etc/packet-guardian"
 APPARMOR_DIR="/etc/apparmor.d"
 
-which systemctl >/dev/null 2>&1
-SYSTEMD=$?
-which apparmor_status >/dev/null 2>&1
-APPARMOR_INSTALLED=$?
+SYSTEMD=""
+APPARMOR_INSTALLED=""
+
+if which systemctl >/dev/null 2>&1; then
+    SYSTEMD="t"
+fi
+if which apparmor_status >/dev/null 2>&1; then
+    APPARMOR_INSTALLED="t"
+fi
 
 confirm() {
     echo -n "$1 [y/N]: "
@@ -30,7 +35,7 @@ confirm() {
 
 stopService() {
     echo "Stopping any running instances"
-    if [[ SYSTEMD ]]; then
+    if [[ -n $SYSTEMD ]]; then
         systemctl stop pg-dhcp >/dev/null 2>&1
         systemctl stop pg >/dev/null 2>&1
         systemctl disable pg-dhcp
@@ -42,10 +47,10 @@ stopService() {
 }
 
 uninstallService() {
-    if [[ $SYSTEMD ]]; then
+    if [[ -n $SYSTEMD ]]; then
         echo "Uninstalling Systemd Service"
-        rm -rf $SYSTEMD_SERVICE_DIR/pg.conf
-        rm -rf $SYSTEMD_SERVICE_DIR/pg-dhcp.conf
+        rm -rf $SYSTEMD_SERVICE_DIR/pg.service
+        rm -rf $SYSTEMD_SERVICE_DIR/pg-dhcp.service
     else
         echo "Uninstalling Upstart Service"
         rm -rf $UPSTART_SERVICE_DIR/pg.conf
@@ -55,7 +60,8 @@ uninstallService() {
 
 uninstallAppArmorProfile() {
     # Install apparmor profile if available
-    if [[ $APPARMOR_INSTALLED ]]; then
+    if [[ -n $APPARMOR_INSTALLED ]]; then
+        echo "Uninstalling AppArmor Profile"
         rm -rf $APPARMOR_DIR/opt.packet-guardian.bin.pg
         rm -rf $APPARMOR_DIR/opt.packet-guardian.bin.dhcp
     fi

@@ -83,7 +83,7 @@ manualRegPlatforms = []
 
 [webserver]
 ## IP address to listen on. Leave blank to listen on all addresses.
-address = "127.0.0.1"
+address = ""
 
 ## Plain HTTP port to listen on
 httpPort = 80
