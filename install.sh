@@ -25,7 +25,7 @@ fi
 if which apparmor_status >/dev/null 2>&1; then
     APPARMOR_INSTALLED="t"
 fi
-if which complain >/dev/null 2>&1; then
+if which aa-complain >/dev/null 2>&1; then
     APPARMOR_UTILS_INSTALLED="t"
 fi
 
