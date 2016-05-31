@@ -110,16 +110,11 @@ footer .copyright {
     color: white;
 }
 
-.main {
-    min-height: calc(100% - 140px);
-}
-
 @media (min-width: 900px) {
     header {
         position: relative;
         height: 100px;
-        background-color: #303030;
-        background: linear-gradient(to bottom, #454545, #303030);
+        padding-bottom: 0;
     }
 
     header .header-title {
@@ -133,5 +128,9 @@ footer .copyright {
 
     header .logo-wrapper {
         height: 100%;
+    }
+
+    .main {
+        min-height: calc(100% - 140px);
     }
 }
