@@ -24,6 +24,7 @@ dist: build
 	@cp README.md dist/packet-guardian/
 	@cp Dockerfile dist/packet-guardian/
 	@cp install.sh dist/packet-guardian/
+	@cp upgrade.sh dist/packet-guardian/
 	@cp uninstall.sh dist/packet-guardian/
 
 	@mkdir dist/packet-guardian/bin
