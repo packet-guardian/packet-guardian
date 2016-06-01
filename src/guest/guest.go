@@ -36,6 +36,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	guest := models.NewUser(e)
 	guest.Username = credential
 	guest.DeviceLimit = models.UserDeviceLimit(e.Config.Guest.DeviceLimit)
+	// TODO: Honor configuration settings
 	guest.DeviceExpiration = &models.UserDeviceExpiration{
 		Mode:  models.UserDeviceExpirationDaily,
 		Value: int64((time.Duration(24) * time.Hour) / time.Second),
