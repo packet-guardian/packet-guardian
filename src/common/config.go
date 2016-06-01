@@ -43,6 +43,23 @@ type Config struct {
 		DefaultDeviceExpiration     string
 		ManualRegPlatforms          []string
 	}
+	Guest struct {
+		Enabled                 bool
+		DeviceLimit             int
+		DeviceExpirationType    string
+		RollingExpirationLength string
+		DeviceExpiration        string
+		Checker                 string
+
+		Email struct {
+		}
+
+		Twilio struct {
+			AccountSID  string
+			AuthToken   string
+			PhoneNumber string
+		}
+	}
 	Webserver struct {
 		Address             string
 		HttpPort            int
@@ -165,6 +182,15 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	if _, err := time.ParseDuration(c.Registration.RollingExpirationLength); err != nil {
 		c.Registration.RollingExpirationLength = "4380h"
 	}
+
+	// Guest registrations
+	c.Guest.DeviceExpirationType = setStringOrDefault(c.Guest.DeviceExpirationType, "daily")
+	c.Guest.DeviceExpiration = setStringOrDefault(c.Guest.DeviceExpiration, "24:00")
+	c.Guest.RollingExpirationLength = setStringOrDefault(c.Guest.RollingExpirationLength, "4380h")
+	if _, err := time.ParseDuration(c.Guest.RollingExpirationLength); err != nil {
+		c.Guest.RollingExpirationLength = "4380h"
+	}
+	c.Guest.Checker = setStringOrDefault(c.Guest.Checker, "email")
 
 	// Webserver
 	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 8080)

@@ -1,12 +1,12 @@
 {{define "register"}}
 {{template "header" dict "css" (list "register") "main" . "pageTitle" "Register"}}
-<div id="suc-msg-auto" class="success-message">
+<div id="suc-msg-auto" class="success-message-start-hidden">
     <p class="instructions">
         Please disconnect your computer from the network for 1 minute and then reconnect.
     </p>
 </div>
 
-<div id="suc-msg-manual" class="success-message">
+<div id="suc-msg-manual" class="success-message-start-hidden">
     <p class="instructions">
         Redirecting to management page...
     </p>
@@ -28,6 +28,9 @@
             <p>
                 <label for="dev-desc">Device Description (optional):</label>
                 <input type="text" name="dev-desc">
+            </p>
+            <p class="guest-btn">
+                <a href="/register/guest" class="btn">Register as Guest</a>
             </p>
         </fieldset>
 
