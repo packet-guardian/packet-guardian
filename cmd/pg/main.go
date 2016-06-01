@@ -18,10 +18,6 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/tasks"
 )
 
-// const (
-// 	version = "0.7.0"
-// )
-
 var (
 	configFile string
 	dev        bool

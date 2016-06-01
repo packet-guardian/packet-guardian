@@ -46,7 +46,7 @@ CMD_SOURCES := $(shell find cmd -name main.go)
 TARGETS := $(patsubst cmd/%/main.go,bin/%,$(CMD_SOURCES))
 
 bin/%: cmd/%/main.go
-	go build -ldflags "$(LDFLAGS)" -o $@ $<
+	go build -v -ldflags "$(LDFLAGS)" -o $@ $<
 
 local-install: test
 	GOBIN=$(PWD)/bin go install -v -ldflags "$(LDFLAGS)" ./cmd/pg
@@ -55,7 +55,7 @@ local-install: test
 all: $(TARGETS)
 .DEFAULT_GOAL := all
 
-dist: test vet $(TARGETS)
+dist: vet test $(TARGETS)
 	@rm -rf ./dist
 	@mkdir -p dist/packet-guardian
 	@cp -R config dist/packet-guardian/
@@ -84,4 +84,4 @@ clean:
 	rm -rf ./logs/*
 	rm -rf ./sessions/*
 
-.PHONY: all test local-install coverage clean dist vet lint benchmark fmt doc
+.PHONY: all test local-install coverage clean dist vet lint benchmark fmt doc $(CMD_SOURCES)
