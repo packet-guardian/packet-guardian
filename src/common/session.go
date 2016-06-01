@@ -134,6 +134,17 @@ func (s *Session) GetInt(key interface{}, def ...int) int {
 	return 0
 }
 
+// GetInt64 takes the same arguments as Get but def must be an int type.
+func (s *Session) GetInt64(key interface{}, def ...int64) int64 {
+	if v := s.Get(key); v != nil {
+		return v.(int64)
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
 func NewTestSession() *Session {
 	return &Session{
 		sessions.NewSession(&TestStore{}, "something"),

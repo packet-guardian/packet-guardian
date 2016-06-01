@@ -36,6 +36,10 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	r.HandleFunc("/register", manageController.RegistrationHandler).Methods("GET")
 	r.Handle("/manage", mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler))).Methods("GET")
 
+	guestController := controllers.NewGuestController(e)
+	r.Handle("/register/guest", mid.CheckReg(e, http.HandlerFunc(guestController.RegistrationHandler))).Methods("GET", "POST")
+	r.Handle("/register/guest/verify", mid.CheckReg(e, http.HandlerFunc(guestController.VerificationHandler))).Methods("GET", "POST")
+
 	r.PathPrefix("/admin").Handler(adminRouter(e))
 	r.PathPrefix("/api").Handler(apiRouter(e))
 

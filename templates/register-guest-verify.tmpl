@@ -1,0 +1,18 @@
+{{define "register-guest-verify"}}
+{{template "header" dict "css" (list "register") "main" . "pageTitle" "Register - Guest"}}
+<div class="register-box">
+    <form method="POST" action="/register/guest/verify">
+        <fieldset>
+            <p>
+                <label for="verify-code">Verification Code:</label>
+                <input type="text" name="verify-code" autofocus="autofocus">
+            </p>
+        </fieldset>
+
+        <p class="reg-btn">
+            <button id="register-btn" type="submit">Register as Guest &gt;</button>
+        </p>
+    </form>
+</div>
+{{template "footer" dict "js" (list "register-guest")}}
+{{end}}

@@ -1,0 +1,37 @@
+{{define "register-guest"}}
+{{template "header" dict "css" (list "register") "main" . "pageTitle" "Register - Guest"}}
+<div class="register-box">
+    <form method="POST" action="/register/guest">
+        {{if .config.Guest.Enabled}}
+        <fieldset>
+            <p>
+                <label for="guest-name">Name*:</label>
+                <input type="text" name="guest-name" autofocus="autofocus">
+            </p>
+            <p>
+                <label for="guest-cred">{{.guestCredLabel}}*:</label>
+                <input type="text" name="guest-cred">
+            </p>
+        </fieldset>
+
+        <div class="reg-policy">
+            <p class="instructions">
+                Please read the policy below and click "Next":
+            </p>
+            {{range .policy}}
+            <p>{{.}}</p>
+            {{end}}
+        </div>
+
+        <p class="reg-btn">
+            <button id="register-btn" type="submit">Next &gt;</button>
+        </p>
+        {{else}}
+        <h2 style="text-align: center;">
+            Guest registrations are not allowed
+        </h2>
+        {{end}}
+    </form>
+</div>
+{{template "footer" dict "js" (list "register-guest")}}
+{{end}}
