@@ -77,7 +77,11 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 	session.Set("_guest-credential", guestCred)
 	session.Set("_guest-name", guestName)
 	session.Save(r, w)
-	// TODO: Send code via email/text message
+	if err := guest.SendGuestCode(g.e, guestCred, verifyCode); err != nil {
+		session.AddFlash(err.Error())
+		g.showGuestRegPage(w, r)
+		return
+	}
 	g.e.Log.Debugf("Verification Code: %s", verifyCode)
 	http.Redirect(w, r, "/register/guest/verify", http.StatusSeeOther)
 }
