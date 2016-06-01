@@ -2,18 +2,11 @@
 
 ## Overview
 
-The DHCP configuration file syntax is a custom syntax loosely based the DHCPD format. The sample DHCP configuration includes explanations and examples of the possible formats. The DHCP server is customized for this specific application. It adheres to the base DHCP RFC, but not all DHCP options are implemented. The available options are:
-
-- subnet-mask
-- router
-- domain-name-server
-- domain-name
-- broadcast-address
-- network-time-protocol-servers
+The DHCP configuration file syntax is a custom syntax loosely based the DHCPD format. The sample DHCP configuration includes explanations and examples of the possible formats. The DHCP server is customized for this specific application. It adheres to the base DHCP RFC, but not all DHCP options are implemented. Implemented options are described below.
 
 Options which allow for multiple values such as domain-name-server and network-time-protocol-servers, must be a list of comma separated values. E.g: `option domain-name-server 10.1.0.1, 10.1.0.2`.
 
-To specify multiple scopes in a single subnet, each scope must be in its own pool. This is contrary to DHCPD where a single pool can contain multiple range statements.
+To specify multiple scopes in a single subnet, each scope must be in its own pool. This is contrary to DHCPD where a single pool can contain multiple range statements. See the Subnet and Pool sections for more.
 
 ## Global
 
@@ -42,7 +35,7 @@ end
 
 The global section contains three subsections. The "root" which is any statement before a `registered` or `unregistered` keyword. Options specified here will be applied to every subnet regardless of registration status unless overridden elsewhere. Global root specific statements are:
 
-    - `server-identifier` - The IP address of the DHCP server
+- `server-identifier` - The IP address of the DHCP server
 
 Registered and unregistered blocks may be located inside a global or network block. Settings here will apply to either registered or unregistered leases either globally (if in global block) or for any containing subnets. These blocks may contain any option along with the lease time settings.
 
@@ -50,18 +43,18 @@ Registered and unregistered blocks may be located inside a global or network blo
 
 Most options correspond to a DHCP option and begin with the keyword `option`. The available options are:
 
-    - `subnet-mask`
-    - `router`
-    - `domain-name-server` - May take a comma separate list of IP addresses
-    - `domain-name`
-    - `broadcast-address`
-    - `network-time-protocol-servers` - May take a comma separate list of IP addresses
+- `subnet-mask`
+- `router`
+- `domain-name-server` - May take a comma separate list of IP addresses
+- `domain-name`
+- `broadcast-address`
+- `network-time-protocol-servers` - May take a comma separate list of IP addresses
 
 The following options do NOT begin with the `option` keyword:
 
-    - `default-lease-time` - The amount of time in seconds a lease will be active for. Defaults to 12 hours.
-    - `max-lease-time` - The maximum amount of time in seconds a lease will be active for. Defaults to 12 hours.
-    - `free-lease-after` - The time in seconds that a lease will be paired with a client MAC address. If a client requests an address after this time, it is not guaranteed they will be given the same lease. This option can only be specified inside a registered/unregistered block within the global block.
+- `default-lease-time` - The amount of time in seconds a lease will be active for. Defaults to 12 hours.
+- `max-lease-time` - The maximum amount of time in seconds a lease will be active for. Defaults to 12 hours.
+- `free-lease-after` - The time in seconds that a lease will be paired with a client MAC address. If a client requests an address after this time, it is not guaranteed they will be given the same lease. This option can only be specified inside a registered/unregistered block within the global block.
 
 ## Network
 
