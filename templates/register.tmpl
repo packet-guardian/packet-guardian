@@ -29,9 +29,11 @@
                 <label for="dev-desc">Device Description (optional):</label>
                 <input type="text" name="dev-desc">
             </p>
+            {{if .config.Guest.Enabled}}
             <p class="guest-btn">
                 <a href="/register/guest" class="btn">Register as Guest</a>
             </p>
+            {{end}}
         </fieldset>
 
         <div class="reg-policy">

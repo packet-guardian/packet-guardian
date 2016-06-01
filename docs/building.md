@@ -4,20 +4,20 @@ The distribution package is compiled against 64-bit Linux. However, the applicat
 
 There are three different ways to build Packet Guardian:
 
-    - `make dist`
-    - `make install`
-    - `make build`
+- `make`
+- `make dist`
+- `make local-install`
 
-All the instructions below assume you've cloned the repo and have `cd`ed into it. All instructions will also run tools such as `go vet` and `go test`.
+All the instructions below assume you've cloned the repo and have `cd`ed into it.
 
-## make dist
+## make
 
-This command will create a distributable tar file. To specify a version number you can add `VERSION=x.y.z` to the command: `make dist VERSION=0.6.0`. The new tar file will be in the dist folder. It can be extracted using `tar -xzf $path_to_file`. This will extract the archive into the folder `packet-guardian` in the current directory. For example, if you're in the folder `/opt` and run the tar command, Packet Guardian will be located at `/etc/packet-guardian`.
+This command will run `go build` and output the executable to `$REPO_DIR/bin`. Although similar to `make local-install`, like `go install` it does not save compiled packages. Typically using `make local-install` is the preferred method since it will save compiled packages and use those if they haven't been edited saving valuable dev time.
 
-## make install
+## make local-install
 
 This command will run `go install` but with $GOBIN set to `$REPO_DIR/bin`. Meaning you can then run Packet Guardian using `bin/pg` from the repo directory.
 
-## make build
+## make dist
 
-This command will run `go build` and output the executable to `$REPO_DIR/bin`. Although similar to `make install`, like `go install` it does not save compiled packages. Typically using `make installed` is the preferred method since it will save compiled packages and use those if they haven't been edited.
+This command will create a distributable tar file. The version number is determined by the latest git tag and commit. The new tar file will be in the dist folder. It can be extracted using `tar -xzf $path_to_file`. This will extract the archive into the folder `packet-guardian` in the current directory. For example, if you're in the folder `/opt` and run the tar command, Packet Guardian will be located at `/etc/packet-guardian`.

@@ -192,6 +192,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 		c.Guest.RollingExpirationLength = "4380h"
 	}
 	c.Guest.Checker = setStringOrDefault(c.Guest.Checker, "email")
+	c.Guest.VerifyCodeExpiration = setIntOrDefault(c.Guest.VerifyCodeExpiration, 3)
 
 	// Webserver
 	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 8080)
