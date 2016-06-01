@@ -46,8 +46,15 @@ func (g *Guest) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *Guest) showGuestRegPage(w http.ResponseWriter, r *http.Request) {
+	label := guest.GetInputLabel(g.e)
+	if label == "" {
+		g.renderErrorMessage("Guest registrations are currently unavailable. Please notify the IT help desk.", w, r)
+		return
+	}
+
 	data := map[string]interface{}{
-		"policy": common.LoadPolicyText(g.e.Config.Registration.RegistrationPolicyFile),
+		"policy":         common.LoadPolicyText(g.e.Config.Registration.RegistrationPolicyFile),
+		"guestCredLabel": label,
 	}
 
 	g.e.Views.NewView("register-guest", r).Render(w, data)
@@ -73,7 +80,7 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 	// Check ban filter for email or phone number
 	verifyCode := guest.GenerateGuestCode()
 	session.Set("_verify-code", verifyCode)
-	session.Set("_expires", time.Now().Add(time.Duration(3)*time.Minute).Unix())
+	session.Set("_expires", time.Now().Add(time.Duration(g.e.Config.Guest.VerifyCodeExpiration)*time.Minute).Unix())
 	session.Set("_guest-credential", guestCred)
 	session.Set("_guest-name", guestName)
 	session.Save(r, w)
@@ -125,7 +132,9 @@ func (g *Guest) showGuestVerifyPage(w http.ResponseWriter, r *http.Request) {
 func (g *Guest) verifyGuestRegistration(w http.ResponseWriter, r *http.Request) {
 	session := common.GetSessionFromContext(r)
 	if session.GetInt64("_expires") < time.Now().Unix() {
-		g.renderErrorMessage("Verification code has expired", w, r)
+		session.AddFlash("Verification code has expired")
+		session.Save(r, w)
+		http.Redirect(w, r, "/register/guest", http.StatusSeeOther)
 		return
 	}
 

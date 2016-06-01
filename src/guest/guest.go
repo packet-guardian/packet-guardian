@@ -19,10 +19,12 @@ func init() {
 }
 
 const (
-	guestCodeChars  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	guestCodeChars  = "ABCDEFGHJKLMNPQRTUVWXYZ0123456789"
 	guestCodeLength = 6
 )
 
+// GenerateGuestCode will create a 6 character verification code for guest registrations.
+// Possibly confusing letters have been removed. In particular, the letters I, S, and O.
 func GenerateGuestCode() string {
 	code := bytes.Buffer{}
 	for i := 0; i < guestCodeLength; i++ {
@@ -31,6 +33,8 @@ func GenerateGuestCode() string {
 	return code.String()
 }
 
+// RegisterDevice will register the device for a guest. It is a simplified form of the
+// full registration function found in controllers.api.Device.RegistrationHandler().
 func RegisterDevice(e *common.Environment, name, credential string, r *http.Request) error {
 	// Build guest user model
 	guest := models.NewUser(e)

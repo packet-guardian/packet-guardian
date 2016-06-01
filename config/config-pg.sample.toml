@@ -97,10 +97,19 @@ DeviceLimit = 10
 ## See registrations config section. Default is 24:00
 # DeviceExpiration = "24:00"
 
+## The duration in minutes a verification code will be usable
+# verifyCodeExpiration = 3
+
+## The mechanism used to send a verification code to the user.
+## Possible values: null, email, twilio
+# checker = "email"
+
 [guest.email]
+## Settings used when the checker is email
 ## Coming soon
 
 [guest.twilio]
+## Settings used when the checker is twilio
 # accountSID = ""
 # authToken = ""
 # phoneNumber = ""

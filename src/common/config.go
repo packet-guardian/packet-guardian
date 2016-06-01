@@ -50,6 +50,7 @@ type Config struct {
 		RollingExpirationLength string
 		DeviceExpiration        string
 		Checker                 string
+		VerifyCodeExpiration    int
 
 		Email struct {
 		}
