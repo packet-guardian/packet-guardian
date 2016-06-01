@@ -5,11 +5,8 @@
 package controllers
 
 import (
-	"bufio"
-	"html/template"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/onesimus-systems/packet-guardian/src/auth"
@@ -64,7 +61,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"policy":   m.loadPolicyText(),
+		"policy":   common.LoadPolicyText(m.e.Config.Registration.RegistrationPolicyFile),
 		"type":     formType,
 		"username": username,
 	}
@@ -89,33 +86,11 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 
 	showAddBtn := (m.e.Config.Registration.AllowManualRegistrations && !sessionUser.IsBlacklisted())
 
-	data := make(map[string]interface{})
-	data["sessionUser"] = sessionUser
-	data["devices"] = results
-	data["showAddBtn"] = showAddBtn
+	data := map[string]interface{}{
+		"sessionUser": sessionUser,
+		"devices":     results,
+		"showAddBtn":  showAddBtn,
+	}
 
 	m.e.Views.NewView("manage", r).Render(w, data)
-}
-
-func (m *Manager) loadPolicyText() []template.HTML {
-	f, err := os.Open(m.e.Config.Registration.RegistrationPolicyFile)
-	if err != nil {
-		return nil
-	}
-	defer f.Close()
-
-	var policy []template.HTML
-	currentParagraph := ""
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		t := strings.TrimSpace(scanner.Text())
-		if t == "" {
-			policy = append(policy, template.HTML(currentParagraph))
-			currentParagraph = ""
-			continue
-		}
-		currentParagraph += " " + t
-	}
-	policy = append(policy, template.HTML(currentParagraph))
-	return policy
 }

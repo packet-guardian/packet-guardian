@@ -5,7 +5,9 @@
 package common
 
 import (
+	"bufio"
 	"errors"
+	"html/template"
 	"net"
 	"os"
 	"regexp"
@@ -225,4 +227,27 @@ func parseLinuxUA(ua []string) string {
 	}
 
 	return "Linux"
+}
+
+func LoadPolicyText(file string) []template.HTML {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+
+	var policy []template.HTML
+	currentParagraph := ""
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		t := strings.TrimSpace(scanner.Text())
+		if t == "" {
+			policy = append(policy, template.HTML(currentParagraph))
+			currentParagraph = ""
+			continue
+		}
+		currentParagraph += " " + t
+	}
+	policy = append(policy, template.HTML(currentParagraph))
+	return policy
 }

@@ -8,7 +8,6 @@ import (
 	"database/sql"
 	"errors"
 	"html/template"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -191,15 +190,17 @@ type View struct {
 	r    *http.Request
 }
 
-func (v *View) Render(w io.Writer, data map[string]interface{}) {
+func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
 	if data == nil {
 		data = make(map[string]interface{})
 	}
-	flashes := GetSessionFromContext(v.r).Flashes()
+	session := GetSessionFromContext(v.r)
+	flashes := session.Flashes()
 	flash := ""
 	if len(flashes) > 0 {
 		flash = flashes[0].(string)
 	}
+	session.Save(v.r, w)
 	data["config"] = v.e.Config
 	data["flashMessage"] = flash
 	if err := v.t.ExecuteTemplate(w, v.name, data); err != nil {

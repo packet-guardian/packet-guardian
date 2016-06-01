@@ -152,6 +152,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	if err := device.Save(); err != nil {
 		d.e.Log.Errorf("Error registering device: %s", err.Error())
 		common.NewAPIResponse("Error registering device", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
 	}
 	d.e.Log.Infof("Successfully registered MAC %s to user %s", mac.String(), formUser.Username)
 

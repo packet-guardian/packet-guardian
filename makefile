@@ -1,4 +1,4 @@
-.PHONY: build clean doc fmt install lint test vet vendor_cleanup vendor_update vendor_updateall vendor_save vendor_saveall
+.PHONY: build clean doc fmt install lint test vet
 
 VERSION?=unversioned
 
@@ -62,18 +62,3 @@ endif
 
 vet:
 	go vet ./src/...
-
-# Godep has a bug where it copies the dot-files from a dependency
-# Until I have time to look at it, this job will clean them up.
-vendor_cleanup:
-	rm -rf `find ./vendor -type f -name ".*"`
-
-# Godep: go get github.com/tools/godep
-vendor_updateall: vendor_update vendor_cleanup
-vendor_saveall: vendor_save vendor_cleanup
-
-vendor_update:
-	godep update ./src/...
-
-vendor_save:
-	godep save ./src/...
