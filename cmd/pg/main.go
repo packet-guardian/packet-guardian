@@ -18,15 +18,20 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/tasks"
 )
 
-const (
-	version = "0.7.0"
-)
+// const (
+// 	version = "0.7.0"
+// )
 
 var (
 	configFile string
 	dev        bool
 	verFlag    bool
 	testConfig bool
+
+	version   = ""
+	buildTime = ""
+	builder   = ""
+	goversion = ""
 )
 
 func init() {
@@ -107,11 +112,13 @@ func main() {
 }
 
 func displayVersionInfo() {
-	fmt.Printf(`Packet Guardian - (C) 2016 Lee Keitel
-Onesimus Systems
+	fmt.Printf(`Packet Guardian - (C) 2016 Lee Keitel Onesimus Systems
 
-Version: %s
-`, version)
+Version:     %s
+Built:       %s
+Compiled by: %s
+Go version:  %s
+`, version, buildTime, builder, goversion)
 }
 
 func testMainConfig() {

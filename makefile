@@ -1,19 +1,61 @@
-.PHONY: build clean doc fmt install lint test vet
+export GO15VENDOREXPERIMENT=1
 
-VERSION?=unversioned
+# variable definitions
+NAME := packet-guardian
+DESC := A captive portal for today's networks
+PREFIX ?= usr/local
+VERSION := $(shell git describe --tags --always --dirty)
+GOVERSION := $(shell go version)
+BUILDTIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+BUILDDATE := $(shell date -u +"%B %d, %Y")
+BUILDER := $(shell echo "`git config user.name` <`git config user.email`>")
+PKG_RELEASE ?= 1
+PROJECT_URL := "https://github.com/onesimus-systems/$(NAME)"
+LDFLAGS := -X 'main.version=$(VERSION)' \
+			-X 'main.buildTime=$(BUILDTIME)' \
+			-X 'main.builder=$(BUILDER)' \
+			-X 'main.goversion=$(GOVERSION)'
 
-default: build
+# development tasks
+doc:
+	godoc -http=:6060 -index
 
-build: test
-	go build -v -o ./bin/pg ./src/cmd/pg
-	go build -v -o ./bin/dhcp ./src/cmd/dhcp
+fmt:
+	go fmt $$(go list ./src/...)
 
-clean:
-	rm -rf ./bin/*
-	rm -rf ./logs/*
-	rm -rf ./sessions/*
+test:
+	go test $$(go list ./src/...)
 
-dist: build
+coverage:
+	@-go test -v -coverprofile=cover.out $$(go list ./src/...)
+	@-go tool cover -html=cover.out -o cover.html
+
+benchmark:
+	@echo "Running tests..."
+	@go test -bench=. $$(go list ./src/...)
+
+# https://github.com/golang/lint
+# go get github.com/golang/lint/golint
+lint:
+	golint $$(go list ./src/...)
+
+vet:
+	go vet $$(go list ./src/...)
+
+CMD_SOURCES := $(shell find cmd -name main.go)
+TARGETS := $(patsubst cmd/%/main.go,bin/%,$(CMD_SOURCES))
+
+bin/%: cmd/%/main.go
+	go build -ldflags "$(LDFLAGS)" -o $@ $<
+
+local-install: test
+	GOBIN=$(PWD)/bin go install -v -ldflags "$(LDFLAGS)" ./cmd/pg
+	GOBIN=$(PWD)/bin go install -v -ldflags "$(LDFLAGS)" ./cmd/dhcp
+
+all: $(TARGETS)
+.DEFAULT_GOAL := all
+
+dist: test vet $(TARGETS)
 	@rm -rf ./dist
 	@mkdir -p dist/packet-guardian
 	@cp -R config dist/packet-guardian/
@@ -37,29 +79,9 @@ dist: build
 
 	@rm -rf dist/packet-guardian
 
-doc:
-	godoc -http=:6060 -index
+clean:
+	rm $(TARGETS)
+	rm -rf ./logs/*
+	rm -rf ./sessions/*
 
-fmt:
-	go fmt ./src/...
-
-install: test
-	GOBIN=$(PWD)/bin go install -v ./src/cmd/pg
-	GOBIN=$(PWD)/bin go install -v ./src/cmd/dhcp
-
-# https://github.com/golang/lint
-# go get github.com/golang/lint/golint
-lint:
-	golint ./src/...
-
-test: vet
-ifdef verbose
-		go test -v ./src/...
-else ifdef vverbose
-		PG_TEST_LOG=true go test -v ./src/...
-else
-		go test ./src/...
-endif
-
-vet:
-	go vet ./src/...
+.PHONY: all test local-install coverage clean dist vet lint benchmark fmt doc
