@@ -71,6 +71,7 @@ func (e *UserDeviceExpiration) NextExpiration(env *common.Environment) time.Time
 				break
 			}
 			globalDeviceExpiration.Value = d.Unix()
+			globalDeviceExpiration.Mode = UserDeviceExpirationSpecific
 		case "duration":
 			d, err := time.ParseDuration(env.Config.Registration.DefaultDeviceExpiration)
 			if err != nil {
@@ -78,6 +79,7 @@ func (e *UserDeviceExpiration) NextExpiration(env *common.Environment) time.Time
 				break
 			}
 			globalDeviceExpiration.Value = int64(d / time.Second)
+			globalDeviceExpiration.Mode = UserDeviceExpirationDuration
 		case "daily":
 			secs, err := common.ParseTime(env.Config.Registration.DefaultDeviceExpiration)
 			if err != nil {
@@ -85,6 +87,10 @@ func (e *UserDeviceExpiration) NextExpiration(env *common.Environment) time.Time
 				break
 			}
 			globalDeviceExpiration.Value = secs
+			globalDeviceExpiration.Mode = UserDeviceExpirationDaily
+		case "rolling":
+			globalDeviceExpiration.Value = 0
+			globalDeviceExpiration.Mode = UserDeviceExpirationRolling
 		}
 		return globalDeviceExpiration.NextExpiration(env)
 	} else if e.Mode == UserDeviceExpirationSpecific {
