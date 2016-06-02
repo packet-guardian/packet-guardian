@@ -36,7 +36,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if sessionUser.Username != formUsername && !sessionUser.IsAdmin() {
+	if sessionUser.Username != formUsername && !sessionUser.IsAdmin() && !sessionUser.IsHelpDesk() {
 		d.e.Log.Errorf("Admin action attempted: Register device for %s attempted by user %s", formUsername, sessionUser.Username)
 		common.NewAPIResponse("Only admins can do that", nil).WriteResponse(w, http.StatusForbidden)
 		return
@@ -54,7 +54,13 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !sessionUser.IsAdmin() { // Admins can register above the limit
+	if !sessionUser.IsAdmin() && !sessionUser.IsHelpDesk() {
+		if formUser.IsBlacklisted() {
+			d.e.Log.Noticef("Attempted registration by blacklisted user %s", formUser.Username)
+			common.NewAPIResponse("Username blacklisted", nil).WriteResponse(w, http.StatusForbidden)
+			return
+		}
+
 		// Get and enforce the device limit
 		limit := models.UserDeviceLimit(d.e.Config.Registration.DefaultDeviceLimit)
 		if formUser.DeviceLimit != models.UserDeviceLimitGlobal {
@@ -116,14 +122,6 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if the username is blacklisted
-	// Administrators bypass the blacklist check
-	if !sessionUser.IsAdmin() && formUser.IsBlacklisted() {
-		d.e.Log.Noticef("Attempted registration by blacklisted user %s", formUser.Username)
-		common.NewAPIResponse("Username blacklisted", nil).WriteResponse(w, http.StatusForbidden)
-		return
-	}
-
 	// Validate platform, we don't want someone to submit an inappropiate value
 	platform := ""
 	if manual {
@@ -142,9 +140,8 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	device.Expires = formUser.DeviceExpiration.NextExpiration(d.e)
 	device.DateRegistered = time.Now()
 	device.LastSeen = time.Now()
-	if !manual {
-		device.UserAgent = r.UserAgent()
-	} else {
+	device.UserAgent = r.UserAgent()
+	if manual {
 		device.UserAgent = "Manual"
 	}
 
@@ -158,7 +155,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect client as needed
 	resp := struct{ Location string }{Location: "/manage"}
-	if sessionUser.IsAdmin() {
+	if !sessionUser.IsNormal() {
 		resp.Location = "/admin/manage/" + formUser.Username
 	}
 

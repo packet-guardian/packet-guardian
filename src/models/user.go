@@ -134,6 +134,7 @@ type User struct {
 
 	isAdmin    int
 	isHelpDesk int
+	isReadOnly int
 }
 
 // NewUser creates a new base user
@@ -153,6 +154,7 @@ func NewUser(e *common.Environment) *User {
 		CanManage:        true,
 		isAdmin:          -1,
 		isHelpDesk:       -1,
+		isReadOnly:       -1,
 	}
 }
 
@@ -306,6 +308,21 @@ func (u *User) IsHelpDesk() bool {
 		u.isHelpDesk = 1
 	}
 	return (u.isHelpDesk == 1)
+}
+
+func (u *User) IsReadOnly() bool {
+	if u.isReadOnly != -1 {
+		return (u.isReadOnly == 1)
+	}
+	u.isReadOnly = 0
+	if common.StringInSlice(u.Username, u.e.Config.Auth.ReadOnlyUsers) {
+		u.isReadOnly = 1
+	}
+	return (u.isReadOnly == 1)
+}
+
+func (u *User) IsNormal() bool {
+	return (!u.IsReadOnly() && !u.IsHelpDesk() && !u.IsAdmin())
 }
 
 func (u *User) IsBlacklisted() bool {

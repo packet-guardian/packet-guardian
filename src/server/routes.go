@@ -112,11 +112,12 @@ func apiRouter(e *common.Environment) http.Handler {
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if auth.IsLoggedIn(r) {
 		sessionUser := models.GetUserFromContext(r)
-		if sessionUser.IsHelpDesk() || sessionUser.IsAdmin() {
+		if !sessionUser.IsNormal() {
 			http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
-		} else {
-			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
+			return
 		}
+
+		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -125,13 +126,16 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	reg, err := dhcp.IsRegisteredByIP(e, ip)
 	if err != nil {
 		e.Log.WithField("Err", err).Error("Couldn't get registration status")
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
 	}
 
 	if reg {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-	} else {
-		http.Redirect(w, r, "/register", http.StatusTemporaryRedirect)
+		return
 	}
+
+	http.Redirect(w, r, "/register", http.StatusTemporaryRedirect)
 }
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
@@ -141,9 +145,10 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionUser := models.GetUserFromContext(r)
-	if sessionUser.IsHelpDesk() || sessionUser.IsAdmin() {
+	if !sessionUser.IsNormal() {
 		http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
-	} else {
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
 	}
+
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }

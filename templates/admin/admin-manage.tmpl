@@ -14,7 +14,6 @@
             {{if .sessionUser.IsAdmin}}
                 <button type="button" name="add-device-btn" data-admin="1">Add New Device</button>
                 {{if gt (len .devices) 0}}
-                <button type="button" name="reassign-selected-btn">Reassign Selected</button>
                 <button type="button" name="del-selected-btn">Delete Selected</button>
                 <button type="button" name="del-all-btn">Delete All</button>
                 {{end}}
@@ -31,6 +30,7 @@
                     <option value="black-sel">Add Selected Devices</option>
                     <option value="unblack-sel">Remove Selected Devices</option>
                 </select>
+                <button type="button" name="reassign-selected-btn" class="admin-btn">Reassign Selected</button>
             {{end}}
             <button type="button" name="admin-btn" class="admin-btn">Admin Dashboard</button>
         </div>

@@ -72,7 +72,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 
-	if sessionUser.IsHelpDesk() {
+	if !sessionUser.IsNormal() {
 		http.Redirect(w, r, "/admin/manage/"+sessionUser.Username, http.StatusTemporaryRedirect)
 		return
 	}

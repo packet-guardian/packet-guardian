@@ -39,7 +39,7 @@ func CheckAPI(next http.Handler) http.Handler {
 
 		u := models.GetUserFromContext(r)
 		// Only admin and helpdesk users may proceed
-		if !u.IsAdmin() && !u.IsHelpDesk() {
+		if u.IsNormal() {
 			common.NewAPIResponse("Insufficient privilages", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
@@ -56,7 +56,7 @@ func CheckAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		u := models.GetUserFromContext(r)
 		// Only admin and helpdesk users may proceed
-		if !u.IsAdmin() && !u.IsHelpDesk() {
+		if u.IsNormal() {
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}

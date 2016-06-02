@@ -156,9 +156,14 @@ authMethod = ["local"]
 ## of authentication is used. It's soley based on username.
 adminUsers = ["admin"]
 
-## List of usernames who are helpdesk (read-only admin) users. Does not matter what type
+## List of usernames who are helpdesk users. Does not matter what type
 ## of authentication is used. It's soley based on username.
+## A helpdesk user can manage user devices but cannot manage user accounts.
 helpDeskUsers = ["helpdesk"]
+
+## List of usernames who are read-only admin users. Does not matter what type
+## of authentication is used. It's soley based on username.
+readOnlyUsers = ["readonly"]
 
 ## LDAP authentication settings
 [auth.ldap]
