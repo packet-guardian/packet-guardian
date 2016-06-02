@@ -238,6 +238,13 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, err := models.GetUserByUsername(d.e, username)
+	if err != nil {
+		d.e.Log.Errorf("Error getting user: %s", err.Error())
+		common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
+	}
+
 	devicesToReassign := strings.Split(devices, ",")
 	for _, devMacStr := range devicesToReassign {
 		devMacStr = strings.TrimSpace(devMacStr)
@@ -256,7 +263,9 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		originalUser := dev.Username
-		dev.Username = username
+		dev.Username = user.Username
+		// Change expiration to reflect new owner
+		dev.Expires = user.DeviceExpiration.NextExpiration(d.e)
 		if err := dev.Save(); err != nil {
 			d.e.Log.Errorf("Error saving device: %s", err.Error())
 			common.NewAPIResponse("Error saving device", nil).WriteResponse(w, http.StatusInternalServerError)
