@@ -5,6 +5,7 @@
 package dhcp
 
 import (
+	"errors"
 	"net"
 	"time"
 
@@ -38,6 +39,9 @@ func IsRegisteredByIP(e *common.Environment, ip net.IP) (bool, error) {
 	lease, err := GetLeaseByIP(e, ip)
 	if err != nil {
 		return false, err
+	}
+	if lease.ID == 0 {
+		return false, errors.New("No lease given for IP " + ip.String())
 	}
 	return lease.Registered, nil
 }

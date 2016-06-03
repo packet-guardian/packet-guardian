@@ -77,6 +77,7 @@ type Config struct {
 		AuthMethod    []string
 		AdminUsers    []string
 		HelpDeskUsers []string
+		ReadOnlyUsers []string
 
 		LDAP struct {
 			UseAD         bool
@@ -209,6 +210,9 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	}
 	if len(c.Auth.HelpDeskUsers) == 0 {
 		c.Auth.HelpDeskUsers = []string{"helpdesk"}
+	}
+	if len(c.Auth.HelpDeskUsers) == 0 {
+		c.Auth.HelpDeskUsers = []string{"readonly"}
 	}
 
 	// DHCP

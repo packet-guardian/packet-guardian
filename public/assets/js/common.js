@@ -35,13 +35,6 @@ var c = {
         }
         show();
     },
-
-    BindSelectAll: function(target, sClass) {
-        target = $(target);
-        target.click(function() {
-            $(sClass).prop("checked", target.prop("checked"));
-        });
-    },
 };
 
 $.onReady(function() {

@@ -36,15 +36,20 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if sessionUser.Username != formUsername && !sessionUser.IsAdmin() {
+	if sessionUser.Username != formUsername && !sessionUser.Can(models.CreateDevice) {
 		d.e.Log.Errorf("Admin action attempted: Register device for %s attempted by user %s", formUsername, sessionUser.Username)
 		common.NewAPIResponse("Only admins can do that", nil).WriteResponse(w, http.StatusForbidden)
 		return
 	}
 
-	if formUsername == sessionUser.Username {
+	if formUsername == sessionUser.Username && sessionUser.Can(models.CreateOwn) {
 		formUser = sessionUser
 	} else {
+		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+		return
+	}
+
+	if formUsername != sessionUser.Username {
 		var err error
 		formUser, err = models.GetUserByUsername(d.e, formUsername)
 		if err != nil {
@@ -54,7 +59,13 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !sessionUser.IsAdmin() { // Admins can register above the limit
+	if !sessionUser.Can(models.CreateDevice) {
+		if formUser.IsBlacklisted() {
+			d.e.Log.Noticef("Attempted registration by blacklisted user %s", formUser.Username)
+			common.NewAPIResponse("Username blacklisted", nil).WriteResponse(w, http.StatusForbidden)
+			return
+		}
+
 		// Get and enforce the device limit
 		limit := models.UserDeviceLimit(d.e.Config.Registration.DefaultDeviceLimit)
 		if formUser.DeviceLimit != models.UserDeviceLimitGlobal {
@@ -116,14 +127,6 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if the username is blacklisted
-	// Administrators bypass the blacklist check
-	if !sessionUser.IsAdmin() && formUser.IsBlacklisted() {
-		d.e.Log.Noticef("Attempted registration by blacklisted user %s", formUser.Username)
-		common.NewAPIResponse("Username blacklisted", nil).WriteResponse(w, http.StatusForbidden)
-		return
-	}
-
 	// Validate platform, we don't want someone to submit an inappropiate value
 	platform := ""
 	if manual {
@@ -142,9 +145,8 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	device.Expires = formUser.DeviceExpiration.NextExpiration(d.e)
 	device.DateRegistered = time.Now()
 	device.LastSeen = time.Now()
-	if !manual {
-		device.UserAgent = r.UserAgent()
-	} else {
+	device.UserAgent = r.UserAgent()
+	if manual {
 		device.UserAgent = "Manual"
 	}
 
@@ -158,7 +160,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect client as needed
 	resp := struct{ Location string }{Location: "/manage"}
-	if sessionUser.IsAdmin() {
+	if sessionUser.Can(models.ViewDevices) {
 		resp.Location = "/admin/manage/" + formUser.Username
 	}
 
@@ -174,7 +176,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if username != sessionUser.Username {
-		if !sessionUser.IsAdmin() {
+		if !sessionUser.Can(models.DeleteDevice) {
 			common.NewAPIResponse("Admin Error", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
@@ -185,6 +187,11 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 			common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
+	}
+
+	if !sessionUser.Can(models.DeleteOwn) {
+		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+		return
 	}
 
 	deleteAll := (r.FormValue("mac") == "")
@@ -220,8 +227,8 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
-	sessUser := models.GetUserFromContext(r)
-	if !sessUser.IsAdmin() {
+	sessionUser := models.GetUserFromContext(r)
+	if !sessionUser.Can(models.ReassignDevice) {
 		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusForbidden)
 		return
 	}
@@ -272,7 +279,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		d.e.Log.WithFields(verbose.Fields{
-			"adminUser":    sessUser.Username,
+			"adminUser":    sessionUser.Username,
 			"assignedTo":   username,
 			"assignedFrom": originalUser,
 			"MAC":          mac.String(),

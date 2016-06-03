@@ -24,7 +24,7 @@ func BlacklistCheck(e *common.Environment, next http.Handler) http.Handler {
 
 		// Admin user's bypass the blacklist
 		sessionUser := models.GetUserFromContext(r)
-		if sessionUser.IsAdmin() {
+		if sessionUser.Can(models.BypassBlacklist) {
 			next.ServeHTTP(w, r)
 			return
 		}

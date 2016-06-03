@@ -26,15 +26,17 @@ CREATE TABLE "user" (
     "valid_start" INTEGER DEFAULT 0,
     "valid_end" INTEGER DEFAULT 0,
     "valid_forever" INTEGER DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=4;
 
 INSERT INTO "user" ("id", "username", "password") VALUES (1, 'admin', '$2a$10$rZfN/gdXZdGYyLtUb6LF.eHOraDes3ibBECmWic2I3SocMC0L2Lxa');
 INSERT INTO "user" ("id", "username", "password") VALUES (2, 'helpdesk', '$2a$10$ICCdq/OyZBBoNPTRmfgntOnujD6INGv7ZAtA/Xq6JIdRMO65xCuNC');
+INSERT INTO "user" ("id", "username", "password") VALUES (3, 'readonly', '$2a$10$02NG6kQV.4UicpCnz8hyeefBD4JHKAlZToL2K0EN1HV.u6sXpP1Xy');
 
 DROP TABLE IF EXISTS "blacklist";
 CREATE TABLE "blacklist" (
     "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    "value" VARCHAR(255) NOT NULL UNIQUE KEY
+    "value" VARCHAR(255) NOT NULL UNIQUE KEY,
+    "comment" TEXT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
 DROP TABLE IF EXISTS "lease";

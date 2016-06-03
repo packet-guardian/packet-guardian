@@ -29,11 +29,13 @@ CREATE TABLE "user" (
 
 INSERT INTO "user" ("username", "password") VALUES ('admin', '$2a$10$rZfN/gdXZdGYyLtUb6LF.eHOraDes3ibBECmWic2I3SocMC0L2Lxa');
 INSERT INTO "user" ("username", "password") VALUES ('helpdesk', '$2a$10$ICCdq/OyZBBoNPTRmfgntOnujD6INGv7ZAtA/Xq6JIdRMO65xCuNC');
+INSERT INTO "user" ("username", "password") VALUES ('readonly', '$2a$10$02NG6kQV.4UicpCnz8hyeefBD4JHKAlZToL2K0EN1HV.u6sXpP1Xy');
 
 DROP TABLE IF EXISTS "blacklist";
 CREATE TABLE "blacklist" (
     "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    "value" TEXT NOT NULL UNIQUE ON CONFLICT IGNORE
+    "value" TEXT NOT NULL UNIQUE ON CONFLICT IGNORE,
+    "comment" TEXT DEFAULT ''
 );
 
 DROP TABLE IF EXISTS "lease";
