@@ -16,39 +16,17 @@ import (
 // CheckAuth is middleware to check if a user is logged in, if not it will redirect to the login page
 func CheckAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !auth.IsLoggedIn(r) {
-			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func CheckAPI(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !auth.IsLoggedIn(r) {
-			common.NewAPIResponse("Login required", nil).WriteResponse(w, http.StatusUnauthorized)
-			return
-		}
-
-		// The device handler checks for appropiate pernissions
-		if strings.HasPrefix(r.URL.Path, "/api/device") {
+		if auth.IsLoggedIn(r) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		u := models.GetUserFromContext(r)
-		// Only admin and helpdesk users may proceed
-		if u.IsNormal() {
-			common.NewAPIResponse("Insufficient privilages", nil).WriteResponse(w, http.StatusForbidden)
+		if strings.HasPrefix(r.URL.Path, "/api") {
+			common.NewAPIResponse("Login required", nil).WriteResponse(w, http.StatusUnauthorized)
 			return
 		}
-
-		if r.Method != "GET" && !u.IsAdmin() {
-			common.NewAPIResponse("Admins only", nil).WriteResponse(w, http.StatusForbidden)
-			return
-		}
-		next.ServeHTTP(w, r)
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
 	})
 }
 
@@ -56,12 +34,12 @@ func CheckAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		u := models.GetUserFromContext(r)
 		// Only admin and helpdesk users may proceed
-		if u.IsNormal() {
+		if !u.Can(models.ViewAdminPage) {
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}
 		// /admin/users is for full admins only
-		if strings.HasPrefix(r.URL.Path, "/admin/users") && !u.IsAdmin() {
+		if strings.HasPrefix(r.URL.Path, "/admin/users") && !u.Can(models.ViewUsers) {
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}

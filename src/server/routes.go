@@ -106,13 +106,13 @@ func apiRouter(e *common.Environment) http.Handler {
 	userApiController := api.NewUserController(e)
 	r.HandleFunc("/api/user", userApiController.UserHandler).Methods("POST", "DELETE")
 
-	return mid.CheckAPI(r)
+	return mid.CheckAuth(r)
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if auth.IsLoggedIn(r) {
 		sessionUser := models.GetUserFromContext(r)
-		if !sessionUser.IsNormal() {
+		if sessionUser.Can(models.ViewAdminPage) {
 			http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
 			return
 		}
@@ -145,7 +145,7 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionUser := models.GetUserFromContext(r)
-	if !sessionUser.IsNormal() {
+	if sessionUser.Can(models.ViewAdminPage) {
 		http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
 		return
 	}

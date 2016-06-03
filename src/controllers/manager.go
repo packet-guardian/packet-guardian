@@ -44,7 +44,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	formType := nonAdminAutoReg
 	if man {
-		if !m.e.Config.Registration.AllowManualRegistrations && !sessionUser.IsAdmin() {
+		if !m.e.Config.Registration.AllowManualRegistrations && !sessionUser.Can(models.CreateDevice) {
 			formType = manualNotAllowed
 		} else {
 			formType = nonAdminManReg
@@ -55,7 +55,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	username := sessionUser.Username
-	if r.FormValue("username") != "" && sessionUser.IsAdmin() {
+	if r.FormValue("username") != "" && sessionUser.Can(models.CreateDevice) {
 		username = r.FormValue("username")
 		formType = adminReg
 	}
@@ -72,7 +72,8 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 
-	if !sessionUser.IsNormal() {
+	// Redirect privilaged users to the full-featured management page
+	if sessionUser.Can(models.ViewDevices) {
 		http.Redirect(w, r, "/admin/manage/"+sessionUser.Username, http.StatusTemporaryRedirect)
 		return
 	}
@@ -87,9 +88,11 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	showAddBtn := (m.e.Config.Registration.AllowManualRegistrations && !sessionUser.IsBlacklisted())
 
 	data := map[string]interface{}{
-		"sessionUser": sessionUser,
-		"devices":     results,
-		"showAddBtn":  showAddBtn,
+		"sessionUser":     sessionUser,
+		"devices":         results,
+		"showAddBtn":      showAddBtn && sessionUser.Can(models.CreateOwn) && !sessionUser.IsBlacklisted(),
+		"canEditDevice":   sessionUser.Can(models.EditOwn) && !sessionUser.IsBlacklisted(),
+		"canDeleteDevice": sessionUser.Can(models.DeleteOwn) && !sessionUser.IsBlacklisted(),
 	}
 
 	m.e.Views.NewView("manage", r).Render(w, data)

@@ -25,7 +25,7 @@ func NewGuestController(e *common.Environment) *Guest {
 }
 
 func (g *Guest) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
-	loggedIn := auth.IsLoggedIn(r)
+	loggedIn := auth.IsLoggedIn(r) // Only non-guests will be logged in.
 	if loggedIn {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -77,7 +77,7 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check ban filter for email or phone number
+	// TODO: Check ban filter for email or phone number
 	verifyCode := guest.GenerateGuestCode()
 	session.Set("_verify-code", verifyCode)
 	session.Set("_expires", time.Now().Add(time.Duration(g.e.Config.Guest.VerifyCodeExpiration)*time.Minute).Unix())

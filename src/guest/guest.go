@@ -1,3 +1,7 @@
+// This source file is part of the Packet Guardian project.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package guest
 
 import (
@@ -37,8 +41,11 @@ func GenerateGuestCode() string {
 // full registration function found in controllers.api.Device.RegistrationHandler().
 func RegisterDevice(e *common.Environment, name, credential string, r *http.Request) error {
 	// Build guest user model
-	guest := models.NewUser(e)
-	guest.Username = credential
+	guest, err := models.GetUserByUsername(e, credential)
+	if err != nil {
+		e.Log.WithField("Err", err).Error("Failed to get guest user")
+		return err
+	}
 	guest.DeviceLimit = models.UserDeviceLimit(e.Config.Guest.DeviceLimit)
 	// TODO: Honor configuration settings
 	guest.DeviceExpiration = &models.UserDeviceExpiration{

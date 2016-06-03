@@ -131,10 +131,7 @@ type User struct {
 	blacklistCached  bool
 	blacklistSave    bool
 	blacklisted      bool
-
-	isAdmin    int
-	isHelpDesk int
-	isReadOnly int
+	Rights           Permission
 }
 
 // NewUser creates a new base user
@@ -144,7 +141,7 @@ func NewUser(e *common.Environment) *User {
 	// Device Expiration is global
 	// User never expires
 	// User can manage their devices
-	return &User{
+	u := &User{
 		e:                e,
 		DeviceLimit:      UserDeviceLimitGlobal,
 		DeviceExpiration: &UserDeviceExpiration{Mode: UserDeviceExpirationGlobal},
@@ -152,10 +149,10 @@ func NewUser(e *common.Environment) *User {
 		ValidEnd:         time.Unix(0, 0),
 		ValidForever:     true,
 		CanManage:        true,
-		isAdmin:          -1,
-		isHelpDesk:       -1,
-		isReadOnly:       -1,
+		Rights:           ViewOwn | ManageOwnRights,
 	}
+	u.LoadRights()
+	return u
 }
 
 func GetUserByUsername(e *common.Environment, username string) (*User, error) {
@@ -183,7 +180,7 @@ func GetUserByID(e *common.Environment, id int) (*User, error) {
 }
 
 func GetAllUsers(e *common.Environment) ([]*User, error) {
-	return getUsersFromDatabase(e, "")
+	return getUsersFromDatabase(e, `ORDER BY "username" COLLATE NOCASE ASC`)
 }
 
 func SearchUsersByField(e *common.Environment, field, pattern string) ([]*User, error) {
@@ -238,13 +235,16 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 			ValidEnd:     time.Unix(validEnd, 0),
 			ValidForever: validForever,
 			CanManage:    canManage,
-			isAdmin:      -1,
-			isHelpDesk:   -1,
+			Rights:       ViewOwn,
+		}
+		if canManage {
+			user.Rights = user.Rights.With(ManageOwnRights)
 		}
 		user.DeviceExpiration = &UserDeviceExpiration{
 			Mode:  UserExpiration(expirationType),
 			Value: defaultExpiration,
 		}
+		user.LoadRights()
 		results = append(results, user)
 	}
 	return results, nil
@@ -259,6 +259,33 @@ func GetUserFromContext(r *http.Request) *User {
 
 func SetUserToContext(r *http.Request, u *User) {
 	context.Set(r, common.SessionUserKey, u)
+}
+
+func (u *User) LoadRights() {
+	if common.StringInSlice(u.Username, u.e.Config.Auth.AdminUsers) {
+		u.Rights = u.Rights.With(AdminRights)
+		return
+	}
+	if common.StringInSlice(u.Username, u.e.Config.Auth.HelpDeskUsers) {
+		u.Rights = u.Rights.With(HelpDeskRights)
+		return
+	}
+	if common.StringInSlice(u.Username, u.e.Config.Auth.ReadOnlyUsers) {
+		u.Rights = u.Rights.With(ReadOnlyRights)
+		return
+	}
+}
+
+func (u *User) IsNew() bool {
+	return (u.ID == 0 || u.Username == "")
+}
+
+func (u *User) Can(p Permission) bool {
+	return u.Rights.Can(p)
+}
+
+func (u *User) CanEither(p Permission) bool {
+	return u.Rights.CanEither(p)
 }
 
 func (u *User) GetPassword() string {
@@ -286,43 +313,6 @@ func (u *User) RemovePassword() {
 	u.Password = ""
 	u.HasPassword = false
 	u.savePassword = true
-}
-
-func (u *User) IsAdmin() bool {
-	if u.isAdmin != -1 {
-		return (u.isAdmin == 1)
-	}
-	u.isAdmin = 0
-	if common.StringInSlice(u.Username, u.e.Config.Auth.AdminUsers) {
-		u.isAdmin = 1
-	}
-	return (u.isAdmin == 1)
-}
-
-func (u *User) IsHelpDesk() bool {
-	if u.isHelpDesk != -1 {
-		return (u.isHelpDesk == 1)
-	}
-	u.isHelpDesk = 0
-	if common.StringInSlice(u.Username, u.e.Config.Auth.HelpDeskUsers) {
-		u.isHelpDesk = 1
-	}
-	return (u.isHelpDesk == 1)
-}
-
-func (u *User) IsReadOnly() bool {
-	if u.isReadOnly != -1 {
-		return (u.isReadOnly == 1)
-	}
-	u.isReadOnly = 0
-	if common.StringInSlice(u.Username, u.e.Config.Auth.ReadOnlyUsers) {
-		u.isReadOnly = 1
-	}
-	return (u.isReadOnly == 1)
-}
-
-func (u *User) IsNormal() bool {
-	return (!u.IsReadOnly() && !u.IsHelpDesk() && !u.IsAdmin())
 }
 
 func (u *User) IsBlacklisted() bool {

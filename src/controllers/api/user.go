@@ -30,6 +30,7 @@ func (u *User) UserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
+	sessionUser := models.GetUserFromContext(r)
 	username := r.FormValue("username")
 	if username == "" {
 		common.NewAPIResponse("Username required", nil).WriteResponse(w, http.StatusBadRequest)
@@ -40,6 +41,13 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		u.e.Log.Errorf("Error saving user: %s", err.Error())
 		common.NewAPIResponse("Error saving user", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
+	}
+
+	canCreate := sessionUser.Can(models.CreateUser)
+	canEdit := sessionUser.Can(models.EditUser)
+	if !(user.IsNew() && canCreate) && !(!user.IsNew() && canEdit) {
+		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
 		return
 	}
 
@@ -150,7 +158,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		user.CanManage = (canManage == "1")
 	}
 
-	newUser := (user.ID == 0) // A user get's an ID when it's saved
+	newUser := user.IsNew() // This will always be false after a call to Save()
 
 	if err := user.Save(); err != nil {
 		u.e.Log.Errorf("Error saving user: %s", err.Error())
@@ -167,6 +175,12 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *User) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	sessionUser := models.GetUserFromContext(r)
+	if !sessionUser.Can(models.DeleteUser) {
+		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+		return
+	}
+
 	username := r.FormValue("username")
 	if username == "" {
 		common.NewAPIResponse("Username required", nil).WriteResponse(w, http.StatusBadRequest)
