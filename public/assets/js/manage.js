@@ -61,5 +61,11 @@ $.onReady(function() {
         });
     });
 
-    c.BindSelectAll('[name=dev-sel-all]', '.device-select');
+    $('[name=dev-sel-all]').click(function(e) {
+        $('.device-select').prop("checked", $(e.target).prop("checked"));
+    });
+
+    $('.device-select').click(function(e) {
+        $('[name=dev-sel-all]').prop("checked", false);
+    });
 });

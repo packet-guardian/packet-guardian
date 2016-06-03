@@ -130,10 +130,7 @@ upgrade() {
     echo "Copying configuration files"
     cp $APP_DIR/config/config-dhcp.sample.toml $CONFIG_DIR
     cp $APP_DIR/config/config-pg.sample.toml $CONFIG_DIR
-    cp $APP_DIR/config/config-dhcp.sample.toml $CONFIG_DIR/config-dhcp.toml.dist
-    cp $APP_DIR/config/config-pg.sample.toml $CONFIG_DIR/config-pg.toml.dist
     cp $APP_DIR/config/dhcp-config.sample.conf $CONFIG_DIR
-    cp $APP_DIR/config/policy.txt $CONFIG_DIR/policy.txt.dist
 
     # Perform any necessary SQL migrations
     # sqlite3 $DATA_DIR/database.sqlite3 < $APP_DIR/config/db-schema-sqlite.sql

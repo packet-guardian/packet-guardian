@@ -7,4 +7,4 @@ All official documentation can be found here.
 - [Configuration](configuration.md)
 - [DHCP Configuration](dhcp-configuration.md)
 - [Using Docker](using-docker.md)
-- [Advanced Installation](advanced-installation.md)
+- [Additional Installation](additional-installation.md)

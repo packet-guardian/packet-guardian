@@ -77,6 +77,7 @@ type Config struct {
 		AuthMethod    []string
 		AdminUsers    []string
 		HelpDeskUsers []string
+		ReadOnlyUsers []string
 
 		LDAP struct {
 			UseAD         bool
@@ -192,6 +193,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 		c.Guest.RollingExpirationLength = "4380h"
 	}
 	c.Guest.Checker = setStringOrDefault(c.Guest.Checker, "email")
+	c.Guest.VerifyCodeExpiration = setIntOrDefault(c.Guest.VerifyCodeExpiration, 3)
 
 	// Webserver
 	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 8080)
@@ -208,6 +210,9 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	}
 	if len(c.Auth.HelpDeskUsers) == 0 {
 		c.Auth.HelpDeskUsers = []string{"helpdesk"}
+	}
+	if len(c.Auth.HelpDeskUsers) == 0 {
+		c.Auth.HelpDeskUsers = []string{"readonly"}
 	}
 
 	// DHCP

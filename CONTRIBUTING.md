@@ -17,7 +17,17 @@ When filing an issue, make sure to answer these six questions:
 
 ## Contributing code
 
-This repository follows the guidelines of [git flow](http://nvie.com/posts/a-successful-git-branching-model/). Fork this repo and create your own feature branch off of develop. Any new dependencies should be vendored using Godeps. When submitting a PR, base it against the develop branch, not master.
+This repository follows the guidelines of [git flow](http://nvie.com/posts/a-successful-git-branching-model/). Fork this repo and create your own feature branch off of develop. Any new dependencies should be vendored using govendor. When submitting a PR, base it against the develop branch, not master.
+
+### Copyright
+
+By submitting code to this project, you agree to release your contribution under the BSD 3-clause or a less restrictive license. This will provide the best flexibility and compatibility with the project. All new files should have the following copyright header at the top:
+
+```
+// This source file is part of the Packet Guardian project.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+```
 
 ### Guidelines
 

@@ -7,17 +7,19 @@
         <a href="/admin" class="btn">Dashboard</a>
         <a href="/logout" class="btn">Logout</a>
 
+        {{if .canCreateUser}}
         <div class="new-user">
             <form id="new-user-form">
                 <input type="text" name="username" placeholder="Username">
                 <button type="submit">Create</button>
             </form>
         </div>
+        {{end}}
     </div>
 
     <table>
         <tr>
-            <th>&nbsp;</th>
+            {{if .canEditUser}}<th>&nbsp;</th>{{end}}
             <th>Username</th>
             <th>Device Limit</th>
             <th>Valid</th>
@@ -25,16 +27,16 @@
         </tr>
         {{range .users}}
         <tr>
-            <td><a href="/admin/users/{{.Username}}">edit</a></td>
+            {{if $.canEditUser}}<td><a href="/admin/users/{{.Username}}">edit</a></td>{{end}}
             <td><a href="/admin/manage/{{.Username}}">{{.Username}}</a></td>
             <td>{{if eq .DeviceLimit 0}}Unlimited
                 {{else if eq .DeviceLimit -1}}Global
-                {{else}}{{.DeviceLimit}} <span class="userLimit">&bull;</span>
+                {{else}}{{.DeviceLimit}}
                 {{end}}</td>
             {{if .ValidForever}}
             <td>Forever</td>
             {{else}}
-            <td>{{.ValidStart}} to {{.ValidEnd}}</td>
+            <td>{{.ValidStart.Format "2006-01-02 15:04"}} to {{.ValidEnd.Format "2006-01-02 15:04"}}</td>
             {{end}}
 
             <td>{{.DeviceExpiration.String}}</td>

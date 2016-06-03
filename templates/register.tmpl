@@ -2,7 +2,7 @@
 {{template "header" dict "css" (list "register") "main" . "pageTitle" "Register"}}
 <div id="suc-msg-auto" class="success-message-start-hidden">
     <p class="instructions">
-        Please disconnect your computer from the network for 1 minute and then reconnect.
+        Please disconnect your computer and reconnect to the network
     </p>
 </div>
 
@@ -29,9 +29,11 @@
                 <label for="dev-desc">Device Description (optional):</label>
                 <input type="text" name="dev-desc">
             </p>
+            {{if .config.Guest.Enabled}}
             <p class="guest-btn">
                 <a href="/register/guest" class="btn">Register as Guest</a>
             </p>
+            {{end}}
         </fieldset>
 
         <div class="reg-policy">

@@ -51,7 +51,7 @@ $.onReady(function () {
         } else if (expires === "4") {
             devExpSel.value("daily");
             // Remove "Daily at " text
-            limit.value(limit.value().slice(10));
+            limit.value(limit.value().slice(9));
         } else {
             devExpSel.value("specific");
         }

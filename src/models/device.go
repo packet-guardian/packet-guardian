@@ -53,7 +53,7 @@ func GetDeviceByID(e *common.Environment, id int) (*Device, error) {
 }
 
 func GetDevicesForUser(e *common.Environment, u *User) ([]*Device, error) {
-	sql := "WHERE \"username\" = ?"
+	sql := "WHERE \"username\" = ? ORDER BY \"mac\" COLLATE NOCASE ASC"
 	return getDevicesFromDatabase(e, sql, u.Username)
 }
 
