@@ -124,7 +124,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 	reg, err := models.IsRegisteredByIP(e, ip)
 	if err != nil {
-		e.Log.WithField("Err", err).Error("Couldn't get registration status")
+		e.Log.WithField("Err", err).Notice("Couldn't get registration status")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}

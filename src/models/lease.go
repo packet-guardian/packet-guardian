@@ -59,6 +59,13 @@ func GetLeaseByMAC(e *common.Environment, mac net.HardwareAddr) (*Lease, error) 
 	return leases[0], nil
 }
 
+// GetAllLeasesByMAC returns a slice of Lease given the mac address. If no leases
+// exist, the slice will be nil.
+func GetAllLeasesByMAC(e *common.Environment, mac net.HardwareAddr) ([]*Lease, error) {
+	sql := "WHERE \"mac\" = ?"
+	return getLeasesFromDatabase(e, sql, mac.String())
+}
+
 // GetLeaseByIP returns a Lease given the IP address. This method will always return
 // a Lease. Make sure to check if error is nil. If a new lease object was created
 // it will have an ID = 0.
@@ -76,6 +83,10 @@ func GetLeaseByIP(e *common.Environment, ip net.IP) (*Lease, error) {
 // GetAllLeases will return a slice of all leases in the database.
 func GetAllLeases(e *common.Environment) ([]*Lease, error) {
 	return getLeasesFromDatabase(e, "")
+}
+
+func SearchLeases(e *common.Environment, where string, vals ...interface{}) ([]*Lease, error) {
+	return getLeasesFromDatabase(e, where, vals...)
 }
 
 func getLeasesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Lease, error) {
