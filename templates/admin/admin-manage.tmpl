@@ -52,6 +52,7 @@
                 <th>Expires</th>
                 <th>Last Seen</th>
                 <th>Registered From</th>
+                <th>Current IP</th>
             </tr>
             {{range .devices}}
             <tr>
@@ -63,6 +64,7 @@
                 <td class="truncate"><span title="{{.Description}}">{{.Description}}</span></td>
                 <td>{{.Platform}}</td>
                 <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>
+
                 {{if eq .Expires.Unix 0}}
                 <td>Never</td>
                 {{else if eq .Expires.Unix 1}}
@@ -70,8 +72,15 @@
                 {{else}}
                 <td>{{.Expires.Format "2006-01-02 15:04"}}</td>
                 {{end}}
+
                 <td>{{.LastSeen.Format "2006-01-02 15:04"}}</td>
                 <td>{{.RegisteredFrom}}</td>
+
+                {{with .GetCurrentLease}}
+                <td><span title="Expires: {{.End.Format "2006-01-02 15:04"}}">{{.IP.String}}</span></td>
+                {{else}}
+                <td>N/A</td>
+                {{end}}
             </tr>
             {{end}}
         </table>

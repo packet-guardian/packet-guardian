@@ -13,7 +13,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
 )
 
@@ -101,7 +100,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// Automatic registration
-		lease, err := dhcp.GetLeaseByIP(d.e, ip)
+		lease, err := models.GetLeaseByIP(d.e, ip)
 		if err != nil {
 			d.e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
 			common.NewEmptyAPIResponse().WriteResponse(w, http.StatusInternalServerError)

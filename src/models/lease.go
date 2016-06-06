@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package dhcp
+package models
 
 import (
 	"errors"
@@ -16,7 +16,6 @@ import (
 // pool and network.
 type Lease struct {
 	e           *common.Environment
-	pool        *pool
 	ID          int
 	IP          net.IP
 	MAC         net.HardwareAddr
@@ -29,7 +28,7 @@ type Lease struct {
 	Registered  bool
 }
 
-func newLease(e *common.Environment) *Lease {
+func NewLease(e *common.Environment) *Lease {
 	return &Lease{e: e}
 }
 
@@ -53,11 +52,18 @@ func GetLeaseByMAC(e *common.Environment, mac net.HardwareAddr) (*Lease, error) 
 	sql := "WHERE \"mac\" = ?"
 	leases, err := getLeasesFromDatabase(e, sql, mac.String())
 	if leases == nil || len(leases) == 0 {
-		lease := newLease(e)
+		lease := NewLease(e)
 		lease.MAC = mac
 		return lease, err
 	}
 	return leases[0], nil
+}
+
+// GetAllLeasesByMAC returns a slice of Lease given the mac address. If no leases
+// exist, the slice will be nil.
+func GetAllLeasesByMAC(e *common.Environment, mac net.HardwareAddr) ([]*Lease, error) {
+	sql := "WHERE \"mac\" = ?"
+	return getLeasesFromDatabase(e, sql, mac.String())
 }
 
 // GetLeaseByIP returns a Lease given the IP address. This method will always return
@@ -67,7 +73,7 @@ func GetLeaseByIP(e *common.Environment, ip net.IP) (*Lease, error) {
 	sql := "WHERE \"ip\" = ?"
 	leases, err := getLeasesFromDatabase(e, sql, ip.String())
 	if leases == nil || len(leases) == 0 {
-		lease := newLease(e)
+		lease := NewLease(e)
 		lease.IP = ip
 		return lease, err
 	}
@@ -77,6 +83,10 @@ func GetLeaseByIP(e *common.Environment, ip net.IP) (*Lease, error) {
 // GetAllLeases will return a slice of all leases in the database.
 func GetAllLeases(e *common.Environment) ([]*Lease, error) {
 	return getLeasesFromDatabase(e, "")
+}
+
+func SearchLeases(e *common.Environment, where string, vals ...interface{}) ([]*Lease, error) {
+	return getLeasesFromDatabase(e, where, vals...)
 }
 
 func getLeasesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Lease, error) {
@@ -140,7 +150,7 @@ func (l *Lease) IsFree() bool {
 	return (l.ID == 0 || time.Now().After(l.End))
 }
 
-func (l *Lease) save() error {
+func (l *Lease) Save() error {
 	if l.ID == 0 {
 		return l.insertLease()
 	}
@@ -184,7 +194,7 @@ func (l *Lease) insertLease() error {
 	return nil
 }
 
-func (l *Lease) delete() error {
+func (l *Lease) Delete() error {
 	if l.ID == 0 {
 		return nil
 	}

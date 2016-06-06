@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
 )
 
@@ -67,7 +66,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 
 	// Automatic registration
-	lease, err := dhcp.GetLeaseByIP(e, ip)
+	lease, err := models.GetLeaseByIP(e, ip)
 	if err != nil {
 		e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
 		return errors.New("Internal Server Error")
