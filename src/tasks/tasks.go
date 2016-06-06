@@ -93,7 +93,7 @@ func cleanUpOldDevices(e *common.Environment) (string, error) {
 		return "No devices to purge", nil
 	}
 
-	sql := `DELETE FROM "device" WHERE "expires" != 0 AND ("last_seen" < ? OR ("expires" != 1 AND "expires" < ?)`
+	sql := `DELETE FROM "device" WHERE "expires" != 0 AND ("last_seen" < ? OR ("expires" != 1 AND "expires" < ?))`
 	results, err := e.DB.Exec(sql, now.Add(d).Unix(), now.Unix())
 	if err != nil {
 		return "", err

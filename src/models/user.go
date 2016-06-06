@@ -7,6 +7,7 @@ package models
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -159,6 +160,8 @@ func GetUserByUsername(e *common.Environment, username string) (*User, error) {
 	if username == "" {
 		return NewUser(e), nil
 	}
+
+	username = strings.ToLower(username)
 
 	sql := "WHERE \"username\" = ?"
 	users, err := getUsersFromDatabase(e, sql, username)

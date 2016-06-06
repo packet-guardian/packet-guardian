@@ -7,6 +7,7 @@ package api
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
@@ -31,7 +32,7 @@ func (u *User) UserHandler(w http.ResponseWriter, r *http.Request) {
 
 func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
-	username := r.FormValue("username")
+	username := strings.ToLower(r.FormValue("username"))
 	if username == "" {
 		common.NewAPIResponse("Username required", nil).WriteResponse(w, http.StatusBadRequest)
 		return

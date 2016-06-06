@@ -6,6 +6,7 @@ package auth
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/packet-guardian/src/common"
@@ -31,7 +32,7 @@ func LoginUser(r *http.Request, w http.ResponseWriter) bool {
 			if authMethod.loginUser(r, w) {
 				sess := common.GetSessionFromContext(r)
 				sess.Set("loggedin", true)
-				sess.Set("username", r.FormValue("username"))
+				sess.Set("username", strings.ToLower(r.FormValue("username")))
 				sess.Set("_authMethod", method)
 				sess.Save(r, w)
 				e.Log.WithFields(verbose.Fields{
