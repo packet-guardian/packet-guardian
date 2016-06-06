@@ -8,6 +8,10 @@
             <span class="username">{{.sessionUser.Username}}</span>
             {{if .sessionUser.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
         </div>
+        <div class="info">
+            <span class="text-label"># of Devices:</span>
+            <span class="username">{{len .devices}}</span>
+        </div>
         <div class="controls">
             {{if .showAddBtn}}
             <button type="button" name="add-device-btn">Add New Device</button>

@@ -10,6 +10,10 @@
             <span class="username">{{.user.Username}}</span>
             {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
         </div>
+        <div class="info">
+            <span class="text-label"># of Devices:</span>
+            <span class="username">{{len .devices}}</span>
+        </div>
         <div class="controls">
             {{if .canCreateDevice}}
             <button type="button" name="add-device-btn" data-admin="1">Add New Device</button>
