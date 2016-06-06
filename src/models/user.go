@@ -167,17 +167,10 @@ func GetUserByUsername(e *common.Environment, username string) (*User, error) {
 	if users == nil || len(users) == 0 {
 		u := NewUser(e)
 		u.Username = username
+		u.LoadRights()
 		return u, err
 	}
-	return users[0], nil
-}
-
-func GetUserByID(e *common.Environment, id int) (*User, error) {
-	sql := "WHERE \"id\" = ?"
-	users, err := getUsersFromDatabase(e, sql, id)
-	if users == nil || len(users) == 0 {
-		return NewUser(e), err
-	}
+	users[0].LoadRights()
 	return users[0], nil
 }
 
@@ -246,7 +239,6 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 			Mode:  UserExpiration(expirationType),
 			Value: defaultExpiration,
 		}
-		user.LoadRights()
 		results = append(results, user)
 	}
 	return results, nil
