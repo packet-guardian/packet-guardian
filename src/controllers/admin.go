@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
 	"github.com/onesimus-systems/packet-guardian/src/stats"
 )
@@ -90,7 +89,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 		if m, err := common.FormatMacAddress(query); err == nil {
 			results, err = models.SearchDevicesByField(a.e, "mac", m.String())
 		} else if ip := net.ParseIP(query); ip != nil {
-			lease, err := dhcp.GetLeaseByIP(a.e, ip)
+			lease, err := models.GetLeaseByIP(a.e, ip)
 			if err == nil {
 				results, err = models.SearchDevicesByField(a.e, "mac", lease.MAC.String())
 			}

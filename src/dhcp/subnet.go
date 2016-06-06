@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/onesimus-systems/dhcp4"
-	"github.com/onesimus-systems/packet-guardian/src/common"
 )
 
 type subnet struct {
@@ -75,15 +74,6 @@ func (s *subnet) getOptions(registered bool) dhcp4.Options {
 
 func (s *subnet) includes(ip net.IP) bool {
 	return s.net.Contains(ip)
-}
-
-func (s *subnet) getFreeLease(e *common.Environment) *Lease {
-	for _, p := range s.pools {
-		if l := p.getFreeLease(e); l != nil {
-			return l
-		}
-	}
-	return nil
 }
 
 func (s *subnet) print() {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/onesimus-systems/dhcp4"
 	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/onesimus-systems/packet-guardian/src/models"
 )
 
 type network struct {
@@ -159,19 +160,21 @@ func (n *network) includes(ip net.IP) bool {
 	return false
 }
 
-func (n *network) getFreeLease(e *common.Environment, registered bool) *Lease {
+func (n *network) getFreeLease(e *common.Environment, registered bool) (*models.Lease, *pool) {
 	for _, s := range n.subnets {
 		if s.allowUnknown == registered {
 			continue
 		}
-		if l := s.getFreeLease(e); l != nil {
-			return l
+		for _, p := range s.pools {
+			if l := p.getFreeLease(e); l != nil {
+				return l, p
+			}
 		}
 	}
-	return nil
+	return nil, nil
 }
 
-func (n *network) getLeaseByMAC(mac net.HardwareAddr, registered bool) *Lease {
+func (n *network) getLeaseByMAC(mac net.HardwareAddr, registered bool) (*models.Lease, *pool) {
 	for _, s := range n.subnets {
 		if s.allowUnknown == registered {
 			continue
@@ -179,26 +182,26 @@ func (n *network) getLeaseByMAC(mac net.HardwareAddr, registered bool) *Lease {
 		for _, p := range s.pools {
 			for _, l := range p.leases {
 				if bytes.Equal(l.MAC, mac) {
-					return l
+					return l, p
 				}
 			}
 		}
 	}
-	return nil
+	return nil, nil
 }
 
-func (n *network) getLeaseByIP(ip net.IP, registered bool) *Lease {
+func (n *network) getLeaseByIP(ip net.IP, registered bool) (*models.Lease, *pool) {
 	for _, s := range n.subnets {
 		if s.allowUnknown == registered {
 			continue
 		}
 		for _, p := range s.pools {
 			if l, ok := p.leases[ip.String()]; ok {
-				return l
+				return l, p
 			}
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 func (n *network) print() {

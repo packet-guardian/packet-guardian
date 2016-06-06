@@ -15,7 +15,6 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/controllers"
 	"github.com/onesimus-systems/packet-guardian/src/controllers/api"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
 	mid "github.com/onesimus-systems/packet-guardian/src/server/middleware"
 )
@@ -123,7 +122,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	e := common.GetEnvironmentFromContext(r)
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, err := dhcp.IsRegisteredByIP(e, ip)
+	reg, err := models.IsRegisteredByIP(e, ip)
 	if err != nil {
 		e.Log.WithField("Err", err).Error("Couldn't get registration status")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)

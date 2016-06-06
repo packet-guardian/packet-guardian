@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
 )
 
@@ -30,7 +29,7 @@ func BlacklistCheck(e *common.Environment, next http.Handler) http.Handler {
 		}
 
 		ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-		lease, err := dhcp.GetLeaseByIP(e, ip)
+		lease, err := models.GetLeaseByIP(e, ip)
 		if err == nil && lease.ID != 0 {
 			device, err := models.GetDeviceByMAC(e, lease.MAC)
 			if err != nil {

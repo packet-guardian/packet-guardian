@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package dhcp
+package models
 
 import (
 	"errors"
@@ -16,7 +16,6 @@ import (
 // pool and network.
 type Lease struct {
 	e           *common.Environment
-	pool        *pool
 	ID          int
 	IP          net.IP
 	MAC         net.HardwareAddr
@@ -29,7 +28,7 @@ type Lease struct {
 	Registered  bool
 }
 
-func newLease(e *common.Environment) *Lease {
+func NewLease(e *common.Environment) *Lease {
 	return &Lease{e: e}
 }
 
@@ -53,7 +52,7 @@ func GetLeaseByMAC(e *common.Environment, mac net.HardwareAddr) (*Lease, error) 
 	sql := "WHERE \"mac\" = ?"
 	leases, err := getLeasesFromDatabase(e, sql, mac.String())
 	if leases == nil || len(leases) == 0 {
-		lease := newLease(e)
+		lease := NewLease(e)
 		lease.MAC = mac
 		return lease, err
 	}
@@ -67,7 +66,7 @@ func GetLeaseByIP(e *common.Environment, ip net.IP) (*Lease, error) {
 	sql := "WHERE \"ip\" = ?"
 	leases, err := getLeasesFromDatabase(e, sql, ip.String())
 	if leases == nil || len(leases) == 0 {
-		lease := newLease(e)
+		lease := NewLease(e)
 		lease.IP = ip
 		return lease, err
 	}
@@ -140,7 +139,7 @@ func (l *Lease) IsFree() bool {
 	return (l.ID == 0 || time.Now().After(l.End))
 }
 
-func (l *Lease) save() error {
+func (l *Lease) Save() error {
 	if l.ID == 0 {
 		return l.insertLease()
 	}
@@ -184,7 +183,7 @@ func (l *Lease) insertLease() error {
 	return nil
 }
 
-func (l *Lease) delete() error {
+func (l *Lease) Delete() error {
 	if l.ID == 0 {
 		return nil
 	}
