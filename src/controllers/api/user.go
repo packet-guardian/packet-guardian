@@ -77,6 +77,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 	// Default device expiration
 	expTypeStr := r.FormValue("expiration_type")
 	devExpiration := r.FormValue("device_expiration")
+	updateDeviceExpirations := false
 	if expTypeStr != "" || devExpiration != "" {
 		if expTypeStr == "" && devExpiration != "" {
 			common.NewAPIResponse("Error saving user: Expiration type not given", nil).WriteResponse(w, http.StatusBadRequest)
@@ -89,25 +90,34 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 			common.NewAPIResponse("Expiration type must be an integer", nil).WriteResponse(w, http.StatusBadRequest)
 			return
 		}
-		user.DeviceExpiration.Mode = models.UserExpiration(expType)
+		if user.DeviceExpiration.Mode != models.UserExpiration(expType) {
+			user.DeviceExpiration.Mode = models.UserExpiration(expType)
+			updateDeviceExpirations = true
+		}
 		if user.DeviceExpiration.Mode == models.UserDeviceExpirationGlobal ||
 			user.DeviceExpiration.Mode == models.UserDeviceExpirationNever ||
 			user.DeviceExpiration.Mode == models.UserDeviceExpirationRolling {
 			user.DeviceExpiration.Value = 0
 		} else if user.DeviceExpiration.Mode == models.UserDeviceExpirationSpecific {
-			t, err := time.Parse(common.TimeFormat, devExpiration)
+			t, err := time.ParseInLocation(common.TimeFormat, devExpiration, time.Local)
 			if err != nil {
 				common.NewAPIResponse("Invalid time format", nil).WriteResponse(w, http.StatusBadRequest)
 				return
 			}
-			user.DeviceExpiration.Value = t.Unix()
+			if user.DeviceExpiration.Value != t.Unix() {
+				user.DeviceExpiration.Value = t.Unix()
+				updateDeviceExpirations = true
+			}
 		} else if user.DeviceExpiration.Mode == models.UserDeviceExpirationDaily {
 			secs, err := common.ParseTime(devExpiration)
 			if err != nil {
 				common.NewAPIResponse("Invalid time format", nil).WriteResponse(w, http.StatusBadRequest)
 				return
 			}
-			user.DeviceExpiration.Value = secs
+			if user.DeviceExpiration.Value != secs {
+				user.DeviceExpiration.Value = secs
+				updateDeviceExpirations = true
+			}
 		} else if user.DeviceExpiration.Mode == models.UserDeviceExpirationDuration {
 			d, err := time.ParseDuration(devExpiration)
 			if err != nil {
@@ -116,7 +126,11 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			// time.Duration's Second() returns a float that contains the nanoseconds as well
 			// For sanity we don't care and don't want the nanoseconds
-			user.DeviceExpiration.Value = int64(d / time.Second)
+			dur := int64(d / time.Second)
+			if user.DeviceExpiration.Value != dur {
+				user.DeviceExpiration.Value = dur
+				updateDeviceExpirations = true
+			}
 		} else {
 			common.NewAPIResponse("Invalid device expiration type", nil).WriteResponse(w, http.StatusBadRequest)
 			return
@@ -159,19 +173,41 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		user.CanManage = (canManage == "1")
 	}
 
-	newUser := user.IsNew() // This will always be false after a call to Save()
+	isNewUser := user.IsNew() // This will always be false after a call to Save()
 
 	if err := user.Save(); err != nil {
 		u.e.Log.Errorf("Error saving user: %s", err.Error())
 		common.NewAPIResponse("Error saving user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	if newUser {
+
+	if isNewUser {
 		u.e.Log.Infof("Admin %s created user %s", models.GetUserFromContext(r).Username, user.Username)
+	} else {
+		u.e.Log.Infof("Admin %s edited user %s", models.GetUserFromContext(r).Username, user.Username)
+	}
+
+	if updateDeviceExpirations {
+		devices, err := models.GetDevicesForUser(u.e, user)
+		if err != nil {
+			u.e.Log.WithField("Err", err).Error("Failed to update user's device expirations")
+			common.NewAPIResponse("User saved, but devices not updated", nil).WriteResponse(w, http.StatusInternalServerError)
+			return
+		}
+		for _, d := range devices {
+			d.Expires = user.DeviceExpiration.NextExpiration(u.e, d.DateRegistered)
+			if err := d.Save(); err != nil {
+				u.e.Log.WithField("Err", err).Error("Failed to save device")
+				common.NewAPIResponse("User saved, but some devices not updated", nil).WriteResponse(w, http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
+	if isNewUser {
 		common.NewAPIResponse("User created successfully", nil).WriteResponse(w, http.StatusNoContent)
 		return
 	}
-	u.e.Log.Infof("Admin %s edited user %s", models.GetUserFromContext(r).Username, user.Username)
 	common.NewAPIResponse("User saved successfully", nil).WriteResponse(w, http.StatusNoContent)
 }
 

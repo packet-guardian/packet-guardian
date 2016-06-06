@@ -57,10 +57,10 @@ func (e *UserDeviceExpiration) String() string {
 	}
 }
 
-func (e *UserDeviceExpiration) NextExpiration(env *common.Environment) time.Time {
+func (e *UserDeviceExpiration) NextExpiration(env *common.Environment, base time.Time) time.Time {
 	if e.Mode == UserDeviceExpirationGlobal {
 		if globalDeviceExpiration != nil {
-			return globalDeviceExpiration.NextExpiration(env)
+			return globalDeviceExpiration.NextExpiration(env, base)
 		}
 		// Build the global default, typically it's the most used mode
 		globalDeviceExpiration = &UserDeviceExpiration{} // Defaults to never
@@ -93,17 +93,16 @@ func (e *UserDeviceExpiration) NextExpiration(env *common.Environment) time.Time
 			globalDeviceExpiration.Value = 0
 			globalDeviceExpiration.Mode = UserDeviceExpirationRolling
 		}
-		return globalDeviceExpiration.NextExpiration(env)
+		return globalDeviceExpiration.NextExpiration(env, base)
 	} else if e.Mode == UserDeviceExpirationSpecific {
 		return time.Unix(e.Value, 0)
 	} else if e.Mode == UserDeviceExpirationDuration {
-		return time.Now().Add(time.Duration(e.Value) * time.Second)
+		return base.Add(time.Duration(e.Value) * time.Second)
 	} else if e.Mode == UserDeviceExpirationDaily {
-		now := time.Now()
-		year, month, day := now.Date()
+		year, month, day := base.Date()
 		bod := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
 		bod = bod.Add(time.Duration(e.Value) * time.Second)
-		if bod.Before(now) { // If the time has passed today, rollover to tomorrow
+		if bod.Before(base) { // If the time has passed today, rollover to tomorrow
 			bod = bod.Add(time.Duration(24) * time.Hour)
 		}
 		return bod

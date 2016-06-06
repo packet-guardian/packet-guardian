@@ -141,7 +141,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	device.Description = r.FormValue("description")
 	device.RegisteredFrom = ip
 	device.Platform = platform
-	device.Expires = formUser.DeviceExpiration.NextExpiration(d.e)
+	device.Expires = formUser.DeviceExpiration.NextExpiration(d.e, time.Now())
 	device.DateRegistered = time.Now()
 	device.LastSeen = time.Now()
 	device.UserAgent = r.UserAgent()
@@ -271,7 +271,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
 		originalUser := dev.Username
 		dev.Username = user.Username
 		// Change expiration to reflect new owner
-		dev.Expires = user.DeviceExpiration.NextExpiration(d.e)
+		dev.Expires = user.DeviceExpiration.NextExpiration(d.e, time.Now())
 		if err := dev.Save(); err != nil {
 			d.e.Log.Errorf("Error saving device: %s", err.Error())
 			common.NewAPIResponse("Error saving device", nil).WriteResponse(w, http.StatusInternalServerError)

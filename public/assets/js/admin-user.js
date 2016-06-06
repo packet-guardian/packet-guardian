@@ -46,6 +46,10 @@ $.onReady(function () {
             devExpSel.value("never");
             limit.value("");
             limit.prop("disabled", true);
+        } else if (expires === "5") {
+            devExpSel.value("rolling");
+            limit.value("");
+            limit.prop("disabled", true);
         } else if (expires === "3") {
             devExpSel.value("duration");
         } else if (expires === "4") {

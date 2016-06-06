@@ -96,7 +96,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	device.Description = "Guest - " + name
 	device.RegisteredFrom = ip
 	device.Platform = platform
-	device.Expires = guest.DeviceExpiration.NextExpiration(e)
+	device.Expires = guest.DeviceExpiration.NextExpiration(e, time.Now())
 	device.DateRegistered = time.Now()
 	device.LastSeen = time.Now()
 	device.UserAgent = r.UserAgent()
