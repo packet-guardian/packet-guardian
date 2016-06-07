@@ -38,8 +38,8 @@
 
 .js-modal-body input {
     margin-top: .5em;
-/*     font-size: 1.25em; */
     width: 100%;
+    box-sizing: border-box;
     color: black;
 }
 
@@ -55,14 +55,13 @@
 }
 
 .grabbable {
-    cursor: move; /* fallback if grab cursor is unsupported */
+    cursor: move;
     cursor: grab;
     cursor: -moz-grab;
     cursor: -webkit-grab;
 }
 
- /* (Optional) Apply a "closed-hand" cursor during drag operation. */
-.grabbable:active { 
+.grabbable:active {
     cursor: grabbing;
     cursor: -moz-grabbing;
     cursor: -webkit-grabbing;
