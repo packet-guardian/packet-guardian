@@ -22,7 +22,7 @@
             <button type="button" name="del-selected-btn">Delete Selected</button>
             <button type="button" name="del-all-btn">Delete All</button>
             {{end}}
-            <button type="button" name="logout-btn">Logout</button>
+            <a href="/logout" class="btn">Logout</a>
         </div>
         <div class="controls">
             {{if .canManageBlacklist}}
@@ -38,7 +38,7 @@
             {{if .canReassignDevice}}
             <button type="button" name="reassign-selected-btn" class="admin-btn">Reassign Selected</button>
             {{end}}
-            <button type="button" name="admin-btn" class="admin-btn">Admin Dashboard</button>
+            <a href="/admin" class="btn admin-btn">Admin Dashboard</a>
         </div>
         {{if eq (len .devices) 0}}
         <div class="no-devices">No devices registered</div>
