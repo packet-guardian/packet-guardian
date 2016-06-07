@@ -55,12 +55,20 @@ func Serve(conn ServeConn, handler Handler) error {
 			}
 		}
 		if res := handler.ServeDHCP(req, reqType, options); res != nil {
-			// If IP not available, broadcast
+			// If coming from a relay, unicast back
+			if !req.GIAddr().Equal(net.IPv4zero) {
+				if _, e := conn.WriteTo(res, addr); e != nil {
+					return e
+				}
+				continue
+			}
+
 			ipStr, portStr, err := net.SplitHostPort(addr.String())
 			if err != nil {
 				return err
 			}
 
+			// If IP not available or broadcast bit is set, broadcast
 			if net.ParseIP(ipStr).Equal(net.IPv4zero) || req.Broadcast() {
 				port, _ := strconv.Atoi(portStr)
 				addr = &net.UDPAddr{IP: net.IPv4bcast, Port: port}
