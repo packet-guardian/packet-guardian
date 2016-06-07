@@ -15,7 +15,6 @@ import (
 	"github.com/onesimus-systems/packet-guardian/src/common"
 	"github.com/onesimus-systems/packet-guardian/src/controllers"
 	"github.com/onesimus-systems/packet-guardian/src/controllers/api"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
 	mid "github.com/onesimus-systems/packet-guardian/src/server/middleware"
 )
@@ -35,6 +34,10 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	manageController := controllers.NewManagerController(e)
 	r.HandleFunc("/register", manageController.RegistrationHandler).Methods("GET")
 	r.Handle("/manage", mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler))).Methods("GET")
+
+	guestController := controllers.NewGuestController(e)
+	r.Handle("/register/guest", mid.CheckReg(e, http.HandlerFunc(guestController.RegistrationHandler))).Methods("GET", "POST")
+	r.Handle("/register/guest/verify", mid.CheckReg(e, http.HandlerFunc(guestController.VerificationHandler))).Methods("GET", "POST")
 
 	r.PathPrefix("/admin").Handler(adminRouter(e))
 	r.PathPrefix("/api").Handler(apiRouter(e))
@@ -102,32 +105,36 @@ func apiRouter(e *common.Environment) http.Handler {
 	userApiController := api.NewUserController(e)
 	r.HandleFunc("/api/user", userApiController.UserHandler).Methods("POST", "DELETE")
 
-	return mid.CheckAPI(r)
+	return mid.CheckAuth(r)
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if auth.IsLoggedIn(r) {
 		sessionUser := models.GetUserFromContext(r)
-		if sessionUser.IsHelpDesk() || sessionUser.IsAdmin() {
+		if sessionUser.Can(models.ViewAdminPage) {
 			http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
-		} else {
-			http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
+			return
 		}
+
+		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return
 	}
 
 	e := common.GetEnvironmentFromContext(r)
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, err := dhcp.IsRegisteredByIP(e, ip)
+	reg, err := models.IsRegisteredByIP(e, ip)
 	if err != nil {
-		e.Log.WithField("Err", err).Error("Couldn't get registration status")
+		e.Log.WithField("Err", err).Notice("Couldn't get registration status")
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
 	}
 
 	if reg {
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-	} else {
-		http.Redirect(w, r, "/register", http.StatusTemporaryRedirect)
+		return
 	}
+
+	http.Redirect(w, r, "/register", http.StatusTemporaryRedirect)
 }
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
@@ -137,9 +144,10 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessionUser := models.GetUserFromContext(r)
-	if sessionUser.IsHelpDesk() || sessionUser.IsAdmin() {
+	if sessionUser.Can(models.ViewAdminPage) {
 		http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
-	} else {
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
 	}
+
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }

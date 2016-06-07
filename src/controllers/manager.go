@@ -5,16 +5,12 @@
 package controllers
 
 import (
-	"bufio"
-	"html/template"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/onesimus-systems/packet-guardian/src/auth"
 	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
 	"github.com/onesimus-systems/packet-guardian/src/models"
 )
 
@@ -39,7 +35,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	man := (r.FormValue("manual") == "1")
 	loggedIn := auth.IsLoggedIn(r)
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, _ := dhcp.IsRegisteredByIP(m.e, ip)
+	reg, _ := models.IsRegisteredByIP(m.e, ip)
 	if !man && reg {
 		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return
@@ -47,7 +43,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	formType := nonAdminAutoReg
 	if man {
-		if !m.e.Config.Registration.AllowManualRegistrations && !sessionUser.IsAdmin() {
+		if !m.e.Config.Registration.AllowManualRegistrations && !sessionUser.Can(models.CreateDevice) {
 			formType = manualNotAllowed
 		} else {
 			formType = nonAdminManReg
@@ -58,13 +54,13 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	username := sessionUser.Username
-	if r.FormValue("username") != "" && sessionUser.IsAdmin() {
+	if r.FormValue("username") != "" && sessionUser.Can(models.CreateDevice) {
 		username = r.FormValue("username")
 		formType = adminReg
 	}
 
 	data := map[string]interface{}{
-		"policy":   m.loadPolicyText(),
+		"policy":   common.LoadPolicyText(m.e.Config.Registration.RegistrationPolicyFile),
 		"type":     formType,
 		"username": username,
 	}
@@ -75,7 +71,8 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 
-	if sessionUser.IsHelpDesk() {
+	// Redirect privilaged users to the full-featured management page
+	if sessionUser.Can(models.ViewDevices) {
 		http.Redirect(w, r, "/admin/manage/"+sessionUser.Username, http.StatusTemporaryRedirect)
 		return
 	}
@@ -89,33 +86,13 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 
 	showAddBtn := (m.e.Config.Registration.AllowManualRegistrations && !sessionUser.IsBlacklisted())
 
-	data := make(map[string]interface{})
-	data["sessionUser"] = sessionUser
-	data["devices"] = results
-	data["showAddBtn"] = showAddBtn
+	data := map[string]interface{}{
+		"sessionUser":     sessionUser,
+		"devices":         results,
+		"showAddBtn":      showAddBtn && sessionUser.Can(models.CreateOwn) && !sessionUser.IsBlacklisted(),
+		"canEditDevice":   sessionUser.Can(models.EditOwn) && !sessionUser.IsBlacklisted(),
+		"canDeleteDevice": sessionUser.Can(models.DeleteOwn) && !sessionUser.IsBlacklisted(),
+	}
 
 	m.e.Views.NewView("manage", r).Render(w, data)
-}
-
-func (m *Manager) loadPolicyText() []template.HTML {
-	f, err := os.Open(m.e.Config.Registration.RegistrationPolicyFile)
-	if err != nil {
-		return nil
-	}
-	defer f.Close()
-
-	var policy []template.HTML
-	currentParagraph := ""
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		t := strings.TrimSpace(scanner.Text())
-		if t == "" {
-			policy = append(policy, template.HTML(currentParagraph))
-			currentParagraph = ""
-			continue
-		}
-		currentParagraph += " " + t
-	}
-	policy = append(policy, template.HTML(currentParagraph))
-	return policy
 }

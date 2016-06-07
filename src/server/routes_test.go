@@ -25,7 +25,7 @@ func TestRootHandlerLoggedInNormal(t *testing.T) {
 		1, "testUser", "", 0, 0, 0, 1, 1, 0, 0,
 	)
 
-	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testUser").WillReturnRows(userRow)
+	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testuser").WillReturnRows(userRow)
 
 	e := common.NewTestEnvironment()
 	e.DB = &common.DatabaseAccessor{DB: db}
@@ -70,7 +70,7 @@ func TestRootHandlerLoggedInAdmin(t *testing.T) {
 		1, "testUser", "", 0, 0, 0, 1, 1, 0, 0,
 	)
 
-	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testUser").WillReturnRows(userRow)
+	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testuser").WillReturnRows(userRow)
 
 	e := common.NewTestEnvironment()
 	e.DB = &common.DatabaseAccessor{DB: db}

@@ -26,6 +26,7 @@ type Device struct {
 	UserAgent      string
 	IsBlacklisted  bool
 	LastSeen       time.Time
+	Leases         []*Lease
 }
 
 func NewDevice(e *common.Environment) *Device {
@@ -53,7 +54,7 @@ func GetDeviceByID(e *common.Environment, id int) (*Device, error) {
 }
 
 func GetDevicesForUser(e *common.Environment, u *User) ([]*Device, error) {
-	sql := "WHERE \"username\" = ?"
+	sql := "WHERE \"username\" = ? ORDER BY \"mac\" COLLATE NOCASE ASC"
 	return getDevicesFromDatabase(e, sql, u.Username)
 }
 
@@ -142,6 +143,37 @@ func DeleteAllDeviceForUser(e *common.Environment, u *User) error {
 	sql := `DELETE FROM "device" WHERE "username" = ?`
 	_, err := e.DB.Exec(sql, u.Username)
 	return err
+}
+
+func (d *Device) LoadKnownLeases() error {
+	leases, err := SearchLeases(
+		d.e,
+		`WHERE "mac" = ? ORDER BY "start" DESC`,
+		d.MAC.String(),
+	)
+	if err != nil {
+		return err
+	}
+	if leases != nil {
+		d.Leases = leases
+	}
+	return nil
+}
+
+// GetCurrentLease will return the last known lease for the device that has
+// not expired. If two leases are currently active, it will return the lease
+// with the farthest end date. If no current lease is found, returns nil.
+func (d *Device) GetCurrentLease() *Lease {
+	if d.Leases == nil {
+		d.LoadKnownLeases()
+	}
+	if d.Leases == nil || len(d.Leases) == 0 {
+		return nil
+	}
+	if d.Leases[0].End.Before(time.Now()) {
+		return nil
+	}
+	return d.Leases[0]
 }
 
 func (d *Device) IsExpired() bool {

@@ -6,7 +6,6 @@ if [[ $UID -ne 0 ]]; then
     exit 1
 fi
 
-SRC_TAR="$1"
 APP_DIR="/opt/packet-guardian"
 UPSTART_SERVICE_DIR="/etc/init"
 SYSTEMD_SERVICE_DIR="/etc/systemd/system"
@@ -111,61 +110,6 @@ setPermissions() {
     chown -R root:packetg $CONFIG_DIR
 }
 
-upgrade() {
-    if ! installed; then
-        echo "It appears Packet Guardian is not installed."
-        echo "Please install Packet Guardian before trying to upgrade."
-        echo
-        exit 1
-    fi
-
-    cd /opt
-
-    if [[ ! -d $APP_DIR ]]; then
-        echo "It appears Packet Guardian is not installed."
-        echo "Please install Packet Guardian before trying to upgrade."
-        echo
-        exit 1
-    else
-        echo "Moving current installation to $APP_DIR.old"
-        rm -rf $APP_DIR.old
-        mv $APP_DIR $APP_DIR.old
-    fi
-
-    SRC_TAR="$(realpath $SRC_TAR)"
-    stopService
-
-    echo "Extracting new version"
-    tar -xzf $SRC_TAR
-    chown -R packetg:packetg $APP_DIR
-
-    echo "Copying configuration files"
-    cp $APP_DIR/config/config-dhcp.sample.toml $CONFIG_DIR
-    cp $APP_DIR/config/config-pg.sample.toml $CONFIG_DIR
-    cp $APP_DIR/config/config-dhcp.sample.toml $CONFIG_DIR/config-dhcp.toml.dist
-    cp $APP_DIR/config/config-pg.sample.toml $CONFIG_DIR/config-pg.toml.dist
-    cp $APP_DIR/config/dhcp-config.sample.toml $CONFIG_DIR
-    cp $APP_DIR/config/policy.txt $CONFIG_DIR/policy.txt.dist
-
-    # Perform any necessary SQL migrations
-    # sqlite3 $DATA_DIR/database.sqlite3 < $APP_DIR/config/db-schema-sqlite.sql
-
-    setPermissions
-    installService
-    setKernalPermissions
-    installAppArmorProfile
-
-    echo
-    echo "Packet Guardian is now upgraded"
-    echo "Please check the docs and configuration"
-    echo "for new options and release notes."
-    echo "When you're ready, start Packet Guardian using:"
-    echo
-    echo "service pg start OR systemctl start pg"
-    echo "service pg-dhcp start OR systemctl start pg-dhcp"
-    echo
-}
-
 install() {
     if [[ ! -d $APP_DIR ]]; then
         echo "It appears Packet Guardian is not in the correct place."
@@ -177,7 +121,7 @@ install() {
 
     if installed; then
         echo "It appears Packet Guardian is already installed."
-        confirm "This will overwrite all configuration files. Are you sure?"
+        confirm "This will overwrite all configuration files and the database. Are you sure?"
     fi
 
     echo "Creating packetg user"
@@ -195,7 +139,7 @@ install() {
     cp $APP_DIR/config/config-pg.sample.toml $CONFIG_DIR
     cp $APP_DIR/config/config-dhcp.sample.toml $CONFIG_DIR/config-dhcp.toml
     cp $APP_DIR/config/config-pg.sample.toml $CONFIG_DIR/config-pg.toml
-    cp $APP_DIR/config/dhcp-config* $CONFIG_DIR
+    cp $APP_DIR/config/dhcp-config.sample.conf $CONFIG_DIR
     cp $APP_DIR/config/policy.txt $CONFIG_DIR
 
     sqlite3 $DATA_DIR/database.sqlite3 < $APP_DIR/config/db-schema-sqlite.sql
@@ -222,14 +166,5 @@ if [[ -z $(which sqlite3) ]]; then
     exit 1
 fi
 
-if [[ -z $SRC_TAR ]]; then
-    confirm "This will install Packet Guardian. Are you sure?"
-    install
-else
-    confirm "This will upgrade Packet Guardian. Are you sure?"
-    if [[ ! -f $SRC_TAR ]]; then
-        echo "The source tarball doesn't appear to exist, please check your path and try again"
-        exit 1
-    fi
-    upgrade
-fi
+confirm "This will install Packet Guardian. Are you sure?"
+install

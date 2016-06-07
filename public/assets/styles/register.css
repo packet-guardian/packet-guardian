@@ -33,22 +33,22 @@ label {
     font-size: 1.2em;
 }
 
-.reg-policy, .reg-btn, .success-message {
+.reg-policy, .reg-btn, .success-message, .failure-message {
     padding-left: 10px;
     padding-right: 10px;
     margin: 0 auto;
     max-width: 700px;
 }
 
-.success-message {
+.start-hidden {
     display: none;
 }
 
-@media (min-width: 400px) {
-    .register-box input {
-        width: 380px;
-    }
+.guest-btn {
+    text-align: right;
+}
 
+@media (min-width: 400px) {
     fieldset {
         width: 400px;
     }

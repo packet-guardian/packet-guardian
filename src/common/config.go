@@ -43,6 +43,24 @@ type Config struct {
 		DefaultDeviceExpiration     string
 		ManualRegPlatforms          []string
 	}
+	Guest struct {
+		Enabled                 bool
+		DeviceLimit             int
+		DeviceExpirationType    string
+		RollingExpirationLength string
+		DeviceExpiration        string
+		Checker                 string
+		VerifyCodeExpiration    int
+
+		Email struct {
+		}
+
+		Twilio struct {
+			AccountSID  string
+			AuthToken   string
+			PhoneNumber string
+		}
+	}
 	Webserver struct {
 		Address             string
 		HttpPort            int
@@ -59,6 +77,7 @@ type Config struct {
 		AuthMethod    []string
 		AdminUsers    []string
 		HelpDeskUsers []string
+		ReadOnlyUsers []string
 
 		LDAP struct {
 			UseAD         bool
@@ -166,6 +185,16 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 		c.Registration.RollingExpirationLength = "4380h"
 	}
 
+	// Guest registrations
+	c.Guest.DeviceExpirationType = setStringOrDefault(c.Guest.DeviceExpirationType, "daily")
+	c.Guest.DeviceExpiration = setStringOrDefault(c.Guest.DeviceExpiration, "24:00")
+	c.Guest.RollingExpirationLength = setStringOrDefault(c.Guest.RollingExpirationLength, "4380h")
+	if _, err := time.ParseDuration(c.Guest.RollingExpirationLength); err != nil {
+		c.Guest.RollingExpirationLength = "4380h"
+	}
+	c.Guest.Checker = setStringOrDefault(c.Guest.Checker, "email")
+	c.Guest.VerifyCodeExpiration = setIntOrDefault(c.Guest.VerifyCodeExpiration, 3)
+
 	// Webserver
 	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 8080)
 	c.Webserver.HttpsPort = setIntOrDefault(c.Webserver.HttpsPort, 1443)
@@ -181,6 +210,9 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	}
 	if len(c.Auth.HelpDeskUsers) == 0 {
 		c.Auth.HelpDeskUsers = []string{"helpdesk"}
+	}
+	if len(c.Auth.HelpDeskUsers) == 0 {
+		c.Auth.HelpDeskUsers = []string{"readonly"}
 	}
 
 	// DHCP

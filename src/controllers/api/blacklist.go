@@ -22,6 +22,11 @@ func NewBlacklistController(e *common.Environment) *Blacklist {
 }
 
 func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request) {
+	if !models.GetUserFromContext(r).Can(models.ManageBlacklist) {
+		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	username, ok := vars["username"]
 	if !ok {
@@ -59,6 +64,11 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Request) {
+	if !models.GetUserFromContext(r).Can(models.ManageBlacklist) {
+		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+		return
+	}
+
 	vars := mux.Vars(r)
 	username, ok := vars["username"]
 	if !ok {

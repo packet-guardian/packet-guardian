@@ -3,7 +3,7 @@
 <div class="admin-dash">
     <h2>Administration Dashboard</h2>
     <div class="controls">
-        {{if .sessionUser.IsAdmin}}
+        {{if .canViewUsers}}
         <a href="/admin/users" class="btn">Manage Users</a>
         {{end}}
         <a href="/logout" class="btn">Logout</a>

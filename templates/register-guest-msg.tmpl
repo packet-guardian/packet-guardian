@@ -1,0 +1,13 @@
+{{define "register-guest-msg"}}
+{{template "header" dict "css" (list "register") "main" . "pageTitle" "Register - Guest"}}
+{{if .error}}
+<div class="failure-message" style="display: block;">
+{{else}}
+<div class="success-message" style="display: block;">
+{{end}}
+    <p class="instructions">
+        {{.msg}}
+    </p>
+</div>
+{{template "footer" dict "js" (list "register-guest")}}
+{{end}}

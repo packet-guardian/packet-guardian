@@ -46,12 +46,16 @@ $.onReady(function () {
             devExpSel.value("never");
             limit.value("");
             limit.prop("disabled", true);
+        } else if (expires === "5") {
+            devExpSel.value("rolling");
+            limit.value("");
+            limit.prop("disabled", true);
         } else if (expires === "3") {
             devExpSel.value("duration");
         } else if (expires === "4") {
             devExpSel.value("daily");
             // Remove "Daily at " text
-            limit.value(limit.value().slice(10));
+            limit.value(limit.value().slice(9));
         } else {
             devExpSel.value("specific");
         }
