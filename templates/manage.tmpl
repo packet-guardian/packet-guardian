@@ -20,7 +20,7 @@
             <button type="button" name="del-selected-btn">Delete Selected</button>
             <button type="button" name="del-all-btn">Delete All</button>
             {{end}}
-            <button type="button" name="logout-btn">Logout</button>
+            <a href="/logout" class="btn">Logout</a>
         </div>
         {{if eq (len .devices) 0}}
         <div class="no-devices">No devices registered</div>
