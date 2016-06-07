@@ -42,12 +42,11 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if formUsername == sessionUser.Username {
-		if sessionUser.Can(models.CreateOwn) {
-			formUser = sessionUser
-		} else {
+		if !sessionUser.Can(models.CreateOwn) {
 			common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
+		formUser = sessionUser
 	}
 
 	if formUsername != sessionUser.Username {
