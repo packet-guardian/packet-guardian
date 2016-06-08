@@ -16,7 +16,11 @@ APPARMOR_DIR="/etc/apparmor.d"
 
 SYSTEMD=""
 APPARMOR_INSTALLED=""
+ALL_YES=""
 
+if [[ $1 == "-y" ]]; then
+    ALL_YES="t"
+fi
 if which systemctl >/dev/null 2>&1; then
     SYSTEMD="t"
 fi
@@ -25,6 +29,9 @@ if which apparmor_status >/dev/null 2>&1; then
 fi
 
 confirm() {
+    if [[ -n $ALL_YES ]]; then
+        return
+    fi
     echo -n "$1 [y/N]: "
     read -n 1 imsure
     echo
@@ -70,6 +77,7 @@ uninstallAppArmorProfile() {
 deleteApplicationFiles() {
     echo "Removing application files"
     rm -rf $APP_DIR
+    rm -rf /usr/local/bin/pg-upgrade
 }
 
 purgeConfigFiles() {

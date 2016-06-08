@@ -17,7 +17,11 @@ APPARMOR_DIR="/etc/apparmor.d"
 SYSTEMD=""
 APPARMOR_INSTALLED=""
 APPARMOR_UTILS_INSTALLED=""
+ALL_YES=""
 
+if [[ $1 == "-y" ]]; then
+    ALL_YES="t"
+fi
 if which systemctl >/dev/null 2>&1; then
     SYSTEMD="t"
 fi
@@ -40,6 +44,9 @@ stopService() {
 }
 
 confirm() {
+    if [[ -n $ALL_YES ]]; then
+        return
+    fi
     echo -n "$1 [y/N]: "
     read -n 1 imsure
     echo
@@ -141,6 +148,8 @@ install() {
     cp $APP_DIR/config/config-pg.sample.toml $CONFIG_DIR/config-pg.toml
     cp $APP_DIR/config/dhcp-config.sample.conf $CONFIG_DIR
     cp $APP_DIR/config/policy.txt $CONFIG_DIR
+
+    cp $APP_DIR/pg-upgrade.sh /usr/local/bin/pg-upgrade
 
     sqlite3 $DATA_DIR/database.sqlite3 < $APP_DIR/config/db-schema-sqlite.sql
 
