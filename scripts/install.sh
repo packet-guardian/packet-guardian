@@ -1,5 +1,9 @@
 #! /usr/bin/env bash
 
+## Directory of running script
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTPATH="$DIR/$(basename "$0")"
+
 # Check running as root
 if [[ $UID -ne 0 ]]; then
     echo "This file must be ran as root."
@@ -64,8 +68,8 @@ installService() {
     cd $APP_DIR
     if [[ -n $SYSTEMD ]]; then
         echo "Installing Systemd Service"
-        cp $APP_DIR/config/service/systemd/pg.service $SYSTEMD_SERVICE_DIR/pg.service
-        cp $APP_DIR/config/service/systemd/dhcp.service $SYSTEMD_SERVICE_DIR/pg-dhcp.service
+        cp config/service/systemd/pg.service $SYSTEMD_SERVICE_DIR/pg.service
+        cp config/service/systemd/dhcp.service $SYSTEMD_SERVICE_DIR/pg-dhcp.service
         chown root:root $SYSTEMD_SERVICE_DIR/pg.service
         chown root:root $SYSTEMD_SERVICE_DIR/pg-dhcp.service
         systemctl daemon-reload
@@ -73,8 +77,8 @@ installService() {
         systemctl enable pg-dhcp.service
     else
         echo "Installing Upstart Service"
-        cp $APP_DIR/config/service/upstart/pg.conf $UPSTART_SERVICE_DIR/pg.conf
-        cp $APP_DIR/config/service/upstart/dhcp.conf $UPSTART_SERVICE_DIR/pg-dhcp.conf
+        cp config/service/upstart/pg.conf $UPSTART_SERVICE_DIR/pg.conf
+        cp config/service/upstart/dhcp.conf $UPSTART_SERVICE_DIR/pg-dhcp.conf
         chown root:root $UPSTART_SERVICE_DIR/pg.conf
         chown root:root $UPSTART_SERVICE_DIR/pg-dhcp.conf
     fi
@@ -91,8 +95,8 @@ installAppArmorProfile() {
     if [[ -n $APPARMOR_INSTALLED ]]; then
         echo "Installing AppArmor profile"
         mkdir -p $APPARMOR_DIR
-        cp $APP_DIR/config/apparmor/pg/apparmor-ext.conf $APPARMOR_DIR/opt.packet-guardian.bin.pg
-        cp $APP_DIR/config/apparmor/dhcp/apparmor-ext.conf $APPARMOR_DIR/opt.packet-guardian.bin.dhcp
+        cp config/apparmor/pg/apparmor-ext.conf $APPARMOR_DIR/opt.packet-guardian.bin.pg
+        cp config/apparmor/dhcp/apparmor-ext.conf $APPARMOR_DIR/opt.packet-guardian.bin.dhcp
         chown root:root $APPARMOR_DIR/opt.packet-guardian.bin.pg
         chown root:root $APPARMOR_DIR/opt.packet-guardian.bin.dhcp
         if [[ -n $APPARMOR_UTILS_INSTALLED ]]; then
@@ -117,14 +121,7 @@ setPermissions() {
     chown -R root:packetg $CONFIG_DIR
 }
 
-upgrade() {
-    if ! installed; then
-        echo "It appears Packet Guardian is not installed."
-        echo "Please install Packet Guardian before trying to upgrade."
-        echo
-        exit 1
-    fi
-
+install() {
     if [[ ! -d $APP_DIR ]]; then
         echo "It appears Packet Guardian is not in the correct place."
         echo "Please extract the Packet Guardian release to $APP_DIR"
@@ -133,27 +130,44 @@ upgrade() {
         exit 1
     fi
 
-    stopService
-    echo "Copying configuration files"
+    if installed; then
+        echo "It appears Packet Guardian is already installed."
+        confirm "This will overwrite all configuration files and the database. Are you sure?"
+    fi
+
+    echo "Creating packetg user"
+    id -u packetg >/dev/null 2>&1
+    if [[ $? -ne 0 ]]; then
+        useradd -M packetg
+    fi
+
+    echo "Creating data directories"
+    mkdir -p $LOG_DIR
+    mkdir -p $DATA_DIR
+    mkdir -p $CONFIG_DIR
+    echo "Creating configuration files"
     cp $APP_DIR/config/config-dhcp.sample.toml $CONFIG_DIR
     cp $APP_DIR/config/config-pg.sample.toml $CONFIG_DIR
+    cp $APP_DIR/config/config-dhcp.sample.toml $CONFIG_DIR/config-dhcp.toml
+    cp $APP_DIR/config/config-pg.sample.toml $CONFIG_DIR/config-pg.toml
     cp $APP_DIR/config/dhcp-config.sample.conf $CONFIG_DIR
+    cp $APP_DIR/config/policy.txt $CONFIG_DIR
 
-    cp $APP_DIR/pg-upgrade.sh /usr/local/bin/pg-upgrade
+    cp $APP_DIR/scripts/pg-upgrade.sh /usr/local/bin/pg-upgrade
 
-    # Perform any necessary SQL migrations
-    # sqlite3 $DATA_DIR/database.sqlite3 < $APP_DIR/config/db-schema-sqlite.sql
+    sqlite3 $DATA_DIR/database.sqlite3 < $APP_DIR/config/db-schema-sqlite.sql
 
     setPermissions
     installService
     setKernalPermissions
     installAppArmorProfile
 
+    touch $DATA_DIR/.installed
+
     echo
-    echo "Packet Guardian is now upgraded"
-    echo "Please check the docs and configuration"
-    echo "for new options and release notes."
-    echo "When you're ready, start Packet Guardian using:"
+    echo "Packet Guardian is now installed"
+    echo "Please edit the configurations to your"
+    echo "liking and them run using:"
     echo
     echo "service pg start OR systemctl start pg"
     echo "service pg-dhcp start OR systemctl start pg-dhcp"
@@ -165,5 +179,5 @@ if [[ -z $(which sqlite3) ]]; then
     exit 1
 fi
 
-confirm "This will upgrade Packet Guardian. Are you sure?"
-upgrade
+confirm "This will install Packet Guardian. Are you sure?"
+install

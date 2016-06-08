@@ -10,7 +10,13 @@ if [[ $UID -ne 0 ]]; then
     exit 1
 fi
 
-SRC_TAR="$1"
+ALL_YES=""
+if [[ $1 == "-y" ]]; then
+    ALL_YES="t"
+    shift
+fi
+
+SRC_TAR="$(realpath $1)"
 
 if [[ ! -f $SRC_TAR ]]; then
     echo "$SRC_TAR not found"
@@ -21,6 +27,18 @@ SYSTEMD=""
 if which systemctl >/dev/null 2>&1; then
     SYSTEMD="t"
 fi
+
+confirm() {
+    if [[ -n $ALL_YES ]]; then
+        return
+    fi
+    echo -n "$1 [y/N]: "
+    read -n 1 imsure
+    echo
+    if [[ $imsure != "y" ]]; then
+        exit 0
+    fi
+}
 
 stopServices() {
     echo "Stopping Packet Guardian"
@@ -44,8 +62,8 @@ startServices() {
     fi
 }
 
+confirm "This will upgrade Packet Guardian, are you sure?"
 cd /opt
-
 stopServices
 # Remove any old versions
 rm -rf packet-guardian.old
@@ -56,5 +74,5 @@ tar -xzf $SRC_TAR
 
 cd packet-guardian
 # Run version specific upgrade script
-./upgrade.sh -y
+./scripts/upgrade.sh -y
 startServices

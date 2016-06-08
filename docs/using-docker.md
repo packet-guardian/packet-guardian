@@ -1,6 +1,6 @@
 # Using Docker
 
-Docker compatibility is currently experimental. Please use at your own risk. If anything goes wrong please file and issue but understand that Docker compatibility is not high priority at this time.
+Docker compatibility is currently experimental and most likely broken. Please use at your own risk. If anything goes wrong please file an issue but understand that Docker compatibility is not high priority at this time.
 
 This repo comes with a handy Dockerfile. To create a new image which will compile PG from source, run `docker build -t pg --rm .`. It exposes ports 67 (DHCP), 80, and 443. Port 443 is optional if you don't want to use HTTPS. You can run the container with:
 

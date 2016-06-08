@@ -1,5 +1,9 @@
 #! /usr/bin/env bash
 
+## Directory of running script
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTPATH="$DIR/$(basename "$0")"
+
 # Check running as root
 if [[ $UID -ne 0 ]]; then
     echo "This file must be ran as root."
@@ -76,15 +80,15 @@ uninstallAppArmorProfile() {
 
 deleteApplicationFiles() {
     echo "Removing application files"
-    rm -rf $APP_DIR
+    uninstallService
+    uninstallAppArmorProfile
     rm -rf /usr/local/bin/pg-upgrade
+    rm -rf $APP_DIR
 }
 
 purgeConfigFiles() {
     confirm "Are you sure you want to purge Packet Guardian config files?"
     echo "Removing configuration and data directories"
-    uninstallService
-    uninstallAppArmorProfile
     rm -rf $LOG_DIR
     rm -rf $DATA_DIR
     rm -rf $CONFIG_DIR

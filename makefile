@@ -65,10 +65,7 @@ dist: vet test $(TARGETS)
 	@cp LICENSE dist/packet-guardian/
 	@cp README.md dist/packet-guardian/
 	@cp Dockerfile dist/packet-guardian/
-	@cp install.sh dist/packet-guardian/
-	@cp upgrade.sh dist/packet-guardian/
-	@cp pg-upgrade.sh dist/packet-guardian/
-	@cp uninstall.sh dist/packet-guardian/
+	@cp -R scripts dist/packet-guardian/
 
 	@mkdir dist/packet-guardian/bin
 	@cp bin/pg dist/packet-guardian/bin/pg
