@@ -29,7 +29,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	var formUser *models.User // The user to whom the device is being registered
 	var err error
 	sessionUser := models.GetUserFromContext(r)
-	formUsername := r.FormValue("username")
+	formUsername := strings.ToLower(r.FormValue("username"))
 	if formUsername == "" {
 		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
 		return
