@@ -2,35 +2,51 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 $.onReady(function() {
+    // Event handlers
+    $("[name=blacklist-sel]").change(function(e) {
+        var self = $(e.target);
+        var cmodal = new jsConfirm();
+        switch (self.value()) {
+            case "username":
+                var isBl = (self.data("blacklisted") === "true");
+                if (isBl) {
+                    cmodal.show("Remove username from blacklist?",
+                        function(){ blacklistUsername(true); });
+                } else {
+                    cmodal.show("Add username to blacklist?",
+                        function(){ blacklistUsername(false); });
+                }
+                break;
+            case "black-all":
+                cmodal.show("Add all user's devices to blacklist?", addDevicesToBlacklist);
+                break;
+            case "unblack-all":
+                cmodal.show("Remove all user's devices from blacklist?", removeDevicesFromBlacklist);
+                break;
+            case "black-sel":
+                cmodal.show("Add selected user's devices to blacklist?",
+                    function(){ blacklistSelectedDevices(true); });
+                break;
+            case "unblack-sel":
+                cmodal.show("Remove selected user's devices from blacklist?",
+                    function(){ blacklistSelectedDevices(false); });
+                break;
+        }
+        self.value("");
+    });
+
+    $('[name=reassign-selected-btn]').click(function() {
+        var pmodal = new jsPrompt();
+        pmodal.show("New owner's username:", reassignSelectedDevices);
+    });
+
+    // Event callbacks
     var blacklistSelect = $('[name=blacklist-sel]');
     if (blacklistSelect.length !== 0) {
         if (blacklistSelect.data("blacklisted") === "true") {
             $('[name=black-user-option]').text("Remove Username");
         }
     }
-
-    $("[name=blacklist-sel]").change(function(e) {
-        var self = $(e.target);
-        switch (self.value()) {
-            case "username":
-                var isBl = (self.data("blacklisted") === "true");
-                blacklistUsername(isBl);
-                break;
-            case "black-all":
-                blacklistDevices([], true);
-                break;
-            case "unblack-all":
-                blacklistDevices([], false);
-                break;
-            case "black-sel":
-                blacklistSelectedDevices(true);
-                break;
-            case "unblack-sel":
-                blacklistSelectedDevices(false);
-                break;
-        }
-        self.value("");
-    });
 
     function getUsername(encode) {
         var u = $('[name=username]').value();
@@ -85,6 +101,7 @@ $.onReady(function() {
     }
 
     function addDevicesToBlacklist(devices) {
+        if (!devices) { devices = ""; }
         $.post('/api/blacklist/device/'+getUsername(), {"mac": devices}, function() {
             location.reload();
         }, function() {
@@ -93,6 +110,7 @@ $.onReady(function() {
     }
 
     function removeDevicesFromBlacklist(devices) {
+        if (!devices) { devices = ""; }
         $.ajax({
             method: 'DELETE',
             url: '/api/blacklist/device/'+getUsername(),
@@ -106,9 +124,8 @@ $.onReady(function() {
         });
     }
 
-    $('[name=reassign-selected-btn]').click(function() {
+    function reassignSelectedDevices(username) {
         var devices = getCheckedDevices();
-        var username = prompt("Reassign to user:");
         if (devices.length === 0 || !username) {
             return;
         }
@@ -117,5 +134,5 @@ $.onReady(function() {
         }, function() {
             c.FlashMessage("Error blacklisting devices");
         });
-    });
+    }
 });

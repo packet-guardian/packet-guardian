@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
 func Panic(e *common.Environment, next http.Handler) http.Handler {

@@ -14,7 +14,8 @@ import (
 
 	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/dhcp4"
-	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 var r = regexp.MustCompile(`\d+ bytes from .*`)
@@ -24,7 +25,7 @@ type pool struct {
 	rangeEnd      net.IP
 	settings      *settings
 	optionsCached bool
-	leases        map[string]*Lease // IP -> Lease
+	leases        map[string]*models.Lease // IP -> Lease
 	subnet        *subnet
 	nextFreeStart int
 	ipsInPool     int
@@ -33,7 +34,7 @@ type pool struct {
 func newPool() *pool {
 	return &pool{
 		settings: newSettingsBlock(),
-		leases:   make(map[string]*Lease),
+		leases:   make(map[string]*models.Lease),
 	}
 }
 
@@ -89,7 +90,7 @@ func (p *pool) getOptions(registered bool) dhcp4.Options {
 	return p.settings.options
 }
 
-func (p *pool) getFreeLease(e *common.Environment) *Lease {
+func (p *pool) getFreeLease(e *common.Environment) *models.Lease {
 	now := time.Now()
 
 	regFreeTime := time.Duration(p.subnet.network.global.registeredSettings.freeLeaseAfter) * time.Second
@@ -126,7 +127,7 @@ func (p *pool) getFreeLease(e *common.Environment) *Lease {
 		}
 
 		// IP has no lease with it
-		l := newLease(e)
+		l := models.NewLease(e)
 		// All known leases have already been checked, which means if this IP
 		// is in use, we didn't do it. Mark as abandoned.
 		if !e.IsTesting() && isIPInUse(next) {
@@ -140,7 +141,6 @@ func (p *pool) getFreeLease(e *common.Environment) *Lease {
 		// Set IP and pool, add to leases map, return
 		l.IP = next
 		l.Network = p.subnet.network.name
-		l.pool = p
 		l.Registered = !p.subnet.allowUnknown
 		p.leases[next.String()] = l
 		return l
@@ -148,7 +148,7 @@ func (p *pool) getFreeLease(e *common.Environment) *Lease {
 
 	// No free leases, bring out the big guns
 	// Find the oldest expired lease
-	var longestExpiredLease *Lease
+	var longestExpiredLease *models.Lease
 	for _, l := range p.leases {
 		if l.End.After(now) { // Skip active leases
 			continue

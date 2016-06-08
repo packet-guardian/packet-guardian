@@ -9,10 +9,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/onesimus-systems/packet-guardian/src/auth"
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
-	"github.com/onesimus-systems/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/auth"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 const (
@@ -36,7 +35,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	man := (r.FormValue("manual") == "1")
 	loggedIn := auth.IsLoggedIn(r)
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, _ := dhcp.IsRegisteredByIP(m.e, ip)
+	reg, _ := models.IsRegisteredByIP(m.e, ip)
 	if !man && reg {
 		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return

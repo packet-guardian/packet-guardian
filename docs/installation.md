@@ -4,17 +4,17 @@
 
 1. Get a copy of the distribution package from the Github releases page.
 2. Untar it to /opt.
-3. Run `install.sh`
+3. Run `scripts/install.sh`
 4. Edit the configurations as needed. See the related documentation for each format.
 5. Start Packet Guardian
 
 ```bash
 # Run as root
 $ cd /opt
-$ wget https://github.com/onesimus-systems/packet-guardian/releases/latest/pg-dist-$VERSION.tar.gz
+$ wget https://github.com/usi-lfkeitel/packet-guardian/releases/latest/pg-dist-$VERSION.tar.gz
 $ tar -xzf pg-dist-$VERSION.tar.gz
 $ cd packet-guardian
-$ ./install.sh
+$ ./scripts/install.sh
 ```
 
 The install script will place the configuration files in `/etc/packet-guardian`, the SQLite database at `/var/lib/packet-guardian/database.sqlite3`, and the log files at `/var/log/packet-guardian`. Edit the files in `/etc/packet-guardian` to suit your environment. The file config-pg.toml will be read by the webserver component and config-dhcp.toml will be read by the DHCP server. config-dhcp.toml is basically a stripped down version of the full config. You can use the same configuration for both binaries, but you will need to edit the Upstart/Systemd service files to do so.

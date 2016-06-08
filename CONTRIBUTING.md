@@ -2,7 +2,7 @@
 
 Want to help contribute to Packet Guardian? Great! Any and all help is certainly appreciated, whether it's code, documentation, or spelling corrections.
 
-If you are planning to contribute a significant change, please draft a design document (or start a conversation) and post it to the [issue tracker](https://github.com/onesimus-systems/packet-guardian/issues). This will allow other developers and users to discuss the proposed change.
+If you are planning to contribute a significant change, please draft a design document (or start a conversation) and post it to the [issue tracker](https://github.com/usi-lfkeitel/packet-guardian/issues). This will allow other developers and users to discuss the proposed change.
 
 ## Filing issues
 

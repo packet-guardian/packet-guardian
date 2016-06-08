@@ -19,24 +19,37 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/dhcp"
 )
 
 var (
 	configFile string
 	dev        bool
 	testConfig bool
+	verFlag    bool
+
+	version   = ""
+	buildTime = ""
+	builder   = ""
+	goversion = ""
 )
 
 func init() {
 	flag.StringVar(&configFile, "c", "", "Configuration file")
 	flag.BoolVar(&dev, "d", false, "Run in development mode")
 	flag.BoolVar(&testConfig, "t", false, "Test DHCP config")
+	flag.BoolVar(&verFlag, "version", false, "Display version information")
+	flag.BoolVar(&verFlag, "v", verFlag, "Display version information")
 }
 
 func main() {
 	flag.Parse()
+
+	if verFlag {
+		displayVersionInfo()
+		return
+	}
 
 	if testConfig {
 		testDHCPConfig()
@@ -105,4 +118,15 @@ func testDHCPConfig() {
 	}
 
 	fmt.Println("Configuration looks good")
+}
+
+func displayVersionInfo() {
+	fmt.Printf(`Packet Guardian - (C) 2016 The Packet Guardian Authors
+
+Component:   DHCP Server
+Version:     %s
+Built:       %s
+Compiled by: %s
+Go version:  %s
+`, version, buildTime, builder, goversion)
 }

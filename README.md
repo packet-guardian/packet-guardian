@@ -1,10 +1,10 @@
 # Packet Guardian
 
-[![Build Status](https://travis-ci.org/onesimus-systems/packet-guardian.svg?branch=master)](https://travis-ci.org/onesimus-systems/packet-guardian)
-[![GoDoc](https://godoc.org/github.com/onesimus-systems/packet-guardian/src?status.svg)](https://godoc.org/github.com/onesimus-systems/packet-guardian/src)
-[![GitHub issues](https://img.shields.io/github/issues/onesimus-systems/packet-guardian.svg)](https://github.com/onesimus-systems/packet-guardian/issues)
-[![GitHub stars](https://img.shields.io/github/stars/onesimus-systems/packet-guardian.svg)](https://github.com/onesimus-systems/packet-guardian/stargazers)
-[![GitHub license](https://img.shields.io/badge/license-New%20BSD-blue.svg)](https://raw.githubusercontent.com/onesimus-systems/packet-guardian/master/LICENSE)
+[![Build Status](https://travis-ci.org/usi-lfkeitel/packet-guardian.svg?branch=master)](https://travis-ci.org/usi-lfkeitel/packet-guardian)
+[![GoDoc](https://godoc.org/github.com/usi-lfkeitel/packet-guardian/src?status.svg)](https://godoc.org/github.com/usi-lfkeitel/packet-guardian/src)
+[![GitHub issues](https://img.shields.io/github/issues/usi-lfkeitel/packet-guardian.svg)](https://github.com/usi-lfkeitel/packet-guardian/issues)
+[![GitHub stars](https://img.shields.io/github/stars/usi-lfkeitel/packet-guardian.svg)](https://github.com/usi-lfkeitel/packet-guardian/stargazers)
+[![GitHub license](https://img.shields.io/badge/license-New%20BSD-blue.svg)](https://raw.githubusercontent.com/usi-lfkeitel/packet-guardian/master/LICENSE)
 
 ### About Packet Guardian
 

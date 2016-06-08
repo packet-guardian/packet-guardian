@@ -16,8 +16,8 @@ import (
 
 	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/dhcp4"
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 var (
@@ -66,7 +66,7 @@ func (h *Handler) Respond() {
 // LoadLeases will import any current leases saved to the database.
 func (h *Handler) LoadLeases() error {
 	// Get leases from storage
-	leases, err := GetAllLeases(h.e)
+	leases, err := models.GetAllLeases(h.e)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,6 @@ func (h *Handler) LoadLeases() error {
 				if !pool.includes(lease.IP) {
 					continue
 				}
-				lease.pool = pool
 				pool.leases[lease.IP.String()] = lease
 				h.log.WithField("Address", lease.IP).Debug("Loaded lease")
 				break subnetLoop
@@ -193,10 +192,10 @@ func (h *Handler) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pa
 	h.gatewayMutex.Unlock()
 
 	// Find an appropiate lease
-	lease := network.getLeaseByMAC(device.MAC, registered)
+	lease, pool := network.getLeaseByMAC(device.MAC, registered)
 	if lease == nil {
 		// Device doesn't have a recent lease, get a new one
-		lease = network.getFreeLease(h.e, registered)
+		lease, pool = network.getFreeLease(h.e, registered)
 		if lease == nil {
 			h.log.WithFields(verbose.Fields{
 				"Network":    network.name,
@@ -222,14 +221,14 @@ func (h *Handler) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pa
 	copy(lease.MAC, p.CHAddr())
 	// No Save because this is a temporary "lease", if the client accepts then we commit to storage
 	// Get options
-	leaseOptions := lease.pool.getOptions(registered)
+	leaseOptions := pool.getOptions(registered)
 	// Send an offer
 	return h.readOnlyFilter(dhcp4.ReplyPacket(
 		p,
 		dhcp4.Offer,
 		c.global.serverIdentifier,
 		lease.IP,
-		lease.pool.getLeaseTime(0, registered),
+		pool.getLeaseTime(0, registered),
 		leaseOptions.SelectOrderOrAll(options[dhcp4.OptionParameterRequestList]),
 	))
 }
@@ -294,7 +293,7 @@ func (h *Handler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, c.global.serverIdentifier, nil, 0, nil))
 	}
 
-	lease := network.getLeaseByIP(reqIP, registered)
+	lease, pool := network.getLeaseByIP(reqIP, registered)
 	if lease == nil || lease.MAC == nil { // If it returns a new lease, the MAC is nil
 		h.log.WithFields(verbose.Fields{
 			"Requested IP": reqIP.String(),
@@ -316,21 +315,21 @@ func (h *Handler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, c.global.serverIdentifier, nil, 0, nil))
 	}
 
-	leaseDur := lease.pool.getLeaseTime(0, registered)
+	leaseDur := pool.getLeaseTime(0, registered)
 	lease.Start = time.Now()
 	lease.End = time.Now().Add(leaseDur + (time.Duration(10) * time.Second)) // Add 10 seconds to account for slight clock drift
 	lease.Offered = false
 	if ci, ok := options[dhcp4.OptionHostName]; ok {
 		lease.Hostname = string(ci)
 	}
-	if err := lease.save(); err != nil {
+	if err := lease.Save(); err != nil {
 		h.log.WithFields(verbose.Fields{
 			"Client MAC": p.CHAddr().String(),
 			"Error":      err,
 		}).Error("Error saving lease")
 		return h.readOnlyFilter(dhcp4.ReplyPacket(p, dhcp4.NAK, c.global.serverIdentifier, nil, 0, nil))
 	}
-	leaseOptions := lease.pool.getOptions(registered)
+	leaseOptions := pool.getOptions(registered)
 
 	h.log.WithFields(verbose.Fields{
 		"Requested IP": lease.IP.String(),
@@ -386,7 +385,7 @@ func (h *Handler) handleRelease(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 		return nil
 	}
 
-	lease := network.getLeaseByIP(reqIP, registered)
+	lease, _ := network.getLeaseByIP(reqIP, registered)
 	if lease == nil || !bytes.Equal(lease.MAC, p.CHAddr()) {
 		h.log.WithFields(verbose.Fields{
 			"Releasing IP": reqIP.String(),
@@ -405,7 +404,7 @@ func (h *Handler) handleRelease(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 	}).Info("Releasing lease")
 	lease.Start = time.Unix(1, 0)
 	lease.End = time.Unix(1, 0)
-	if err := lease.save(); err != nil {
+	if err := lease.Save(); err != nil {
 		h.log.WithFields(verbose.Fields{
 			"Client MAC": p.CHAddr().String(),
 			"Error":      err,
@@ -441,7 +440,7 @@ func (h *Handler) handleDecline(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 		return nil
 	}
 
-	lease := network.getLeaseByIP(reqIP, registered)
+	lease, _ := network.getLeaseByIP(reqIP, registered)
 	if lease == nil || !bytes.Equal(lease.MAC, p.CHAddr()) {
 		h.log.WithFields(verbose.Fields{
 			"Declined IP": reqIP.String(),
@@ -461,7 +460,7 @@ func (h *Handler) handleDecline(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 	lease.IsAbandoned = true
 	lease.Start = time.Unix(1, 0)
 	lease.End = time.Unix(1, 0)
-	if err := lease.save(); err != nil {
+	if err := lease.Save(); err != nil {
 		h.log.WithFields(verbose.Fields{
 			"Client MAC": p.CHAddr().String(),
 			"Error":      err,

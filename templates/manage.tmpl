@@ -8,6 +8,10 @@
             <span class="username">{{.sessionUser.Username}}</span>
             {{if .sessionUser.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
         </div>
+        <div class="info">
+            <span class="text-label"># of Devices:</span>
+            <span class="username">{{len .devices}}</span>
+        </div>
         <div class="controls">
             {{if .showAddBtn}}
             <button type="button" name="add-device-btn">Add New Device</button>
@@ -16,7 +20,7 @@
             <button type="button" name="del-selected-btn">Delete Selected</button>
             <button type="button" name="del-all-btn">Delete All</button>
             {{end}}
-            <button type="button" name="logout-btn">Logout</button>
+            <a href="/logout" class="btn">Logout</a>
         </div>
         {{if eq (len .devices) 0}}
         <div class="no-devices">No devices registered</div>
@@ -32,6 +36,7 @@
                 <th>Expires</th>
                 <th>Last Seen</th>
                 <th>Registered From</th>
+                <th>Current IP</th>
             </tr>
             {{range .devices}}
             <tr>
@@ -41,6 +46,7 @@
                 <td class="truncate"><span title="{{.Description}}">{{.Description}}</span></td>
                 <td>{{.Platform}}</td>
                 <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>
+
                 {{if eq .Expires.Unix 0}}
                 <td>Never</td>
                 {{else if eq .Expires.Unix 1}}
@@ -48,8 +54,15 @@
                 {{else}}
                 <td>{{.Expires.Format "2006-01-02 15:04"}}</td>
                 {{end}}
+
                 <td>{{.LastSeen.Format "2006-01-02 15:04"}}</td>
                 <td>{{.RegisteredFrom}}</td>
+
+                {{with .GetCurrentLease}}
+                <td><span title="Expires: {{.End.Format "2006-01-02 15:04"}}">{{.IP.String}}</span></td>
+                {{else}}
+                <td>N/A</td>
+                {{end}}
             </tr>
             {{end}}
         </table>

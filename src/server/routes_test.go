@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 func TestRootHandlerLoggedInNormal(t *testing.T) {
@@ -25,7 +25,7 @@ func TestRootHandlerLoggedInNormal(t *testing.T) {
 		1, "testUser", "", 0, 0, 0, 1, 1, 0, 0,
 	)
 
-	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testUser").WillReturnRows(userRow)
+	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testuser").WillReturnRows(userRow)
 
 	e := common.NewTestEnvironment()
 	e.DB = &common.DatabaseAccessor{DB: db}
@@ -70,7 +70,7 @@ func TestRootHandlerLoggedInAdmin(t *testing.T) {
 		1, "testUser", "", 0, 0, 0, 1, 1, 0, 0,
 	)
 
-	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testUser").WillReturnRows(userRow)
+	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testuser").WillReturnRows(userRow)
 
 	e := common.NewTestEnvironment()
 	e.DB = &common.DatabaseAccessor{DB: db}

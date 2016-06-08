@@ -13,9 +13,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/server"
-	"github.com/onesimus-systems/packet-guardian/src/tasks"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/server"
+	"github.com/usi-lfkeitel/packet-guardian/src/tasks"
 )
 
 var (
@@ -108,8 +108,9 @@ func main() {
 }
 
 func displayVersionInfo() {
-	fmt.Printf(`Packet Guardian - (C) 2016 Lee Keitel Onesimus Systems
+	fmt.Printf(`Packet Guardian - (C) 2016 The Packet Guardian Authors
 
+Component:   Web Server
 Version:     %s
 Built:       %s
 Compiled by: %s

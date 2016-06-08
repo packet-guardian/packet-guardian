@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 const (
@@ -194,7 +194,7 @@ func parse(scan *bufio.Scanner, e *common.Environment) error {
 			dev.Username = user.Username
 			dev.RegisteredFrom = registeredFrom
 			dev.Platform = platform
-			dev.Expires = user.DeviceExpiration.NextExpiration(e)
+			dev.Expires = user.DeviceExpiration.NextExpiration(e, time.Now())
 			dev.DateRegistered = dateRegistered
 			dev.UserAgent = userAgent
 			dev.Description = description

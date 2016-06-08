@@ -1,5 +1,9 @@
 #! /usr/bin/env bash
 
+## Directory of running script
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTPATH="$DIR/$(basename "$0")"
+
 # Check running as root
 if [[ $UID -ne 0 ]]; then
     echo "This file must be ran as root."
@@ -16,7 +20,11 @@ APPARMOR_DIR="/etc/apparmor.d"
 
 SYSTEMD=""
 APPARMOR_INSTALLED=""
+ALL_YES=""
 
+if [[ $1 == "-y" ]]; then
+    ALL_YES="t"
+fi
 if which systemctl >/dev/null 2>&1; then
     SYSTEMD="t"
 fi
@@ -25,6 +33,9 @@ if which apparmor_status >/dev/null 2>&1; then
 fi
 
 confirm() {
+    if [[ -n $ALL_YES ]]; then
+        return
+    fi
     echo -n "$1 [y/N]: "
     read -n 1 imsure
     echo
@@ -69,14 +80,15 @@ uninstallAppArmorProfile() {
 
 deleteApplicationFiles() {
     echo "Removing application files"
+    uninstallService
+    uninstallAppArmorProfile
+    rm -rf /usr/local/bin/pg-upgrade
     rm -rf $APP_DIR
 }
 
 purgeConfigFiles() {
     confirm "Are you sure you want to purge Packet Guardian config files?"
     echo "Removing configuration and data directories"
-    uninstallService
-    uninstallAppArmorProfile
     rm -rf $LOG_DIR
     rm -rf $DATA_DIR
     rm -rf $CONFIG_DIR

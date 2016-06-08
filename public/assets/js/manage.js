@@ -2,14 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 $.onReady(function() {
-    $('[name=logout-btn]').click(function() {
-        location.href = "/logout";
-        return;
-    });
-    $('[name=admin-btn]').click(function() {
-        location.href = "/admin";
-        return;
-    });
+    // Event handlers
     $('[name=add-device-btn]').click(function(e) {
         isAdmin = $(e.target).data("admin");
         user = $('[name=username]').value();
@@ -23,6 +16,26 @@ $.onReady(function() {
 
     // Delete buttons
     $('[name=del-all-btn]').click(function() {
+        var cmodal = new jsConfirm();
+        cmodal.show("Are you sure you want to delete all devices?", deleteAllDevices);
+    });
+
+    $('[name=del-selected-btn]').click(function() {
+        var cmodal = new jsConfirm();
+        cmodal.show("Are you sure you want to delete selected devices?", deleteSelectedDevices);
+    });
+
+    $('[name=dev-sel-all]').click(function(e) {
+        $('.device-select').prop("checked", $(e.target).prop("checked"));
+    });
+
+    $('.device-select').click(function(e) {
+        $('[name=dev-sel-all]').prop("checked", false);
+    });
+
+    // Event callbacks
+    // Delete buttons
+    function deleteAllDevices() {
         var username = $('[name=username]').value();
         $.ajax({
             method: "DELETE",
@@ -34,9 +47,9 @@ $.onReady(function() {
                 c.FlashMessage("Error deleting devices");
             }
         });
-    });
+    }
 
-    $('[name=del-selected-btn]').click(function() {
+    function deleteSelectedDevices() {
         var checked = $('.device-select:checked');
         if (checked.length === 0) {
             return;
@@ -59,13 +72,5 @@ $.onReady(function() {
                 c.FlashMessage("Error deleting devices");
             }
         });
-    });
-
-    $('[name=dev-sel-all]').click(function(e) {
-        $('.device-select').prop("checked", $(e.target).prop("checked"));
-    });
-
-    $('.device-select').click(function(e) {
-        $('[name=dev-sel-all]').prop("checked", false);
-    });
+    }
 });

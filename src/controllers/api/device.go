@@ -12,9 +12,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/lfkeitel/verbose"
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
-	"github.com/onesimus-systems/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 type Device struct {
@@ -42,11 +41,12 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if formUsername == sessionUser.Username && sessionUser.Can(models.CreateOwn) {
+	if formUsername == sessionUser.Username {
+		if !sessionUser.Can(models.CreateOwn) {
+			common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+			return
+		}
 		formUser = sessionUser
-	} else {
-		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
-		return
 	}
 
 	if formUsername != sessionUser.Username {
@@ -101,7 +101,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// Automatic registration
-		lease, err := dhcp.GetLeaseByIP(d.e, ip)
+		lease, err := models.GetLeaseByIP(d.e, ip)
 		if err != nil {
 			d.e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
 			common.NewEmptyAPIResponse().WriteResponse(w, http.StatusInternalServerError)
@@ -142,7 +142,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	device.Description = r.FormValue("description")
 	device.RegisteredFrom = ip
 	device.Platform = platform
-	device.Expires = formUser.DeviceExpiration.NextExpiration(d.e)
+	device.Expires = formUser.DeviceExpiration.NextExpiration(d.e, time.Now())
 	device.DateRegistered = time.Now()
 	device.LastSeen = time.Now()
 	device.UserAgent = r.UserAgent()
@@ -272,7 +272,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
 		originalUser := dev.Username
 		dev.Username = user.Username
 		// Change expiration to reflect new owner
-		dev.Expires = user.DeviceExpiration.NextExpiration(d.e)
+		dev.Expires = user.DeviceExpiration.NextExpiration(d.e, time.Now())
 		if err := dev.Save(); err != nil {
 			d.e.Log.Errorf("Error saving device: %s", err.Error())
 			common.NewAPIResponse("Error saving device", nil).WriteResponse(w, http.StatusInternalServerError)

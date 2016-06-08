@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/src/auth"
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
-	"github.com/onesimus-systems/packet-guardian/src/guest"
+	"github.com/usi-lfkeitel/packet-guardian/src/auth"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/guest"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 type Guest struct {
@@ -32,7 +32,7 @@ func (g *Guest) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, _ := dhcp.IsRegisteredByIP(g.e, ip)
+	reg, _ := models.IsRegisteredByIP(g.e, ip)
 	if reg {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -106,7 +106,7 @@ func (g *Guest) VerificationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, _ := dhcp.IsRegisteredByIP(g.e, ip)
+	reg, _ := models.IsRegisteredByIP(g.e, ip)
 	if reg {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return

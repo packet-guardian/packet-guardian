@@ -255,6 +255,17 @@
             });
         },
 
+        style: function(s, v) {
+            if (v !== undefined) {
+                return this.forEach(function(el) {
+                    el.style[s] = v;
+                });
+            }
+            return this.mapOne(function(el) {
+                return el.style[s];
+            });
+        },
+
         fadeIn: function(speed, callback) {
             this.fadeGeneric(speed, callback, "in");
         },

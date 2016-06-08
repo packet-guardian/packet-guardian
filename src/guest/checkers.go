@@ -7,7 +7,7 @@ package guest
 import (
 	"errors"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
 type guestChecker interface {

@@ -9,10 +9,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
-	"github.com/onesimus-systems/packet-guardian/src/models"
-	"github.com/onesimus-systems/packet-guardian/src/stats"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/stats"
 )
 
 type Admin struct {
@@ -90,7 +89,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 		if m, err := common.FormatMacAddress(query); err == nil {
 			results, err = models.SearchDevicesByField(a.e, "mac", m.String())
 		} else if ip := net.ParseIP(query); ip != nil {
-			lease, err := dhcp.GetLeaseByIP(a.e, ip)
+			lease, err := models.GetLeaseByIP(a.e, ip)
 			if err == nil {
 				results, err = models.SearchDevicesByField(a.e, "mac", lease.MAC.String())
 			}

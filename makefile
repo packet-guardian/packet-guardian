@@ -10,7 +10,7 @@ BUILDTIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILDDATE := $(shell date -u +"%B %d, %Y")
 BUILDER := $(shell echo "`git config user.name` <`git config user.email`>")
 PKG_RELEASE ?= 1
-PROJECT_URL := "https://github.com/onesimus-systems/$(NAME)"
+PROJECT_URL := "https://github.com/usi-lfkeitel/$(NAME)"
 LDFLAGS := -X 'main.version=$(VERSION)' \
 			-X 'main.buildTime=$(BUILDTIME)' \
 			-X 'main.builder=$(BUILDER)' \
@@ -65,9 +65,7 @@ dist: vet test $(TARGETS)
 	@cp LICENSE dist/packet-guardian/
 	@cp README.md dist/packet-guardian/
 	@cp Dockerfile dist/packet-guardian/
-	@cp install.sh dist/packet-guardian/
-	@cp upgrade.sh dist/packet-guardian/
-	@cp uninstall.sh dist/packet-guardian/
+	@cp -R scripts dist/packet-guardian/
 
 	@mkdir dist/packet-guardian/bin
 	@cp bin/pg dist/packet-guardian/bin/pg

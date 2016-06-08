@@ -4,7 +4,7 @@
 
 package guest
 
-import "github.com/onesimus-systems/packet-guardian/src/common"
+import "github.com/usi-lfkeitel/packet-guardian/src/common"
 
 func init() {
 	checkers["email"] = email{}
