@@ -1,5 +1,7 @@
 # Installation
 
+For instructions on setting up the full captive portal stack, please see the [Full Stack](full-stack.md) documentation.
+
 ## Automatic Installation (recommended)
 
 1. Get a copy of the distribution package from the Github releases page.
