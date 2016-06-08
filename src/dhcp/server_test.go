@@ -15,7 +15,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	d4 "github.com/onesimus-systems/dhcp4"
-	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
 var testConfig = `

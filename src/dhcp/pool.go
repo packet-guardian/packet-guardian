@@ -14,8 +14,8 @@ import (
 
 	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/dhcp4"
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 var r = regexp.MustCompile(`\d+ bytes from .*`)

@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gorilla/context"
-	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
 type UserExpiration int

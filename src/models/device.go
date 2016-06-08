@@ -9,7 +9,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
 // Device represents a device in the system

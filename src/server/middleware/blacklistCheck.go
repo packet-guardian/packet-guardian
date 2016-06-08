@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 func BlacklistCheck(e *common.Environment, next http.Handler) http.Handler {

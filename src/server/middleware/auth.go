@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/onesimus-systems/packet-guardian/src/auth"
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/auth"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 // CheckAuth is middleware to check if a user is logged in, if not it will redirect to the login page

@@ -19,8 +19,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/dhcp"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/dhcp"
 )
 
 var (

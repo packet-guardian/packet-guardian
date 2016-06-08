@@ -8,7 +8,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
 type Job func(e *common.Environment) (string, error)

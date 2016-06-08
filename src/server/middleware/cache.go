@@ -7,7 +7,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
 func Cache(e *common.Environment, next http.Handler) http.Handler {

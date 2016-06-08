@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/onesimus-systems/packet-guardian/src/auth"
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/auth"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 const (

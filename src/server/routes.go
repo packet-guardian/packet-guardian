@@ -11,12 +11,12 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/onesimus-systems/packet-guardian/src/auth"
-	"github.com/onesimus-systems/packet-guardian/src/common"
-	"github.com/onesimus-systems/packet-guardian/src/controllers"
-	"github.com/onesimus-systems/packet-guardian/src/controllers/api"
-	"github.com/onesimus-systems/packet-guardian/src/models"
-	mid "github.com/onesimus-systems/packet-guardian/src/server/middleware"
+	"github.com/usi-lfkeitel/packet-guardian/src/auth"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/controllers"
+	"github.com/usi-lfkeitel/packet-guardian/src/controllers/api"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	mid "github.com/usi-lfkeitel/packet-guardian/src/server/middleware"
 )
 
 func LoadRoutes(e *common.Environment) http.Handler {

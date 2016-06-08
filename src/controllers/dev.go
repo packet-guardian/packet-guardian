@@ -7,7 +7,7 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
 type Dev struct {

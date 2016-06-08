@@ -6,9 +6,9 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends -y sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /go/src/github.com/onesimus-systems/packet-guardian \
-    && ln -s /go/src/github.com/onesimus-systems/packet-guardian /go/src/app
-WORKDIR /go/src/github.com/onesimus-systems/packet-guardian
+RUN mkdir -p /go/src/github.com/usi-lfkeitel/packet-guardian \
+    && ln -s /go/src/github.com/usi-lfkeitel/packet-guardian /go/src/app
+WORKDIR /go/src/github.com/usi-lfkeitel/packet-guardian
 
 COPY . /go/src/app
 RUN ["/bin/sh", "-c", "make install"]

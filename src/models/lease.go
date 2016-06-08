@@ -9,7 +9,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/onesimus-systems/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
 // A Lease represents a single DHCP lease in a pool. It is bound to a particular
