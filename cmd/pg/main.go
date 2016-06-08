@@ -108,8 +108,9 @@ func main() {
 }
 
 func displayVersionInfo() {
-	fmt.Printf(`Packet Guardian - (C) 2016 Lee Keitel Onesimus Systems
+	fmt.Printf(`Packet Guardian - (C) 2016 The Packet Guardian Authors
 
+Component:   Web Server
 Version:     %s
 Built:       %s
 Compiled by: %s
