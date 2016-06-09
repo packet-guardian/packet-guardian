@@ -26,10 +26,10 @@ $.onReady(function() {
     });
 
     $('[name=dev-sel-all]').click(function(e) {
-        $('.device-select').prop("checked", $(e.target).prop("checked"));
+        $('.device-checkbox').prop("checked", $(e.target).prop("checked"));
     });
 
-    $('.device-select').click(function(e) {
+    $('.device-checkbox').click(function(e) {
         $('[name=dev-sel-all]').prop("checked", false);
     });
 
@@ -50,7 +50,7 @@ $.onReady(function() {
     }
 
     function deleteSelectedDevices() {
-        var checked = $('.device-select:checked');
+        var checked = $('.device-checkbox:checked');
         if (checked.length === 0) {
             return;
         }
@@ -73,4 +73,14 @@ $.onReady(function() {
             }
         });
     }
+
+    $(".device-header").click(function(e) {
+        var self = $(e.target);
+        while (!self.hasClass("device-header")) {
+            self = $(self[0].parentNode);
+        }
+        var body = self.data("deviceId");
+        $(".device-body").hide();
+        $("#device-body-"+body).show();
+    });
 });

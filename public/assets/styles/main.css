@@ -41,8 +41,7 @@ header img {
 }
 
 .clearfix {
-    display: inline-block;
-    width: 100%;
+    clear: both;
 }
 
 .flash {

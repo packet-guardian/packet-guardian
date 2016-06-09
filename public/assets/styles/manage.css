@@ -2,18 +2,20 @@
     font-weight: bold;
 }
 
-.info {
+.user-info {
     font-size: 1.2em;
     margin-left: 10px;
+    float: left;
 }
 
 .controls {
     margin: 0 10px 10px 10px;
+    display: inline-block;
+    float: right;
 }
 
-.admin-controls {
-    margin-top: 10px;
-    text-align: left;
+.controls section {
+    margin-top: 5px;
 }
 
 .no-devices {
@@ -36,20 +38,6 @@ button {
 .admin-btn {
     background-color: #FF3131;
     background: linear-gradient(to bottom, #FF3131, #EA2F2F);
-}
-
-table {
-    border-collapse: collapse;
-    margin: 0 10px;
-}
-
-table td, table th {
-    border: 1px solid black;
-    padding: 10px;
-}
-
-table tr:nth-child(2n) {
-    background-color: #CACACA;
 }
 
 .blacklist-icon {
@@ -75,14 +63,65 @@ select > .placeholder {
   display: none;
 }
 
-.not-important {
+.devices-list {
+    width: 60%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.device-header {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 6em;
+    background-color: #8FBC8F;
+    text-align: center;
+    border-bottom: .1em solid black;
+}
+
+.device-header:hover {
+    cursor: pointer;
+}
+
+.device-info-container {
+}
+
+.device-body {
     display: none;
 }
 
+.device-info {
+    display: inline-block;
+    text-align: center;
+}
+
+.device-info-label {
+    font-weight: bold;
+    font-size: 1.25em;
+    margin-bottom: .5em;
+}
+
+.device-info-text {
+    
+}
+
+.device-checkbox {
+    width: 2em;
+    height: 2em;
+}
+
+.device-check-select {
+}
+
+/* .collapsable {
+    display: none;
+} */
+
 @media (min-width: 700px) {
-    .not-important {
+/*     .collapsable {
         display: table-cell;
-    }
+    } */
 
     .controls {
         text-align: right;
@@ -96,9 +135,5 @@ select > .placeholder {
 
     .controls {
         margin-right: 0;
-    }
-
-    table {
-        margin: 10px auto;
     }
 }

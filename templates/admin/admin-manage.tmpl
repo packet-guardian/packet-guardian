@@ -5,91 +5,79 @@
 <div class="manager">
     <form>
         <input type="hidden" name="username" value="{{.user.Username}}">
-        <div class="info">
-            <span class="text-label">Username:</span>
-            <span class="username">{{.user.Username}}</span>
-            {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
-        </div>
-        <div class="info">
-            <span class="text-label"># of Devices:</span>
-            <span class="username">{{len .devices}}</span>
-        </div>
-        <div class="controls">
-            {{if .canCreateDevice}}
-            <button type="button" name="add-device-btn" data-admin="1">Add New Device</button>
-            {{end}}
-            {{if .canDeleteDevice}}
-            <button type="button" name="del-selected-btn">Delete Selected</button>
-            <button type="button" name="del-all-btn">Delete All</button>
-            {{end}}
-            <a href="/logout" class="btn">Logout</a>
+        <div class="user-info">
+            <section>
+                <span class="text-label">Username:</span>
+                <span class="username">{{.user.Username}}</span>
+                {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
+            </section>
+            <section>
+                <span class="text-label"># of Devices:</span>
+                <span class="username">{{len .devices}}</span>
+            </section>
         </div>
         <div class="controls">
-            {{if .canManageBlacklist}}
-            <select name="blacklist-sel" data-blacklisted="{{.user.IsBlacklisted}}" required>
-                <option  class="placeholder" selected disabled value="">Blacklist Options</option>
-                <option value="username" name="black-user-option">Add Username</option>
-                <option value="black-all">Add All Devices</option>
-                <option value="unblack-all">Remove All Devices</option>
-                <option value="black-sel">Add Selected Devices</option>
-                <option value="unblack-sel">Remove Selected Devices</option>
-            </select>
-            {{end}}
-            {{if .canReassignDevice}}
-            <button type="button" name="reassign-selected-btn" class="admin-btn">Reassign Selected</button>
-            {{end}}
-            <a href="/admin" class="btn admin-btn">Admin Dashboard</a>
+            <section>
+                {{if .canCreateDevice}}
+                <button type="button" name="add-device-btn" data-admin="1">Add New Device</button>
+                {{end}}
+                {{if .canDeleteDevice}}
+                <button type="button" name="del-selected-btn">Delete Selected</button>
+                <button type="button" name="del-all-btn">Delete All</button>
+                {{end}}
+                <a href="/logout" class="btn">Logout</a>
+            </section>
+            <section>
+                {{if .canManageBlacklist}}
+                <select name="blacklist-sel" data-blacklisted="{{.user.IsBlacklisted}}" required>
+                    <option  class="placeholder" selected disabled value="">Blacklist Options</option>
+                    <option value="username" name="black-user-option">Add Username</option>
+                    <option value="black-all">Add All Devices</option>
+                    <option value="unblack-all">Remove All Devices</option>
+                    <option value="black-sel">Add Selected Devices</option>
+                    <option value="unblack-sel">Remove Selected Devices</option>
+                </select>
+                {{end}}
+                {{if .canReassignDevice}}
+                <button type="button" name="reassign-selected-btn" class="admin-btn">Reassign Selected</button>
+                {{end}}
+                <a href="/admin" class="btn admin-btn">Admin Dashboard</a>
+            </section>
         </div>
-        {{if eq (len .devices) 0}}
-        <div class="no-devices">No devices registered</div>
-        {{else}}
-        <table>
-            <tr>
-                {{if or $.canDeleteDevice $.canEditDevice $.canReassignDevice $.canManageBlacklist}}
-                <th><input type="checkbox" name="dev-sel-all"></th>
-                {{end}}
-                <th>MAC Address</th>
-                <th>User Agent</th>
-                <th>Description</th>
-                <th>Platform</th>
-                <th>Registered</th>
-                <th>Expires</th>
-                <th>Last Seen</th>
-                <th>Registered From</th>
-                <th>Current IP</th>
-            </tr>
-            {{range .devices}}
-            <tr>
-                {{if or $.canDeleteDevice $.canEditDevice $.canReassignDevice $.canManageBlacklist}}
-                <td><input type="checkbox" value="{{.MAC}}" class="device-select"></td>
-                {{end}}
-                <td>{{if .IsBlacklisted}}<span class="blacklist-icon">&cross;</span>{{end}}{{.MAC}}</td>
-                <td class="truncate"><span title="{{.UserAgent}}">{{.UserAgent}}</span></td>
-                <td class="truncate"><span title="{{.Description}}">{{.Description}}</span></td>
-                <td>{{.Platform}}</td>
-                <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>
-
-                {{if eq .Expires.Unix 0}}
-                <td>Never</td>
-                {{else if eq .Expires.Unix 1}}
-                <td>Rolling</td>
-                {{else}}
-                <td>{{.Expires.Format "2006-01-02 15:04"}}</td>
-                {{end}}
-
-                <td>{{.LastSeen.Format "2006-01-02 15:04"}}</td>
-                <td>{{.RegisteredFrom}}</td>
-
-                {{with .GetCurrentLease}}
-                <td><span title="Expires: {{.End.Format "2006-01-02 15:04"}}">{{.IP.String}}</span></td>
-                {{else}}
-                <td>N/A</td>
-                {{end}}
-            </tr>
-            {{end}}
-        </table>
-        {{end}}
     </form>
+
+    {{if eq (len .devices) 0}}
+    <div class="no-devices clearfix">No devices registered</div>
+    {{else}}
+    <div class="clearfix devices-list">
+        {{range .devices}}
+        <div class="device-header" data-device-id="{{.ID}}">
+            {{if or $.canDeleteDevice $.canEditDevice $.canReassignDevice $.canManageBlacklist}}
+            <div class="device-check-select">
+                <input type="checkbox" value="{{.MAC}}" class="device-checkbox">
+            </div>
+            {{end}}
+            <div class="device-info">
+                <div class="device-info-label">MAC Address</div>
+                <div class="device-info-text">{{.MAC}}</div>
+            </div>
+            <div class="device-info">
+                <div class="device-info-label">Platform</div>
+                <div class="device-info-text">{{.Platform}}</div>
+            </div>
+            <div class="device-info">
+                <div class="device-info-label">Last Seen</div>
+                <div class="device-info-text">{{.LastSeen.Format "2006-01-02 15:04"}}</div>
+            </div>
+        </div>
+        <div class="device-body" id="device-body-{{.ID}}">
+            <p>
+                Hello.
+            </p>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
 
     {{if gt (len .devices) 0}}
     <p>
