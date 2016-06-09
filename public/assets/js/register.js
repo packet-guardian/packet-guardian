@@ -94,20 +94,14 @@ $.onReady(function () {
         }, function (req) {
             window.scrollTo(0, 0);
             enableRegBtn();
+            var resp = JSON.parse(req.responseText);
             switch(req.status) {
-                case 400:
-                case 409:
-                    var resp = JSON.parse(req.responseText);
-                    c.FlashMessage(resp.Message);
-                    break;
-                case 401:
-                    c.FlashMessage("Login failed");
-                    break;
-                case 403:
-                    c.FlashMessage("Invalid permissions");
+                case 500:
+                    c.FlashMessage("Internal Server Error - "+resp.Message);
                     break;
                 default:
-                    c.FlashMessage("Internal Server Error");
+                    c.FlashMessage(resp.Message);
+                    break;
             }
         });
     }

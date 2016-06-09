@@ -62,7 +62,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"policy":   common.LoadPolicyText(m.e.Config.Registration.RegistrationPolicyFile),
 		"type":     formType,
-		"username": username,
+		"username": strings.ToLower(username),
 	}
 
 	m.e.Views.NewView("register", r).Render(w, data)
