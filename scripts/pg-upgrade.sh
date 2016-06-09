@@ -6,8 +6,20 @@
 
 # Check running as root
 if [[ $UID -ne 0 ]]; then
-    echo "This file must be ran as root."
-    exit 1
+    exec sudo "$0" "$@"
+fi
+
+# Copy to temporary location and run from there
+# The upgrade script will edit this file while it's running
+# which causes adverse side-effects
+if [[ ! "`dirname $0`" =~ ^/tmp/.sh-tmp ]]; then
+    mkdir -p /tmp/.sh-tmp/
+    DIST="/tmp/.sh-tmp/$( basename $0 )"
+    install -m 700 "$0" $DIST
+    exec $DIST "$@"
+else
+    # Delete temporary copy
+    rm "$0"
 fi
 
 ALL_YES=""
@@ -16,10 +28,10 @@ if [[ $1 == "-y" ]]; then
     shift
 fi
 
-SRC_TAR="$(realpath $1)"
+SRC_TAR="$(python -c "import os,sys; print os.path.realpath(sys.argv[1])" $1 2>/dev/null)"
 
 if [[ ! -f $SRC_TAR ]]; then
-    echo "$SRC_TAR not found"
+    echo "Source tar file not found"
     exit 1
 fi
 
@@ -62,6 +74,7 @@ startServices() {
     fi
 }
 
+confirm "Is the file $SRC_TAR correct?"
 confirm "This will upgrade Packet Guardian, are you sure?"
 cd /opt
 stopServices

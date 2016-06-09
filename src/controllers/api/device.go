@@ -37,19 +37,17 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	if sessionUser.Username != formUsername && !sessionUser.Can(models.CreateDevice) {
 		d.e.Log.Errorf("Admin action attempted: Register device for %s attempted by user %s", formUsername, sessionUser.Username)
-		common.NewAPIResponse("Only admins can do that", nil).WriteResponse(w, http.StatusForbidden)
+		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
 		return
 	}
 
 	if formUsername == sessionUser.Username {
 		if !sessionUser.Can(models.CreateOwn) {
-			common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+			common.NewAPIResponse("Cannot register device - Permission denied", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
 		formUser = sessionUser
-	}
-
-	if formUsername != sessionUser.Username {
+	} else {
 		var err error
 		formUser, err = models.GetUserByUsername(d.e, formUsername)
 		if err != nil {
@@ -91,7 +89,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		// Manual registration
 		if !d.e.Config.Registration.AllowManualRegistrations {
 			d.e.Log.Noticef("Unauthorized manual registration attempt for MAC %s from user %s", macPost, formUser.Username)
-			common.NewAPIResponse("Manual registrations are not allowed", nil).WriteResponse(w, http.StatusForbidden)
+			common.NewAPIResponse("Manual registrations not allowed", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
 		mac, err = common.FormatMacAddress(macPost)
@@ -104,7 +102,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		lease, err := models.GetLeaseByIP(d.e, ip)
 		if err != nil {
 			d.e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
-			common.NewEmptyAPIResponse().WriteResponse(w, http.StatusInternalServerError)
+			common.NewAPIResponse("Failed detecting MAC address", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		} else if lease.ID == 0 {
 			d.e.Log.Errorf("Attempted automatic registration on non-leased device %s", ip)
@@ -118,6 +116,8 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	device, err := models.GetDeviceByMAC(d.e, mac)
 	if err != nil {
 		d.e.Log.Errorf("Error getting device: %s", err.Error())
+		common.NewAPIResponse("Failed loading device", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
 	}
 
 	// Check if device is already registered
@@ -153,7 +153,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	// Save new device
 	if err := device.Save(); err != nil {
 		d.e.Log.Errorf("Error registering device: %s", err.Error())
-		common.NewAPIResponse("Error registering device", nil).WriteResponse(w, http.StatusInternalServerError)
+		common.NewAPIResponse("Error saving device", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
 	d.e.Log.Infof("Successfully registered MAC %s to user %s", mac.String(), formUser.Username)

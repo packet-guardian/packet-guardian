@@ -51,10 +51,11 @@
 			"revisionTime": "2016-04-23T15:30:15Z"
 		},
 		{
-			"checksumSHA1": "HKhlp22D9MgOhbE6O0hwH9WdEOg=",
+			"checksumSHA1": "V+dueNW80HEGwdToMb94J/veUgY=",
+			"origin": "github.com/usi-lfkeitel/packet-guardian/vendor/github.com/lfkeitel/verbose",
 			"path": "github.com/lfkeitel/verbose",
-			"revision": "1a7ae878500a7c16b998555a0f946093353f660b",
-			"revisionTime": "2016-04-25T13:41:48Z"
+			"revision": "6638292f115274c9468fe7570338898a80a99ef2",
+			"revisionTime": "2016-06-08T20:29:02-05:00"
 		},
 		{
 			"checksumSHA1": "+q6a7iju2XMMu5DB/we6odv3/Iw=",

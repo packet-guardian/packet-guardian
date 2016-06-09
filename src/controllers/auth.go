@@ -38,6 +38,7 @@ func (a *Auth) showLoginPage(w http.ResponseWriter, r *http.Request) {
 
 func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	// Assume invalid until convinced otherwise
+	auth.LogoutUser(r, w)
 	resp := common.NewAPIResponse("Invalid login", nil)
 	if auth.LoginUser(r, w) {
 		resp.Message = ""

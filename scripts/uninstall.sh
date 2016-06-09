@@ -1,13 +1,8 @@
 #! /usr/bin/env bash
 
-## Directory of running script
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPTPATH="$DIR/$(basename "$0")"
-
 # Check running as root
 if [[ $UID -ne 0 ]]; then
-    echo "This file must be ran as root."
-    exit 1
+    exec sudo "$0" "$@"
 fi
 
 APP_DIR="/opt/packet-guardian"
@@ -84,6 +79,7 @@ deleteApplicationFiles() {
     uninstallAppArmorProfile
     rm -rf /usr/local/bin/pg-upgrade
     rm -rf $APP_DIR
+    rm -rf $APP_DIR.old
 }
 
 purgeConfigFiles() {

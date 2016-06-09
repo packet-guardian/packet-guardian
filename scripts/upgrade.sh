@@ -1,13 +1,8 @@
 #! /usr/bin/env bash
 
-## Directory of running script
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPTPATH="$DIR/$(basename "$0")"
-
 # Check running as root
 if [[ $UID -ne 0 ]]; then
-    echo "This file must be ran as root."
-    exit 1
+    exec sudo "$0" "$@"
 fi
 
 APP_DIR="/opt/packet-guardian"
@@ -144,6 +139,7 @@ upgrade() {
     cp $APP_DIR/config/dhcp-config.sample.conf $CONFIG_DIR
 
     cp $APP_DIR/scripts/pg-upgrade.sh /usr/local/bin/pg-upgrade
+    cp $APP_DIR/scripts/uninstall.sh $DATA_DIR/uninstall.sh
 
     # Perform any necessary SQL migrations
     # sqlite3 $DATA_DIR/database.sqlite3 < $APP_DIR/config/db-schema-sqlite.sql

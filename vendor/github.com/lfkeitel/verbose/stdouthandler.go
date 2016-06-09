@@ -48,7 +48,7 @@ type StdoutHandler struct {
 func NewStdoutHandler() *StdoutHandler {
 	return &StdoutHandler{
 		min: LogLevelDebug,
-		max: LogLevelEmergency,
+		max: LogLevelFatal,
 		out: os.Stdout,
 	}
 }
