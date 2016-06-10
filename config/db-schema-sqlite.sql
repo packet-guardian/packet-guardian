@@ -50,3 +50,11 @@ CREATE TABLE "lease" (
     "abandoned" INTEGER DEFAULT (0),
     "registered" INTEGER DEFAULT (0)
 );
+
+DROP TABLE IF EXISTS "settings";
+CREATE TABLE "settings" (
+    "id" TEXT PRIMARY KEY NOT NULL,
+    "value" TEXT DEFAULT ''
+);
+
+INSERT INTO "settings" ("id", "value") VALUES ('db_version', 1);
