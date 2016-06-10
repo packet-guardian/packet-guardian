@@ -141,7 +141,8 @@ $.onReady(function () {
             "expiration_type": "",
             "device_expiration": $('[name=device-expiration]').value(),
             "valid_start": 0,
-            "valid_end": 0
+            "valid_end": 0,
+            "can_manage": $('[name=can-manage]').prop('checked') ? 1 : 0
         };
 
         if ($('[name=clear-pass]').prop("checked")) {
@@ -175,6 +176,9 @@ $.onReady(function () {
             c.FlashMessage("User saved", 'success');
             $('[name=password]').value("");
             $('[name=clear-pass]').prop("checked", false);
+        }, function(req) {
+            var resp = JSON.parse(req.responseText);
+            c.FlashMessage(resp.Message);
         });
     });
 

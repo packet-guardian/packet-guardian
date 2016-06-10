@@ -50,6 +50,11 @@ fieldset {
     border: none;
 }
 
+input[type="checkbox"] {
+    width: 1.2em;
+    height: 1.2em;
+}
+
 @media (min-width: 700px) {
     .admin-users, .admin-user {
         width: 70%;

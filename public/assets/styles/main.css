@@ -41,8 +41,7 @@ header img {
 }
 
 .clearfix {
-    display: inline-block;
-    width: 100%;
+    clear: both;
 }
 
 .flash {
@@ -78,13 +77,14 @@ header img {
     border: 0;
     background-color: #0083A8;
     background: linear-gradient(to bottom, #0083A8, #007899);
+    white-space: nowrap;
 }
 
 .truncate {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 15em;
+  max-width: 20em;
 }
 
 .main {

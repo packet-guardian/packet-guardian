@@ -51,3 +51,11 @@ CREATE TABLE "lease" (
     "abandoned" INTEGER DEFAULT 0,
     "registered" INTEGER DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+
+DROP TABLE IF EXISTS "settings";
+CREATE TABLE "settings" (
+    "id" VARCHAR(255) PRIMARY KEY NOT NULL,
+    "value" TEXT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO "settings" ("id", "value") VALUES ('db_version', 1);

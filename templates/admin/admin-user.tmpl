@@ -57,11 +57,19 @@
             </p>
             <p>
                 <label for="valid-after">Start:</label>
-                <input type="text" name="valid-after" value="{{.user.ValidStart.Format "2006-01-02 15:04:05"}}">
+                <input type="text" name="valid-after" value="{{.user.ValidStart.Format "2006-01-02 15:04"}}">
             </p>
             <p>
                 <label for="valid-before">End:</label>
-                <input type="text" name="valid-before" value="{{.user.ValidEnd.Format "2006-01-02 15:04:05"}}">
+                <input type="text" name="valid-before" value="{{.user.ValidEnd.Format "2006-01-02 15:04"}}">
+            </p>
+            <p>
+                <label for="can-manage">Can Manage Own Devices:</label>
+                {{if .user.CanManage}}
+                <input type="checkbox" name="can-manage" checked="true">
+                {{else}}
+                <input type="checkbox" name="can-manage">
+                {{end}}
             </p>
             <p>
                 <button type="submit">Save</button>

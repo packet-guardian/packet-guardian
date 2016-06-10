@@ -1,0 +1,73 @@
+{{define "device-list"}}
+{{if eq (len .devices) 0}}
+<div class="clearfix no-devices">No devices registered</div>
+{{else}}
+<div class="clearfix devices-list">
+    {{range .devices}}
+    <div class="device-header {{if .IsBlacklisted}}blacklisted{{else}}good-standing{{end}}" data-device-id="{{.ID}}">
+        {{if or $.canDeleteDevice $.canEditDevice $.canReassignDevice $.canManageBlacklist}}
+        <div class="device-check-select">
+            <input type="checkbox" value="{{.MAC}}" class="device-checkbox">
+        </div>
+        {{end}}
+        <div class="device-info">
+            <div class="device-info-label">MAC Address</div>
+            <div class="device-info-text">{{.MAC}}</div>
+        </div>
+        <div class="device-info">
+            <div class="device-info-label">Description</div>
+            <div class="device-info-text">{{.Description}}</div>
+        </div>
+        <div class="device-info">
+            <div class="device-info-label">Last Seen</div>
+            <div class="device-info-text">{{.LastSeen.Format "2006-01-02 15:04"}}</div>
+        </div>
+    </div>
+    <div class="device-body" id="device-body-{{.ID}}">
+        <div class="device-body-inner">
+            {{if .IsBlacklisted}}
+            <div class="device-info blacklisted">
+                <div class="device-info-label">Blacklisted</div>
+                <div class="device-info-text">Yes</div>
+            </div>
+            {{end}}
+            <div class="device-info">
+                <div class="device-info-label">Platform</div>
+                <div class="device-info-text">{{.Platform}}</div>
+            </div>
+            <div class="device-info">
+                <div class="device-info-label">Date Registered</div>
+                <div class="device-info-text">{{.DateRegistered.Format "2006-01-02 15:04"}}</div>
+            </div>
+            <div class="device-info">
+                <div class="device-info-label">Registered From</div>
+                <div class="device-info-text">{{.RegisteredFrom.String}}</div>
+            </div>
+            <div class="device-info">
+                <div class="device-info-label">Expires</div>
+                {{if eq .Expires.Unix 0}}
+                <div class="device-info-text">Never</div>
+                {{else if eq .Expires.Unix 1}}
+                <div class="device-info-text">Rolling</div>
+                {{else}}
+                <div class="device-info-text">{{.Expires.Format "2006-01-02 15:04"}}</div>
+                {{end}}
+            </div>
+            <div class="device-info">
+                <div class="device-info-label">User Agent</div>
+                <div class="device-info-text truncate"><span title="{{.UserAgent}}">{{.UserAgent}}</span></div>
+            </div>
+            <div class="device-info">
+                <div class="device-info-label">Current Lease</div>
+                {{with .GetCurrentLease}}
+                <div class="device-info-text">{{.IP.String}}</div>
+                {{else}}
+                <div class="device-info-text">N/A</div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+    {{end}}
+</div>
+{{end}}
+{{end}}
