@@ -2,6 +2,27 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 $.onReady(function() {
+    var currentOpenDevice = 0;
+    $(".device-header").click(function(e) {
+        var self = $(e.target);
+        if (self.hasClass("device-checkbox")) {
+            return;
+        }
+
+        while (!self.hasClass("device-header")) {
+            self = $(self[0].parentNode);
+        }
+
+        var bodyNum = self.data("deviceId");
+        $(".device-body").style("max-height", "0");
+        if (bodyNum != currentOpenDevice) {
+            $("#device-body-"+bodyNum).style("max-height", "200px");
+            currentOpenDevice = bodyNum;
+        } else {
+            currentOpenDevice = 0;
+        }
+    });
+
     // Event handlers
     $('[name=add-device-btn]').click(function(e) {
         isAdmin = $(e.target).data("admin");
@@ -26,10 +47,10 @@ $.onReady(function() {
     });
 
     $('[name=dev-sel-all]').click(function(e) {
-        $('.device-select').prop("checked", $(e.target).prop("checked"));
+        $('.device-checkbox').prop("checked", $(e.target).prop("checked"));
     });
 
-    $('.device-select').click(function(e) {
+    $('.device-checkbox').click(function(e) {
         $('[name=dev-sel-all]').prop("checked", false);
     });
 
@@ -50,7 +71,7 @@ $.onReady(function() {
     }
 
     function deleteSelectedDevices() {
-        var checked = $('.device-select:checked');
+        var checked = $('.device-checkbox:checked');
         if (checked.length === 0) {
             return;
         }

@@ -75,7 +75,7 @@ $.onReady(function() {
     }
 
     function getCheckedDevices() {
-        var checked = $('.device-select:checked');
+        var checked = $('.device-checkbox:checked');
         var devices = [];
         for (var i = 0; i < checked.length; i++) {
             devices.push(checked[i].value);
