@@ -2,22 +2,6 @@
     font-weight: bold;
 }
 
-.user-info {
-    font-size: 1.2em;
-    margin-left: 10px;
-    float: left;
-}
-
-.controls {
-    margin: 0 10px 10px 10px;
-    display: inline-block;
-    float: right;
-}
-
-.controls section {
-    margin-top: 5px;
-}
-
 .no-devices {
     text-align: center;
     width: 600px;
@@ -46,6 +30,15 @@ button {
     font-weight: bold;
 }
 
+.blacklisted {
+    background-color: #cd5c5c;
+    color: white;
+}
+
+.good-standing {
+    background-color: #8FBC8F;
+}
+
 select {
     font-weight: bold;
     padding: 4px 10px;
@@ -63,8 +56,24 @@ select > .placeholder {
   display: none;
 }
 
+.user-info {
+    font-size: 1.2em;
+}
+
+.manager {
+    margin: 0 10px;
+}
+
+.controls {
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+.controls section {
+    margin-top: 5px;
+}
+
 .devices-list {
-    width: 60%;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -73,9 +82,8 @@ select > .placeholder {
 .device-header {
     display: flex;
     justify-content: space-around;
+    flex-wrap: wrap;
     align-items: center;
-    height: 6em;
-    background-color: #8FBC8F;
     text-align: center;
     border-bottom: .1em solid black;
 }
@@ -84,16 +92,29 @@ select > .placeholder {
     cursor: pointer;
 }
 
-.device-info-container {
+.device-body {
+    max-height: 0;
+	overflow: hidden;
+
+	/* Set our transitions up. */
+	-webkit-transition: max-height 0.8s;
+	   -moz-transition: max-height 0.8s;
+         -o-transition: max-height 0.8s;
+	        transition: max-height 0.8s;
 }
 
-.device-body {
-    display: none;
+.device-body-inner {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    text-align: center;
 }
 
 .device-info {
+    padding: 1em 0;
+    min-width: 25%;
     display: inline-block;
-    text-align: center;
 }
 
 .device-info-label {
@@ -102,38 +123,37 @@ select > .placeholder {
     margin-bottom: .5em;
 }
 
-.device-info-text {
-    
-}
-
 .device-checkbox {
-    width: 2em;
-    height: 2em;
+    -webkit-transform: scale(2); /* Safari and Chrome */
+       -moz-transform: scale(2); /* FF */
+        -ms-transform: scale(2); /* IE */
+         -o-transform: scale(2); /* Opera */
+            transform: scale(2);
 }
 
-.device-check-select {
-}
-
-/* .collapsable {
-    display: none;
-} */
-
-@media (min-width: 700px) {
-/*     .collapsable {
-        display: table-cell;
-    } */
+@media (min-width: 875px) {
+    .user-info {
+        margin-left: 10px;
+        float: left;
+    }
 
     .controls {
         text-align: right;
+        float: right;
     }
-}
 
-@media (min-width: 800px) {
     .manager {
         margin: 0 15px;
     }
 
     .controls {
         margin-right: 0;
+        margin-left: 0;
+    }
+}
+
+@media (min-width: 1024px) {
+    .devices-list {
+        width: 60%;
     }
 }

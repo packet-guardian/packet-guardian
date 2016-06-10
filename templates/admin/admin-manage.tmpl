@@ -1,7 +1,5 @@
 {{define "admin-manage"}}
 {{template "header" dict "css" (list "manage") "main" . "pageTitle" "Admin - Device Management"}}
-{{/* All the .IsAdmin checks are because this template is used for both Helpdesk and Admin users */}}
-{{/* Helpdesk users are read-only */}}
 <div class="manager">
     <form>
         <input type="hidden" name="username" value="{{.user.Username}}">
@@ -21,7 +19,7 @@
                 {{if .canCreateDevice}}
                 <button type="button" name="add-device-btn" data-admin="1">Add New Device</button>
                 {{end}}
-                {{if .canDeleteDevice}}
+                {{if and .canDeleteDevice (gt (len .devices) 0)}}
                 <button type="button" name="del-selected-btn">Delete Selected</button>
                 <button type="button" name="del-all-btn">Delete All</button>
                 {{end}}
@@ -46,44 +44,7 @@
         </div>
     </form>
 
-    {{if eq (len .devices) 0}}
-    <div class="no-devices clearfix">No devices registered</div>
-    {{else}}
-    <div class="clearfix devices-list">
-        {{range .devices}}
-        <div class="device-header" data-device-id="{{.ID}}">
-            {{if or $.canDeleteDevice $.canEditDevice $.canReassignDevice $.canManageBlacklist}}
-            <div class="device-check-select">
-                <input type="checkbox" value="{{.MAC}}" class="device-checkbox">
-            </div>
-            {{end}}
-            <div class="device-info">
-                <div class="device-info-label">MAC Address</div>
-                <div class="device-info-text">{{.MAC}}</div>
-            </div>
-            <div class="device-info">
-                <div class="device-info-label">Platform</div>
-                <div class="device-info-text">{{.Platform}}</div>
-            </div>
-            <div class="device-info">
-                <div class="device-info-label">Last Seen</div>
-                <div class="device-info-text">{{.LastSeen.Format "2006-01-02 15:04"}}</div>
-            </div>
-        </div>
-        <div class="device-body" id="device-body-{{.ID}}">
-            <p>
-                Hello.
-            </p>
-        </div>
-        {{end}}
-    </div>
-    {{end}}
-
-    {{if gt (len .devices) 0}}
-    <p>
-        <span class="blacklist-icon">&cross;</span> = Blacklisted MAC address
-    </p>
-    {{end}}
+    {{template "device-list" $}}
 </div>
 {{template "footer" dict "js" (list "manage" "manage-admin")}}
 {{end}}
