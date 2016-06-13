@@ -86,7 +86,7 @@ func GetAllLeases(e *common.Environment) ([]*Lease, error) {
 }
 
 func SearchLeases(e *common.Environment, where string, vals ...interface{}) ([]*Lease, error) {
-	return getLeasesFromDatabase(e, where, vals...)
+	return getLeasesFromDatabase(e, "WHERE "+where, vals...)
 }
 
 func getLeasesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Lease, error) {
@@ -148,6 +148,10 @@ func getLeasesFromDatabase(e *common.Environment, where string, values ...interf
 // IsFree determines if the lease is expired and available for use
 func (l *Lease) IsFree() bool {
 	return (l.ID == 0 || time.Now().After(l.End))
+}
+
+func (l *Lease) IsExpired() bool {
+	return l.End.Before(time.Now())
 }
 
 func (l *Lease) Save() error {
