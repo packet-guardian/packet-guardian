@@ -133,8 +133,8 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"query":         query,
-		"searchResults": results,
+		"query":   query,
+		"devices": results,
 	}
 
 	a.e.Views.NewView("admin-search", r).Render(w, data)

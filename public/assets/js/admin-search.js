@@ -1,0 +1,3 @@
+$.onReady(function() {
+    keepDevicesOpen(true);
+});

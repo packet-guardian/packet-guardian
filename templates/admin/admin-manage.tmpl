@@ -1,5 +1,5 @@
 {{define "admin-manage"}}
-{{template "header" dict "css" (list "manage") "main" . "pageTitle" "Admin - Device Management"}}
+{{template "header" dict "css" (list "device-list" "manage") "main" . "pageTitle" "Admin - Device Management"}}
 <div class="manager">
     <form>
         <input type="hidden" name="username" value="{{.user.Username}}">
@@ -46,5 +46,5 @@
 
     {{template "device-list" $}}
 </div>
-{{template "footer" dict "js" (list "manage" "manage-admin")}}
+{{template "footer" dict "js" (list "device-list" "manage" "manage-admin")}}
 {{end}}
