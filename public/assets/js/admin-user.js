@@ -177,7 +177,7 @@ $.onReady(function () {
             c.FlashMessage("User saved", 'success');
             $('[name=password]').value("");
             $('[name=clear-pass]').prop("checked", false);
-            if (formData.password === -1) {
+            if (formData.password === -1 || formData.password === "") {
                 $('#has-password').text("No");
             } else {
                 $('#has-password').text("Yes");
