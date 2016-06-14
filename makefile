@@ -64,7 +64,6 @@ dist: vet test $(TARGETS)
 
 	@cp LICENSE dist/packet-guardian/
 	@cp README.md dist/packet-guardian/
-	@cp Dockerfile dist/packet-guardian/
 	@cp -R scripts dist/packet-guardian/
 
 	@mkdir dist/packet-guardian/bin
@@ -82,4 +81,23 @@ clean:
 	rm -rf ./logs/*
 	rm -rf ./sessions/*
 
-.PHONY: all test local-install coverage clean dist vet lint benchmark fmt doc $(CMD_SOURCES)
+docker:
+	@rm -rf docker/tmp
+	@mkdir docker/tmp
+	cp dist/pg-dist* docker/tmp/dist.tar.gz
+
+	cp docker/pg-base/Dockerfile docker/tmp/Dockerfile
+	cd docker/tmp; \
+	sudo docker build -t pg-base --rm .
+
+	cp docker/pg-web/Dockerfile docker/tmp/Dockerfile
+	cd docker/tmp; \
+	sudo docker build -t pg-web --rm .
+
+	cp docker/pg-dhcp/Dockerfile docker/tmp/Dockerfile
+	cd docker/tmp; \
+	sudo docker build -t pg-dhcp --rm .
+
+	@rm -rf docker/tmp
+
+.PHONY: all test local-install coverage clean dist vet lint benchmark fmt doc $(CMD_SOURCES) docker
