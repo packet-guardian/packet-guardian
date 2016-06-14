@@ -132,7 +132,7 @@ $.onReady(function() {
         $.post("/api/device/_reassign", {"username": username, "macs": devices.join(',')}, function() {
             location.reload();
         }, function() {
-            c.FlashMessage("Error blacklisting devices");
+            c.FlashMessage("Error reassigning devices");
         });
     }
 });
