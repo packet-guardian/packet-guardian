@@ -8,6 +8,7 @@ $.onReady(function() {
         if (!reallyOpen) { return; }
         var self = $(e.target);
         if (self.hasClass("device-checkbox")) { return; }
+        if (self[0].tagName === 'A') { return; }
 
         while (!self.hasClass("device-header")) {
             self = $(self[0].parentNode);
@@ -21,10 +22,13 @@ $.onReady(function() {
         // Get the max-height value before setting it back to 0
         var mh = thebody.style("max-height");
         if (!stayOpen) {
-            $(".device-body").style("max-height", "0");
+            // Close all
+            $(".device-body").style("max-height", "0px");
         }
         if (mh !== "200px") {
             thebody.style("max-height", "200px");
+        } else {
+            thebody.style("max-height", "0px");
         }
     }
 
