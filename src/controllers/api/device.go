@@ -215,7 +215,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		d.e.Log.Infof("Deleted device %s for user %s", device.MAC.String(), formUser.Username)
+		d.e.Log.Infof("Deleted device %s for user %s by %s", device.MAC.String(), formUser.Username, sessionUser.Username)
 	}
 
 	if finishedWithErrors {
