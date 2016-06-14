@@ -22,7 +22,7 @@ func TestRootHandlerLoggedInNormal(t *testing.T) {
 	defer db.Close()
 
 	userRow := sqlmock.NewRows(common.UserTableCols).AddRow(
-		1, "testUser", "", 0, 0, 0, 1, 1, 0, 0,
+		1, "testUser", "", 0, 0, 0, 1, 1, 1, 0, 0,
 	)
 
 	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testuser").WillReturnRows(userRow)
@@ -67,7 +67,7 @@ func TestRootHandlerLoggedInAdmin(t *testing.T) {
 	defer db.Close()
 
 	userRow := sqlmock.NewRows(common.UserTableCols).AddRow(
-		1, "testUser", "", 0, 0, 0, 1, 1, 0, 0,
+		1, "testUser", "", 0, 0, 0, 1, 1, 1, 0, 0,
 	)
 
 	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testuser").WillReturnRows(userRow)

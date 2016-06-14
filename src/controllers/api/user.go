@@ -173,6 +173,11 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		user.CanManage = (canManage == "1")
 	}
 
+	canAutoreg := r.FormValue("can_autoreg")
+	if canAutoreg != "" {
+		user.CanAutoreg = (canAutoreg == "1")
+	}
+
 	isNewUser := user.IsNew() // This will always be false after a call to Save()
 
 	if err := user.Save(); err != nil {

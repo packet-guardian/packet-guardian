@@ -128,6 +128,7 @@ type User struct {
 	ValidEnd         time.Time
 	ValidForever     bool
 	CanManage        bool
+	CanAutoreg       bool
 	blacklistCached  bool
 	blacklistSave    bool
 	blacklisted      bool
@@ -149,8 +150,10 @@ func NewUser(e *common.Environment) *User {
 		ValidEnd:         time.Unix(0, 0),
 		ValidForever:     true,
 		CanManage:        true,
+		CanAutoreg:       true,
 		Rights:           ViewOwn | ManageOwnRights,
 	}
+	// Load extra rights as set in the configuration
 	u.LoadRights()
 	return u
 }
@@ -184,7 +187,7 @@ func SearchUsersByField(e *common.Environment, field, pattern string) ([]*User, 
 }
 
 func getUsersFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*User, error) {
-	sql := `SELECT "id", "username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "valid_forever", "valid_start", "valid_end" FROM "user" ` + where
+	sql := `SELECT "id", "username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end" FROM "user" ` + where
 	rows, err := e.DB.Query(sql, values...)
 	if err != nil {
 		return nil, err
@@ -200,6 +203,7 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 		var defaultExpiration int64
 		var expirationType int
 		var canManage bool
+		var canAutoreg bool
 		var validForever bool
 		var validStart int64
 		var validEnd int64
@@ -212,6 +216,7 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 			&defaultExpiration,
 			&expirationType,
 			&canManage,
+			&canAutoreg,
 			&validForever,
 			&validStart,
 			&validEnd,
@@ -230,10 +235,14 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 			ValidEnd:     time.Unix(validEnd, 0),
 			ValidForever: validForever,
 			CanManage:    canManage,
+			CanAutoreg:   canAutoreg,
 			Rights:       ViewOwn,
 		}
 		if canManage {
 			user.Rights = user.Rights.With(ManageOwnRights)
+		}
+		if canAutoreg {
+			user.Rights = user.Rights.With(AutoRegOwn)
 		}
 		user.DeviceExpiration = &UserDeviceExpiration{
 			Mode:  UserExpiration(expirationType),
@@ -356,7 +365,7 @@ func (u *User) Save() error {
 }
 
 func (u *User) updateExisting() error {
-	sql := `UPDATE "user" SET "device_limit" = ?, "default_expiration" = ?, "expiration_type" = ?, "can_manage" = ?, "valid_forever" = ?, "valid_start" = ?, "valid_end" = ?`
+	sql := `UPDATE "user" SET "device_limit" = ?, "default_expiration" = ?, "expiration_type" = ?, "can_manage" = ?, "can_autoreg" = ?, "valid_forever" = ?, "valid_start" = ?, "valid_end" = ?`
 
 	if u.savePassword {
 		sql += ", \"password\" = ?"
@@ -372,6 +381,7 @@ func (u *User) updateExisting() error {
 			u.DeviceExpiration.Value,
 			u.DeviceExpiration.Mode,
 			u.CanManage,
+			u.CanAutoreg,
 			u.ValidForever,
 			u.ValidStart.Unix(),
 			u.ValidEnd.Unix(),
@@ -385,6 +395,7 @@ func (u *User) updateExisting() error {
 			u.DeviceExpiration.Value,
 			u.DeviceExpiration.Mode,
 			u.CanManage,
+			u.CanAutoreg,
 			u.ValidForever,
 			u.ValidStart.Unix(),
 			u.ValidEnd.Unix(),
@@ -402,7 +413,7 @@ func (u *User) saveNew() error {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := `INSERT INTO "user" ("username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "valid_forever", "valid_start", "valid_end") VALUES (?,?,?,?,?,?,?,?,?)`
+	sql := `INSERT INTO "user" ("username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end") VALUES (?,?,?,?,?,?,?,?,?,?)`
 
 	result, err := u.e.DB.Exec(
 		sql,
@@ -412,6 +423,7 @@ func (u *User) saveNew() error {
 		u.DeviceExpiration.Value,
 		u.DeviceExpiration.Mode,
 		u.CanManage,
+		u.CanAutoreg,
 		u.ValidForever,
 		u.ValidStart.Unix(),
 		u.ValidEnd.Unix(),

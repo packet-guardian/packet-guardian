@@ -26,6 +26,8 @@ func NewDeviceController(e *common.Environment) *Device {
 
 func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	// Check authentication and get User models
+	macPost := r.FormValue("mac-address")
+	manual := (macPost != "")
 	var formUser *models.User // The user to whom the device is being registered
 	var err error
 	sessionUser := models.GetUserFromContext(r)
@@ -42,8 +44,12 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if formUsername == sessionUser.Username {
-		if !sessionUser.Can(models.CreateOwn) {
-			common.NewAPIResponse("Cannot register device - Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+		if manual && !sessionUser.Can(models.CreateOwn) {
+			common.NewAPIResponse("Cannot manually register device - Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+			return
+		}
+		if !manual && !sessionUser.Can(models.AutoRegOwn) {
+			common.NewAPIResponse("Cannot automatically register device - Permission denied", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
 		formUser = sessionUser
@@ -82,8 +88,6 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get MAC address
 	var mac net.HardwareAddr
-	macPost := r.FormValue("mac-address")
-	manual := (macPost != "")
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 	if manual {
 		// Manual registration

@@ -34,7 +34,11 @@
             {{end}}
             <div class="device-info">
                 <div class="device-info-label">Platform</div>
+                {{if eq .Platform ""}}
+                <div class="device-info-text">N/A</div>
+                {{else}}
                 <div class="device-info-text">{{.Platform}}</div>
+                {{end}}
             </div>
             <div class="device-info">
                 <div class="device-info-label">Date Registered</div>

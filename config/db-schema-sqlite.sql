@@ -22,6 +22,7 @@ CREATE TABLE "user" (
     "default_expiration" INTEGER DEFAULT (0),
     "expiration_type" INTEGER DEFAULT (1),
     "can_manage" INTEGER DEFAULT (1),
+    "can_autoreg" INTEGER DEFAULT (1),
     "valid_start" INTEGER DEFAULT (0),
     "valid_end" INTEGER DEFAULT (0),
     "valid_forever" INTEGER DEFAULT (1)

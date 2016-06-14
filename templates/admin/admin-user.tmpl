@@ -12,9 +12,9 @@
             </p>
             <p>
                 {{if .user.HasPassword}}
-                <span class="label">Has Password</span>: Yes
+                <span class="label">Has Password</span>: <span id="has-password">Yes</span>
                 {{else}}
-                <span class="label">Has Password</span>: No
+                <span class="label">Has Password</span>: <span id="has-password">No</span>
                 {{end}}
             </p>
             <p>
@@ -69,6 +69,14 @@
                 <input type="checkbox" name="can-manage" checked="true">
                 {{else}}
                 <input type="checkbox" name="can-manage">
+                {{end}}
+            </p>
+            <p>
+                <label for="can-autoreg">Can Auto Register Devices:</label>
+                {{if .user.CanAutoreg}}
+                <input type="checkbox" name="can-autoreg" checked="true">
+                {{else}}
+                <input type="checkbox" name="can-autoreg">
                 {{end}}
             </p>
             <p>
