@@ -155,6 +155,9 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 		"list": func(values ...interface{}) ([]interface{}, error) {
 			return values, nil
 		},
+		"plus1": func(a int) int {
+			return a + 1
+		},
 	})
 
 	filepath.Walk(basepath, func(path string, info os.FileInfo, err1 error) error {

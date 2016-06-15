@@ -92,25 +92,32 @@
             <span class="data">N/A</span>
             {{end}}
         </p>
+        <br>
         <h3>Previous Leases</h3>
         <div class="leases">
-            {{range .Leases}}
-            <p>
-                <span class="label">IP Address</span>:
-                <span class="data">{{.IP.String}}</span>
-            </p>
-            <p>
-                <span class="label">Network</span>:
-                <span class="data">{{.Network}}</span>
-            </p>
-            <p>
-                <span class="label">Start</span>:
-                <span class="data">{{.Start.Format "2006-01-02 15:04"}}</span>
-            </p>
-            <p>
-                <span class="label">End</span>:
-                <span class="data">{{.End.Format "2006-01-02 15:04"}}</span>
-            </p>
+            {{$n := len .Leases}}
+            {{range $i, $l := .Leases}}
+            <div class="lease">
+                <p>
+                    <span class="label">IP Address</span>:
+                    <span class="data">{{$l.IP.String}}</span>
+                </p>
+                <p>
+                    <span class="label">Network</span>:
+                    <span class="data">{{$l.Network}}</span>
+                </p>
+                <p>
+                    <span class="label">Start</span>:
+                    <span class="data">{{$l.Start.Format "2006-01-02 15:04"}}</span>
+                </p>
+                <p>
+                    <span class="label">End</span>:
+                    <span class="data">{{$l.End.Format "2006-01-02 15:04"}}</span>
+                </p>
+            </div>
+            {{if ne (plus1 $i) $n}}
+            <hr class="lease-separator">
+            {{end}}
             {{end}}
         </div>
         {{end}}

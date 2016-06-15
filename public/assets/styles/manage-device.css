@@ -7,6 +7,12 @@
     font-weight: bold;
 }
 
-.data {
+.leases {
+    margin-left: 2em;
+}
 
+hr.lease-separator {
+    width: 10em;
+    display: inline-block;
+    margin: 0;
 }
