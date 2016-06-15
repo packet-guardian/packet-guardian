@@ -195,7 +195,11 @@ func (v *Views) Reload() error {
 }
 
 func (v *Views) RenderError(w http.ResponseWriter, r *http.Request, data map[string]interface{}) {
-	v.NewView("error", r).Render(w, data)
+	if data == nil {
+		v.NewView("error", r).Render(w, nil)
+		return
+	}
+	v.NewView("custom-error", r).Render(w, data)
 }
 
 type View struct {

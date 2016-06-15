@@ -81,10 +81,11 @@ func adminRouter(e *common.Environment) http.Handler {
 	adminController := controllers.NewAdminController(e)
 	get.HandleFunc("/admin", adminController.DashboardHandler)
 	get.HandleFunc("/admin/search", adminController.SearchHandler)
-	get.HandleFunc("/admin/manage/{username}", adminController.ManageHandler)
-	get.HandleFunc("/admin/manage/{username}/{mac:(?:[0-f]{2}:?){6}}", adminController.ShowDeviceHandler)
+	get.HandleFunc("/admin/manage/user/{username}", adminController.ManageHandler)
+	get.HandleFunc("/admin/manage/device/{mac:(?:[0-f]{2}:?){6}}", adminController.ShowDeviceHandler)
 	get.HandleFunc("/admin/users", adminController.AdminUserListHandler)
 	get.HandleFunc("/admin/users/{username}", adminController.AdminUserHandler)
+	get.HandleFunc("/admin/leases/{network}", adminController.AdminLeaseListHandler)
 
 	h := mid.CheckAdmin(r)
 	h = mid.CheckAuth(h)

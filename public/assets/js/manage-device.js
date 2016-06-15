@@ -14,7 +14,7 @@ $.onReady(function() {
                 url: '/api/device/'+username,
                 params: {"mac": mac},
                 success: function() {
-                    location.href = '/admin/manage/'+username;
+                    location.href = '/admin/manage/user/'+username;
                 },
                 error: function() {
                     c.FlashMessage("Error deleting device");
@@ -58,7 +58,7 @@ $.onReady(function() {
         pmodal.show("New owner's username:", function(newUser) {
             var mac = getMacAddress();
             $.post("/api/device/_reassign", {"username": newUser, "macs": mac}, function() {
-                location.href = '/admin/manage/'+newUser+'/'+encodeURIComponent(mac);
+                location.reload();
             }, function() {
                 c.FlashMessage("Error reassigning device");
             });

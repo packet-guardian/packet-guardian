@@ -12,11 +12,11 @@
     <div class="device-header {{if .IsBlacklisted}}blacklisted{{else}}good-standing{{end}}" data-device-id="{{.ID}}">
         <div class="device-info">
             <div class="device-info-label">MAC Address</div>
-            <div class="device-info-text"><a href="/admin/manage/{{.Username}}/{{urlquery .MAC}}">{{.MAC}}</a></div>
+            <div class="device-info-text"><a href="/admin/manage/device/{{urlquery .MAC}}">{{.MAC}}</a></div>
         </div>
         <div class="device-info">
             <div class="device-info-label">Username</div>
-            <div class="device-info-text"><a href="/admin/manage/{{.Username}}">{{.Username}}</a></div>
+            <div class="device-info-text"><a href="/admin/manage/user/{{.Username}}">{{.Username}}</a></div>
         </div>
         <div class="device-info">
             <div class="device-info-label">Description</div>

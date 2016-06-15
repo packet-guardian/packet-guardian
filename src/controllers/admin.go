@@ -5,9 +5,13 @@
 package controllers
 
 import (
+	"bytes"
 	"net"
 	"net/http"
 	"regexp"
+	"sort"
+	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
@@ -85,17 +89,23 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := models.GetUserByUsername(a.e, mux.Vars(r)["username"])
 	mac, err := net.ParseMAC(mux.Vars(r)["mac"])
 	if err != nil {
-		a.e.Log.Errorf("Malformatted MAC %s", mux.Vars(r)["mac"])
-		a.e.Views.RenderError(w, r, nil)
+		a.e.Views.RenderError(w, r, map[string]interface{}{
+			"title": "No device found",
+			"body":  "Incorrectly formed MAC address: " + mux.Vars(r)["mac"],
+		})
 		return
 	}
 	device, err := models.GetDeviceByMAC(a.e, mac)
-
 	if err != nil {
 		a.e.Log.Errorf("Error showing device %s", err.Error())
+		a.e.Views.RenderError(w, r, nil)
+		return
+	}
+	user, err := models.GetUserByUsername(a.e, device.Username)
+	if err != nil {
+		a.e.Log.Errorf("Error getting user %s", err.Error())
 		a.e.Views.RenderError(w, r, nil)
 		return
 	}
@@ -213,4 +223,50 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.e.Views.NewView("admin-user", r).Render(w, data)
+}
+
+func (a *Admin) AdminLeaseListHandler(w http.ResponseWriter, r *http.Request) {
+	sessionUser := models.GetUserFromContext(r)
+	if !sessionUser.Can(models.ViewLeases) {
+		a.redirectToRoot(w, r)
+		return
+	}
+
+	network := strings.ToLower(mux.Vars(r)["network"])
+	_, registered := r.URL.Query()["registered"]
+
+	leases, err := models.SearchLeases(a.e,
+		"network = ? AND registered = ? AND end > ?",
+		network, registered, time.Now().Unix(),
+	)
+	if err != nil {
+		a.e.Log.WithField("Err", err).Error("Failed to get leases")
+	}
+
+	ls := leaseSorter{leases}
+	sort.Sort(ls)
+
+	data := map[string]interface{}{
+		"network":    network,
+		"registered": registered,
+		"leases":     ls.l,
+	}
+
+	a.e.Views.NewView("admin-leases", r).Render(w, data)
+}
+
+type leaseSorter struct {
+	l []*models.Lease
+}
+
+func (l leaseSorter) Len() int {
+	return len(l.l)
+}
+
+func (l leaseSorter) Less(i, j int) bool {
+	return bytes.Compare([]byte(l.l[i].IP), []byte(l.l[j].IP)) < 0
+}
+
+func (l leaseSorter) Swap(i, j int) {
+	l.l[i], l.l[j] = l.l[j], l.l[i]
 }

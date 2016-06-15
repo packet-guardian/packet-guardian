@@ -31,8 +31,8 @@
             <div>
                 <h3>{{$netName}}</h3>
                 <div class="stat-block">
-                    <h4 class="hlabel">Registered:</h4> {{$stat.Registered}}<br>
-                    <h4 class="hlabel">Unregistered:</h4> {{$stat.Unregistered}}
+                    <h4 class="hlabel">Registered:</h4> <a href="/admin/leases/{{$netName}}?registered">{{$stat.Registered}}</a><br>
+                    <h4 class="hlabel">Unregistered:</h4> <a href="/admin/leases/{{$netName}}">{{$stat.Unregistered}}</a>
                 </div>
             </div>
             {{end}}

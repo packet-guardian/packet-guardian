@@ -25,7 +25,7 @@ func TestIPGiveOut(t *testing.T) {
 		t.Fatalf("Test config failed parsing: %v", err)
 	}
 
-	pool := c.networks["Network1"].subnets[0].pools[0]
+	pool := c.networks["network1"].subnets[0].pools[0]
 	lease := pool.getFreeLease(e)
 	if !bytes.Equal(lease.IP.To4(), []byte{0xa, 0x0, 0x1, 0xa}) {
 		t.Errorf("Incorrect lease. Expected %v, got %v", []byte{0xa, 0x0, 0x2, 0xa}, lease.IP)
