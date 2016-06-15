@@ -78,6 +78,40 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	a.e.Views.NewView("admin-manage", r).Render(w, data)
 }
 
+func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request) {
+	sessionUser := models.GetUserFromContext(r)
+	if !sessionUser.Can(models.ViewDevices) {
+		a.redirectToRoot(w, r)
+		return
+	}
+
+	user, err := models.GetUserByUsername(a.e, mux.Vars(r)["username"])
+	mac, err := net.ParseMAC(mux.Vars(r)["mac"])
+	if err != nil {
+		a.e.Log.Errorf("Malformatted MAC %s", mux.Vars(r)["mac"])
+		a.e.Views.RenderError(w, r, nil)
+		return
+	}
+	device, err := models.GetDeviceByMAC(a.e, mac)
+
+	if err != nil {
+		a.e.Log.Errorf("Error showing device %s", err.Error())
+		a.e.Views.RenderError(w, r, nil)
+		return
+	}
+
+	data := map[string]interface{}{
+		"user":               user,
+		"device":             device,
+		"canEditDevice":      sessionUser.Can(models.EditDevice),
+		"canDeleteDevice":    sessionUser.Can(models.DeleteDevice),
+		"canReassignDevice":  sessionUser.Can(models.ReassignDevice),
+		"canManageBlacklist": sessionUser.Can(models.ManageBlacklist),
+	}
+
+	a.e.Views.NewView("admin-manage-device", r).Render(w, data)
+}
+
 func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.ViewAdminPage | models.ViewDevices) {

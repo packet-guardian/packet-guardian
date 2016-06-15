@@ -44,7 +44,7 @@
         </div>
     </form>
 
-    {{template "device-list" $}}
+    {{template "device-list" dict "main" $ "linkMac" true}}
 </div>
 {{template "footer" dict "js" (list "device-list" "manage" "manage-admin")}}
 {{end}}
