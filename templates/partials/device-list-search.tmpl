@@ -1,23 +1,22 @@
-{{define "device-list"}}
-{{if eq (len .main.devices) 0}}
-<div class="clearfix no-devices">No devices registered</div>
+{{define "device-list-search"}}
+{{if eq (len .devices) 0}}
+{{if eq .query ""}}
+<div class="clearfix no-devices">Please enter a search query</div>
+{{else}}
+<div class="clearfix no-devices">No results found</div>
+{{end}}
 {{else}}
 <div class="clearfix devices-list">
-    {{range .main.devices}}
+    {{range .devices}}
     <a name="{{.ID}}"></a>
     <div class="device-header {{if .IsBlacklisted}}blacklisted{{else}}good-standing{{end}}" data-device-id="{{.ID}}">
-        {{if or $.main.canDeleteDevice $.main.canEditDevice $.main.canReassignDevice $.main.canManageBlacklist}}
-        <div class="device-check-select">
-            <input type="checkbox" value="{{.MAC}}" class="device-checkbox">
-        </div>
-        {{end}}
         <div class="device-info">
             <div class="device-info-label">MAC Address</div>
-            {{if $.linkMac}}
             <div class="device-info-text"><a href="/admin/manage/device/{{urlquery .MAC}}">{{.MAC}}</a></div>
-            {{else}}
-            <div class="device-info-text">{{.MAC}}</div>
-            {{end}}
+        </div>
+        <div class="device-info">
+            <div class="device-info-label">Username</div>
+            <div class="device-info-text"><a href="/admin/manage/user/{{.Username}}">{{.Username}}</a></div>
         </div>
         <div class="device-info">
             <div class="device-info-label">Description</div>
@@ -38,11 +37,7 @@
             {{end}}
             <div class="device-info">
                 <div class="device-info-label">Platform</div>
-                {{if eq .Platform ""}}
-                <div class="device-info-text">N/A</div>
-                {{else}}
                 <div class="device-info-text">{{.Platform}}</div>
-                {{end}}
             </div>
             <div class="device-info">
                 <div class="device-info-label">Date Registered</div>

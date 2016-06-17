@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/onesimus-systems/dhcp4"
@@ -28,7 +29,7 @@ type network struct {
 
 func newNetwork(name string) *network {
 	return &network{
-		name:                 name,
+		name:                 strings.ToLower(name),
 		settings:             newSettingsBlock(),
 		registeredSettings:   newSettingsBlock(),
 		unregisteredSettings: newSettingsBlock(),

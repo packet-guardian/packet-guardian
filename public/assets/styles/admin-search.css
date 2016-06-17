@@ -2,6 +2,11 @@ h2 {
     margin-top: 0;
 }
 
+h2.sub {
+    margin-top: .5em;
+    text-align: center;
+}
+
 .controls {
     margin-left: 5px;
 }
@@ -39,36 +44,9 @@ button {
     font-weight: bold;
 }
 
-table {
-    border-collapse: collapse;
-}
-
-table td, table th {
-    border: 1px solid black;
-    padding: 10px;
-}
-
-table tr:nth-child(2n) {
-    background-color: #CACACA;
-}
-
-.blacklist-icon {
-    margin-right: 2px;
-    color: red;
-    font-weight: bold;
-}
-
-.not-important {
-    display: none;
-}
-
 @media (min-width: 850px) {
     .admin-search {
         width: 75%;
-        margin: 0 auto;
-    }
-
-    table {
         margin: 0 auto;
     }
 
@@ -85,8 +63,8 @@ table tr:nth-child(2n) {
     }
 }
 
-@media (min-width: 1000px) {
-    .not-important {
-        display: table-cell;
+@media (min-width: 1024px) {
+    .devices-list {
+        width: 75%;
     }
 }

@@ -24,7 +24,8 @@ const (
 
 	// These are normal user permissions to manage their own devices.
 	ViewOwn
-	CreateOwn
+	CreateOwn  // Manually register device
+	AutoRegOwn // Automatically register device
 	EditOwn
 	DeleteOwn
 
@@ -35,27 +36,27 @@ const (
 	// Flag to view the admin dashboard. This should be given to any group
 	// that has at lease ViewUsers or ViewDevices
 	ViewAdminPage
+	ViewLeases
 )
 
 const (
 	// AdminRights has all bits set to one meaning all permissions are given
 	AdminRights = 1<<64 - 1
 	// HelpDeskRights represents a restricted admin user
-	HelpDeskRights = ViewOwn |
-		ManageOwnRights |
-		ViewDevices |
+	HelpDeskRights = ReadOnlyRights |
 		ViewUsers |
 		CreateDevice |
 		EditDevice |
-		DeleteDevice |
-		ViewAdminPage
+		DeleteDevice
 	// ReadOnlyRights represents a read-only admin user
 	ReadOnlyRights = ViewOwn |
 		ManageOwnRights |
 		ViewDevices |
-		ViewAdminPage
+		ViewAdminPage |
+		ViewLeases
 	// ManageOwnRights is a convenience Permission combining CreateOwn, EditOwn and DeleteOwn.
 	ManageOwnRights = CreateOwn |
+		AutoRegOwn |
 		EditOwn |
 		DeleteOwn
 )

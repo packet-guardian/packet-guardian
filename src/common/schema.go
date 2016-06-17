@@ -44,6 +44,7 @@ var (
 		"default_expiration",
 		"expiration_type",
 		"can_manage",
+		"can_autoreg",
 		"valid_start",
 		"valid_end",
 		"valid_forever",

@@ -44,7 +44,6 @@ $.onReady(function () {
 
         if (data.password) { // Need to login first
             $.post('/login', {"username": data.username, "password": data.password}, function(resp, req) {
-                delete(data.password);
                 registerDevice(data);
             }, function(req) {
                 window.scrollTo(0, 0);
@@ -81,7 +80,7 @@ $.onReady(function () {
                 // If the use had to login to register, let's log them out.
                 // It may be a bit confusing if they go back and forget they
                 // had to enter a password.
-                $.get('/logout');
+                $.get('/logout?noredirect');
             }
 
             if (data["mac-address"] === "") {
@@ -102,6 +101,12 @@ $.onReady(function () {
                 default:
                     c.FlashMessage(resp.Message);
                     break;
+            }
+            if (data.password) {
+                // If the use had to login to register, let's log them out.
+                // It may be a bit confusing if they go back and forget they
+                // had to enter a password.
+                $.get('/logout?noredirect');
             }
         });
     }

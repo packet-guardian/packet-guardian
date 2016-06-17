@@ -148,7 +148,7 @@ func DeleteAllDeviceForUser(e *common.Environment, u *User) error {
 func (d *Device) LoadKnownLeases() error {
 	leases, err := SearchLeases(
 		d.e,
-		`WHERE "mac" = ? ORDER BY "start" DESC`,
+		`"mac" = ? ORDER BY "start" DESC`,
 		d.MAC.String(),
 	)
 	if err != nil {

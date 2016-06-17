@@ -84,17 +84,19 @@ func (e *Environment) IsDev() bool {
 
 type DatabaseAccessor struct {
 	*sql.DB
+	Driver string
 }
 
 func NewDatabaseAccessor(config *Config) (*DatabaseAccessor, error) {
-	var db *sql.DB
 	var err error
+	da := &DatabaseAccessor{}
 
 	if config.Database.Type == "sqlite" {
 		if !FileExists(config.Database.Address) {
 			return nil, errors.New("SQLite database file doesn't exist")
 		}
-		db, err = sql.Open("sqlite3", config.Database.Address)
+		da.DB, err = sql.Open("sqlite3", config.Database.Address)
+		da.Driver = "sqlite3"
 	} else {
 		return nil, errors.New("Unsupported database type " + config.Database.Type)
 	}
@@ -102,7 +104,17 @@ func NewDatabaseAccessor(config *Config) (*DatabaseAccessor, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &DatabaseAccessor{db}, nil
+	da.setupDatabase()
+	return da, nil
+}
+
+func (da *DatabaseAccessor) setupDatabase() error {
+	var err error
+	switch da.Driver {
+	case "sqlite3":
+		_, err = da.Exec("PRAGMA foreign_keys = ON")
+	}
+	return err
 }
 
 type Views struct {
@@ -143,6 +155,9 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 		"list": func(values ...interface{}) ([]interface{}, error) {
 			return values, nil
 		},
+		"plus1": func(a int) int {
+			return a + 1
+		},
 	})
 
 	filepath.Walk(basepath, func(path string, info os.FileInfo, err1 error) error {
@@ -180,7 +195,11 @@ func (v *Views) Reload() error {
 }
 
 func (v *Views) RenderError(w http.ResponseWriter, r *http.Request, data map[string]interface{}) {
-	v.NewView("error", r).Render(w, data)
+	if data == nil {
+		v.NewView("error", r).Render(w, nil)
+		return
+	}
+	v.NewView("custom-error", r).Render(w, data)
 }
 
 type View struct {

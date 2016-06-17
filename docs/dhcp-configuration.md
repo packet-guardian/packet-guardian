@@ -71,7 +71,7 @@ end
 
 A network block groups multiple subnets into logical units. Although technically all subnets could be located in a single network block, it would be incredibly inefficient and difficult to determine true network usage.
 
-The start line syntax is `network [name]`. The name is completely arbitrary but must be unique to each network block. Options may be specified within a network block in which case they will apply to both registered and unregistered leases in that network. Every network must contain a registered and unregistered block. And each block must have at lease one subnet.
+The start line syntax is `network [name]`. The name is completely arbitrary but must be unique to each network block. Names are case insensitive. Options may be specified within a network block in which case they will apply to both registered and unregistered leases in that network. Every network must contain a registered and unregistered block. And each block must have at lease one subnet.
 
 ## Subnet
 

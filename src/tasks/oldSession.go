@@ -35,7 +35,7 @@ func (s sessionWalker) sessionDirWalker(path string, info os.FileInfo, err error
 	if info.IsDir() {
 		return filepath.SkipDir
 	}
-	if info.ModTime().Before(s.n) {
+	if info.Size() < 100*1024 {
 		s.c++
 		return os.Remove(path)
 	}

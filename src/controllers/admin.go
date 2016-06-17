@@ -5,13 +5,23 @@
 package controllers
 
 import (
+	"bytes"
 	"net"
 	"net/http"
+	"regexp"
+	"sort"
+	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	"github.com/usi-lfkeitel/packet-guardian/src/stats"
+)
+
+var (
+	ipStartRegex  = regexp.MustCompile(`^[0-9]{1,3}\.`)
+	macStartRegex = regexp.MustCompile(`^[0-f]{2}\:`)
 )
 
 type Admin struct {
@@ -72,6 +82,46 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	a.e.Views.NewView("admin-manage", r).Render(w, data)
 }
 
+func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request) {
+	sessionUser := models.GetUserFromContext(r)
+	if !sessionUser.Can(models.ViewDevices) {
+		a.redirectToRoot(w, r)
+		return
+	}
+
+	mac, err := net.ParseMAC(mux.Vars(r)["mac"])
+	if err != nil {
+		a.e.Views.RenderError(w, r, map[string]interface{}{
+			"title": "No device found",
+			"body":  "Incorrectly formed MAC address: " + mux.Vars(r)["mac"],
+		})
+		return
+	}
+	device, err := models.GetDeviceByMAC(a.e, mac)
+	if err != nil {
+		a.e.Log.Errorf("Error showing device %s", err.Error())
+		a.e.Views.RenderError(w, r, nil)
+		return
+	}
+	user, err := models.GetUserByUsername(a.e, device.Username)
+	if err != nil {
+		a.e.Log.Errorf("Error getting user %s", err.Error())
+		a.e.Views.RenderError(w, r, nil)
+		return
+	}
+
+	data := map[string]interface{}{
+		"user":               user,
+		"device":             device,
+		"canEditDevice":      sessionUser.Can(models.EditDevice),
+		"canDeleteDevice":    sessionUser.Can(models.DeleteDevice),
+		"canReassignDevice":  sessionUser.Can(models.ReassignDevice),
+		"canManageBlacklist": sessionUser.Can(models.ManageBlacklist),
+	}
+
+	a.e.Views.NewView("admin-manage-device", r).Render(w, data)
+}
+
 func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.ViewAdminPage | models.ViewDevices) {
@@ -83,15 +133,36 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	var results []*models.Device
 	var err error
 
-	if query == "*" {
-		results, err = models.SearchDevicesByField(a.e, "username", "%")
-	} else if query != "" {
-		if m, err := common.FormatMacAddress(query); err == nil {
-			results, err = models.SearchDevicesByField(a.e, "mac", m.String())
-		} else if ip := net.ParseIP(query); ip != nil {
-			lease, err := models.GetLeaseByIP(a.e, ip)
-			if err == nil {
-				results, err = models.SearchDevicesByField(a.e, "mac", lease.MAC.String())
+	if query != "" {
+		if macStartRegex.MatchString(query) {
+			results, err = models.SearchDevicesByField(a.e, "mac", query+"%")
+		} else if ipStartRegex.MatchString(query) {
+			if ip := net.ParseIP(query); ip != nil {
+				// Get device with exact lease IP
+				lease, err := models.GetLeaseByIP(a.e, ip)
+				if err == nil && !lease.IsExpired() {
+					results, err = models.SearchDevicesByField(a.e, "mac", lease.MAC.String())
+				}
+			} else {
+				// Get leases matching partial IP
+				var leases []*models.Lease
+				leases, err = models.SearchLeases(
+					a.e,
+					`"ip" LIKE ?`,
+					query+"%",
+				)
+				// Get devices corresponding to each lease
+				var d *models.Device
+				for _, l := range leases {
+					if l.IsExpired() {
+						continue
+					}
+					d, err = models.GetDeviceByMAC(a.e, l.MAC)
+					if err != nil || d.ID == 0 {
+						continue
+					}
+					results = append(results, d)
+				}
 			}
 		} else {
 			results, err = models.SearchDevicesByField(a.e, "username", query+"%")
@@ -106,8 +177,8 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"query":         query,
-		"searchResults": results,
+		"query":   query,
+		"devices": results,
 	}
 
 	a.e.Views.NewView("admin-search", r).Render(w, data)
@@ -152,4 +223,50 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.e.Views.NewView("admin-user", r).Render(w, data)
+}
+
+func (a *Admin) AdminLeaseListHandler(w http.ResponseWriter, r *http.Request) {
+	sessionUser := models.GetUserFromContext(r)
+	if !sessionUser.Can(models.ViewLeases) {
+		a.redirectToRoot(w, r)
+		return
+	}
+
+	network := strings.ToLower(mux.Vars(r)["network"])
+	_, registered := r.URL.Query()["registered"]
+
+	leases, err := models.SearchLeases(a.e,
+		"network = ? AND registered = ? AND end > ?",
+		network, registered, time.Now().Unix(),
+	)
+	if err != nil {
+		a.e.Log.WithField("Err", err).Error("Failed to get leases")
+	}
+
+	ls := leaseSorter{leases}
+	sort.Sort(ls)
+
+	data := map[string]interface{}{
+		"network":    network,
+		"registered": registered,
+		"leases":     ls.l,
+	}
+
+	a.e.Views.NewView("admin-leases", r).Render(w, data)
+}
+
+type leaseSorter struct {
+	l []*models.Lease
+}
+
+func (l leaseSorter) Len() int {
+	return len(l.l)
+}
+
+func (l leaseSorter) Less(i, j int) bool {
+	return bytes.Compare([]byte(l.l[i].IP), []byte(l.l[j].IP)) < 0
+}
+
+func (l leaseSorter) Swap(i, j int) {
+	l.l[i], l.l[j] = l.l[j], l.l[i]
 }

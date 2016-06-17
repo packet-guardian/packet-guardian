@@ -24,11 +24,12 @@
             <th>Device Limit</th>
             <th>Valid</th>
             <th>Default Expiration</th>
+            <th>Can Manage/Autoreg</th>
         </tr>
         {{range .users}}
         <tr>
             {{if $.canEditUser}}<td><a href="/admin/users/{{.Username}}">edit</a></td>{{end}}
-            <td><a href="/admin/manage/{{.Username}}">{{.Username}}</a></td>
+            <td><a href="/admin/manage/user/{{.Username}}">{{.Username}}</a></td>
             <td>{{if eq .DeviceLimit 0}}Unlimited
                 {{else if eq .DeviceLimit -1}}Global
                 {{else}}{{.DeviceLimit}}
@@ -40,6 +41,11 @@
             {{end}}
 
             <td>{{.DeviceExpiration.String}}</td>
+            <td>
+                {{if .CanManage}}Yes{{else}}No{{end}}
+                /
+                {{if .CanAutoreg}}Yes{{else}}No{{end}}
+            </td>
         </tr>
         {{end}}
     </table>

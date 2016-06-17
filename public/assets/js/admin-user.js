@@ -142,7 +142,8 @@ $.onReady(function () {
             "device_expiration": $('[name=device-expiration]').value(),
             "valid_start": 0,
             "valid_end": 0,
-            "can_manage": $('[name=can-manage]').prop('checked') ? 1 : 0
+            "can_manage": $('[name=can-manage]').prop('checked') ? 1 : 0,
+            "can_autoreg": $('[name=can-autoreg]').prop('checked') ? 1 : 0
         };
 
         if ($('[name=clear-pass]').prop("checked")) {
@@ -176,6 +177,11 @@ $.onReady(function () {
             c.FlashMessage("User saved", 'success');
             $('[name=password]').value("");
             $('[name=clear-pass]').prop("checked", false);
+            if (formData.password === -1 || formData.password === "") {
+                $('#has-password').text("No");
+            } else {
+                $('#has-password').text("Yes");
+            }
         }, function(req) {
             var resp = JSON.parse(req.responseText);
             c.FlashMessage(resp.Message);

@@ -51,5 +51,9 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 // LogoutHandler voids a user's session
 func (a *Auth) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	auth.LogoutUser(r, w)
+	if _, ok := r.URL.Query()["noredirect"]; ok {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }
