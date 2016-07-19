@@ -85,7 +85,6 @@ func adminRouter(e *common.Environment) http.Handler {
 	get.HandleFunc("/admin/manage/device/{mac:(?:[0-f]{2}:?){6}}", adminController.ShowDeviceHandler)
 	get.HandleFunc("/admin/users", adminController.AdminUserListHandler)
 	get.HandleFunc("/admin/users/{username}", adminController.AdminUserHandler)
-	get.HandleFunc("/admin/leases/{network}", adminController.AdminLeaseListHandler)
 	get.HandleFunc("/admin/reports", adminController.ReportHandler)
 	get.HandleFunc("/admin/reports/{report}", adminController.ReportHandler)
 

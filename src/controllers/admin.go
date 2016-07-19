@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"regexp"
 	"sort"
-	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
@@ -225,38 +223,9 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request) {
 	a.e.Views.NewView("admin-user", r).Render(w, data)
 }
 
-func (a *Admin) AdminLeaseListHandler(w http.ResponseWriter, r *http.Request) {
-	sessionUser := models.GetUserFromContext(r)
-	if !sessionUser.Can(models.ViewLeases) {
-		a.redirectToRoot(w, r)
-		return
-	}
-
-	network := strings.ToLower(mux.Vars(r)["network"])
-	_, registered := r.URL.Query()["registered"]
-
-	leases, err := models.SearchLeases(a.e,
-		"network = ? AND registered = ? AND end > ?",
-		network, registered, time.Now().Unix(),
-	)
-	if err != nil {
-		a.e.Log.WithField("Err", err).Error("Failed to get leases")
-	}
-
-	sort.Sort(models.LeaseSorter(leases))
-
-	data := map[string]interface{}{
-		"network":    network,
-		"registered": registered,
-		"leases":     leases,
-	}
-
-	a.e.Views.NewView("admin-leases", r).Render(w, data)
-}
-
 func (a *Admin) ReportHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
-	if !sessionUser.Can(models.ViewAdminPage) {
+	if !sessionUser.Can(models.ViewReports) {
 		a.redirectToRoot(w, r)
 		return
 	}
