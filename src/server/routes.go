@@ -86,6 +86,8 @@ func adminRouter(e *common.Environment) http.Handler {
 	get.HandleFunc("/admin/users", adminController.AdminUserListHandler)
 	get.HandleFunc("/admin/users/{username}", adminController.AdminUserHandler)
 	get.HandleFunc("/admin/leases/{network}", adminController.AdminLeaseListHandler)
+	get.HandleFunc("/admin/reports", adminController.ReportHandler)
+	get.HandleFunc("/admin/reports/{report}", adminController.ReportHandler)
 
 	h := mid.CheckAdmin(r)
 	h = mid.CheckAuth(h)

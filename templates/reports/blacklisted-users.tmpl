@@ -1,0 +1,31 @@
+{{define "report-blacklisted-users"}}
+{{template "header" dict "css" (list "reports/blk-user") "main" . "pageTitle" "Report - Blacklisted Users"}}
+<div class="main-content">
+    <div class="controls">
+        <a href="/admin" class="btn">Dashboard</a>
+        <a href="/admin/reports" class="btn">Reports</a>
+        <a href="/logout" class="btn">Logout</a>
+    </div>
+
+    <div class="report">
+        <h2>Report - Blacklisted Users</h2>
+        <table>
+            <tr>
+                <th>Username</th>
+            </tr>
+            {{if eq (len .users) 0}}
+            <tr>
+                <td>No users blacklisted</td>
+            </tr>
+            {{else}}
+            {{range .users}}
+            <tr>
+                <td><a href="/admin/manage/user/{{.Username}}">{{.Username}}</a></td>
+            </tr>
+            {{end}}
+            {{end}}
+        </table>
+    </div>
+</div>
+{{template "footer"}}
+{{end}}

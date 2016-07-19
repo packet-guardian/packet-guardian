@@ -5,7 +5,6 @@
 package controllers
 
 import (
-	"bytes"
 	"net"
 	"net/http"
 	"regexp"
@@ -16,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/reports"
 	"github.com/usi-lfkeitel/packet-guardian/src/stats"
 )
 
@@ -243,30 +243,43 @@ func (a *Admin) AdminLeaseListHandler(w http.ResponseWriter, r *http.Request) {
 		a.e.Log.WithField("Err", err).Error("Failed to get leases")
 	}
 
-	ls := leaseSorter{leases}
-	sort.Sort(ls)
+	sort.Sort(models.LeaseSorter(leases))
 
 	data := map[string]interface{}{
 		"network":    network,
 		"registered": registered,
-		"leases":     ls.l,
+		"leases":     leases,
 	}
 
 	a.e.Views.NewView("admin-leases", r).Render(w, data)
 }
 
-type leaseSorter struct {
-	l []*models.Lease
-}
+func (a *Admin) ReportHandler(w http.ResponseWriter, r *http.Request) {
+	sessionUser := models.GetUserFromContext(r)
+	if !sessionUser.Can(models.ViewAdminPage) {
+		a.redirectToRoot(w, r)
+		return
+	}
 
-func (l leaseSorter) Len() int {
-	return len(l.l)
-}
+	report := mux.Vars(r)["report"]
+	if report != "" {
+		reports.RenderReport(report, w, r)
+		return
+	}
 
-func (l leaseSorter) Less(i, j int) bool {
-	return bytes.Compare([]byte(l.l[i].IP), []byte(l.l[j].IP)) < 0
-}
+	allReports := reports.GetReports()
+	i := 0
+	reportSlice := make([]*reports.Report, len(allReports))
+	for _, v := range allReports {
+		reportSlice[i] = v
+		i++
+	}
 
-func (l leaseSorter) Swap(i, j int) {
-	l.l[i], l.l[j] = l.l[j], l.l[i]
+	sort.Sort(reports.ReportSorter(reportSlice))
+
+	data := map[string]interface{}{
+		"reports": reportSlice,
+	}
+
+	a.e.Views.NewView("admin-reports", r).Render(w, data)
 }
