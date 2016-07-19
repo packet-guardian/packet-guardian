@@ -1,0 +1,13 @@
+table {
+    border-collapse: collapse;
+    border: 1px black solid;
+}
+
+td, th {
+    border: 1px black solid;
+    padding: .5em 1em;
+}
+
+.report {
+    margin-top: 2em;
+}

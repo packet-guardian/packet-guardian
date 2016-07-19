@@ -36,7 +36,7 @@ const (
 	// Flag to view the admin dashboard. This should be given to any group
 	// that has at lease ViewUsers or ViewDevices
 	ViewAdminPage
-	ViewLeases
+	ViewReports
 )
 
 const (
@@ -53,7 +53,7 @@ const (
 		ManageOwnRights |
 		ViewDevices |
 		ViewAdminPage |
-		ViewLeases
+		ViewReports
 	// ManageOwnRights is a convenience Permission combining CreateOwn, EditOwn and DeleteOwn.
 	ManageOwnRights = CreateOwn |
 		AutoRegOwn |

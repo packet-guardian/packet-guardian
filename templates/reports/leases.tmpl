@@ -1,7 +1,11 @@
-{{define "admin-leases"}}
-{{template "header" dict "css" (list "admin-leases") "main" . "pageTitle" "Admin - Leases"}}
+{{define "reports-leases"}}
+{{template "header" dict "css" (list "reports/leases") "main" . "pageTitle" "Admin - Leases"}}
 <div class="content">
     <h2>Leases in network {{.network}}</h2>
+    <div class="controls">
+        <a href="/admin" class="btn">Dashboard</a>
+        <a href="/logout" class="btn">Logout</a>
+    </div>
     <div class="info">
         <p>
             <span class="label">Registered</span>
@@ -11,10 +15,6 @@
             <span class="label">Leases</span>
             {{len .leases}}
         </p>
-    </div>
-    <div class="controls">
-        <a href="/admin" class="btn">Dashboard</a>
-        <a href="/logout" class="btn">Logout</a>
     </div>
 
     <div class="lease-list">
