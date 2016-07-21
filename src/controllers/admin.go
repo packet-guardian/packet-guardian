@@ -5,17 +5,15 @@
 package controllers
 
 import (
-	"bytes"
 	"net"
 	"net/http"
 	"regexp"
 	"sort"
-	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/reports"
 	"github.com/usi-lfkeitel/packet-guardian/src/stats"
 )
 
@@ -225,48 +223,32 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request) {
 	a.e.Views.NewView("admin-user", r).Render(w, data)
 }
 
-func (a *Admin) AdminLeaseListHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Admin) ReportHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
-	if !sessionUser.Can(models.ViewLeases) {
+	if !sessionUser.Can(models.ViewReports) {
 		a.redirectToRoot(w, r)
 		return
 	}
 
-	network := strings.ToLower(mux.Vars(r)["network"])
-	_, registered := r.URL.Query()["registered"]
-
-	leases, err := models.SearchLeases(a.e,
-		"network = ? AND registered = ? AND end > ?",
-		network, registered, time.Now().Unix(),
-	)
-	if err != nil {
-		a.e.Log.WithField("Err", err).Error("Failed to get leases")
+	report := mux.Vars(r)["report"]
+	if report != "" {
+		reports.RenderReport(report, w, r)
+		return
 	}
 
-	ls := leaseSorter{leases}
-	sort.Sort(ls)
+	allReports := reports.GetReports()
+	i := 0
+	reportSlice := make([]*reports.Report, len(allReports))
+	for _, v := range allReports {
+		reportSlice[i] = v
+		i++
+	}
+
+	sort.Sort(reports.ReportSorter(reportSlice))
 
 	data := map[string]interface{}{
-		"network":    network,
-		"registered": registered,
-		"leases":     ls.l,
+		"reports": reportSlice,
 	}
 
-	a.e.Views.NewView("admin-leases", r).Render(w, data)
-}
-
-type leaseSorter struct {
-	l []*models.Lease
-}
-
-func (l leaseSorter) Len() int {
-	return len(l.l)
-}
-
-func (l leaseSorter) Less(i, j int) bool {
-	return bytes.Compare([]byte(l.l[i].IP), []byte(l.l[j].IP)) < 0
-}
-
-func (l leaseSorter) Swap(i, j int) {
-	l.l[i], l.l[j] = l.l[j], l.l[i]
+	a.e.Views.NewView("admin-reports", r).Render(w, data)
 }

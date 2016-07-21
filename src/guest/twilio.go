@@ -6,7 +6,6 @@ package guest
 
 import (
 	"errors"
-	"strings"
 
 	"bitbucket.org/ckvist/twilio/twirest"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
@@ -46,27 +45,4 @@ func (t twilio) sendCode(e *common.Environment, phone, code string) error {
 
 	e.Log.Info(resp.Message.Status)
 	return nil
-}
-
-func formatPhoneNumber(number string) (string, error) {
-	number = stripChars(number, "0123456789")
-	if len(number) == 11 {
-		if number[0] != '1' {
-			return "", errors.New("Only US phone numbers are supported")
-		}
-		return number[1:], nil
-	}
-	if len(number) != 10 {
-		return "", errors.New("Invalid phone number")
-	}
-	return number, nil
-}
-
-func stripChars(str, chr string) string {
-	return strings.Map(func(r rune) rune {
-		if strings.IndexRune(chr, r) < 0 {
-			return -1
-		}
-		return r
-	}, str)
 }

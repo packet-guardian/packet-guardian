@@ -1,0 +1,35 @@
+h2 {
+    margin-top: 0;
+}
+
+.controls {
+    margin-left: 5px;
+}
+
+.report-list {
+    margin-top: 2em;
+}
+
+.report {
+    margin-left: 2em;
+    margin-bottom: 1.5em;
+}
+
+.report a {
+    padding: .5em 1em;
+    background-color: #8FBC8F;
+    text-decoration: none;
+    color: black;
+    font-size: 1.2em;
+}
+
+.report a:hover {
+    background-color: #729a72;
+}
+
+@media (min-width: 600px) {
+    .admin-dash {
+        width: 60%;
+        margin: 0 auto;
+    }
+}

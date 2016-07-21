@@ -114,6 +114,12 @@ DeviceLimit = 10
 # authToken = ""
 # phoneNumber = ""
 
+[guest.smseagle]
+# Settings used when the checker is an SMSEagle appliance
+# address = ""
+# username = ""
+# password = ""
+
 [webserver]
 ## IP address to listen on. Leave blank to listen on all addresses.
 address = ""

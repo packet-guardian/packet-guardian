@@ -14,6 +14,7 @@ import (
 type LeaseStats map[string]*NetworkStats
 
 type NetworkStats struct {
+	Title        string
 	Registered   int
 	Unregistered int
 }
@@ -37,17 +38,18 @@ func GetLeaseStats(e *common.Environment) LeaseStats {
 			continue
 		}
 
-		network = strings.Title(network)
-
 		if _, ok := counts[network]; !ok {
 			counts[network] = &NetworkStats{}
 		}
+
+		counts[network].Title = strings.Title(network)
 
 		if registered {
 			counts[network].Registered = count
 		} else {
 			counts[network].Unregistered = count
 		}
+
 	}
 	return counts
 }

@@ -110,6 +110,13 @@ footer .copyright {
     color: white;
 }
 
+@media (min-width: 600px) {
+    .main-content {
+        width: 60%;
+        margin: 0 auto;
+    }
+}
+
 @media (min-width: 900px) {
     header {
         position: relative;

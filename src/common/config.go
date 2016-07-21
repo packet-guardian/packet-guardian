@@ -60,6 +60,14 @@ type Config struct {
 			AuthToken   string
 			PhoneNumber string
 		}
+
+		Smseagle struct {
+			Address      string
+			Username     string
+			Password     string
+			HighPriority int
+			FlashMsg     int
+		}
 	}
 	Webserver struct {
 		Address             string
