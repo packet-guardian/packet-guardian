@@ -44,6 +44,28 @@ button {
     font-weight: bold;
 }
 
+.device-info {
+    padding: 1em 0;
+    min-width: 20%;
+    display: inline-block;
+}
+
+.expired-sample-block {
+    margin-bottom: 1em;
+    margin-left: 15%;
+}
+
+.expired-sample {
+    display: inline-block;
+    height: 1em;
+    width: 1em;
+}
+
+.expired {
+    background-color: #cd5c5c;
+    color: black;
+}
+
 @media (min-width: 850px) {
     .admin-search {
         width: 75%;

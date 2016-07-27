@@ -162,7 +162,7 @@ func (d *Device) LoadKnownLeases() error {
 
 // GetCurrentLease will return the last known lease for the device that has
 // not expired. If two leases are currently active, it will return the lease
-// with the farthest end date. If no current lease is found, returns nil.
+// with the newest start date. If no current lease is found, returns nil.
 func (d *Device) GetCurrentLease() *Lease {
 	if d.Leases == nil {
 		d.LoadKnownLeases()

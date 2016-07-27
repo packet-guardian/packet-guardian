@@ -120,6 +120,11 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request) {
 	a.e.Views.NewView("admin-manage-device", r).Render(w, data)
 }
 
+type searchResults struct {
+	D *models.Device
+	L *models.Lease
+}
+
 func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.ViewAdminPage | models.ViewDevices) {
@@ -128,46 +133,56 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := r.FormValue("q")
-	var results []*models.Device
+	var results []*searchResults
+	var devices []*models.Device
 	var err error
 
 	if query != "" {
 		if macStartRegex.MatchString(query) {
-			results, err = models.SearchDevicesByField(a.e, "mac", query+"%")
+			devices, err = models.SearchDevicesByField(a.e, "mac", query+"%")
+			for _, d := range devices {
+				results = append(results, &searchResults{
+					D: d,
+				})
+			}
 		} else if ipStartRegex.MatchString(query) {
-			if ip := net.ParseIP(query); ip != nil {
-				// Get device with exact lease IP
-				lease, err := models.GetLeaseByIP(a.e, ip)
-				if err == nil && !lease.IsExpired() {
-					results, err = models.SearchDevicesByField(a.e, "mac", lease.MAC.String())
+			// Get leases matching IP
+			var leases []*models.Lease
+			leases, err = models.SearchLeases(a.e, `"ip" LIKE ?`, query+"%")
+			// Get devices corresponding to each lease
+			var d *models.Device
+			for _, l := range leases {
+				d, err = models.GetDeviceByMAC(a.e, l.MAC)
+				if err != nil || d.ID == 0 {
+					continue
 				}
-			} else {
-				// Get leases matching partial IP
-				var leases []*models.Lease
-				leases, err = models.SearchLeases(
-					a.e,
-					`"ip" LIKE ?`,
-					query+"%",
-				)
-				// Get devices corresponding to each lease
-				var d *models.Device
-				for _, l := range leases {
-					if l.IsExpired() {
-						continue
-					}
-					d, err = models.GetDeviceByMAC(a.e, l.MAC)
-					if err != nil || d.ID == 0 {
-						continue
-					}
-					results = append(results, d)
-				}
+				results = append(results, &searchResults{
+					D: d,
+					L: l,
+				})
 			}
 		} else {
-			results, err = models.SearchDevicesByField(a.e, "username", query+"%")
-			if len(results) == 0 {
-				results, err = models.SearchDevicesByField(a.e, "user_agent", "%"+query+"%")
+			devices, err = models.SearchDevicesByField(a.e, "username", query+"%")
+			if len(devices) == 0 {
+				devices, err = models.SearchDevicesByField(a.e, "user_agent", "%"+query+"%")
+			}
+			for _, d := range devices {
+				results = append(results, &searchResults{
+					D: d,
+				})
 			}
 		}
+	}
+
+	for _, r := range results {
+		if r.L != nil {
+			continue
+		}
+		lease, err := models.GetLeaseByMAC(a.e, r.D.MAC)
+		if err != nil || lease.ID == 0 {
+			continue
+		}
+		r.L = lease
 	}
 
 	if err != nil {
@@ -176,7 +191,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := map[string]interface{}{
 		"query":   query,
-		"devices": results,
+		"results": results,
 	}
 
 	a.e.Views.NewView("admin-search", r).Render(w, data)

@@ -47,9 +47,10 @@ func IsRegisteredByIP(e *common.Environment, ip net.IP) (bool, error) {
 
 // GetLeaseByMAC returns a Lease given the mac address. This method will always return
 // a Lease. Make sure to check if error is nil. If a new lease object was created
-// it will have an ID = 0.
+// it will have an ID = 0. The lease returned will be the most recent least given
+// to the provided MAC address.
 func GetLeaseByMAC(e *common.Environment, mac net.HardwareAddr) (*Lease, error) {
-	sql := "WHERE \"mac\" = ?"
+	sql := `WHERE "mac" = ? ORDER BY "start" DESC`
 	leases, err := getLeasesFromDatabase(e, sql, mac.String())
 	if leases == nil || len(leases) == 0 {
 		lease := NewLease(e)
@@ -62,7 +63,7 @@ func GetLeaseByMAC(e *common.Environment, mac net.HardwareAddr) (*Lease, error) 
 // GetAllLeasesByMAC returns a slice of Lease given the mac address. If no leases
 // exist, the slice will be nil.
 func GetAllLeasesByMAC(e *common.Environment, mac net.HardwareAddr) ([]*Lease, error) {
-	sql := "WHERE \"mac\" = ?"
+	sql := `WHERE "mac" = ?`
 	return getLeasesFromDatabase(e, sql, mac.String())
 }
 
@@ -70,7 +71,7 @@ func GetAllLeasesByMAC(e *common.Environment, mac net.HardwareAddr) ([]*Lease, e
 // a Lease. Make sure to check if error is nil. If a new lease object was created
 // it will have an ID = 0.
 func GetLeaseByIP(e *common.Environment, ip net.IP) (*Lease, error) {
-	sql := "WHERE \"ip\" = ?"
+	sql := `WHERE "ip" = ?`
 	leases, err := getLeasesFromDatabase(e, sql, ip.String())
 	if leases == nil || len(leases) == 0 {
 		lease := NewLease(e)
