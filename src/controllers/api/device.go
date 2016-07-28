@@ -271,7 +271,9 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if dev.ID == 0 { // Device doesn't exist
-			continue
+			d.e.Log.WithField("Mac", devMacStr).Error("Tried reassigning unregistered device")
+			common.NewAPIResponse("Device "+devMacStr+" isn't registered", nil).WriteResponse(w, http.StatusBadRequest)
+			return
 		}
 		originalUser := dev.Username
 		dev.Username = user.Username

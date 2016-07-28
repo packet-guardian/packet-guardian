@@ -19,15 +19,19 @@
         </div>
         <div class="device-info">
             <div class="device-info-label">Username</div>
+            {{if eq .D.Username ""}}
+            <div class="device-info-text unregistered">UNREGISTERED</div>
+            {{else}}
             <div class="device-info-text"><a href="/admin/manage/user/{{.D.Username}}">{{.D.Username}}</a></div>
+            {{end}}
         </div>
         <div class="device-info">
             <div class="device-info-label">Description</div>
-            <div class="device-info-text">{{.D.Description}}</div>
+            <div class="device-info-text">{{if ne .D.Description ""}}{{.D.Description}}{{else}}&nbsp;{{end}}</div>
         </div>
         <div class="device-info">
             <div class="device-info-label">Last Seen</div>
-            <div class="device-info-text">{{.D.LastSeen.Format "2006-01-02 15:04"}}</div>
+            <div class="device-info-text">{{if gt .D.LastSeen.Unix 0}}{{.D.LastSeen.Format "2006-01-02 15:04"}}{{else}}&nbsp;{{end}}</div>
         </div>
         <div class="device-info {{with .L}}{{if .IsExpired}}expired{{end}}{{end}}">
             <div class="device-info-label">Last Address</div>

@@ -44,6 +44,11 @@ button {
     font-weight: bold;
 }
 
+.unregistered {
+    color: red;
+    font-weight: bold;
+}
+
 .device-info {
     padding: 1em 0;
     min-width: 20%;

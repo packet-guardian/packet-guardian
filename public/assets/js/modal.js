@@ -120,7 +120,6 @@ function jsConfirm(){
     this.ok = function(){
         $(this._container).hide();
         this._overlay.hide();
-        console.log(this._okCallback);
         this._okCallback();
         document.body.removeChild(document.getElementsByClassName("js-modal")[0]);
     };
@@ -155,11 +154,23 @@ function jsPrompt(){
         $(header).prop("id", "js-modal-header-id");
         this._container.appendChild(header);
 
-
+        // Create dialog body
         var body = document.createElement("div");
-        body.innerHTML = dialog;
-        body.innerHTML += "<form><input type=\"text\" id=\"js-modal-prompt-input\" size=\"50\"></form>";
         $(body).addClass("js-modal-body");
+        body.innerHTML = dialog;
+        // Create the main form
+        var form = document.createElement("form");
+        $(form).submit(this.enter.bind(this));
+        // Create the input for user data
+        var input = document.createElement("input");
+        input.type = "text";
+        input.id = "js-modal-prompt-input";
+        input.size = 50;
+        // Add input to form
+        form.appendChild(input);
+        // Add form to body
+        body.appendChild(form);
+        // Add body to container
         this._container.appendChild(body);
 
         var footer = document.createElement("div");
@@ -188,6 +199,15 @@ function jsPrompt(){
         bindMouseMove("#js-modal-header-id", "#js-modal-container");
     };
 
+    // This is called when a user presses enter in the input box
+    // It stops the form submittion and calls the ok function
+    this.enter = function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        this.ok();
+        return false;
+    };
+
     this.ok = function(){
         $(this._container).hide();
         this._overlay.hide();
@@ -205,12 +225,10 @@ function jsPrompt(){
 
 function bindMouseMove(binderID, movediv) {
     var binder = $(binderID);
-    console.log(binder);
     binder.on("mousedown", function(e) {
     	if (e.which !== 1) { return; }
         var self = $(e.target);
         var mover = $(movediv);
-        console.log(self);
         self.style("position", "relative");
 
         document.onmousemove = function(e) {

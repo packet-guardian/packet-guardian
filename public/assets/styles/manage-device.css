@@ -1,3 +1,8 @@
+.unregistered {
+    color: red;
+    font-weight: bold;
+}
+
 .device-info {
     width: 75%;
     margin: 0 auto;
@@ -15,4 +20,8 @@ hr.lease-separator {
     width: 10em;
     display: inline-block;
     margin: 0;
+}
+
+.controls section {
+    margin-top: 15px;
 }

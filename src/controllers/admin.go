@@ -153,7 +153,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 			var d *models.Device
 			for _, l := range leases {
 				d, err = models.GetDeviceByMAC(a.e, l.MAC)
-				if err != nil || d.ID == 0 {
+				if err != nil {
 					continue
 				}
 				results = append(results, &searchResults{

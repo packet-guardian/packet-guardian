@@ -6,18 +6,23 @@
         <div class="user-info">
             <section>
                 <span class="text-label">Username:</span>
+                {{if eq .user.ID 0}}
+                <span class="username unregistered">UNREGISTERED</span>
+                {{else}}
                 <span class="username">{{.user.Username}}</span>
                 {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
+                {{end}}
             </section>
         </div>
         <div class="controls">
             <section>
-                {{if .canDeleteDevice}}
+                {{if and .canDeleteDevice (ne .device.ID 0)}}
                 <button type="button" id="delete-btn">Delete</button>
                 {{end}}
                 <a href="/logout" class="btn">Logout</a>
             </section>
             <section>
+                {{if ne .device.ID 0}}
                 {{if .canManageBlacklist}}
                 {{if .device.IsBlacklisted}}
                 <button type="button" class="admin-btn" id="unblacklist-btn">Remove From Blacklist</button>
@@ -29,6 +34,7 @@
                 <button type="button" id="reassign-btn" class="admin-btn">Reassign</button>
                 {{end}}
                 <a href="/admin/manage/user/{{.user.Username}}" class="btn admin-btn">Device List</a>
+                {{end}}
                 <a href="/admin" class="btn admin-btn">Admin Dashboard</a>
             </section>
         </div>
@@ -36,90 +42,92 @@
 
     <div class="clearfix device-info">
         {{with .device}}
-        {{if .IsBlacklisted}}
-        <p>
-            <span class="label">Blacklisted</span>:
-            <span class="data">Yes</span>
-        </p>
-        {{end}}
-        <p>
-            <span class="label">MAC Address</span>:
-            <span class="data" id="mac-address">{{.MAC}}</span>
-        </p>
-        <p>
-            <span class="label">Description</span>:
-            <span class="data">{{.Description}}</span>
-        </p>
-        <p>
-            <span class="label">Registered From</span>:
-            <span class="data">{{.RegisteredFrom.String}}</span>
-        </p>
-        <p>
-            <span class="label">Platform</span>:
-            {{if eq .Platform ""}}
-            <span class="data">N/A</span>
-            {{else}}
-            <span class="data">{{.Platform}}</span>
+            {{if .IsBlacklisted}}
+            <p>
+                <span class="label">Blacklisted</span>:
+                <span class="data">Yes</span>
+            </p>
             {{end}}
-        </p>
-        <p>
-            <span class="label">Expires</span>:
-            {{if eq .Expires.Unix 0}}
-            <span class="data">Never</span>
-            {{else if eq .Expires.Unix 1}}
-            <span class="data">Rolling</span>
-            {{else}}
-            <span class="data">{{.Expires.Format "2006-01-02 15:04"}}</span>
+            <p>
+                <span class="label">MAC Address</span>:
+                <span class="data" id="mac-address">{{.MAC}}</span>
+            </p>
+            {{if ne .ID 0}}
+            <p>
+                <span class="label">Description</span>:
+                <span class="data">{{.Description}}</span>
+            </p>
+            <p>
+                <span class="label">Registered From</span>:
+                <span class="data">{{.RegisteredFrom.String}}</span>
+            </p>
+            <p>
+                <span class="label">Platform</span>:
+                {{if eq .Platform ""}}
+                <span class="data">N/A</span>
+                {{else}}
+                <span class="data">{{.Platform}}</span>
+                {{end}}
+            </p>
+            <p>
+                <span class="label">Expires</span>:
+                {{if eq .Expires.Unix 0}}
+                <span class="data">Never</span>
+                {{else if eq .Expires.Unix 1}}
+                <span class="data">Rolling</span>
+                {{else}}
+                <span class="data">{{.Expires.Format "2006-01-02 15:04"}}</span>
+                {{end}}
+            </p>
+            <p>
+                <span class="label">Registered</span>:
+                <span class="data">{{.DateRegistered.Format "2006-01-02 15:04"}}</span>
+            </p>
+            <p>
+                <span class="label">User Agent</span>:
+                <span class="data">{{.UserAgent}}</span>
+            </p>
+            <p>
+                <span class="label">Last Seen</span>:
+                <span class="data">{{.LastSeen.Format "2006-01-02 15:04"}}</span>
+            </p>
             {{end}}
-        </p>
-        <p>
-            <span class="label">Registered</span>:
-            <span class="data">{{.DateRegistered.Format "2006-01-02 15:04"}}</span>
-        </p>
-        <p>
-            <span class="label">User Agent</span>:
-            <span class="data">{{.UserAgent}}</span>
-        </p>
-        <p>
-            <span class="label">Last Seen</span>:
-            <span class="data">{{.LastSeen.Format "2006-01-02 15:04"}}</span>
-        </p>
-        <p>
-            <span class="label">Current Lease</span>:
-            {{with .GetCurrentLease}}
-            <span class="data">{{.IP.String}}</span>
-            {{else}}
-            <span class="data">N/A</span>
-            {{end}}
-        </p>
-        <br>
-        <h3>Previous Leases</h3>
-        <div class="leases">
-            {{$n := len .Leases}}
-            {{range $i, $l := .Leases}}
-            <div class="lease">
-                <p>
-                    <span class="label">IP Address</span>:
-                    <span class="data">{{$l.IP.String}}</span>
-                </p>
-                <p>
-                    <span class="label">Network</span>:
-                    <span class="data">{{$l.Network}}</span>
-                </p>
-                <p>
-                    <span class="label">Start</span>:
-                    <span class="data">{{$l.Start.Format "2006-01-02 15:04"}}</span>
-                </p>
-                <p>
-                    <span class="label">End</span>:
-                    <span class="data">{{$l.End.Format "2006-01-02 15:04"}}</span>
-                </p>
+            <p>
+                <span class="label">Current Lease</span>:
+                {{with .GetCurrentLease}}
+                <span class="data">{{.IP.String}}</span>
+                {{else}}
+                <span class="data">N/A</span>
+                {{end}}
+            </p>
+            <br>
+            <h3>Previous Leases</h3>
+            <div class="leases">
+                {{$n := len .Leases}}
+                {{range $i, $l := .Leases}}
+                <div class="lease">
+                    <p>
+                        <span class="label">IP Address</span>:
+                        <span class="data">{{$l.IP.String}}</span>
+                    </p>
+                    <p>
+                        <span class="label">Network</span>:
+                        <span class="data">{{$l.Network}}</span>
+                    </p>
+                    <p>
+                        <span class="label">Start</span>:
+                        <span class="data">{{$l.Start.Format "2006-01-02 15:04"}}</span>
+                    </p>
+                    <p>
+                        <span class="label">End</span>:
+                        <span class="data">{{$l.End.Format "2006-01-02 15:04"}}</span>
+                    </p>
+                </div>
+                {{if ne (plus1 $i) $n}}
+                <hr class="lease-separator">
+                {{end}}
+                {{end}}
             </div>
-            {{if ne (plus1 $i) $n}}
-            <hr class="lease-separator">
-            {{end}}
-            {{end}}
-        </div>
         {{end}}
     </div>
 </div>

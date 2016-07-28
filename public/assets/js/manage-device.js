@@ -59,8 +59,9 @@ $.onReady(function() {
             var mac = getMacAddress();
             $.post("/api/device/_reassign", {"username": newUser, "macs": mac}, function() {
                 location.reload();
-            }, function() {
-                c.FlashMessage("Error reassigning device");
+            }, function(req) {
+                data = JSON.parse(req.responseText);
+                c.FlashMessage(data.Message);
             });
         });
     });
