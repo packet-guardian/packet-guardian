@@ -55,7 +55,7 @@ local-install: test
 all: $(TARGETS)
 .DEFAULT_GOAL := all
 
-dist: vet test $(TARGETS)
+dist: vet local-install
 	@rm -rf ./dist
 	@mkdir -p dist/packet-guardian
 	@cp -R config dist/packet-guardian/

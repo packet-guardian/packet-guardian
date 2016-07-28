@@ -52,7 +52,7 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 func blacklistedDevicesReport(e *common.Environment, w http.ResponseWriter, r *http.Request) error {
 	devices, err := models.SearchDevicesByField(e, "blacklisted", "1")
 	if err != nil {
-		e.Log.WithField("ErrMsg", err).Error()
+		e.Log.WithField("ErrMsg", err).Error("")
 		return errors.New("SQL Query Failed")
 	}
 
