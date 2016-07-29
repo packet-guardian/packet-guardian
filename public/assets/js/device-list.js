@@ -25,8 +25,8 @@ $.onReady(function() {
             // Close all
             $(".device-body").style("max-height", "0px");
         }
-        if (mh !== "200px") {
-            thebody.style("max-height", "200px");
+        if (mh !== "300px") {
+            thebody.style("max-height", "300px");
         } else {
             thebody.style("max-height", "0px");
         }
