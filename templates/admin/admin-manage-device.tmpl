@@ -6,7 +6,7 @@
         <div class="user-info">
             <section>
                 <span class="text-label">Username:</span>
-                {{if eq .user.ID 0}}
+                {{if eq .device.ID 0}}
                 <span class="username unregistered">UNREGISTERED</span>
                 {{else}}
                 <span class="username">{{.user.Username}}</span>
