@@ -213,6 +213,15 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		// Protect blacklisted devices
+		if device.IsBlacklisted && !sessionUser.Can(models.ManageBlacklist) {
+			d.e.Log.WithFields(verbose.Fields{
+				"user": sessionUser.Username,
+				"MAC":  device.MAC.String(),
+			}).Error("Attempted deleting a blacklisted device")
+			continue
+		}
+
 		if err := device.Delete(); err != nil {
 			d.e.Log.Errorf("Error deleting device %s: %s", device.MAC.String(), err.Error())
 			finishedWithErrors = true
@@ -274,6 +283,14 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
 			d.e.Log.WithField("Mac", devMacStr).Error("Tried reassigning unregistered device")
 			common.NewAPIResponse("Device "+devMacStr+" isn't registered", nil).WriteResponse(w, http.StatusBadRequest)
 			return
+		}
+		// Protect blacklisted devices
+		if dev.IsBlacklisted && !sessionUser.Can(models.ManageBlacklist) {
+			d.e.Log.WithFields(verbose.Fields{
+				"user": sessionUser.Username,
+				"MAC":  dev.MAC.String(),
+			}).Error("Attempted reassigning a blacklisted device")
+			continue
 		}
 		originalUser := dev.Username
 		dev.Username = user.Username
