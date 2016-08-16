@@ -17,6 +17,9 @@
 ## Example: wifi.example.com  OR  wifi.example.com:5000
 # siteDomainName = ""
 
+## This text will show up in the footer of every page
+# siteFooterText = "The Guardian of Packets"
+
 ## This is the time between wake ups for the job scheduler. When the appliacation first
 ## starts, it will wait this long, perform tasks, and then wait again. The format
 ## uses Go's time.Duration format. E.g. 1h = 1 hour, 30m = 30 minutes. If an invalid

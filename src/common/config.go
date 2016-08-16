@@ -20,6 +20,7 @@ type Config struct {
 		SiteTitle          string
 		SiteCompanyName    string
 		SiteDomainName     string
+		SiteFooterText     string
 		JobSchedulerWakeUp string
 	}
 	Logging struct {
@@ -172,6 +173,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	// Core
 	c.Core.SiteTitle = setStringOrDefault(c.Core.SiteTitle, "Packet Guardian")
+	c.Core.SiteFooterText = setStringOrDefault(c.Core.SiteFooterText, "The Guardian of Packets")
 	c.Core.JobSchedulerWakeUp = setStringOrDefault(c.Core.JobSchedulerWakeUp, "1h")
 	if _, err := time.ParseDuration(c.Core.JobSchedulerWakeUp); err != nil {
 		c.Core.JobSchedulerWakeUp = "1h"

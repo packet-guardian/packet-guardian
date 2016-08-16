@@ -54,8 +54,12 @@ func (s *Server) startRedirector() {
 		"address": s.address,
 		"port":    s.httpPort,
 	}).Debug()
+	timeout := 1 * time.Second
+	if s.e.IsDev() {
+		timeout = 1 * time.Millisecond
+	}
 	srv := &graceful.Server{
-		Timeout: 1 * time.Second,
+		Timeout: timeout,
 		Server:  &http.Server{Addr: s.address + ":" + s.httpPort, Handler: http.HandlerFunc(s.redirectToHttps)},
 	}
 	if err := srv.ListenAndServe(); err != nil {
@@ -68,8 +72,12 @@ func (s *Server) startHttp() {
 		"address": s.address,
 		"port":    s.httpPort,
 	}).Debug()
+	timeout := 5 * time.Second
+	if s.e.IsDev() {
+		timeout = 1 * time.Millisecond
+	}
 	srv := &graceful.Server{
-		Timeout: 5 * time.Second,
+		Timeout: timeout,
 		Server:  &http.Server{Addr: s.address + ":" + s.httpPort, Handler: s.routes},
 	}
 	if err := srv.ListenAndServe(); err != nil {
@@ -82,9 +90,12 @@ func (s *Server) startHttps() {
 		"address": s.address,
 		"port":    s.httpsPort,
 	}).Debug()
-
+	timeout := 5 * time.Second
+	if s.e.IsDev() {
+		timeout = 1 * time.Millisecond
+	}
 	srv := &graceful.Server{
-		Timeout: 5 * time.Second,
+		Timeout: timeout,
 		Server:  &http.Server{Addr: s.address + ":" + s.httpsPort, Handler: s.routes},
 	}
 	if err := srv.ListenAndServeTLS(
