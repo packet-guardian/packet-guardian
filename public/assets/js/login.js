@@ -5,7 +5,6 @@ $.onReady(function () {
     'use strict';
     var login = function() {
         $('#login-btn').prop('disabled', true);
-        $('#login-btn').text("Logging in...");
 
         var data = {};
         data.username = $('[name=username]').value();
@@ -14,6 +13,8 @@ $.onReady(function () {
         if (data.username === '' || data.password === '') {
             return;
         }
+
+        $('#login-btn').text("Logging in...");
 
         $.post('/login', data, function(resp, req) {
             location.href = '/';
