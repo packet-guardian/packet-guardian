@@ -13,6 +13,7 @@ Here's a quick run down of the main sections of the configuration:
 - **Guest**: Guest specific registration settings. It has many of the same types of settings as Registration, but is only for "guest" users. Here is also where you specify the method used to verify guest users. Currently only Twilio is support but more are coming soon.
     - **Email**: Settings pertaining to email verification for guest registrations. Not implemented yet.
     - **Twilio**: Settings pertaining to using Twilio SMS messaging to verify users. One text message is sent with a verification code for the user to enter.
+    - **SMSEagle**: Allows sending text messages via SMSEagle with a verification code.
 - **Webserver**: How the webserver should behave. Ports, addresses, TLS settings, and session settings.
 - **Auth**: How to authentication non-Guest users.
     - **LDAP**: Use LDAP/Active Directory authentication. Currently only AD authentication is supported.

@@ -2,11 +2,20 @@
 
 All official documentation can be found here.
 
-- [Installation](installation.md)
+## Installation
+- [Packet Guardian Installation](installation.md)
 - [Uninstall](uninstall.md)
 - [Upgrade](upgrade.md)
-- [Building](building.md)
+- [Full Stack Setup](full-stack.md)
+
+## Configuration
 - [Configuration](configuration.md)
 - [DHCP Configuration](dhcp-configuration.md)
+- [Additional Installation](additional-installation.md) (service, AppArmor)
+
+## Troubleshooting
+- [Troubleshooting](troubleshooting.md)
+
+## Developement
+- [Building From Source](building.md)
 - [Using Docker](using-docker.md)
-- [Additional Installation](additional-installation.md)

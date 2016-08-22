@@ -29,6 +29,8 @@ $ cp $APP_DIR/config/service/systemd/dhcp.service /etc/systemd/system/pg-dhcp.se
 $ chown root:root /etc/systemd/system/pg.service
 $ chown root:root /etc/systemd/system/pg-dhcp.service
 $ systemctl daemon-reload
+$ systemctl start pg
+$ systemctl start pg-dhcp
 $ systemctl enable pg.service
 $ systemctl enable pg-dhcp.service
 ```
