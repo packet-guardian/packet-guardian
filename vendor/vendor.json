@@ -15,10 +15,10 @@
 			"revisionTime": "2016-02-26T19:13:42Z"
 		},
 		{
-			"checksumSHA1": "XLdurJbzg10h4ofoakSSMvsDJgg=",
+			"checksumSHA1": "w7kBdx+SuYbRYMHazeg4WHenlc4=",
 			"path": "github.com/dragonlibs/cas",
-			"revision": "5f29a22520453e33c1f5af6dbee4bcbe804646e8",
-			"revisionTime": "2016-04-28T15:56:56Z"
+			"revision": "be7e57879191d005879c367d084836866b43dd43",
+			"revisionTime": "2016-08-22T20:54:30Z"
 		},
 		{
 			"checksumSHA1": "iIUYZyoanCQQTUaWsu8b+iOSPt4=",
@@ -160,5 +160,5 @@
 			"revisionTime": "2016-03-01T20:40:22Z"
 		}
 	],
-	"rootPath": "github.com/onesimus-systems/packet-guardian"
+	"rootPath": "github.com/usi-lfkeitel/packet-guardian"
 }
