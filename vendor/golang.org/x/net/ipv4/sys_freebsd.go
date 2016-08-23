@@ -6,11 +6,11 @@ package ipv4
 
 import (
 	"net"
+	"runtime"
+	"strings"
 	"syscall"
 	"unsafe"
 )
-
-type sysSockoptLen int32
 
 var (
 	ctlOpts = [ctlMax]ctlOpt{
@@ -42,6 +42,15 @@ func init() {
 	freebsdVersion, _ = syscall.SysctlUint32("kern.osreldate")
 	if freebsdVersion >= 1000000 {
 		sockOpts[ssoMulticastInterface].typ = ssoTypeIPMreqn
+	}
+	if runtime.GOOS == "freebsd" && runtime.GOARCH == "386" {
+		archs, _ := syscall.Sysctl("kern.supported_archs")
+		for _, s := range strings.Fields(archs) {
+			if s == "amd64" {
+				freebsd32o64 = true
+				break
+			}
+		}
 	}
 }
 
