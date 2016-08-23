@@ -88,6 +88,7 @@ func (c *Client) AuthenticateUser(username, password string, r *http.Request) (*
 	}
 
 	resp, err := client.Do(req)
+	defer resp.Body.Close()
 	// Filter out our fake redirect error
 	if urlError, ok := err.(*url.Error); ok && urlError.Err == redirectAttemptedError {
 		err = nil
@@ -107,6 +108,7 @@ func (c *Client) validateTicket(ticket string, r *http.Request) (*Authentication
 	// Validate the ticket
 	reqUrl, _ := c.serviceValidateUrlForRequest(ticket, r)
 	resp, err := http.Get(reqUrl)
+	defer resp.Body.Close()
 
 	if err != nil {
 		return nil, err

@@ -85,6 +85,7 @@ $.onReady(function () {
 
     $('[name=dev-exp-sel]').change(function(e) {
         var self = $(e.target);
+        // Enable/disable appropiate textboxes
         if (self.value() === "specific" ||
             self.value() === "daily" ||
             self.value() === "duration") {
@@ -93,10 +94,23 @@ $.onReady(function () {
             $("[name=device-expiration]").prop("disabled", true);
         }
 
-        if (self.value() === "specific") {
-            setTextboxToToday('[name=device-expiration]');
-        } else {
-            $("[name=device-expiration]").value("");
+        // Zero field by default
+        $("[name=device-expiration]").value("");
+
+        // Fill in textbox and tooltip as needed
+        switch (self.value()) {
+            case "specific":
+                setTextboxToToday('[name=device-expiration]');
+                setExpirationToolTop("(YYYY-MM-DD HH:mm)");
+                break;
+            case "duration":
+                setExpirationToolTop("(5h30m = 5 hours and 30 minutes)");
+                break;
+            case "daily":
+                setExpirationToolTop("(HH:mm)");
+                break;
+            default:
+                setExpirationToolTop("");
         }
     });
 
@@ -108,9 +122,11 @@ $.onReady(function () {
         if (self.value() === "specific") {
             setTextboxToToday('[name=valid-before]');
             setTextboxToToday('[name=valid-after]');
+            setUserExpirationToolTip("(YYYY-MM-DD HH:mm)");
         } else {
             $("[name=valid-before]").value("");
             $("[name=valid-after]").value("");
+            setUserExpirationToolTip("");
         }
     });
 
@@ -198,5 +214,13 @@ $.onReady(function () {
         var timeStr = ('0' + date.getHours()).slice(-2) + ':' +
             ('0' + (date.getMinutes())).slice(-2);
         $(el).value(dateStr+" "+timeStr);
+    }
+
+    function setExpirationToolTop(tip) {
+        $("#dev-exp-tooltip").text(tip);
+    }
+
+    function setUserExpirationToolTip(tip) {
+        $("#user-exp-tooltip").text(tip);
     }
 });

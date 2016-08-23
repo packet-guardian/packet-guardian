@@ -74,6 +74,7 @@ func ParseServiceResponse(data []byte) (*AuthenticationResponse, error) {
 	var x xmlServiceResponse
 
 	if err := xml.Unmarshal(data, &x); err != nil {
+		fmt.Printf("Raw XML Resp: '%s'", string(data))
 		return nil, err
 	}
 

@@ -55,15 +55,33 @@ input[type="checkbox"] {
     height: 1.2em;
 }
 
+label, .label {
+    font-weight: bold;
+}
+
+.tooltip {
+    margin-left: 1em;
+}
+
+fieldset p {
+    margin-left: 2em;
+}
+
+.user-edit-separator {
+    color: black;
+    height: 2px;
+    width: 60%;
+}
+
 @media (min-width: 700px) {
     .admin-users, .admin-user {
         width: 70%;
         margin: 0 auto;
     }
-}
 
-label, .label {
-    font-weight: bold;
+    .user-edit-separator {
+        margin: 0;
+    }
 }
 
 @media (min-width: 850px) {

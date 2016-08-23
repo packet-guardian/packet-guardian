@@ -6,6 +6,7 @@
     <form id="user-form">
         <input type="hidden" name="user-id" value="{{.user.ID}}">
         <fieldset>
+            <h3>User Information</h3>
             <p>
                 <label for="username">Username:</label>
                 <input type="text" name="username" value="{{.user.Username}}" disabled="disabled">
@@ -22,6 +23,10 @@
                 <input type="password" name="password">
                 <input type="checkbox" name="clear-pass"> Clear Password
             </p>
+        </fieldset>
+        <hr class="user-edit-separator">
+        <fieldset>
+            <h3>Device Settings</h3>
             <p>
                 <label for="device-limit">Device Limit:</label>
                 <select name="special-limit">
@@ -31,13 +36,13 @@
                 </select>
                 <input type="text" name="device-limit" value="{{.user.DeviceLimit}}">
             </p>
-            <p>
+            <!-- <p>
                 <span class="label">Date format</span>: YYYY-MM-DD HH:mm<br>
                 <span class="label">Time format</span>: HH:mm<br>
                 <span class="label">Duration</span>: 5h30m = 5 hours and 30 minutes
-            </p>
+            </p> -->
             <p>
-                <label for="device-expiration"><span title="When the user's device will expire by default">Default Device Expiration:</span></label>
+                <label for="dev-exp-sel"><span title="The method use to expire a device automatically">Default Device Expiration Type:</span></label>
                 <select name="dev-exp-sel" data-expires="{{.user.DeviceExpiration.Mode}}">
                     <option value="global">Global</option>
                     <option value="never">Never</option>
@@ -46,8 +51,16 @@
                     <option value="daily">Daily @</option>
                     <option value="rolling">Rolling</option>
                 </select>
-                <input type="text" name="device-expiration" value="{{.user.DeviceExpiration.String}}">
             </p>
+            <p>
+                <label for="device-expiration"><span title="When the user's device will expire by default">Default Device Expiration Value:</span></label>
+                <input type="text" name="device-expiration" value="{{.user.DeviceExpiration.String}}">
+                <span id="dev-exp-tooltip" class="tooltip"></span>
+            </p>
+        </fieldset>
+        <hr class="user-edit-separator">
+        <fieldset>
+            <h3>User Expiration</h3>
             <p>
                 <label for="val-bef-sel">User Valid:</label>
                 <select name="val-bef-sel" data-forever="{{.user.ValidForever}}">
@@ -58,11 +71,16 @@
             <p>
                 <label for="valid-after">Start:</label>
                 <input type="text" name="valid-after" value="{{.user.ValidStart.Format "2006-01-02 15:04"}}">
+                <span id="user-exp-tooltip" class="tooltip"></span>
             </p>
             <p>
                 <label for="valid-before">End:</label>
                 <input type="text" name="valid-before" value="{{.user.ValidEnd.Format "2006-01-02 15:04"}}">
             </p>
+        </fieldset>
+        <hr class="user-edit-separator">
+        <fieldset>
+            <h3>Other Settings</h3>
             <p>
                 <label for="can-manage">Can Manage Own Devices:</label>
                 {{if .user.CanManage}}
@@ -79,6 +97,9 @@
                 <input type="checkbox" name="can-autoreg">
                 {{end}}
             </p>
+        </fieldset>
+        <hr class="user-edit-separator">
+        <fieldset>
             <p>
                 <button type="submit">Save</button>
                 <button type="button" name="delete-btn">Delete</button>

@@ -6,7 +6,7 @@ Packet Guardian is just one (or two) pieces of the puzzle. To get a fully workin
 
 Packet Guardian requires at least one vlan. Local subnets are currently not supported. All DHCP must be done via relays. The vlan needs to have two IP subnets assigned to it. The primary subnet will be for registered clients. The secondary is unregistered. A DHCP relay must be setup on the router/wireless controller to forward DHCP packets to Packet Guardian.
 
-If the server is going to be in a restricted network segment (recommended), the following ports will need to be allowed in: tcp/udp 53 (DNS), 67 (DHCP server), 80, and 443 (web). The server will need to be able to unicast back to relay agents.
+If the server is going to be in a restricted network segment (recommended), the following ports will need to be allowed in: tcp/udp 53 (DNS), udp 67 (DHCP server), tcp 80, and tcp 443 (web). The server will need to be able to udp unicast back to relay agents.
 
 ## Setting up Packet Guardian
 
