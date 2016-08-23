@@ -16,7 +16,7 @@ func Panic(e *common.Environment, next http.Handler) http.Handler {
 		defer func() {
 			if r := recover(); r != nil {
 				if _, ok := r.(runtime.Error); ok {
-					buf := make([]byte, 1024)
+					buf := make([]byte, 2048)
 					runtime.Stack(buf, false)
 					e.Log.WithField("Stack", string(buf)).Alert()
 				}

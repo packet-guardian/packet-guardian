@@ -6,13 +6,11 @@ package models
 
 import (
 	"errors"
-	"net/http"
 	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/gorilla/context"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
@@ -251,17 +249,6 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 		results = append(results, user)
 	}
 	return results, nil
-}
-
-func GetUserFromContext(r *http.Request) *User {
-	if rv := context.Get(r, common.SessionUserKey); rv != nil {
-		return rv.(*User)
-	}
-	return nil
-}
-
-func SetUserToContext(r *http.Request, u *User) {
-	context.Set(r, common.SessionUserKey, u)
 }
 
 func (u *User) LoadRights() {

@@ -57,8 +57,8 @@ func TestLocalAuth(t *testing.T) {
 	session := common.NewTestSession()
 
 	req, _ := http.NewRequest("", "", nil)
-	common.SetEnvironmentToContext(req, e)
-	common.SetSessionToContext(req, session)
+	req = common.SetEnvironmentToContext(req, e)
+	req = common.SetSessionToContext(req, session)
 
 	req.Form = make(url.Values)
 	req.Form.Add("username", "tester1")
@@ -117,8 +117,8 @@ func TestFailedLocalAuth(t *testing.T) {
 	session := common.NewTestSession()
 
 	req, _ := http.NewRequest("", "", nil)
-	common.SetEnvironmentToContext(req, e)
-	common.SetSessionToContext(req, session)
+	req = common.SetEnvironmentToContext(req, e)
+	req = common.SetSessionToContext(req, session)
 
 	req.Form = make(url.Values)
 	req.Form.Add("username", "tester1")

@@ -38,8 +38,8 @@ func TestLoginUser(t *testing.T) {
 	session := common.NewTestSession()
 
 	req, _ := http.NewRequest("", "", nil)
-	common.SetEnvironmentToContext(req, e)
-	common.SetSessionToContext(req, session)
+	req = common.SetEnvironmentToContext(req, e)
+	req = common.SetSessionToContext(req, session)
 
 	req.Form = make(url.Values)
 
@@ -79,7 +79,7 @@ func TestLoginUser(t *testing.T) {
 func TestIsLoggedIn(t *testing.T) {
 	session := common.NewTestSession()
 	req, _ := http.NewRequest("", "", nil)
-	common.SetSessionToContext(req, session)
+	req = common.SetSessionToContext(req, session)
 
 	session.Set("loggedin", true)
 	if !IsLoggedIn(req) {
@@ -103,9 +103,9 @@ func TestLogoutUser(t *testing.T) {
 	user.Username = "Tester"
 
 	req, _ := http.NewRequest("", "", nil)
-	common.SetEnvironmentToContext(req, e)
-	common.SetSessionToContext(req, session)
-	models.SetUserToContext(req, user)
+	req = common.SetEnvironmentToContext(req, e)
+	req = common.SetSessionToContext(req, session)
+	req = models.SetUserToContext(req, user)
 
 	LogoutUser(req, httptest.NewRecorder())
 	if session.GetBool("loggedin", true) {

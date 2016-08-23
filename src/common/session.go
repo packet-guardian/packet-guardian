@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gorilla/context"
 	"github.com/gorilla/sessions"
 )
 
@@ -69,16 +68,7 @@ type Session struct {
 	*sessions.Session
 }
 
-func GetSessionFromContext(r *http.Request) *Session {
-	if rv := context.Get(r, SessionKey); rv != nil {
-		return rv.(*Session)
-	}
-	return nil
-}
-
-func SetSessionToContext(r *http.Request, s *Session) {
-	context.Set(r, SessionKey, s)
-}
+// Get and set Session to context moved to context files
 
 func (s *Session) Delete(r *http.Request, w http.ResponseWriter) error {
 	s.Options.MaxAge = -1

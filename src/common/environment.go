@@ -7,12 +7,10 @@ package common
 import (
 	"database/sql"
 	"errors"
-	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/gorilla/context"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 
 	"github.com/lfkeitel/verbose"
@@ -57,16 +55,7 @@ func NewTestEnvironment() *Environment {
 	return e
 }
 
-func GetEnvironmentFromContext(r *http.Request) *Environment {
-	if rv := context.Get(r, SessionEnvKey); rv != nil {
-		return rv.(*Environment)
-	}
-	return nil
-}
-
-func SetEnvironmentToContext(r *http.Request, e *Environment) {
-	context.Set(r, SessionEnvKey, e)
-}
+// Get and Set Environment to context, moved to context files
 
 func (e *Environment) IsTesting() bool {
 	return (e.Env == EnvTesting)
