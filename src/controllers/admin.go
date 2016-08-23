@@ -135,10 +135,12 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.FormValue("q")
 	var results []*searchResults
 	var devices []*models.Device
+	var searchType string
 	var err error
 
 	if query != "" {
 		if macStartRegex.MatchString(query) {
+			searchType = "mac"
 			devices, err = models.SearchDevicesByField(a.e, "mac", query+"%")
 			for _, d := range devices {
 				results = append(results, &searchResults{
@@ -146,6 +148,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 				})
 			}
 		} else if ipStartRegex.MatchString(query) {
+			searchType = "ip"
 			// Get leases matching IP
 			var leases []*models.Lease
 			leases, err = models.SearchLeases(a.e, `"ip" LIKE ?`, query+"%")
@@ -162,6 +165,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 				})
 			}
 		} else {
+			searchType = "user"
 			devices, err = models.SearchDevicesByField(a.e, "username", query+"%")
 			if len(devices) == 0 {
 				devices, err = models.SearchDevicesByField(a.e, "user_agent", "%"+query+"%")
@@ -190,8 +194,9 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"query":   query,
-		"results": results,
+		"query":      query,
+		"results":    results,
+		"searchType": searchType,
 	}
 
 	a.e.Views.NewView("admin-search", r).Render(w, data)
