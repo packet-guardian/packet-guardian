@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 // Device represents a device in the system
@@ -26,7 +27,7 @@ type Device struct {
 	UserAgent      string
 	IsBlacklisted  bool
 	LastSeen       time.Time
-	Leases         []*Lease
+	Leases         []*dhcp.Lease
 }
 
 func NewDevice(e *common.Environment) *Device {
