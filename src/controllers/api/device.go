@@ -103,7 +103,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// Automatic registration
-		lease, err := models.GetLeaseByIP(d.e, ip)
+		lease, err := models.NewLeaseStore(d.e).GetLeaseByIP(ip)
 		if err != nil {
 			d.e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
 			common.NewAPIResponse("Failed detecting MAC address", nil).WriteResponse(w, http.StatusInternalServerError)
@@ -214,7 +214,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Protect blacklisted devices
-		if device.IsBlacklisted && !sessionUser.Can(models.ManageBlacklist) {
+		if device.IsBlacklisted() && !sessionUser.Can(models.ManageBlacklist) {
 			d.e.Log.WithFields(verbose.Fields{
 				"user": sessionUser.Username,
 				"MAC":  device.MAC.String(),
@@ -285,7 +285,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// Protect blacklisted devices
-		if dev.IsBlacklisted && !sessionUser.Can(models.ManageBlacklist) {
+		if dev.IsBlacklisted() && !sessionUser.Can(models.ManageBlacklist) {
 			d.e.Log.WithFields(verbose.Fields{
 				"user": sessionUser.Username,
 				"MAC":  dev.MAC.String(),

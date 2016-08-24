@@ -15,6 +15,7 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	"github.com/usi-lfkeitel/packet-guardian/src/reports"
 	"github.com/usi-lfkeitel/packet-guardian/src/stats"
+	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 var (
@@ -122,7 +123,7 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request) {
 
 type searchResults struct {
 	D *models.Device
-	L *models.Lease
+	L *dhcp.Lease
 }
 
 func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
@@ -150,8 +151,8 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 		} else if ipStartRegex.MatchString(query) {
 			searchType = "ip"
 			// Get leases matching IP
-			var leases []*models.Lease
-			leases, err = models.SearchLeases(a.e, `"ip" LIKE ?`, query+"%")
+			var leases []*dhcp.Lease
+			leases, err = models.NewLeaseStore(a.e).SearchLeases(`"ip" LIKE ?`, query+"%")
 			// Get devices corresponding to each lease
 			var d *models.Device
 			for _, l := range leases {
@@ -182,7 +183,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 		if r.L != nil {
 			continue
 		}
-		lease, err := models.GetLeaseByMAC(a.e, r.D.MAC)
+		lease, err := models.NewLeaseStore(a.e).GetRecentLeaseByMAC(r.D.MAC)
 		if err != nil || lease.ID == 0 {
 			continue
 		}

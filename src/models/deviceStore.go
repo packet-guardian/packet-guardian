@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 type DeviceStore struct {
@@ -18,6 +19,6 @@ func NewDeviceStore(e *common.Environment) *DeviceStore {
 	return &DeviceStore{e: e}
 }
 
-func (d *DeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (*Device, error) {
+func (d *DeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (dhcp.Device, error) {
 	return GetDeviceByMAC(d.e, mac)
 }

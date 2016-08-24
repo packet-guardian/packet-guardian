@@ -17,6 +17,7 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/controllers/api"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	mid "github.com/usi-lfkeitel/packet-guardian/src/server/middleware"
+	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 func LoadRoutes(e *common.Environment) http.Handler {
@@ -125,7 +126,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	e := common.GetEnvironmentFromContext(r)
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, err := models.IsRegisteredByIP(e, ip)
+	reg, err := dhcp.IsRegisteredByIP(models.NewLeaseStore(e), ip)
 	if err != nil {
 		e.Log.WithField("Err", err).Notice("Couldn't get registration status")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
