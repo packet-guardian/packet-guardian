@@ -12,10 +12,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/dhcp4"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 var r = regexp.MustCompile(`\d+ bytes from .*`)
@@ -25,7 +22,7 @@ type pool struct {
 	rangeEnd      net.IP
 	settings      *settings
 	optionsCached bool
-	leases        map[string]*models.Lease // IP -> Lease
+	leases        map[string]*Lease // IP -> Lease
 	subnet        *subnet
 	nextFreeStart int
 	ipsInPool     int
@@ -34,7 +31,7 @@ type pool struct {
 func newPool() *pool {
 	return &pool{
 		settings: newSettingsBlock(),
-		leases:   make(map[string]*models.Lease),
+		leases:   make(map[string]*Lease),
 	}
 }
 
@@ -90,7 +87,7 @@ func (p *pool) getOptions(registered bool) dhcp4.Options {
 	return p.settings.options
 }
 
-func (p *pool) getFreeLease(e *common.Environment) *models.Lease {
+func (p *pool) getFreeLease(s *ServerConfig) *Lease {
 	now := time.Now()
 
 	regFreeTime := time.Duration(p.subnet.network.global.registeredSettings.freeLeaseAfter) * time.Second
@@ -127,13 +124,11 @@ func (p *pool) getFreeLease(e *common.Environment) *models.Lease {
 		}
 
 		// IP has no lease with it
-		l := models.NewLease(e)
+		l := NewLease(s.LeaseStore)
 		// All known leases have already been checked, which means if this IP
 		// is in use, we didn't do it. Mark as abandoned.
-		if !e.IsTesting() && isIPInUse(next) {
-			e.Log.WithFields(verbose.Fields{
-				"IP": next.String(),
-			}).Notice("Abandoned IP")
+		if !s.IsTesting() && isIPInUse(next) {
+			s.Log.Error("Abandoned IP %s", next.String())
 			l.IsAbandoned = true
 			continue
 		}
@@ -148,7 +143,7 @@ func (p *pool) getFreeLease(e *common.Environment) *models.Lease {
 
 	// No free leases, bring out the big guns
 	// Find the oldest expired lease
-	var longestExpiredLease *models.Lease
+	var longestExpiredLease *Lease
 	for _, l := range p.leases {
 		if l.End.After(now) { // Skip active leases
 			continue

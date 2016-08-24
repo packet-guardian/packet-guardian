@@ -12,8 +12,6 @@ import (
 	"time"
 
 	"github.com/onesimus-systems/dhcp4"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 type network struct {
@@ -161,7 +159,7 @@ func (n *network) includes(ip net.IP) bool {
 	return false
 }
 
-func (n *network) getFreeLease(e *common.Environment, registered bool) (*models.Lease, *pool) {
+func (n *network) getFreeLease(e *ServerConfig, registered bool) (*Lease, *pool) {
 	for _, s := range n.subnets {
 		if s.allowUnknown == registered {
 			continue
@@ -175,7 +173,7 @@ func (n *network) getFreeLease(e *common.Environment, registered bool) (*models.
 	return nil, nil
 }
 
-func (n *network) getLeaseByMAC(mac net.HardwareAddr, registered bool) (*models.Lease, *pool) {
+func (n *network) getLeaseByMAC(mac net.HardwareAddr, registered bool) (*Lease, *pool) {
 	for _, s := range n.subnets {
 		if s.allowUnknown == registered {
 			continue
@@ -191,7 +189,7 @@ func (n *network) getLeaseByMAC(mac net.HardwareAddr, registered bool) (*models.
 	return nil, nil
 }
 
-func (n *network) getLeaseByIP(ip net.IP, registered bool) (*models.Lease, *pool) {
+func (n *network) getLeaseByIP(ip net.IP, registered bool) (*Lease, *pool) {
 	for _, s := range n.subnets {
 		if s.allowUnknown == registered {
 			continue

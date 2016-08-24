@@ -66,7 +66,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 
 	// Automatic registration
-	lease, err := models.GetLeaseByIP(e, ip)
+	lease, err := models.NewLeaseStore(e).GetLeaseByIP(ip)
 	if err != nil {
 		e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
 		return errors.New("Internal Server Error")

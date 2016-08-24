@@ -20,7 +20,8 @@ import (
 	"time"
 
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/dhcp"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 var (
@@ -103,7 +104,14 @@ func main() {
 		e.Log.WithField("ErrMsg", err).Fatal("Error loading DHCP configuration")
 	}
 
-	handler := dhcp.NewDHCPServer(dhcpConfig, e)
+	dhcpPkgConfig := &dhcp.ServerConfig{
+		LeaseStore:  models.NewLeaseStore(e),
+		DeviceStore: models.NewDeviceStore(e),
+		LogPath:     e.Config.Logging.Path,
+		Env:         dhcp.EnvDev,
+	}
+
+	handler := dhcp.NewDHCPServer(dhcpConfig, dhcpPkgConfig)
 	if err := handler.LoadLeases(); err != nil {
 		e.Log.WithField("ErrMsg", err).Fatal("Couldn't load leases")
 	}
