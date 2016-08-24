@@ -134,6 +134,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := r.FormValue("q")
+	leaseStore := models.NewLeaseStore(a.e)
 	var results []*searchResults
 	var devices []*models.Device
 	var searchType string
@@ -152,7 +153,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 			searchType = "ip"
 			// Get leases matching IP
 			var leases []*dhcp.Lease
-			leases, err = models.NewLeaseStore(a.e).SearchLeases(`"ip" LIKE ?`, query+"%")
+			leases, err = leaseStore.SearchLeases(`"ip" LIKE ?`, query+"%")
 			// Get devices corresponding to each lease
 			var d *models.Device
 			for _, l := range leases {
@@ -183,7 +184,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 		if r.L != nil {
 			continue
 		}
-		lease, err := models.NewLeaseStore(a.e).GetRecentLeaseByMAC(r.D.MAC)
+		lease, err := leaseStore.GetRecentLeaseByMAC(r.D.MAC)
 		if err != nil || lease.ID == 0 {
 			continue
 		}
