@@ -1,4 +1,4 @@
-// This source file is part of the Packet Guardian project.
+// This source file is part of the PG-DHCP project.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -92,6 +92,7 @@ func (p *pool) getFreeLease(s *ServerConfig) *Lease {
 
 	regFreeTime := time.Duration(p.subnet.network.global.registeredSettings.freeLeaseAfter) * time.Second
 	unRegFreeTime := time.Duration(p.subnet.network.global.unregisteredSettings.freeLeaseAfter) * time.Second
+	// Find a candidate from the already used leases
 	for _, l := range p.leases {
 		if l.IsAbandoned { // IP in use by a device we don't know about
 			continue
@@ -141,6 +142,13 @@ func (p *pool) getFreeLease(s *ServerConfig) *Lease {
 		return l
 	}
 
+	// We've exhausted all possibilities, admit defeat.
+	return nil
+}
+
+func (p *pool) getFreeLeaseDesperate(s *ServerConfig) *Lease {
+	now := time.Now()
+
 	// No free leases, bring out the big guns
 	// Find the oldest expired lease
 	var longestExpiredLease *Lease
@@ -170,11 +178,10 @@ func (p *pool) getFreeLease(s *ServerConfig) *Lease {
 			continue
 		}
 		if !isIPInUse(l.IP) {
+			l.IsAbandoned = false
 			return l
 		}
 	}
-
-	// We've exhausted all possibilities, admit defeat.
 	return nil
 }
 
