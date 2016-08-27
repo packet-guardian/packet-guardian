@@ -176,7 +176,12 @@ func GetUserByUsername(e *common.Environment, username string) (*User, error) {
 }
 
 func GetAllUsers(e *common.Environment) ([]*User, error) {
-	return getUsersFromDatabase(e, `ORDER BY "username" COLLATE NOCASE ASC`)
+	sql := `ORDER BY "username"`
+	if e.DB.Driver == "sqlite" {
+		sql += " COLLATE NOCASE ASC"
+	}
+	sql += "ASC"
+	return getUsersFromDatabase(e, sql)
 }
 
 func SearchUsersByField(e *common.Environment, field, pattern string) ([]*User, error) {

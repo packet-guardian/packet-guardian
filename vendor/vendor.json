@@ -21,6 +21,12 @@
 			"revisionTime": "2016-08-22T20:54:30Z"
 		},
 		{
+			"checksumSHA1": "jEXpLrWXoQvH/zk1lW5Si0swr6Y=",
+			"path": "github.com/go-sql-driver/mysql",
+			"revision": "0b58b37b664c21f3010e836f1b931e1d0b0b0685",
+			"revisionTime": "2016-08-02T11:38:42Z"
+		},
+		{
 			"checksumSHA1": "iIUYZyoanCQQTUaWsu8b+iOSPt4=",
 			"path": "github.com/gorilla/context",
 			"revision": "aed02d124ae4a0e94fea4541c8effd05bf0c8296",
