@@ -57,9 +57,9 @@ func GetDeviceByID(e *common.Environment, id int) (*Device, error) {
 func GetDevicesForUser(e *common.Environment, u *User) ([]*Device, error) {
 	sql := "WHERE \"username\" = ? ORDER BY \"mac\""
 	if e.DB.Driver == "sqlite" {
-		sql += " COLLATE NOCASE ASC"
+		sql += " COLLATE NOCASE"
 	}
-	sql += "ASC"
+	sql += " ASC"
 	return getDevicesFromDatabase(e, sql, u.Username)
 }
 

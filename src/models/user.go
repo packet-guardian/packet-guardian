@@ -178,9 +178,9 @@ func GetUserByUsername(e *common.Environment, username string) (*User, error) {
 func GetAllUsers(e *common.Environment) ([]*User, error) {
 	sql := `ORDER BY "username"`
 	if e.DB.Driver == "sqlite" {
-		sql += " COLLATE NOCASE ASC"
+		sql += " COLLATE NOCASE"
 	}
-	sql += "ASC"
+	sql += " ASC"
 	return getUsersFromDatabase(e, sql)
 }
 
