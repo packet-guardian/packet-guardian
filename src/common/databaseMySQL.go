@@ -8,7 +8,9 @@ package common
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/go-sql-driver/mysql" // MySQL driver
 )
@@ -38,7 +40,21 @@ func init() {
 		}
 
 		d.Driver = "mysql"
-		_, err = d.DB.Exec(`SET GLOBAL sql_mode="ANSI,TRADITIONAL"`)
+
+		// Check the SQL mode, the user is responsible for setting it
+		row := d.DB.QueryRow(`SELECT @@GLOBAL.sql_mode`)
+
+		mode := ""
+		if err := row.Scan(&mode); err != nil {
+			return err
+		}
+
+		ansiOK := strings.Contains(mode, "ANSI")
+		tradOK := strings.Contains(mode, "TRADITIONAL")
+
+		if !ansiOK || !tradOK {
+			return errors.New("MySQL must be in ANSI,TRADITIONAL mode. Please set the global mode or edit the my.cnf file to enable ANSI,TRADITIONAL sql_mode.")
+		}
 		return err
 	}
 }
