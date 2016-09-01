@@ -50,10 +50,9 @@ func init() {
 		}
 
 		ansiOK := strings.Contains(mode, "ANSI")
-		tradOK := strings.Contains(mode, "TRADITIONAL")
 
-		if !ansiOK || !tradOK {
-			return errors.New("MySQL must be in ANSI,TRADITIONAL mode. Please set the global mode or edit the my.cnf file to enable ANSI,TRADITIONAL sql_mode.")
+		if !ansiOK {
+			return errors.New("MySQL must be in ANSI mode. Please set the global mode or edit the my.cnf file to enable ANSI sql_mode.")
 		}
 		return err
 	}
