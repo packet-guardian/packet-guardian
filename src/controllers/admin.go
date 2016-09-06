@@ -15,6 +15,7 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	"github.com/usi-lfkeitel/packet-guardian/src/reports"
 	"github.com/usi-lfkeitel/packet-guardian/src/stats"
+	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 var (
@@ -122,7 +123,7 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request) {
 
 type searchResults struct {
 	D *models.Device
-	L *models.Lease
+	L *dhcp.Lease
 }
 
 func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
@@ -133,12 +134,15 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := r.FormValue("q")
+	leaseStore := models.NewLeaseStore(a.e)
 	var results []*searchResults
 	var devices []*models.Device
+	var searchType string
 	var err error
 
 	if query != "" {
 		if macStartRegex.MatchString(query) {
+			searchType = "mac"
 			devices, err = models.SearchDevicesByField(a.e, "mac", query+"%")
 			for _, d := range devices {
 				results = append(results, &searchResults{
@@ -146,9 +150,10 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 				})
 			}
 		} else if ipStartRegex.MatchString(query) {
+			searchType = "ip"
 			// Get leases matching IP
-			var leases []*models.Lease
-			leases, err = models.SearchLeases(a.e, `"ip" LIKE ?`, query+"%")
+			var leases []*dhcp.Lease
+			leases, err = leaseStore.SearchLeases(`"ip" LIKE ?`, query+"%")
 			// Get devices corresponding to each lease
 			var d *models.Device
 			for _, l := range leases {
@@ -162,6 +167,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 				})
 			}
 		} else {
+			searchType = "user"
 			devices, err = models.SearchDevicesByField(a.e, "username", query+"%")
 			if len(devices) == 0 {
 				devices, err = models.SearchDevicesByField(a.e, "user_agent", "%"+query+"%")
@@ -178,7 +184,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 		if r.L != nil {
 			continue
 		}
-		lease, err := models.GetLeaseByMAC(a.e, r.D.MAC)
+		lease, err := leaseStore.GetRecentLeaseByMAC(r.D.MAC)
 		if err != nil || lease.ID == 0 {
 			continue
 		}
@@ -190,8 +196,9 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"query":   query,
-		"results": results,
+		"query":      query,
+		"results":    results,
+		"searchType": searchType,
 	}
 
 	a.e.Views.NewView("admin-search", r).Render(w, data)

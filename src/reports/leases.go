@@ -22,7 +22,7 @@ func leaseReport(e *common.Environment, w http.ResponseWriter, r *http.Request) 
 	networkName := network[0]
 	_, registered := r.URL.Query()["registered"]
 
-	leases, err := models.SearchLeases(e,
+	leases, err := models.NewLeaseStore(e).SearchLeases(
 		"network = ? AND registered = ? AND end > ?",
 		networkName, registered, time.Now().Unix(),
 	)

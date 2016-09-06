@@ -3,7 +3,14 @@
 {{if eq .query ""}}
 <div class="clearfix no-devices">Please enter a search query</div>
 {{else}}
-<div class="clearfix no-devices">No results found</div>
+<div class="clearfix no-devices">
+    No results found.
+</div>
+{{if eq .searchType "user"}}
+<div class="no-devices no-devices-register">
+    <a href="/register?manual=1&username={{.query}}" class="btn">Register new device for {{.query}}</a>
+</div>
+{{end}}
 {{end}}
 {{else}}
 <div class="expired-sample-block">

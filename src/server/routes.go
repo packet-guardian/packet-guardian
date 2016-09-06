@@ -5,9 +5,11 @@
 package server
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/pprof"
+	"runtime"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -17,6 +19,7 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/controllers/api"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	mid "github.com/usi-lfkeitel/packet-guardian/src/server/middleware"
+	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 func LoadRoutes(e *common.Environment) http.Handler {
@@ -44,23 +47,8 @@ func LoadRoutes(e *common.Environment) http.Handler {
 
 	// Development Routes
 	if e.IsDev() {
-		devController := controllers.NewDevController(e)
-		s := r.PathPrefix("/dev").Subrouter()
-		s.HandleFunc("/reloadtemp", devController.ReloadTemplates).Methods("GET")
-		s.HandleFunc("/reloadconf", devController.ReloadConfiguration).Methods("GET")
-
-		// Add routes for profiler
-		s = r.PathPrefix("/debug").Subrouter()
-		s.HandleFunc("/pprof/", pprof.Index)
-		s.HandleFunc("/pprof/cmdline", pprof.Cmdline)
-		s.HandleFunc("/pprof/profile", pprof.Profile)
-		s.HandleFunc("/pprof/symbol", pprof.Symbol)
-		s.HandleFunc("/pprof/trace", pprof.Trace)
-		// Manually add support for paths linked to by index page at /debug/pprof/
-		s.Handle("/pprof/goroutine", pprof.Handler("goroutine"))
-		s.Handle("/pprof/heap", pprof.Handler("heap"))
-		s.Handle("/pprof/threadcreate", pprof.Handler("threadcreate"))
-		s.Handle("/pprof/block", pprof.Handler("block"))
+		r.PathPrefix("/dev").Handler(devRouter(e))
+		r.PathPrefix("/debug").Handler(debugRouter(e))
 		e.Log.Debug("Profiling enabled")
 	}
 
@@ -71,6 +59,53 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	h = mid.Panic(e, h)           // Panic catcher
 
 	return h
+}
+
+func devRouter(e *common.Environment) http.Handler {
+	r := mux.NewRouter()
+	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+
+	devController := controllers.NewDevController(e)
+	r.HandleFunc("/dev/reloadtemp", devController.ReloadTemplates).Methods("GET")
+	r.HandleFunc("/dev/reloadconf", devController.ReloadConfiguration).Methods("GET")
+
+	h := mid.CheckAdmin(r)
+	h = mid.CheckAuth(h)
+	return h
+}
+
+func debugRouter(e *common.Environment) http.Handler {
+	r := mux.NewRouter()
+	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+
+	r.HandleFunc("/debug/pprof", pprof.Index)
+	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	// Manually add support for paths linked to by index page at /debug/pprof/
+	r.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	r.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	r.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+	r.Handle("/debug/pprof/block", pprof.Handler("block"))
+
+	r.HandleFunc("/debug/heap-stats", heapStats)
+
+	h := mid.CheckAdmin(r)
+	h = mid.CheckAuth(h)
+	return h
+}
+
+func heapStats(w http.ResponseWriter, r *http.Request) {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	fmt.Fprintf(w,
+		"HeapSys: %d, HeapAlloc: %d, HeapIdle: %d, HeapReleased: %d\n",
+		m.HeapSys,
+		m.HeapAlloc,
+		m.HeapIdle,
+		m.HeapReleased,
+	)
 }
 
 func adminRouter(e *common.Environment) http.Handler {
@@ -125,7 +160,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	e := common.GetEnvironmentFromContext(r)
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, err := models.IsRegisteredByIP(e, ip)
+	reg, err := dhcp.IsRegisteredByIP(models.NewLeaseStore(e), ip)
 	if err != nil {
 		e.Log.WithField("Err", err).Notice("Couldn't get registration status")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)

@@ -29,12 +29,12 @@ func BlacklistCheck(e *common.Environment, next http.Handler) http.Handler {
 		}
 
 		ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-		lease, err := models.GetLeaseByIP(e, ip)
+		lease, err := models.NewLeaseStore(e).GetLeaseByIP(ip)
 		if err == nil && lease.ID != 0 {
 			device, err := models.GetDeviceByMAC(e, lease.MAC)
 			if err != nil {
 				e.Log.Errorf("Error getting device for blacklist check: %s", err.Error())
-			} else if device.IsBlacklisted {
+			} else if device.IsBlacklisted() {
 				e.Views.NewView("blacklisted", r).Render(w, nil)
 				return
 			}

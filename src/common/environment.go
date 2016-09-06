@@ -5,15 +5,9 @@
 package common
 
 import (
-	"database/sql"
-	"errors"
-	"net/http"
 	"os"
 	"strings"
 	"time"
-
-	"github.com/gorilla/context"
-	_ "github.com/mattn/go-sqlite3" // SQLite driver
 
 	"github.com/lfkeitel/verbose"
 )
@@ -57,16 +51,7 @@ func NewTestEnvironment() *Environment {
 	return e
 }
 
-func GetEnvironmentFromContext(r *http.Request) *Environment {
-	if rv := context.Get(r, SessionEnvKey); rv != nil {
-		return rv.(*Environment)
-	}
-	return nil
-}
-
-func SetEnvironmentToContext(r *http.Request, e *Environment) {
-	context.Set(r, SessionEnvKey, e)
-}
+// Get and Set Environment to context, moved to context files
 
 func (e *Environment) IsTesting() bool {
 	return (e.Env == EnvTesting)
@@ -78,41 +63,6 @@ func (e *Environment) IsProd() bool {
 
 func (e *Environment) IsDev() bool {
 	return (e.Env == EnvDev)
-}
-
-type DatabaseAccessor struct {
-	*sql.DB
-	Driver string
-}
-
-func NewDatabaseAccessor(config *Config) (*DatabaseAccessor, error) {
-	var err error
-	da := &DatabaseAccessor{}
-
-	if config.Database.Type == "sqlite" {
-		if !FileExists(config.Database.Address) {
-			return nil, errors.New("SQLite database file doesn't exist")
-		}
-		da.DB, err = sql.Open("sqlite3", config.Database.Address)
-		da.Driver = "sqlite3"
-	} else {
-		return nil, errors.New("Unsupported database type " + config.Database.Type)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	da.setupDatabase()
-	return da, nil
-}
-
-func (da *DatabaseAccessor) setupDatabase() error {
-	var err error
-	switch da.Driver {
-	case "sqlite3":
-		_, err = da.Exec("PRAGMA foreign_keys = ON")
-	}
-	return err
 }
 
 var logLevels = map[string]verbose.LogLevel{

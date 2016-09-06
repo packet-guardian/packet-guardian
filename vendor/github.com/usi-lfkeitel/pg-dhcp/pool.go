@@ -1,4 +1,4 @@
-// This source file is part of the Packet Guardian project.
+// This source file is part of the PG-DHCP project.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -12,10 +12,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/lfkeitel/verbose"
 	"github.com/onesimus-systems/dhcp4"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 var r = regexp.MustCompile(`\d+ bytes from .*`)
@@ -25,7 +22,7 @@ type pool struct {
 	rangeEnd      net.IP
 	settings      *settings
 	optionsCached bool
-	leases        map[string]*models.Lease // IP -> Lease
+	leases        map[string]*Lease // IP -> Lease
 	subnet        *subnet
 	nextFreeStart int
 	ipsInPool     int
@@ -34,7 +31,7 @@ type pool struct {
 func newPool() *pool {
 	return &pool{
 		settings: newSettingsBlock(),
-		leases:   make(map[string]*models.Lease),
+		leases:   make(map[string]*Lease),
 	}
 }
 
@@ -90,11 +87,12 @@ func (p *pool) getOptions(registered bool) dhcp4.Options {
 	return p.settings.options
 }
 
-func (p *pool) getFreeLease(e *common.Environment) *models.Lease {
+func (p *pool) getFreeLease(s *ServerConfig) *Lease {
 	now := time.Now()
 
 	regFreeTime := time.Duration(p.subnet.network.global.registeredSettings.freeLeaseAfter) * time.Second
 	unRegFreeTime := time.Duration(p.subnet.network.global.unregisteredSettings.freeLeaseAfter) * time.Second
+	// Find a candidate from the already used leases
 	for _, l := range p.leases {
 		if l.IsAbandoned { // IP in use by a device we don't know about
 			continue
@@ -127,13 +125,11 @@ func (p *pool) getFreeLease(e *common.Environment) *models.Lease {
 		}
 
 		// IP has no lease with it
-		l := models.NewLease(e)
+		l := NewLease(s.LeaseStore)
 		// All known leases have already been checked, which means if this IP
 		// is in use, we didn't do it. Mark as abandoned.
-		if !e.IsTesting() && isIPInUse(next) {
-			e.Log.WithFields(verbose.Fields{
-				"IP": next.String(),
-			}).Notice("Abandoned IP")
+		if !s.IsTesting() && isIPInUse(next) {
+			s.Log.Error("Abandoned IP %s", next.String())
 			l.IsAbandoned = true
 			continue
 		}
@@ -146,9 +142,16 @@ func (p *pool) getFreeLease(e *common.Environment) *models.Lease {
 		return l
 	}
 
+	// We've exhausted all possibilities, admit defeat.
+	return nil
+}
+
+func (p *pool) getFreeLeaseDesperate(s *ServerConfig) *Lease {
+	now := time.Now()
+
 	// No free leases, bring out the big guns
 	// Find the oldest expired lease
-	var longestExpiredLease *models.Lease
+	var longestExpiredLease *Lease
 	for _, l := range p.leases {
 		if l.End.After(now) { // Skip active leases
 			continue
@@ -175,11 +178,10 @@ func (p *pool) getFreeLease(e *common.Environment) *models.Lease {
 			continue
 		}
 		if !isIPInUse(l.IP) {
+			l.IsAbandoned = false
 			return l
 		}
 	}
-
-	// We've exhausted all possibilities, admit defeat.
 	return nil
 }
 

@@ -11,6 +11,7 @@ BUILDDATE := $(shell date -u +"%B %d, %Y")
 BUILDER := $(shell echo "`git config user.name` <`git config user.email`>")
 PKG_RELEASE ?= 1
 PROJECT_URL := "https://github.com/usi-lfkeitel/$(NAME)"
+BUILDTAGS ?= dball
 LDFLAGS := -X 'main.version=$(VERSION)' \
 			-X 'main.buildTime=$(BUILDTIME)' \
 			-X 'main.builder=$(BUILDER)' \
@@ -46,11 +47,15 @@ CMD_SOURCES := $(shell find cmd -name main.go)
 TARGETS := $(patsubst cmd/%/main.go,bin/%,$(CMD_SOURCES))
 
 bin/%: cmd/%/main.go
-	go build -v -ldflags "$(LDFLAGS)" -o $@ $<
+	go build -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' -o $@ $<
 
 local-install: test
-	GOBIN=$(PWD)/bin go install -v -ldflags "$(LDFLAGS)" ./cmd/pg
-	GOBIN=$(PWD)/bin go install -v -ldflags "$(LDFLAGS)" ./cmd/dhcp
+	GOBIN=$(PWD)/bin go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
+	GOBIN=$(PWD)/bin go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
+
+install: test
+	go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
+	go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
 
 all: $(TARGETS)
 .DEFAULT_GOAL := all

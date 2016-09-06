@@ -69,7 +69,14 @@ func FormatMacAddress(mac string) (net.HardwareAddr, error) {
 	if len(mac) == 12 {
 		mac = mac[0:4] + "." + mac[4:8] + "." + mac[8:12]
 	}
-	return net.ParseMAC(mac)
+	m, err := net.ParseMAC(mac)
+	if err != nil {
+		return nil, err
+	}
+	if len(m.String()) != 17 {
+		return nil, errors.New("Incorrect MAC address length")
+	}
+	return m, nil
 }
 
 func FileExists(file string) bool {

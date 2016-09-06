@@ -6,13 +6,11 @@ package models
 
 import (
 	"errors"
-	"net/http"
 	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/gorilla/context"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
@@ -178,7 +176,12 @@ func GetUserByUsername(e *common.Environment, username string) (*User, error) {
 }
 
 func GetAllUsers(e *common.Environment) ([]*User, error) {
-	return getUsersFromDatabase(e, `ORDER BY "username" COLLATE NOCASE ASC`)
+	sql := `ORDER BY "username"`
+	if e.DB.Driver == "sqlite" {
+		sql += " COLLATE NOCASE"
+	}
+	sql += " ASC"
+	return getUsersFromDatabase(e, sql)
 }
 
 func SearchUsersByField(e *common.Environment, field, pattern string) ([]*User, error) {
@@ -251,17 +254,6 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 		results = append(results, user)
 	}
 	return results, nil
-}
-
-func GetUserFromContext(r *http.Request) *User {
-	if rv := context.Get(r, common.SessionUserKey); rv != nil {
-		return rv.(*User)
-	}
-	return nil
-}
-
-func SetUserToContext(r *http.Request, u *User) {
-	context.Set(r, common.SessionUserKey, u)
 }
 
 func (u *User) LoadRights() {

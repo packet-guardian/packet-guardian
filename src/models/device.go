@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 // Device represents a device in the system
@@ -24,9 +25,9 @@ type Device struct {
 	Expires        time.Time
 	DateRegistered time.Time
 	UserAgent      string
-	IsBlacklisted  bool
+	blacklisted    bool
 	LastSeen       time.Time
-	Leases         []*Lease
+	Leases         []*dhcp.Lease
 }
 
 func NewDevice(e *common.Environment) *Device {
@@ -54,7 +55,11 @@ func GetDeviceByID(e *common.Environment, id int) (*Device, error) {
 }
 
 func GetDevicesForUser(e *common.Environment, u *User) ([]*Device, error) {
-	sql := "WHERE \"username\" = ? ORDER BY \"mac\" COLLATE NOCASE ASC"
+	sql := "WHERE \"username\" = ? ORDER BY \"mac\""
+	if e.DB.Driver == "sqlite" {
+		sql += " COLLATE NOCASE"
+	}
+	sql += " ASC"
 	return getDevicesFromDatabase(e, sql, u.Username)
 }
 
@@ -131,7 +136,7 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 			Expires:        time.Unix(expires, 0),
 			DateRegistered: time.Unix(dateRegistered, 0),
 			UserAgent:      ua,
-			IsBlacklisted:  blacklisted,
+			blacklisted:    blacklisted,
 			LastSeen:       time.Unix(lastSeen, 0),
 		}
 		results = append(results, device)
@@ -145,9 +150,36 @@ func DeleteAllDeviceForUser(e *common.Environment, u *User) error {
 	return err
 }
 
+func (d *Device) GetID() int {
+	return d.ID
+}
+
+func (d *Device) GetMAC() net.HardwareAddr {
+	return d.MAC
+}
+
+func (d *Device) GetUsername() string {
+	return d.Username
+}
+
+func (d *Device) IsBlacklisted() bool {
+	return d.blacklisted
+}
+
+func (d *Device) SetBlacklist(b bool) {
+	d.blacklisted = b
+}
+
+func (d *Device) IsRegistered() bool {
+	return (d.ID != 0 && !d.IsBlacklisted() && !d.IsExpired())
+}
+
+func (d *Device) SetLastSeen(t time.Time) {
+	d.LastSeen = t
+}
+
 func (d *Device) LoadKnownLeases() error {
-	leases, err := SearchLeases(
-		d.e,
+	leases, err := NewLeaseStore(d.e).SearchLeases(
 		`"mac" = ? ORDER BY "start" DESC`,
 		d.MAC.String(),
 	)
@@ -163,7 +195,7 @@ func (d *Device) LoadKnownLeases() error {
 // GetCurrentLease will return the last known lease for the device that has
 // not expired. If two leases are currently active, it will return the lease
 // with the newest start date. If no current lease is found, returns nil.
-func (d *Device) GetCurrentLease() *Lease {
+func (d *Device) GetCurrentLease() *dhcp.Lease {
 	if d.Leases == nil {
 		d.LoadKnownLeases()
 	}
@@ -199,7 +231,7 @@ func (d *Device) updateExisting() error {
 		d.Expires.Unix(),
 		d.DateRegistered.Unix(),
 		d.UserAgent,
-		d.IsBlacklisted,
+		d.IsBlacklisted(),
 		d.Description,
 		d.LastSeen.Unix(),
 		d.ID,
@@ -223,7 +255,7 @@ func (d *Device) saveNew() error {
 		d.Expires.Unix(),
 		d.DateRegistered.Unix(),
 		d.UserAgent,
-		d.IsBlacklisted,
+		d.IsBlacklisted(),
 		d.Description,
 		d.LastSeen.Unix(),
 	)

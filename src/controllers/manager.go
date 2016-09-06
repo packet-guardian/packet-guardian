@@ -12,6 +12,7 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 const (
@@ -35,7 +36,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	man := (r.FormValue("manual") == "1")
 	loggedIn := auth.IsLoggedIn(r)
 	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, _ := models.IsRegisteredByIP(m.e, ip)
+	reg, _ := dhcp.IsRegisteredByIP(models.NewLeaseStore(m.e), ip)
 	if !man && reg {
 		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return

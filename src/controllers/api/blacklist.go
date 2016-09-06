@@ -99,18 +99,18 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 		}
 
 		// Device is already in the state we want
-		if device.IsBlacklisted == (r.Method == "POST") {
+		if device.IsBlacklisted() == (r.Method == "POST") {
 			continue
 		}
 
-		device.IsBlacklisted = (r.Method == "POST")
+		device.SetBlacklist(r.Method == "POST")
 		if err := device.Save(); err != nil {
 			b.e.Log.Errorf("Error blacklisting device %s: %s", device.MAC.String(), err.Error())
 			finishedWithErrors = true
 			continue
 		}
 
-		if device.IsBlacklisted {
+		if device.IsBlacklisted() {
 			b.e.Log.Infof("Blacklisted device %s for user %s", device.MAC.String(), user.Username)
 		} else {
 			b.e.Log.Infof("Removed device %s from blacklist for user %s", device.MAC.String(), user.Username)

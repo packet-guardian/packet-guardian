@@ -21,6 +21,12 @@
 			"revisionTime": "2016-08-22T20:54:30Z"
 		},
 		{
+			"checksumSHA1": "jEXpLrWXoQvH/zk1lW5Si0swr6Y=",
+			"path": "github.com/go-sql-driver/mysql",
+			"revision": "0b58b37b664c21f3010e836f1b931e1d0b0b0685",
+			"revisionTime": "2016-08-02T11:38:42Z"
+		},
+		{
 			"checksumSHA1": "iIUYZyoanCQQTUaWsu8b+iOSPt4=",
 			"path": "github.com/gorilla/context",
 			"revision": "aed02d124ae4a0e94fea4541c8effd05bf0c8296",
@@ -91,6 +97,12 @@
 			"path": "github.com/onesimus-systems/dhcp4",
 			"revision": "0c6d61b871fffc4288a9b2543373e8fb7208eb8b",
 			"revisionTime": "2016-06-08T14:48:14Z"
+		},
+		{
+			"checksumSHA1": "2eihtwrllLGgtPUurPjxv+3wsTU=",
+			"path": "github.com/usi-lfkeitel/pg-dhcp",
+			"revision": "f71067c7b632af68d59c666a302c8e6712063046",
+			"revisionTime": "2016-08-25T02:14:35Z"
 		},
 		{
 			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",

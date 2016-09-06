@@ -2,10 +2,12 @@ package models
 
 import (
 	"bytes"
+
+	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 // LeaseSorter sorts a slice of leases by their IP addresses
-type LeaseSorter []*Lease
+type LeaseSorter []*dhcp.Lease
 
 func (l LeaseSorter) Len() int           { return len(l) }
 func (l LeaseSorter) Less(i, j int) bool { return bytes.Compare([]byte(l[i].IP), []byte(l[j].IP)) < 0 }

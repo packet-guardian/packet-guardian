@@ -18,9 +18,9 @@ func SetSessionInfo(e *common.Environment, next http.Handler) http.Handler {
 		if err != nil {
 			e.Log.Error("Failed to get session user: " + err.Error())
 		}
-		common.SetSessionToContext(r, session)
-		common.SetEnvironmentToContext(r, e)
-		models.SetUserToContext(r, sessionUser)
+		r = common.SetSessionToContext(r, session)
+		r = common.SetEnvironmentToContext(r, e)
+		r = models.SetUserToContext(r, sessionUser)
 
 		// If running behind a proxy, set the RemoteAddr to the real address
 		if r.Header.Get("X-Real-IP") != "" {

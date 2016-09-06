@@ -40,6 +40,15 @@ button {
     font-size: 1.5em;
 }
 
+.no-devices-register {
+    font-weight: normal;
+    margin-top: 1em;
+}
+
+.no-devices-register a {
+    font-size: 1em;
+}
+
 .text-label {
     font-weight: bold;
 }

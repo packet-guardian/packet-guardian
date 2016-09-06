@@ -35,14 +35,14 @@ func TestRootHandlerLoggedInNormal(t *testing.T) {
 	session.Set("username", "testUser")
 
 	req, _ := http.NewRequest("", "", nil)
-	common.SetEnvironmentToContext(req, e)
-	common.SetSessionToContext(req, session)
+	req = common.SetEnvironmentToContext(req, e)
+	req = common.SetSessionToContext(req, session)
 
 	sessionUser, err := models.GetUserByUsername(e, "testUser")
 	if err != nil {
 		t.Logf("Failed to get session user: %v", err.Error())
 	}
-	models.SetUserToContext(req, sessionUser)
+	req = models.SetUserToContext(req, sessionUser)
 
 	w := httptest.NewRecorder()
 	rootHandler(w, req)
@@ -81,14 +81,14 @@ func TestRootHandlerLoggedInAdmin(t *testing.T) {
 	session.Set("username", "testUser")
 
 	req, _ := http.NewRequest("", "", nil)
-	common.SetEnvironmentToContext(req, e)
-	common.SetSessionToContext(req, session)
+	req = common.SetEnvironmentToContext(req, e)
+	req = common.SetSessionToContext(req, session)
 
 	sessionUser, err := models.GetUserByUsername(e, "testUser")
 	if err != nil {
 		t.Logf("Failed to get session user: %v", err.Error())
 	}
-	models.SetUserToContext(req, sessionUser)
+	req = models.SetUserToContext(req, sessionUser)
 
 	w := httptest.NewRecorder()
 	rootHandler(w, req)
@@ -125,8 +125,8 @@ func TestRootHandlerNotLoggedInNotRegistered(t *testing.T) {
 	session.Set("loggedin", false)
 
 	req, _ := http.NewRequest("", "", nil)
-	common.SetEnvironmentToContext(req, e)
-	common.SetSessionToContext(req, session)
+	req = common.SetEnvironmentToContext(req, e)
+	req = common.SetSessionToContext(req, session)
 	req.RemoteAddr = "192.168.1.10"
 
 	w := httptest.NewRecorder()
@@ -164,8 +164,8 @@ func TestRootHandlerNotLoggedInRegistered(t *testing.T) {
 	session.Set("loggedin", false)
 
 	req, _ := http.NewRequest("", "", nil)
-	common.SetEnvironmentToContext(req, e)
-	common.SetSessionToContext(req, session)
+	req = common.SetEnvironmentToContext(req, e)
+	req = common.SetSessionToContext(req, session)
 	req.RemoteAddr = "192.168.1.10"
 
 	w := httptest.NewRecorder()
