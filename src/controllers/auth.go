@@ -7,6 +7,7 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
@@ -19,7 +20,7 @@ func NewAuthController(e *common.Environment) *Auth {
 	return &Auth{e: e}
 }
 
-func (a *Auth) LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Auth) LoginHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	if r.Method == "GET" {
 		a.showLoginPage(w, r)
 	} else if r.Method == "POST" {
@@ -49,7 +50,7 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // LogoutHandler voids a user's session
-func (a *Auth) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Auth) LogoutHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	auth.LogoutUser(r, w)
 	if _, ok := r.URL.Query()["noredirect"]; ok {
 		w.WriteHeader(http.StatusNoContent)

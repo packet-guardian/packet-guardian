@@ -39,7 +39,7 @@ $.onReady(function() {
         var username = $('[name=username]').value();
         $.ajax({
             method: "DELETE",
-            url: "/api/device/"+username,
+            url: "/api/device/user/"+username,
             success: function() {
                 location.reload();
             },
@@ -63,7 +63,7 @@ $.onReady(function() {
 
         $.ajax({
             method: 'DELETE',
-            url: '/api/device/'+username,
+            url: '/api/device/user/'+username,
             params: {"mac": devicesToRemove.join(',')},
             success: function() {
                 location.reload();

@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	"github.com/usi-lfkeitel/packet-guardian/src/reports"
@@ -35,7 +35,7 @@ func (a *Admin) redirectToRoot(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func (a *Admin) DashboardHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Admin) DashboardHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.ViewAdminPage) {
 		a.redirectToRoot(w, r)
@@ -52,14 +52,14 @@ func (a *Admin) DashboardHandler(w http.ResponseWriter, r *http.Request) {
 	a.e.Views.NewView("admin-dash", r).Render(w, data)
 }
 
-func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.ViewDevices) {
 		a.redirectToRoot(w, r)
 		return
 	}
 
-	user, err := models.GetUserByUsername(a.e, mux.Vars(r)["username"])
+	user, err := models.GetUserByUsername(a.e, p.ByName("username"))
 
 	results, err := models.GetDevicesForUser(a.e, user)
 	if err != nil {
@@ -81,18 +81,18 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	a.e.Views.NewView("admin-manage", r).Render(w, data)
 }
 
-func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.ViewDevices) {
 		a.redirectToRoot(w, r)
 		return
 	}
 
-	mac, err := net.ParseMAC(mux.Vars(r)["mac"])
+	mac, err := net.ParseMAC(p.ByName("mac"))
 	if err != nil {
 		a.e.Views.RenderError(w, r, map[string]interface{}{
 			"title": "No device found",
-			"body":  "Incorrectly formed MAC address: " + mux.Vars(r)["mac"],
+			"body":  "Incorrectly formed MAC address: " + p.ByName("mac"),
 		})
 		return
 	}
@@ -126,7 +126,7 @@ type searchResults struct {
 	L *dhcp.Lease
 }
 
-func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.ViewAdminPage | models.ViewDevices) {
 		a.redirectToRoot(w, r)
@@ -204,7 +204,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	a.e.Views.NewView("admin-search", r).Render(w, data)
 }
 
-func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.ViewUsers) {
 		a.redirectToRoot(w, r)
@@ -225,14 +225,14 @@ func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request) {
 	a.e.Views.NewView("admin-user-list", r).Render(w, data)
 }
 
-func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.EditUser) {
 		a.redirectToRoot(w, r)
 		return
 	}
 
-	username := mux.Vars(r)["username"]
+	username := p.ByName("username")
 	user, err := models.GetUserByUsername(a.e, username)
 	if err != nil {
 		a.e.Log.Errorf("Error getting user %s: %s", username, err.Error())
@@ -245,14 +245,14 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request) {
 	a.e.Views.NewView("admin-user", r).Render(w, data)
 }
 
-func (a *Admin) ReportHandler(w http.ResponseWriter, r *http.Request) {
+func (a *Admin) ReportHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.ViewReports) {
 		a.redirectToRoot(w, r)
 		return
 	}
 
-	report := mux.Vars(r)["report"]
+	report := p.ByName("report")
 	if report != "" {
 		reports.RenderReport(report, w, r)
 		return

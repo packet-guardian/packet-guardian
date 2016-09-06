@@ -129,7 +129,7 @@ $.onReady(function() {
         if (devices.length === 0 || !username) {
             return;
         }
-        $.post("/api/device/_reassign", {"username": username, "macs": devices.join(',')}, function() {
+        $.post("/api/device/reassign", {"username": username, "macs": devices.join(',')}, function() {
             location.reload();
         }, function() {
             c.FlashMessage("Error reassigning devices");
