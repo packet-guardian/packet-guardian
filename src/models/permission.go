@@ -37,6 +37,8 @@ const (
 	// that has at lease ViewUsers or ViewDevices
 	ViewAdminPage
 	ViewReports
+
+	ViewDebugInfo
 )
 
 const (

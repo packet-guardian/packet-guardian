@@ -38,8 +38,13 @@ func CheckAdmin(next http.Handler) http.Handler {
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}
-		// /admin/users is for full admins only
+
 		if strings.HasPrefix(r.URL.Path, "/admin/users") && !u.Can(models.ViewUsers) {
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			return
+		}
+
+		if (strings.HasPrefix(r.URL.Path, "/debug") || strings.HasPrefix(r.URL.Path, "/dev")) && !u.Can(models.ViewDebugInfo) {
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
 		}
