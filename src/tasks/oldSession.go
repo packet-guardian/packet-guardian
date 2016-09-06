@@ -13,13 +13,15 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
+const sessionsDir string = "sessions"
+
 func init() {
 	RegisterJob("Purge old web sessions", cleanUpExpiredSessions)
 }
 
 func cleanUpExpiredSessions(e *common.Environment) (string, error) {
 	w := sessionWalker{n: time.Now().Add(time.Duration(-24) * time.Hour)}
-	err := filepath.Walk("sessions", w.sessionDirWalker)
+	err := filepath.Walk(sessionsDir, w.sessionDirWalker)
 	if err != nil {
 		return "", err
 	}
@@ -32,7 +34,7 @@ type sessionWalker struct {
 }
 
 func (s sessionWalker) sessionDirWalker(path string, info os.FileInfo, err error) error {
-	if info.IsDir() {
+	if info.IsDir() && path != sessionsDir {
 		return filepath.SkipDir
 	}
 	if info.ModTime().Before(s.n) {
