@@ -88,7 +88,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 
 	// Get MAC address
 	var mac net.HardwareAddr
-	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
+	ip := common.GetIPFromContext(r)
 	if manual {
 		// Manual registration
 		if !d.e.Config.Registration.AllowManualRegistrations {
@@ -103,7 +103,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 		}
 	} else {
 		// Automatic registration
-		lease, err := models.NewLeaseStore(d.e).GetLeaseByIP(ip)
+		lease, err := models.GetLeaseStore(d.e).GetLeaseByIP(ip)
 		if err != nil {
 			d.e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
 			common.NewAPIResponse("Failed detecting MAC address", nil).WriteResponse(w, http.StatusInternalServerError)

@@ -16,8 +16,28 @@ type LeaseStore struct {
 	e *common.Environment
 }
 
+var leaseStore *LeaseStore
+
+// NewLeaseStore will create a new LeaseStore object using the given Environment.
+// Client code should use GetLeaseStore unless it's absolutly necessary to have
+// a new LeaseStore object.
 func NewLeaseStore(e *common.Environment) *LeaseStore {
 	return &LeaseStore{e: e}
+}
+
+// GetLeaseStore will return an existing LeaseStore if one has been made already,
+// or it will create a new one and return it. Client code should use this unless
+// it's required to get a new LeaseStore object. If the environment is testing,
+// it will always return a new store.
+func GetLeaseStore(e *common.Environment) *LeaseStore {
+	if e.IsTesting() {
+		return NewLeaseStore(e)
+	}
+	if leaseStore != nil {
+		return leaseStore
+	}
+	leaseStore = NewLeaseStore(e)
+	return leaseStore
 }
 
 func (l *LeaseStore) GetAllLeases() ([]*dhcp.Lease, error) {

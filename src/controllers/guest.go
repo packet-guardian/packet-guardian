@@ -5,7 +5,6 @@
 package controllers
 
 import (
-	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -32,8 +31,8 @@ func (g *Guest) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, _ := dhcp.IsRegisteredByIP(models.NewLeaseStore(g.e), ip)
+	ip := common.GetIPFromContext(r)
+	reg, _ := dhcp.IsRegisteredByIP(models.GetLeaseStore(g.e), ip)
 	if reg {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -106,8 +105,8 @@ func (g *Guest) VerificationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, _ := dhcp.IsRegisteredByIP(models.NewLeaseStore(g.e), ip)
+	ip := common.GetIPFromContext(r)
+	reg, _ := dhcp.IsRegisteredByIP(models.GetLeaseStore(g.e), ip)
 	if reg {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return

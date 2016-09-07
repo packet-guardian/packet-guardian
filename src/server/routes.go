@@ -6,7 +6,6 @@ package server
 
 import (
 	"fmt"
-	"net"
 	"net/http"
 	"net/http/pprof"
 	"runtime"
@@ -168,8 +167,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	e := common.GetEnvironmentFromContext(r)
-	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, err := dhcp.IsRegisteredByIP(models.NewLeaseStore(e), ip)
+	reg, err := dhcp.IsRegisteredByIP(models.GetLeaseStore(e), common.GetIPFromContext(r))
 	if err != nil {
 		e.Log.WithField("Err", err).Notice("Couldn't get registration status")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)

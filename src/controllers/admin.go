@@ -134,7 +134,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	}
 
 	query := r.FormValue("q")
-	leaseStore := models.NewLeaseStore(a.e)
+	leaseStore := models.GetLeaseStore(a.e)
 	var results []*searchResults
 	var devices []*models.Device
 	var searchType string

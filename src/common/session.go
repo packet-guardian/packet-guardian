@@ -18,6 +18,7 @@ const (
 	SessionKey     Key = 0
 	SessionUserKey Key = 1
 	SessionEnvKey  Key = 2
+	SessionIPKey   Key = 3
 )
 
 type SessionStore struct {

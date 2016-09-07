@@ -5,7 +5,6 @@
 package middleware
 
 import (
-	"net"
 	"net/http"
 	"strings"
 
@@ -28,8 +27,8 @@ func BlacklistCheck(e *common.Environment, next http.Handler) http.Handler {
 			return
 		}
 
-		ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-		lease, err := models.NewLeaseStore(e).GetLeaseByIP(ip)
+		ip := common.GetIPFromContext(r)
+		lease, err := models.GetLeaseStore(e).GetLeaseByIP(ip)
 		if err == nil && lease.ID != 0 {
 			device, err := models.GetDeviceByMAC(e, lease.MAC)
 			if err != nil {

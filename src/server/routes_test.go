@@ -129,6 +129,7 @@ func TestRootHandlerNotLoggedInNotRegistered(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 	req.RemoteAddr = "192.168.1.10"
+	req = common.SetIPToContext(req)
 
 	w := httptest.NewRecorder()
 	rootHandler(w, req, make(httprouter.Params, 0))
@@ -168,6 +169,7 @@ func TestRootHandlerNotLoggedInRegistered(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 	req.RemoteAddr = "192.168.1.10"
+	req = common.SetIPToContext(req)
 
 	w := httptest.NewRecorder()
 	rootHandler(w, req, make(httprouter.Params, 0))

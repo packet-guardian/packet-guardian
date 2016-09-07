@@ -5,7 +5,6 @@
 package controllers
 
 import (
-	"net"
 	"net/http"
 	"strings"
 
@@ -36,8 +35,8 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ 
 	sessionUser := models.GetUserFromContext(r)
 	man := (r.FormValue("manual") == "1")
 	loggedIn := auth.IsLoggedIn(r)
-	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
-	reg, _ := dhcp.IsRegisteredByIP(models.NewLeaseStore(m.e), ip)
+	ip := common.GetIPFromContext(r)
+	reg, _ := dhcp.IsRegisteredByIP(models.GetLeaseStore(m.e), ip)
 	if !man && reg {
 		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return
