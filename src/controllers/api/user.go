@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
@@ -22,7 +23,7 @@ func NewUserController(e *common.Environment) *User {
 	return &User{e: e}
 }
 
-func (u *User) UserHandler(w http.ResponseWriter, r *http.Request) {
+func (u *User) UserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	if r.Method == "POST" {
 		u.saveUserHandler(w, r)
 	} else if r.Method == "DELETE" {

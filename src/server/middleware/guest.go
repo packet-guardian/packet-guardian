@@ -10,7 +10,7 @@ import (
 	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
-func CheckReg(e *common.Environment, next http.Handler) http.Handler {
+func CheckGuestReg(e *common.Environment, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
 		reg, err := dhcp.IsRegisteredByIP(models.NewLeaseStore(e), ip)

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
@@ -24,7 +24,7 @@ func NewDeviceController(e *common.Environment) *Device {
 	return &Device{e: e}
 }
 
-func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
+func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Check authentication and get User models
 	macPost := r.FormValue("mac-address")
 	manual := (macPost != "")
@@ -171,11 +171,11 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	common.NewAPIResponse("Registration successful", resp).WriteResponse(w, http.StatusOK)
 }
 
-func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
+func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	formUser := sessionUser
-	username, ok := mux.Vars(r)["username"]
-	if !ok {
+	username := p.ByName("username")
+	if username == "" {
 		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
 		return
 	}
@@ -239,7 +239,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	common.NewAPIResponse("Devices deleted successful", nil).WriteResponse(w, http.StatusNoContent)
 }
 
-func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
+func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.ReassignDevice) {
 		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusForbidden)

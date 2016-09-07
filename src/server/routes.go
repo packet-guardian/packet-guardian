@@ -12,7 +12,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
+
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/controllers"
@@ -23,32 +24,38 @@ import (
 )
 
 func LoadRoutes(e *common.Environment) http.Handler {
-	r := mux.NewRouter().StrictSlash(true)
+	r := httprouter.New()
+	r.NotFound = http.HandlerFunc(notFoundHandler)
 
-	// Page routes
-	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
-	r.HandleFunc("/", rootHandler)
-	r.PathPrefix("/public").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public/"))))
+	r.GET("/", rootHandler)
+	r.ServeFiles("/public/*filepath", http.Dir("./public"))
 
 	authController := controllers.NewAuthController(e)
-	r.HandleFunc("/login", authController.LoginHandler).Methods("GET", "POST")
-	r.HandleFunc("/logout", authController.LogoutHandler).Methods("GET")
+	r.GET("/login", authController.LoginHandler)
+	r.POST("/login", authController.LoginHandler)
+	r.GET("/logout", authController.LogoutHandler)
 
 	manageController := controllers.NewManagerController(e)
-	r.HandleFunc("/register", manageController.RegistrationHandler).Methods("GET")
-	r.Handle("/manage", mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler))).Methods("GET")
+	r.GET("/register", manageController.RegistrationHandler)
+	r.Handler("GET", "/manage", mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler)))
 
 	guestController := controllers.NewGuestController(e)
-	r.Handle("/register/guest", mid.CheckReg(e, http.HandlerFunc(guestController.RegistrationHandler))).Methods("GET", "POST")
-	r.Handle("/register/guest/verify", mid.CheckReg(e, http.HandlerFunc(guestController.VerificationHandler))).Methods("GET", "POST")
+	r.Handler("GET", "/register/guest", mid.CheckGuestReg(e,
+		http.HandlerFunc(guestController.RegistrationHandler)))
+	r.Handler("POST", "/register/guest", mid.CheckGuestReg(e,
+		http.HandlerFunc(guestController.RegistrationHandler)))
+	r.Handler("GET", "/register/guest/verify", mid.CheckGuestReg(e,
+		http.HandlerFunc(guestController.VerificationHandler)))
+	r.Handler("POST", "/register/guest/verify", mid.CheckGuestReg(e,
+		http.HandlerFunc(guestController.VerificationHandler)))
 
-	r.PathPrefix("/admin").Handler(adminRouter(e))
-	r.PathPrefix("/api").Handler(apiRouter(e))
+	r.Handler("GET", "/admin/*a", adminRouter(e))
+	r.Handler("POST", "/api/*a", apiRouter(e))
+	r.Handler("DELETE", "/api/*a", apiRouter(e))
 
-	// Development Routes
 	if e.IsDev() {
-		r.PathPrefix("/dev").Handler(devRouter(e))
-		r.PathPrefix("/debug").Handler(debugRouter(e))
+		r.Handler("GET", "/dev/*a", devRouter(e))
+		r.Handler("GET", "/debug/*a", debugRouter(e))
 		e.Log.Debug("Profiling enabled")
 	}
 
@@ -57,17 +64,16 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	h = mid.SetSessionInfo(e, h)  // Adds Environment and user information to requet context
 	h = mid.Logging(e, h)         // Logging
 	h = mid.Panic(e, h)           // Panic catcher
-
 	return h
 }
 
 func devRouter(e *common.Environment) http.Handler {
-	r := mux.NewRouter()
-	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	r := httprouter.New()
+	r.NotFound = http.HandlerFunc(notFoundHandler)
 
 	devController := controllers.NewDevController(e)
-	r.HandleFunc("/dev/reloadtemp", devController.ReloadTemplates).Methods("GET")
-	r.HandleFunc("/dev/reloadconf", devController.ReloadConfiguration).Methods("GET")
+	r.HandlerFunc("GET", "/dev/reloadtemp", devController.ReloadTemplates)
+	r.HandlerFunc("GET", "/dev/reloadconf", devController.ReloadConfiguration)
 
 	h := mid.CheckAdmin(r)
 	h = mid.CheckAuth(h)
@@ -75,21 +81,21 @@ func devRouter(e *common.Environment) http.Handler {
 }
 
 func debugRouter(e *common.Environment) http.Handler {
-	r := mux.NewRouter()
-	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	r := httprouter.New()
+	r.NotFound = http.HandlerFunc(notFoundHandler)
 
-	r.HandleFunc("/debug/pprof", pprof.Index)
-	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	r.HandlerFunc("GET", "/debug/pprof", pprof.Index)
+	r.HandlerFunc("GET", "/debug/pprof/cmdline", pprof.Cmdline)
+	r.HandlerFunc("GET", "/debug/pprof/profile", pprof.Profile)
+	r.HandlerFunc("GET", "/debug/pprof/symbol", pprof.Symbol)
+	r.HandlerFunc("GET", "/debug/pprof/trace", pprof.Trace)
 	// Manually add support for paths linked to by index page at /debug/pprof/
-	r.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
-	r.Handle("/debug/pprof/heap", pprof.Handler("heap"))
-	r.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
-	r.Handle("/debug/pprof/block", pprof.Handler("block"))
+	r.Handler("GET", "/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	r.Handler("GET", "/debug/pprof/heap", pprof.Handler("heap"))
+	r.Handler("GET", "/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+	r.Handler("GET", "/debug/pprof/block", pprof.Handler("block"))
 
-	r.HandleFunc("/debug/heap-stats", heapStats)
+	r.HandlerFunc("GET", "/debug/heap-stats", heapStats)
 
 	h := mid.CheckAdmin(r)
 	h = mid.CheckAuth(h)
@@ -109,19 +115,18 @@ func heapStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func adminRouter(e *common.Environment) http.Handler {
-	r := mux.NewRouter()
-	r.NotFoundHandler = http.HandlerFunc(notFoundHandler)
-	get := r.Methods("GET").Subrouter()
+	r := httprouter.New()
+	r.NotFound = http.HandlerFunc(notFoundHandler)
 
 	adminController := controllers.NewAdminController(e)
-	get.HandleFunc("/admin", adminController.DashboardHandler)
-	get.HandleFunc("/admin/search", adminController.SearchHandler)
-	get.HandleFunc("/admin/manage/user/{username}", adminController.ManageHandler)
-	get.HandleFunc("/admin/manage/device/{mac:(?:[0-f]{2}:?){6}}", adminController.ShowDeviceHandler)
-	get.HandleFunc("/admin/users", adminController.AdminUserListHandler)
-	get.HandleFunc("/admin/users/{username}", adminController.AdminUserHandler)
-	get.HandleFunc("/admin/reports", adminController.ReportHandler)
-	get.HandleFunc("/admin/reports/{report}", adminController.ReportHandler)
+	r.GET("/admin/", adminController.DashboardHandler)
+	r.GET("/admin/search", adminController.SearchHandler)
+	r.GET("/admin/manage/user/:username", adminController.ManageHandler)
+	r.GET("/admin/manage/device/:mac", adminController.ShowDeviceHandler)
+	r.GET("/admin/users", adminController.AdminUserListHandler)
+	r.GET("/admin/users/:username", adminController.AdminUserHandler)
+	r.GET("/admin/reports", adminController.ReportHandler)
+	r.GET("/admin/reports/:report", adminController.ReportHandler)
 
 	h := mid.CheckAdmin(r)
 	h = mid.CheckAuth(h)
@@ -129,24 +134,28 @@ func adminRouter(e *common.Environment) http.Handler {
 }
 
 func apiRouter(e *common.Environment) http.Handler {
-	r := mux.NewRouter()
+	r := httprouter.New()
 
 	deviceApiController := api.NewDeviceController(e)
-	r.HandleFunc("/api/device", deviceApiController.RegistrationHandler).Methods("POST")
-	r.HandleFunc("/api/device/{username}", deviceApiController.DeleteHandler).Methods("DELETE")
-	r.HandleFunc("/api/device/_reassign", deviceApiController.ReassignHandler).Methods("POST")
+	r.POST("/api/device", deviceApiController.RegistrationHandler)
+	r.DELETE("/api/device/user/:username", deviceApiController.DeleteHandler)
+	r.POST("/api/device/reassign", deviceApiController.ReassignHandler)
 
 	blacklistController := api.NewBlacklistController(e)
-	r.HandleFunc("/api/blacklist/user/{username}", blacklistController.BlacklistUserHandler).Methods("POST", "DELETE")
-	r.HandleFunc("/api/blacklist/device/{username}", blacklistController.BlacklistDeviceHandler).Methods("POST", "DELETE")
+	r.POST("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)
+	r.DELETE("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)
+
+	r.POST("/api/blacklist/device/:username", blacklistController.BlacklistDeviceHandler)
+	r.DELETE("/api/blacklist/device/:username", blacklistController.BlacklistDeviceHandler)
 
 	userApiController := api.NewUserController(e)
-	r.HandleFunc("/api/user", userApiController.UserHandler).Methods("POST", "DELETE")
+	r.POST("/api/user", userApiController.UserHandler)
+	r.DELETE("/api/user", userApiController.UserHandler)
 
 	return mid.CheckAuth(r)
 }
 
-func rootHandler(w http.ResponseWriter, r *http.Request) {
+func rootHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	if auth.IsLoggedIn(r) {
 		sessionUser := models.GetUserFromContext(r)
 		if sessionUser.Can(models.ViewAdminPage) {
