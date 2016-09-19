@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
@@ -31,7 +30,7 @@ func NewManagerController(e *common.Environment) *Manager {
 	return &Manager{e: e}
 }
 
-func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 	man := (r.FormValue("manual") == "1")
 	loggedIn := auth.IsLoggedIn(r)
