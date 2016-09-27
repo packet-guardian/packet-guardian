@@ -165,7 +165,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 	// Redirect client as needed
 	resp := struct{ Location string }{Location: "/manage"}
 	if sessionUser.Can(models.ViewDevices) {
-		resp.Location = "/admin/manage/" + formUser.Username
+		resp.Location = "/admin/manage/user/" + formUser.Username
 	}
 
 	common.NewAPIResponse("Registration successful", resp).WriteResponse(w, http.StatusOK)
