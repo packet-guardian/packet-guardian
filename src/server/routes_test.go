@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/julienschmidt/httprouter"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
@@ -46,7 +45,7 @@ func TestRootHandlerLoggedInNormal(t *testing.T) {
 	req = models.SetUserToContext(req, sessionUser)
 
 	w := httptest.NewRecorder()
-	rootHandler(w, req, make(httprouter.Params, 0))
+	rootHandler(w, req)
 	if w.Code != 307 {
 		t.Errorf("Wrong redirect code. Expected 307, got %d", w.Code)
 	}
@@ -92,7 +91,7 @@ func TestRootHandlerLoggedInAdmin(t *testing.T) {
 	req = models.SetUserToContext(req, sessionUser)
 
 	w := httptest.NewRecorder()
-	rootHandler(w, req, make(httprouter.Params, 0))
+	rootHandler(w, req)
 	if w.Code != 307 {
 		t.Errorf("Wrong redirect code. Expected 307, got %d", w.Code)
 	}
@@ -132,7 +131,7 @@ func TestRootHandlerNotLoggedInNotRegistered(t *testing.T) {
 	req = common.SetIPToContext(req)
 
 	w := httptest.NewRecorder()
-	rootHandler(w, req, make(httprouter.Params, 0))
+	rootHandler(w, req)
 	if w.Code != 307 {
 		t.Errorf("Wrong redirect code. Expected 307, got %d", w.Code)
 	}
@@ -172,7 +171,7 @@ func TestRootHandlerNotLoggedInRegistered(t *testing.T) {
 	req = common.SetIPToContext(req)
 
 	w := httptest.NewRecorder()
-	rootHandler(w, req, make(httprouter.Params, 0))
+	rootHandler(w, req)
 	if w.Code != 307 {
 		t.Errorf("Wrong redirect code. Expected 307, got %d", w.Code)
 	}

@@ -26,43 +26,47 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	r := httprouter.New()
 	r.NotFound = http.HandlerFunc(notFoundHandler)
 
-	r.GET("/", rootHandler)
+	r.Handler("GET", "/", midStack(e, http.HandlerFunc(rootHandler)))
 	r.ServeFiles("/public/*filepath", http.Dir("./public"))
 
 	authController := controllers.NewAuthController(e)
-	r.GET("/login", authController.LoginHandler)
-	r.POST("/login", authController.LoginHandler)
-	r.GET("/logout", authController.LogoutHandler)
+	r.Handler("GET", "/login", midStack(e, http.HandlerFunc(authController.LoginHandler)))
+	r.Handler("POST", "/login", midStack(e, http.HandlerFunc(authController.LoginHandler)))
+	r.Handler("GET", "/logout", midStack(e, http.HandlerFunc(authController.LogoutHandler)))
 
 	manageController := controllers.NewManagerController(e)
-	r.GET("/register", manageController.RegistrationHandler)
-	r.Handler("GET", "/manage", mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler)))
+	r.Handler("GET", "/register", midStack(e, http.HandlerFunc(manageController.RegistrationHandler)))
+	r.Handler("GET", "/manage", midStack(e, mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler))))
 
 	guestController := controllers.NewGuestController(e)
-	r.Handler("GET", "/register/guest", mid.CheckGuestReg(e,
-		http.HandlerFunc(guestController.RegistrationHandler)))
-	r.Handler("POST", "/register/guest", mid.CheckGuestReg(e,
-		http.HandlerFunc(guestController.RegistrationHandler)))
-	r.Handler("GET", "/register/guest/verify", mid.CheckGuestReg(e,
-		http.HandlerFunc(guestController.VerificationHandler)))
-	r.Handler("POST", "/register/guest/verify", mid.CheckGuestReg(e,
-		http.HandlerFunc(guestController.VerificationHandler)))
+	r.Handler("GET", "/register/guest", midStack(e, mid.CheckGuestReg(e,
+		http.HandlerFunc(guestController.RegistrationHandler))))
+	r.Handler("POST", "/register/guest", midStack(e, mid.CheckGuestReg(e,
+		http.HandlerFunc(guestController.RegistrationHandler))))
+	r.Handler("GET", "/register/guest/verify", midStack(e, mid.CheckGuestReg(e,
+		http.HandlerFunc(guestController.VerificationHandler))))
+	r.Handler("POST", "/register/guest/verify", midStack(e, mid.CheckGuestReg(e,
+		http.HandlerFunc(guestController.VerificationHandler))))
 
-	r.Handler("GET", "/admin/*a", adminRouter(e))
-	r.Handler("POST", "/api/*a", apiRouter(e))
-	r.Handler("DELETE", "/api/*a", apiRouter(e))
+	r.Handler("GET", "/admin/*a", midStack(e, adminRouter(e)))
+	r.Handler("POST", "/api/*a", midStack(e, apiRouter(e)))
+	r.Handler("DELETE", "/api/*a", midStack(e, apiRouter(e)))
 
 	if e.IsDev() {
-		r.Handler("GET", "/dev/*a", devRouter(e))
-		r.Handler("GET", "/debug/*a", debugRouter(e))
+		r.Handler("GET", "/dev/*a", midStack(e, devRouter(e)))
+		r.Handler("GET", "/debug/*a", midStack(e, debugRouter(e)))
 		e.Log.Debug("Profiling enabled")
 	}
 
-	h := mid.BlacklistCheck(e, r) // Enforce a blacklist check
-	h = mid.Cache(e, h)           // Set cache headers if needed
-	h = mid.SetSessionInfo(e, h)  // Adds Environment and user information to requet context
-	h = mid.Logging(e, h)         // Logging
-	h = mid.Panic(e, h)           // Panic catcher
+	h := mid.Logging(e, r) // Logging
+	h = mid.Panic(e, h)    // Panic catcher
+	return h
+}
+
+func midStack(e *common.Environment, h http.Handler) http.Handler {
+	h = mid.BlacklistCheck(e, h) // Enforce a blacklist check
+	h = mid.Cache(e, h)          // Set cache headers if needed
+	h = mid.SetSessionInfo(e, h) // Adds Environment and user information to requet context
 	return h
 }
 
@@ -154,7 +158,7 @@ func apiRouter(e *common.Environment) http.Handler {
 	return mid.CheckAuth(r)
 }
 
-func rootHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if auth.IsLoggedIn(r) {
 		sessionUser := models.GetUserFromContext(r)
 		if sessionUser.Can(models.ViewAdminPage) {
@@ -187,12 +191,5 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusNotFound)
 		return
 	}
-
-	sessionUser := models.GetUserFromContext(r)
-	if sessionUser.Can(models.ViewAdminPage) {
-		http.Redirect(w, r, "/admin", http.StatusTemporaryRedirect)
-		return
-	}
-
-	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
