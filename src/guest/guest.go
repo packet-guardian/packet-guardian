@@ -44,6 +44,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 		e.Log.WithField("Err", err).Error("Failed to get guest user")
 		return err
 	}
+	defer guest.Release()
 	guest.DeviceLimit = models.UserDeviceLimit(e.Config.Guest.DeviceLimit)
 	// TODO: Honor configuration settings
 	guest.DeviceExpiration = &models.UserDeviceExpiration{

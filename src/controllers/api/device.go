@@ -61,6 +61,8 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 			common.NewAPIResponse("Error registering device", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
+		// Be careful with this, if this goes outside this if, it may release the sessionUser prematurely.
+		defer formUser.Release()
 	}
 
 	if !sessionUser.Can(models.CreateDevice) {
@@ -191,6 +193,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 			common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
+		defer formUser.Release()
 	}
 
 	if !sessionUser.Can(models.DeleteOwn) {
@@ -264,6 +267,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
+	defer user.Release()
 
 	devicesToReassign := strings.Split(devices, ",")
 	for _, devMacStr := range devicesToReassign {
