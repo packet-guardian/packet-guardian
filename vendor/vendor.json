@@ -39,10 +39,10 @@
 			"revisionTime": "2016-08-16T22:23:38Z"
 		},
 		{
-			"checksumSHA1": "oSx9IYMY+lnnX3op2Pnh376tIe4=",
+			"checksumSHA1": "f1dfF3vmO95G/hbwMYlFru/FfMo=",
 			"path": "github.com/gorilla/sessions",
-			"revision": "1bbba13ba476e132b5a0739b18f1653c3e57d3c1",
-			"revisionTime": "2016-08-16T18:50:42Z"
+			"revision": "ca9ada44574153444b00d3fd9c8559e4cc95f896",
+			"revisionTime": "2016-09-22T14:58:04Z"
 		},
 		{
 			"checksumSHA1": "Drsz3oT4NmM2tVQCRk+occxVvPA=",
