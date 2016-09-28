@@ -148,7 +148,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		user.ValidForever = false
 		if validStart != "" {
-			t, err := time.Parse(common.TimeFormat, validStart)
+			t, err := time.ParseInLocation(common.TimeFormat, validStart, time.Local)
 			if err != nil {
 				common.NewAPIResponse("Invalid time format: valid_start", nil).WriteResponse(w, http.StatusBadRequest)
 				return
@@ -156,7 +156,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 			user.ValidStart = t
 		}
 		if validEnd != "" {
-			t, err := time.Parse(common.TimeFormat, validEnd)
+			t, err := time.ParseInLocation(common.TimeFormat, validEnd, time.Local)
 			if err != nil {
 				common.NewAPIResponse("Invalid time format: valid_end", nil).WriteResponse(w, http.StatusBadRequest)
 				return
