@@ -128,7 +128,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 
 	// Check if device is already registered
 	if device.ID != 0 {
-		d.e.Log.Noticef("Attempted duplicate registration of MAC %s to user %s", mac.String(), formUser.Username)
+		d.e.Log.Noticef("Attempted duplicate registration of MAC %s to user %s by %s", mac.String(), formUser.Username, sessionUser.Username)
 		common.NewAPIResponse("Device already registered", nil).WriteResponse(w, http.StatusConflict)
 		return
 	}
@@ -162,7 +162,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 		common.NewAPIResponse("Error saving device", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	d.e.Log.Infof("Successfully registered MAC %s to user %s", mac.String(), formUser.Username)
+	d.e.Log.Infof("Successfully registered MAC %s to user %s by %s", mac.String(), formUser.Username, sessionUser.Username)
 
 	// Redirect client as needed
 	resp := struct{ Location string }{Location: "/manage"}

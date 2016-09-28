@@ -63,7 +63,8 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 }
 
 func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	if !models.GetUserFromContext(r).Can(models.ManageBlacklist) {
+	sessionUser := models.GetUserFromContext(r)
+	if !sessionUser.Can(models.ManageBlacklist) {
 		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
 		return
 	}
@@ -110,9 +111,9 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 		}
 
 		if device.IsBlacklisted() {
-			b.e.Log.Infof("Blacklisted device %s for user %s", device.MAC.String(), user.Username)
+			b.e.Log.Infof("Blacklisted device %s for user %s by %s", device.MAC.String(), user.Username, sessionUser.Username)
 		} else {
-			b.e.Log.Infof("Removed device %s from blacklist for user %s", device.MAC.String(), user.Username)
+			b.e.Log.Infof("Removed device %s from blacklist for user %s by %s", device.MAC.String(), user.Username, sessionUser.Username)
 		}
 	}
 
