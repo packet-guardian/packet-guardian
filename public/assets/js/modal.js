@@ -20,7 +20,7 @@ function jsAlert(){
     this._overlay = new jsOverlay();
     this._container = null;
 
-	this.show = function(dialog, callback){
+	this.show = function(dialog, callback) {
         this._okCallback = (callback) ? callback : function(){};
 		var winW = window.innerWidth;
 	    var winH = window.innerHeight;
@@ -59,7 +59,7 @@ function jsAlert(){
         jContainer.show();
 	};
 
-	this.ok = function(){
+	this.ok = function() {
         $(this._container).hide();
         this._overlay.hide();
         this._okCallback();
@@ -73,7 +73,7 @@ function jsConfirm(){
     this._overlay = null;
     this._container = null;
 
-    this.show = function(dialog, okCallback, cnlCallback){
+    this.show = function(dialog, okCallback, cnlCallback) {
         this._okCallback = (okCallback) ? okCallback : function(){};
         this._cancelCallback = (cnlCallback) ? cnlCallback : function(){};
         var winW = window.innerWidth;
@@ -117,14 +117,14 @@ function jsConfirm(){
         jContainer.show();
     };
 
-    this.ok = function(){
+    this.ok = function() {
         $(this._container).hide();
         this._overlay.hide();
         this._okCallback();
         document.body.removeChild(document.getElementsByClassName("js-modal")[0]);
     };
 
-    this.cancel = function(){
+    this.cancel = function() {
         $(this._container).hide();
         this._overlay.hide();
         this._cancelCallback();
@@ -138,7 +138,13 @@ function jsPrompt(){
     this._overlay = new jsOverlay();
     this._container = null;
 
-    this.show = function(dialog, okkCallback, cnlCallback){
+    this.show = function(dialog, value, okkCallback, cnlCallback) {
+        if (typeof value === "function") {
+            // Shift variables
+            cnlCallback = okkCallback;
+            okkCallback = value;
+            value = "";
+        }
         this._okCallback = (okkCallback) ? okkCallback : function(){};
         this._cancelCallback = (cnlCallback) ? cnlCallback : function(){};
         var winW = window.innerWidth;
@@ -166,6 +172,7 @@ function jsPrompt(){
         input.type = "text";
         input.id = "js-modal-prompt-input";
         input.size = 50;
+        input.value = value;
         // Add input to form
         form.appendChild(input);
         // Add form to body
@@ -208,14 +215,14 @@ function jsPrompt(){
         return false;
     };
 
-    this.ok = function(){
+    this.ok = function() {
         $(this._container).hide();
         this._overlay.hide();
         this._okCallback($("#js-modal-prompt-input").value());
         document.body.removeChild(document.getElementsByClassName("js-modal")[0]);
     };
 
-    this.cancel = function(){
+    this.cancel = function() {
         $(this._container).hide();
         this._overlay.hide();
         this._cancelCallback();

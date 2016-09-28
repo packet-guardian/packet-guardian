@@ -33,7 +33,37 @@ $.onReady(function() {
         $('[name=dev-sel-all]').prop("checked", false);
     });
 
+    $('.edit-dev-desc').click(function(e) {
+        e.stopPropagation();
+        id = $(e.target).data("device");
+        var pmodal = new jsPrompt();
+        pmodal.show("Device Description:", $('#device-'+id+'-desc').text(), function(desc) {
+            editDeviceDescription(id, desc);
+        });
+    });
+
     // Event callbacks
+    function editDeviceDescription(id, desc) {
+        mac = $('#device-'+id+'-mac').text();
+        $.post(
+            '/api/device/mac/'+encodeURIComponent(mac)+'/description',
+            {"description": desc}, function(resp, req) {
+                $('#device-'+id+'-desc').text(desc);
+                c.FlashMessage("Device description saved", 'success');
+            }, function(req) {
+                var resp = JSON.parse(req.responseText);
+                switch(req.status) {
+                    case 500:
+                        c.FlashMessage("Internal Server Error - "+resp.Message);
+                        break;
+                    default:
+                        c.FlashMessage(resp.Message);
+                        break;
+                    }
+            }
+        );
+    }
+
     // Delete buttons
     function deleteAllDevices() {
         var username = $('[name=username]').value();

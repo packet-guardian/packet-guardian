@@ -315,3 +315,53 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 	common.NewAPIResponse("Devices reassigned successfully", nil).WriteResponse(w, http.StatusOK)
 }
+
+func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	sessionUser := models.GetUserFromContext(r)
+	mac, err := net.ParseMAC(p.ByName("mac"))
+	if err != nil {
+		common.NewAPIResponse("Invalid MAC address", nil).WriteResponse(w, http.StatusBadRequest)
+	}
+
+	device, err := models.GetDeviceByMAC(d.e, mac)
+	if err != nil {
+		d.e.Log.Errorf("Error getting device: %s", err.Error())
+		common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
+	}
+
+	if device.Username != sessionUser.Username {
+		// Check admin privilages
+		if !sessionUser.Can(models.EditDevice) {
+			common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
+			return
+		}
+	} else {
+		// Check user privilages
+		deviceUser, err := models.GetUserByUsername(d.e, device.Username)
+		if err != nil {
+			d.e.Log.Errorf("Error getting user: %s", err.Error())
+			common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
+			return
+		}
+
+		if !deviceUser.Can(models.EditOwn) {
+			common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
+			return
+		}
+	}
+
+	device.Description = r.FormValue("description")
+	if err := device.Save(); err != nil {
+		d.e.Log.Errorf("Error saving device: %s", err.Error())
+		common.NewAPIResponse("Error saving device", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
+	}
+
+	d.e.Log.WithFields(verbose.Fields{
+		"MAC":          device.MAC.String(),
+		"Device User":  device.Username,
+		"Session User": sessionUser.Username,
+	}).Infof("Device description changed")
+	common.NewAPIResponse("Device saved successfully", nil).WriteResponse(w, http.StatusOK)
+}
