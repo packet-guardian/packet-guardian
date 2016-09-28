@@ -7,7 +7,9 @@
 package common
 
 import (
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/context"
 )
@@ -37,5 +39,19 @@ func GetSessionFromContext(r *http.Request) *Session {
 
 func SetSessionToContext(r *http.Request, s *Session) *http.Request {
 	context.Set(r, SessionKey, s)
+	return r
+}
+
+// IP of client
+
+func GetIPFromContext(r *http.Request) net.IP {
+	if rv := context.Get(r, SessionIPKey); rv != nil {
+		return rv.(net.IP)
+	}
+	return nil
+}
+
+func SetIPToContext(r *http.Request) *http.Request {
+	context.Set(r, SessionIPKey, net.ParseIP(strings.Split(r.RemoteAddr, ":")[0]))
 	return r
 }

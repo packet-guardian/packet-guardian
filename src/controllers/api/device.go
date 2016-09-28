@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
@@ -24,7 +24,7 @@ func NewDeviceController(e *common.Environment) *Device {
 	return &Device{e: e}
 }
 
-func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
+func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Check authentication and get User models
 	macPost := r.FormValue("mac-address")
 	manual := (macPost != "")
@@ -61,6 +61,8 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 			common.NewAPIResponse("Error registering device", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
+		// Be careful with this, if this goes outside this if, it may release the sessionUser prematurely.
+		defer formUser.Release()
 	}
 
 	if !sessionUser.Can(models.CreateDevice) {
@@ -88,7 +90,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get MAC address
 	var mac net.HardwareAddr
-	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
+	ip := common.GetIPFromContext(r)
 	if manual {
 		// Manual registration
 		if !d.e.Config.Registration.AllowManualRegistrations {
@@ -103,7 +105,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// Automatic registration
-		lease, err := models.NewLeaseStore(d.e).GetLeaseByIP(ip)
+		lease, err := models.GetLeaseStore(d.e).GetLeaseByIP(ip)
 		if err != nil {
 			d.e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
 			common.NewAPIResponse("Failed detecting MAC address", nil).WriteResponse(w, http.StatusInternalServerError)
@@ -165,17 +167,17 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	// Redirect client as needed
 	resp := struct{ Location string }{Location: "/manage"}
 	if sessionUser.Can(models.ViewDevices) {
-		resp.Location = "/admin/manage/" + formUser.Username
+		resp.Location = "/admin/manage/user/" + formUser.Username
 	}
 
 	common.NewAPIResponse("Registration successful", resp).WriteResponse(w, http.StatusOK)
 }
 
-func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
+func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	formUser := sessionUser
-	username, ok := mux.Vars(r)["username"]
-	if !ok {
+	username := p.ByName("username")
+	if username == "" {
 		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
 		return
 	}
@@ -191,6 +193,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 			common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
+		defer formUser.Release()
 	}
 
 	if !sessionUser.Can(models.DeleteOwn) {
@@ -239,7 +242,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	common.NewAPIResponse("Devices deleted successful", nil).WriteResponse(w, http.StatusNoContent)
 }
 
-func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
+func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.ReassignDevice) {
 		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusForbidden)
@@ -264,6 +267,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request) {
 		common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
+	defer user.Release()
 
 	devicesToReassign := strings.Split(devices, ",")
 	for _, devMacStr := range devicesToReassign {

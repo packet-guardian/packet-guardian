@@ -33,12 +33,6 @@
 			"revisionTime": "2016-05-25T20:33:19Z"
 		},
 		{
-			"checksumSHA1": "TfZ8ulM+No3vdOTjK6qF1y9yVlI=",
-			"path": "github.com/gorilla/mux",
-			"revision": "780415097119f6f61c55475fe59b66f3c3e9ea53",
-			"revisionTime": "2016-08-01T17:00:46Z"
-		},
-		{
 			"checksumSHA1": "nZoAsxDHOA8fLilA56HKvezLqNU=",
 			"path": "github.com/gorilla/securecookie",
 			"revision": "c13558c2b1c44da35e0eb043053609a5ba3a1f19",
@@ -49,6 +43,12 @@
 			"path": "github.com/gorilla/sessions",
 			"revision": "1bbba13ba476e132b5a0739b18f1653c3e57d3c1",
 			"revisionTime": "2016-08-16T18:50:42Z"
+		},
+		{
+			"checksumSHA1": "Drsz3oT4NmM2tVQCRk+occxVvPA=",
+			"path": "github.com/julienschmidt/httprouter",
+			"revision": "d8ff598a019f2c7bad0980917a588193cf26666e",
+			"revisionTime": "2016-08-10T19:53:38Z"
 		},
 		{
 			"checksumSHA1": "m2VzAOdgKH2qv5TW9dorf2rYGUQ=",
@@ -143,12 +143,6 @@
 		{
 			"checksumSHA1": "BJrlL/vetMJZLv8XPuzvw3ZITaU=",
 			"path": "golang.org/x/net/ipv4",
-			"revision": "7394c112eae4dba7e96bfcfe738e6373d61772b4",
-			"revisionTime": "2016-08-19T20:57:39Z"
-		},
-		{
-			"checksumSHA1": "7WASrg0PEueWDDRHkFhEEN6Qrms=",
-			"path": "golang.org/x/net/netutil",
 			"revision": "7394c112eae4dba7e96bfcfe738e6373d61772b4",
 			"revisionTime": "2016-08-19T20:57:39Z"
 		},

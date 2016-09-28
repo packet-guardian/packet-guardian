@@ -21,6 +21,7 @@ type localAuthenticator struct{}
 func (l *localAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bool {
 	e := common.GetEnvironmentFromContext(r)
 	user, err := models.GetUserByUsername(e, r.FormValue("username"))
+	defer user.Release()
 	if err != nil {
 		e.Log.WithField("Err", err).Errorf("Error getting user")
 		return false

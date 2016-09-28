@@ -21,7 +21,7 @@ func poolReport(e *common.Environment, w http.ResponseWriter, r *http.Request) e
 	}
 
 	dhcpPkgConfig := &dhcp.ServerConfig{
-		LeaseStore: models.NewLeaseStore(e),
+		LeaseStore: models.GetLeaseStore(e),
 	}
 
 	handler := dhcp.NewDHCPServer(dhcpConfig, dhcpPkgConfig)

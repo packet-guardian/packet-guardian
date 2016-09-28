@@ -179,7 +179,7 @@ func (d *Device) SetLastSeen(t time.Time) {
 }
 
 func (d *Device) LoadKnownLeases() error {
-	leases, err := NewLeaseStore(d.e).SearchLeases(
+	leases, err := GetLeaseStore(d.e).SearchLeases(
 		`"mac" = ? ORDER BY "start" DESC`,
 		d.MAC.String(),
 	)

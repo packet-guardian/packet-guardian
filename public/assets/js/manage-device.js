@@ -11,7 +11,7 @@ $.onReady(function() {
 
             $.ajax({
                 method: 'DELETE',
-                url: '/api/device/'+username,
+                url: '/api/device/user/'+username,
                 params: {"mac": mac},
                 success: function() {
                     location.href = '/admin/manage/user/'+username;
@@ -57,7 +57,7 @@ $.onReady(function() {
         var pmodal = new jsPrompt();
         pmodal.show("New owner's username:", function(newUser) {
             var mac = getMacAddress();
-            $.post("/api/device/_reassign", {"username": newUser, "macs": mac}, function() {
+            $.post("/api/device/reassign", {"username": newUser, "macs": mac}, function() {
                 location.reload();
             }, function(req) {
                 data = JSON.parse(req.responseText);

@@ -10,7 +10,6 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
@@ -45,6 +44,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 		e.Log.WithField("Err", err).Error("Failed to get guest user")
 		return err
 	}
+	defer guest.Release()
 	guest.DeviceLimit = models.UserDeviceLimit(e.Config.Guest.DeviceLimit)
 	// TODO: Honor configuration settings
 	guest.DeviceExpiration = &models.UserDeviceExpiration{
@@ -63,10 +63,10 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 
 	// Get MAC address
 	var mac net.HardwareAddr
-	ip := net.ParseIP(strings.Split(r.RemoteAddr, ":")[0])
+	ip := common.GetIPFromContext(r)
 
 	// Automatic registration
-	lease, err := models.NewLeaseStore(e).GetLeaseByIP(ip)
+	lease, err := models.GetLeaseStore(e).GetLeaseByIP(ip)
 	if err != nil {
 		e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
 		return errors.New("Internal Server Error")

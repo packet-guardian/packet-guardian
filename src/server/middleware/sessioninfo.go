@@ -26,7 +26,10 @@ func SetSessionInfo(e *common.Environment, next http.Handler) http.Handler {
 		if r.Header.Get("X-Real-IP") != "" {
 			r.RemoteAddr = r.Header.Get("X-Real-IP")
 		}
+		r = common.SetIPToContext(r)
 
 		next.ServeHTTP(w, r)
+
+		sessionUser.Release()
 	})
 }

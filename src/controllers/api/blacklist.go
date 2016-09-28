@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
@@ -21,15 +21,14 @@ func NewBlacklistController(e *common.Environment) *Blacklist {
 	return &Blacklist{e: e}
 }
 
-func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request) {
+func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	if !models.GetUserFromContext(r).Can(models.ManageBlacklist) {
 		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
 		return
 	}
 
-	vars := mux.Vars(r)
-	username, ok := vars["username"]
-	if !ok {
+	username := p.ByName("username")
+	if username == "" {
 		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
 		return
 	}
@@ -40,6 +39,7 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request)
 		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
+	defer user.Release()
 
 	if r.Method == "POST" {
 		user.Blacklist()
@@ -60,18 +60,16 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request)
 		b.e.Log.Infof("Admin %s unblacklisted user %s", models.GetUserFromContext(r).Username, user.Username)
 		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusNoContent)
 	}
-
 }
 
-func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Request) {
+func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	if !models.GetUserFromContext(r).Can(models.ManageBlacklist) {
 		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
 		return
 	}
 
-	vars := mux.Vars(r)
-	username, ok := vars["username"]
-	if !ok {
+	username := p.ByName("username")
+	if username == "" {
 		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
 		return
 	}
@@ -82,6 +80,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
+	defer user.Release()
 
 	blacklistAll := (r.FormValue("mac") == "")
 	macsToBlacklist := strings.Split(r.FormValue("mac"), ",")

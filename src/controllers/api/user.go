@@ -10,19 +10,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
-type User struct {
+type UserController struct {
 	e *common.Environment
 }
 
-func NewUserController(e *common.Environment) *User {
-	return &User{e: e}
+func NewUserController(e *common.Environment) *UserController {
+	return &UserController{e: e}
 }
 
-func (u *User) UserHandler(w http.ResponseWriter, r *http.Request) {
+func (u *UserController) UserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	if r.Method == "POST" {
 		u.saveUserHandler(w, r)
 	} else if r.Method == "DELETE" {
@@ -30,7 +31,7 @@ func (u *User) UserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
+func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 	username := strings.ToLower(r.FormValue("username"))
 	if username == "" {
@@ -44,6 +45,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 		common.NewAPIResponse("Error saving user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
+	defer user.Release()
 
 	canCreate := sessionUser.Can(models.CreateUser)
 	canEdit := sessionUser.Can(models.EditUser)
@@ -147,7 +149,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		user.ValidForever = false
 		if validStart != "" {
-			t, err := time.Parse(common.TimeFormat, validStart)
+			t, err := time.ParseInLocation(common.TimeFormat, validStart, time.Local)
 			if err != nil {
 				common.NewAPIResponse("Invalid time format: valid_start", nil).WriteResponse(w, http.StatusBadRequest)
 				return
@@ -155,7 +157,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 			user.ValidStart = t
 		}
 		if validEnd != "" {
-			t, err := time.Parse(common.TimeFormat, validEnd)
+			t, err := time.ParseInLocation(common.TimeFormat, validEnd, time.Local)
 			if err != nil {
 				common.NewAPIResponse("Invalid time format: valid_end", nil).WriteResponse(w, http.StatusBadRequest)
 				return
@@ -216,7 +218,7 @@ func (u *User) saveUserHandler(w http.ResponseWriter, r *http.Request) {
 	common.NewAPIResponse("User saved successfully", nil).WriteResponse(w, http.StatusNoContent)
 }
 
-func (u *User) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.DeleteUser) {
 		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
@@ -235,6 +237,7 @@ func (u *User) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		common.NewAPIResponse("Error deleting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
+	defer user.Release()
 
 	if err := user.Delete(); err != nil {
 		u.e.Log.Errorf("Error deleting user: %s", err.Error())
