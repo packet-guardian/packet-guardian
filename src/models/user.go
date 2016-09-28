@@ -5,8 +5,10 @@
 package models
 
 import (
+	"container/list"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -30,6 +32,11 @@ const (
 )
 
 var globalDeviceExpiration *UserDeviceExpiration
+var appUserPool *userPool
+
+func init() {
+	appUserPool = newUserPool()
+}
 
 type UserDeviceExpiration struct {
 	Mode  UserExpiration
@@ -111,6 +118,9 @@ func (e *UserDeviceExpiration) NextExpiration(env *common.Environment, base time
 	}
 }
 
+// When changing the User struct, make sure to update the
+// clean() method to reflect any new/editied fields.
+
 // User it's a user
 type User struct {
 	e                *common.Environment
@@ -131,6 +141,7 @@ type User struct {
 	blacklistSave    bool
 	blacklisted      bool
 	Rights           Permission
+	pool             *userPool
 }
 
 // NewUser creates a new base user
@@ -140,17 +151,16 @@ func NewUser(e *common.Environment) *User {
 	// Device Expiration is global
 	// User never expires
 	// User can manage their devices
-	u := &User{
-		e:                e,
-		DeviceLimit:      UserDeviceLimitGlobal,
-		DeviceExpiration: &UserDeviceExpiration{Mode: UserDeviceExpirationGlobal},
-		ValidStart:       time.Unix(0, 0),
-		ValidEnd:         time.Unix(0, 0),
-		ValidForever:     true,
-		CanManage:        true,
-		CanAutoreg:       true,
-		Rights:           ViewOwn | ManageOwnRights,
-	}
+	u := appUserPool.getUser()
+	u.e = e
+	u.DeviceLimit = UserDeviceLimitGlobal
+	u.DeviceExpiration = &UserDeviceExpiration{Mode: UserDeviceExpirationGlobal}
+	u.ValidStart = time.Unix(0, 0)
+	u.ValidEnd = time.Unix(0, 0)
+	u.ValidForever = true
+	u.CanManage = true
+	u.CanAutoreg = true
+	u.Rights = ViewOwn | ManageOwnRights
 	// Load extra rights as set in the configuration
 	u.LoadRights()
 	return u
@@ -228,19 +238,19 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 			continue
 		}
 
-		user := &User{
-			e:            e,
-			ID:           id,
-			Username:     username,
-			HasPassword:  (password != ""),
-			DeviceLimit:  UserDeviceLimit(deviceLimit),
-			ValidStart:   time.Unix(validStart, 0),
-			ValidEnd:     time.Unix(validEnd, 0),
-			ValidForever: validForever,
-			CanManage:    canManage,
-			CanAutoreg:   canAutoreg,
-			Rights:       ViewOwn,
-		}
+		user := appUserPool.getUser()
+		user.e = e
+		user.ID = id
+		user.Username = username
+		user.HasPassword = (password != "")
+		user.DeviceLimit = UserDeviceLimit(deviceLimit)
+		user.ValidStart = time.Unix(validStart, 0)
+		user.ValidEnd = time.Unix(validEnd, 0)
+		user.ValidForever = validForever
+		user.CanManage = canManage
+		user.CanAutoreg = canAutoreg
+		user.Rights = ViewOwn
+
 		if canManage {
 			user.Rights = user.Rights.With(ManageOwnRights)
 		}
@@ -455,4 +465,68 @@ func (u *User) Delete() error {
 	sql := `DELETE FROM "user" WHERE "id" = ?`
 	_, err := u.e.DB.Exec(sql, u.ID)
 	return err
+}
+
+// clean sets the User object to all field defaults
+func (u *User) clean() {
+	u.ID = 0
+	u.Username = ""
+	u.Password = ""
+	u.HasPassword = false
+	u.savePassword = false
+	u.ClearPassword = false
+	u.DeviceLimit = UserDeviceLimitUnlimited
+	u.DeviceExpiration = nil
+	u.ValidStart = time.Unix(0, 0)
+	u.ValidEnd = time.Unix(0, 0)
+	u.ValidForever = false
+	u.CanManage = false
+	u.CanAutoreg = false
+	u.blacklistCached = false
+	u.blacklistSave = false
+	u.blacklisted = false
+	u.Rights = Permission(0)
+}
+
+func (u *User) Release() {
+	u.pool.release(u)
+}
+
+func ReleaseUsers(u []*User) {
+	for _, user := range u {
+		user.Release()
+	}
+}
+
+// A userPool is a collection of user objects than can be used instead of
+// creating new objects.
+type userPool struct {
+	*sync.RWMutex
+	l *list.List
+}
+
+func newUserPool() *userPool {
+	return &userPool{
+		RWMutex: &sync.RWMutex{},
+		l:       list.New(),
+	}
+}
+
+func (p *userPool) getUser() *User {
+	p.Lock()
+	defer p.Unlock()
+
+	e := p.l.Front()
+	if e == nil { // Nothing in the list
+		return &User{pool: p}
+	}
+	p.l.Remove(e)
+	return e.Value.(*User)
+}
+
+func (p *userPool) release(u *User) {
+	u.clean()
+	p.Lock()
+	p.l.PushBack(u)
+	p.Unlock()
 }

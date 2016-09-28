@@ -46,6 +46,7 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 	}
 
 	e.Views.NewView("report-blacklisted-users", r).Render(w, data)
+	models.ReleaseUsers(blacklistedUsers)
 	return nil
 }
 
