@@ -1,7 +1,7 @@
 Verbose - Logging for Go
 =========================
 
-[![GoDoc](https://godoc.org/github.com/dragonrider23/verbose?status.svg)](https://godoc.org/github.com/dragonrider23/verbose)
+[![GoDoc](https://godoc.org/github.com/lfkeitel/verbose?status.svg)](https://godoc.org/github.com/lfkeitel/verbose)
 
 Verbose allows for organized, simplified, custom logging for any application. Verbose makes creating logs easy.
 Create multiple loggers for different purposes each with their own handlers. Verbose supports both traditional
@@ -13,13 +13,13 @@ Usage
 Creating a Logger:
 
 ```Go
-import "github.com/dragonrider23/verbose"
+import "github.com/lfkeitel/verbose"
 
 appLogger := verbose.New("app")
 appLogger.Info("Application started")
 appLogger.Warning("User not found")
 appLogger.Error("I can't handle this")
-appLogger.Fatal("Unhandled error occured") // Calls os.Exit(1)
+appLogger.Fatal("Unhandled error occurred") // Calls os.Exit(1)
 ```
 
 You can also use the Get() func to get a specific logger. If Get() can't
@@ -49,7 +49,7 @@ You can also use the following functions:
 - Print
 - Panic
 
-All functions take the form of Print[f]ln. E.g.: Print, Printf, Println.
+All functions take the form of Print[f|ln]. E.g.: Print, Printf, Println.
 
 Structured Logging
 ------------------
@@ -64,11 +64,11 @@ logger.WithFields(verbose.Fields{
 The fields should be formatted appropriately by the handler.
 
 A Logger initially is nothing more than a shell. Without handlers it won't do anything.
-Verbose comes with two prebuilt handlers. You can use your own handlers so long as they
+Verbose comes with two pre-built handlers. You can use your own handlers so long as they
 satisfy the verbose.Handler interface. You can add a handler by calling `logger.AddHandler(name, Handler)`.
 A Logger will cycle through all the handlers and send the message to any that report
 they can handle the log level. Each handler should be given a unique name which can be used to later
-remove to get the handler to make changes to it.
+remove or get the handler to make changes to it.
 
 Included handlers
 -----------------
@@ -76,11 +76,14 @@ Included handlers
 StdoutHandler
 -------------
 
-The StdoutHandler will print colored log messages to stdout. This handler supports specifying
-a minimum and maximum log level.
+The StdoutHandler will print colored log messages to stdout.
 
 ```go
-sh := verbose.NewStdoutHandler()
+// Handler that supports color terminals
+sh := verbose.NewStdoutHandler(true)
+
+// Handler that doesn't use color
+sh := verbose.NewStdoutHandler(false)
 ```
 
 FileHandler
@@ -88,7 +91,6 @@ FileHandler
 
 The FileHandler will write log messages to a file or directory. If it's writing to a directory,
 each log level will have its own file. Otherwise all log levels are written to a single file.
-Like the StdoutHandler, FileHandlers support specifying a minimum and maximum log level to handle.
 
 ```go
 // If path exists and is a file, it will write all logs to that file
@@ -100,6 +102,20 @@ fh := verbose.NewFileHandler(path)
 
 Release Notes
 -------------
+
+v3.0.0
+
+- Expanded Handler interface
+    - SetFormatter(Formatter)
+    - SetLevel(LogLevel)
+    - SetMinLevel(LogLevel)
+    - SetMaxLevel(LogLevel)
+- Added support for formatters
+    - Included formatters:
+        - JSON
+        - Line
+        - Line with Color
+- Use Fatal as the default Handler max for StdOut and FileHandlers
 
 v2.0.0
 

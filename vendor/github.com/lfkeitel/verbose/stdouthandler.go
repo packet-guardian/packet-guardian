@@ -1,11 +1,9 @@
 package verbose
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
-	"strings"
 )
 
 // Color is an escaped color code for the terminal
@@ -39,17 +37,26 @@ var colors = map[LogLevel]Color{
 // StdoutHandler writes log message to standard out
 // It even uses color!
 type StdoutHandler struct {
-	min LogLevel
-	max LogLevel
-	out io.Writer // Usually os.Stdout, mainly used for testing
+	min       LogLevel
+	max       LogLevel
+	out       io.Writer // Usually os.Stdout, mainly used for testing
+	formatter Formatter
 }
 
 // NewStdoutHandler creates a new StdoutHandler, surprise!
-func NewStdoutHandler() *StdoutHandler {
+// Color specifies if the log messages will be printed to a colored terminal.
+func NewStdoutHandler(color bool) *StdoutHandler {
+	var formatter Formatter
+	if color {
+		formatter = &ColoredLineFormatter{}
+	} else {
+		formatter = &LineFormatter{}
+	}
 	return &StdoutHandler{
-		min: LogLevelDebug,
-		max: LogLevelFatal,
-		out: os.Stdout,
+		min:       LogLevelDebug,
+		max:       LogLevelFatal,
+		out:       os.Stdout,
+		formatter: formatter,
 	}
 }
 
@@ -76,6 +83,11 @@ func (s *StdoutHandler) SetMaxLevel(l LogLevel) {
 	s.max = l
 }
 
+// SetFormatter gives StdoutHandler a formatter for log messages.
+func (s *StdoutHandler) SetFormatter(f Formatter) {
+	s.formatter = f
+}
+
 // Handles returns whether the handler handles log level l.
 func (s *StdoutHandler) Handles(l LogLevel) bool {
 	return (s.min <= l && l <= s.max)
@@ -83,25 +95,7 @@ func (s *StdoutHandler) Handles(l LogLevel) bool {
 
 // WriteLog writes the log message to standard output
 func (s *StdoutHandler) WriteLog(e *Entry) {
-	buf := &bytes.Buffer{}
-	now := e.Timestamp.Format("2006-01-02 15:04:05 MST")
-	fmt.Fprintf(
-		buf,
-		"%s%s: %s%s: %s%s: %s%s",
-		ColorGrey,
-		now,
-		colors[e.Level],
-		strings.ToUpper(e.Level.String()),
-		ColorGreen,
-		e.Logger.Name(),
-		ColorReset,
-		e.Message,
-	)
-	for k, v := range e.Data {
-		fmt.Fprintf(buf, " %s=%v", k, v)
-	}
-	buf.WriteByte('\n')
-	fmt.Fprint(s.out, buf.String())
+	fmt.Fprint(s.out, s.formatter.Format(e))
 }
 
 // Close satisfies the interface, NOOP

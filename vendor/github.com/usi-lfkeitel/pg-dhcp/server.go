@@ -54,7 +54,7 @@ func startLogger(c *ServerConfig) {
 		return
 	}
 
-	sh := verbose.NewStdoutHandler()
+	sh := verbose.NewStdoutHandler(true)
 	fh, _ := verbose.NewFileHandler(c.LogPath)
 	logger.AddHandler("stdout", sh)
 	logger.AddHandler("file", fh)

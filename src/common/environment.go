@@ -44,7 +44,7 @@ func NewTestEnvironment() *Environment {
 	// Disable automatic logging, manually configure if needed
 	e.Log.c.Logging.Enabled = false
 	if os.Getenv("PG_TEST_LOG") != "" {
-		stdout := verbose.NewStdoutHandler()
+		stdout := verbose.NewStdoutHandler(true)
 		stdout.SetMinLevel(verbose.LogLevelDebug)
 		e.Log.AddHandler("stdout", stdout)
 	}
@@ -98,7 +98,7 @@ func NewLogger(c *Config, name string) *Logger {
 			Logger: logger,
 		}
 	}
-	sh := verbose.NewStdoutHandler()
+	sh := verbose.NewStdoutHandler(true)
 	fh, _ := verbose.NewFileHandler(c.Logging.Path)
 	logger.AddHandler("stdout", sh)
 	logger.AddHandler("file", fh)
@@ -107,9 +107,7 @@ func NewLogger(c *Config, name string) *Logger {
 		sh.SetMinLevel(level)
 		fh.SetMinLevel(level)
 	}
-	// The verbose package sets the default max to Emergancy
-	sh.SetMaxLevel(verbose.LogLevelFatal)
-	fh.SetMaxLevel(verbose.LogLevelFatal)
+	fh.SetFormatter(&verbose.JSONFormatter{})
 	return &Logger{
 		Logger: logger,
 		c:      c,
