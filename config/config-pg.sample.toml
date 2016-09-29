@@ -94,17 +94,20 @@ manualRegPlatforms = []
 ## Enabled guest registrations
 enabled = true
 
+## Skip the normal registration page and go straight to the guest page
+# guestOnly = false
+
 ## Device limit for each guest. 0 means unlimited (default).
-DeviceLimit = 10
+deviceLimit = 10
 
 ## See registrations config section. Default is daily
-# DeviceExpirationType = "daily"
+# deviceExpirationType = "daily"
 
 ## See registrations config section
-# RollingExpirationLength =
+# rollingExpirationLength =
 
 ## See registrations config section. Default is 24:00
-# DeviceExpiration = "24:00"
+# deviceExpiration = "24:00"
 
 ## The duration in minutes a verification code will be usable
 # verifyCodeExpiration = 3

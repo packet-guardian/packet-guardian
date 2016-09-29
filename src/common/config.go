@@ -48,6 +48,7 @@ type Config struct {
 	}
 	Guest struct {
 		Enabled                 bool
+		GuestOnly               bool
 		DeviceLimit             int
 		DeviceExpirationType    string
 		RollingExpirationLength string
