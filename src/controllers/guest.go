@@ -31,6 +31,11 @@ func (g *Guest) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !g.e.Config.Guest.Enabled {
+		g.e.Views.NewView("register-guest", r).Render(w, nil)
+		return
+	}
+
 	ip := common.GetIPFromContext(r)
 	reg, _ := dhcp.IsRegisteredByIP(models.GetLeaseStore(g.e), ip)
 	if reg {
