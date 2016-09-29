@@ -144,6 +144,7 @@ func apiRouter(e *common.Environment) http.Handler {
 	r.DELETE("/api/device/user/:username", deviceApiController.DeleteHandler)
 	r.POST("/api/device/reassign", deviceApiController.ReassignHandler)
 	r.POST("/api/device/mac/:mac/description", deviceApiController.EditDescriptionHandler)
+	r.POST("/api/device/mac/:mac/expiration", deviceApiController.EditExpirationHandler)
 
 	blacklistController := api.NewBlacklistController(e)
 	r.POST("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)

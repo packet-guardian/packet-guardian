@@ -365,3 +365,72 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 	}).Infof("Device description changed")
 	common.NewAPIResponse("Device saved successfully", nil).WriteResponse(w, http.StatusOK)
 }
+
+func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	sessionUser := models.GetUserFromContext(r)
+	var err error
+	mac, err := net.ParseMAC(p.ByName("mac"))
+	if err != nil {
+		common.NewAPIResponse("Invalid MAC address", nil).WriteResponse(w, http.StatusBadRequest)
+	}
+
+	device, err := models.GetDeviceByMAC(d.e, mac)
+	if err != nil {
+		d.e.Log.Errorf("Error getting device: %s", err.Error())
+		common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
+	}
+
+	if !sessionUser.Can(models.EditDevice) {
+		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
+		return
+	}
+
+	expType := r.FormValue("type")
+	expValue := r.FormValue("value")
+
+	newExpire := &models.UserDeviceExpiration{}
+	switch expType {
+	case "global":
+		newExpire.Mode = models.UserDeviceExpirationGlobal
+	case "never":
+		newExpire.Mode = models.UserDeviceExpirationNever
+	case "rolling":
+		newExpire.Mode = models.UserDeviceExpirationRolling
+	case "specific":
+		newExpire.Mode = models.UserDeviceExpirationSpecific
+		expTime, err := time.ParseInLocation(common.TimeFormat, expValue, time.Local)
+		if err != nil {
+			d.e.Log.Errorf("Error saving device: %s", err.Error())
+			common.NewAPIResponse("Error saving device", nil).WriteResponse(w, http.StatusInternalServerError)
+			return
+		}
+		newExpire.Value = expTime.Unix()
+	default:
+		common.NewAPIResponse("Invalid expiration type", nil).WriteResponse(w, http.StatusBadRequest)
+		return
+	}
+	newExpireResp := newExpire.String()
+
+	device.Expires = newExpire.NextExpiration(d.e, time.Now())
+	if err := device.Save(); err != nil {
+		d.e.Log.Errorf("Error saving device: %s", err.Error())
+		common.NewAPIResponse("Error saving device", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
+	}
+
+	if newExpire.Mode == models.UserDeviceExpirationGlobal {
+		newExpireResp = models.GetGlobalDefaultExpiration(d.e).String()
+	} else if newExpire.Mode == models.UserDeviceExpirationSpecific {
+		newExpireResp = device.Expires.Format(common.TimeFormat)
+	}
+
+	d.e.Log.WithFields(verbose.Fields{
+		"MAC":            device.MAC.String(),
+		"Device User":    device.Username,
+		"Session User":   sessionUser.Username,
+		"New Expiration": newExpireResp,
+	}).Infof("Device expiration changed")
+	resp := map[string]string{"newExpiration": newExpireResp}
+	common.NewAPIResponse("Device saved successfully", resp).WriteResponse(w, http.StatusOK)
+}

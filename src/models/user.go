@@ -68,36 +68,7 @@ func (e *UserDeviceExpiration) NextExpiration(env *common.Environment, base time
 			return globalDeviceExpiration.NextExpiration(env, base)
 		}
 		// Build the global default, typically it's the most used mode
-		globalDeviceExpiration = &UserDeviceExpiration{} // Defaults to never
-		switch env.Config.Registration.DefaultDeviceExpirationType {
-		case "date":
-			d, err := time.ParseInLocation("2006-01-02", env.Config.Registration.DefaultDeviceExpiration, time.Local)
-			if err != nil {
-				env.Log.Error("Incorrect default device expiration date format")
-				break
-			}
-			globalDeviceExpiration.Value = d.Unix()
-			globalDeviceExpiration.Mode = UserDeviceExpirationSpecific
-		case "duration":
-			d, err := time.ParseDuration(env.Config.Registration.DefaultDeviceExpiration)
-			if err != nil {
-				env.Log.Error("Incorrect default device expiration duration format")
-				break
-			}
-			globalDeviceExpiration.Value = int64(d / time.Second)
-			globalDeviceExpiration.Mode = UserDeviceExpirationDuration
-		case "daily":
-			secs, err := common.ParseTime(env.Config.Registration.DefaultDeviceExpiration)
-			if err != nil {
-				env.Log.Error("Incorrect default device expiration time format")
-				break
-			}
-			globalDeviceExpiration.Value = secs
-			globalDeviceExpiration.Mode = UserDeviceExpirationDaily
-		case "rolling":
-			globalDeviceExpiration.Value = 0
-			globalDeviceExpiration.Mode = UserDeviceExpirationRolling
-		}
+		globalDeviceExpiration = GetGlobalDefaultExpiration(env)
 		return globalDeviceExpiration.NextExpiration(env, base)
 	} else if e.Mode == UserDeviceExpirationSpecific {
 		return time.Unix(e.Value, 0)
@@ -116,6 +87,40 @@ func (e *UserDeviceExpiration) NextExpiration(env *common.Environment, base time
 	} else { // Default to never
 		return time.Unix(0, 0)
 	}
+}
+
+func GetGlobalDefaultExpiration(e *common.Environment) *UserDeviceExpiration {
+	g := &UserDeviceExpiration{} // Defaults to never
+	switch e.Config.Registration.DefaultDeviceExpirationType {
+	case "date":
+		d, err := time.ParseInLocation("2006-01-02", e.Config.Registration.DefaultDeviceExpiration, time.Local)
+		if err != nil {
+			e.Log.Error("Incorrect default device expiration date format")
+			break
+		}
+		g.Value = d.Unix()
+		g.Mode = UserDeviceExpirationSpecific
+	case "duration":
+		d, err := time.ParseDuration(e.Config.Registration.DefaultDeviceExpiration)
+		if err != nil {
+			e.Log.Error("Incorrect default device expiration duration format")
+			break
+		}
+		g.Value = int64(d / time.Second)
+		g.Mode = UserDeviceExpirationDuration
+	case "daily":
+		secs, err := common.ParseTime(e.Config.Registration.DefaultDeviceExpiration)
+		if err != nil {
+			e.Log.Error("Incorrect default device expiration time format")
+			break
+		}
+		g.Value = secs
+		g.Mode = UserDeviceExpirationDaily
+	case "rolling":
+		g.Value = 0
+		g.Mode = UserDeviceExpirationRolling
+	}
+	return g
 }
 
 // When changing the User struct, make sure to update the

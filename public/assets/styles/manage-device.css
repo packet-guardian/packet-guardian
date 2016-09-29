@@ -25,3 +25,11 @@ hr.lease-separator {
 .controls section {
     margin-top: 15px;
 }
+
+.edit-property {
+    cursor: pointer;
+}
+
+#edit-expire-controls, #confirmation-icons, #dev-exp-val {
+    display: none;
+}
