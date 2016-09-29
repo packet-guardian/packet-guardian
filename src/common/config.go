@@ -79,6 +79,7 @@ type Config struct {
 		TLSCertFile         string
 		TLSKeyFile          string
 		RedirectHttpToHttps bool
+		SessionStore        string
 		SessionName         string
 		SessionsDir         string
 		SessionsAuthKey     string
@@ -212,6 +213,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Webserver.HttpsPort = setIntOrDefault(c.Webserver.HttpsPort, 1443)
 	c.Webserver.SessionName = setStringOrDefault(c.Webserver.SessionName, "packet-guardian")
 	c.Webserver.SessionsDir = setStringOrDefault(c.Webserver.SessionsDir, "sessions")
+	c.Webserver.SessionStore = setStringOrDefault(c.Webserver.SessionStore, "filesystem")
 
 	// Authentication
 	if len(c.Auth.AuthMethod) == 0 {

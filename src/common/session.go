@@ -22,40 +22,81 @@ const (
 )
 
 type SessionStore struct {
-	*sessions.FilesystemStore
+	sessions.Store
 	sessionName string
 }
 
-func NewSessionStore(config *Config) (*SessionStore, error) {
-	if config.Webserver.SessionsDir == "" {
-		config.Webserver.SessionsDir = "sessions"
+func NewSessionStore(e *Environment) (*SessionStore, error) {
+	switch e.Config.Webserver.SessionStore {
+	case "filesystem":
+		return newFilesystemStore(e)
+	case "database":
+		return newDatabaseStore(e)
 	}
-	if config.Webserver.SessionsAuthKey == "" {
+	return nil, errors.New("Invalid setting for SessionStore")
+}
+
+func newFilesystemStore(e *Environment) (*SessionStore, error) {
+	if e.Config.Webserver.SessionsDir == "" {
+		e.Config.Webserver.SessionsDir = "sessions"
+	}
+	if e.Config.Webserver.SessionsAuthKey == "" {
 		return nil, errors.New("No session authentication key given in configuration")
 	}
+	var err error
 
-	err := os.MkdirAll(config.Webserver.SessionsDir, 0700)
+	err = os.MkdirAll(e.Config.Webserver.SessionsDir, 0700)
 	if err != nil {
 		return nil, err
 	}
 
-	sessDir := config.Webserver.SessionsDir
+	fs := sessions.NewFilesystemStore(e.Config.Webserver.SessionsDir, getKeyPairs(e.Config)...)
+	fs.Options = &sessions.Options{
+		Path:   "/",
+		MaxAge: 0, // Expire on browser close
+	}
+	store := &SessionStore{
+		Store:       fs,
+		sessionName: e.Config.Webserver.SessionName,
+	}
+
+	return store, nil
+}
+
+func newDatabaseStore(e *Environment) (*SessionStore, error) {
+	var store sessions.Store
+	var err error
+	options := &Options{
+		Path:      "/",
+		MaxAge:    0,
+		TableName: "sessions",
+	}
+	switch e.DB.Driver {
+	case "sqlite":
+		fallthrough
+	case "mysql":
+		store, err = newDBStore(
+			e.DB,
+			options,
+			getKeyPairs(e.Config)...,
+		)
+	}
+	if store == nil {
+		return nil, errors.New("Non-supported database driver")
+	}
+	return &SessionStore{
+		Store:       store,
+		sessionName: e.Config.Webserver.SessionName,
+	}, err
+}
+
+func getKeyPairs(config *Config) [][]byte {
 	sessKeyPair := make([][]byte, 1)
 	sessKeyPair[0] = []byte(config.Webserver.SessionsAuthKey)
 	if config.Webserver.SessionsEncryptKey != "" {
 		sessKeyPair = append(sessKeyPair, []byte(config.Webserver.SessionsEncryptKey))
 	}
-
-	store := &SessionStore{
-		FilesystemStore: sessions.NewFilesystemStore(sessDir, sessKeyPair...),
-		sessionName:     config.Webserver.SessionName,
-	}
-
-	store.Options = &sessions.Options{
-		Path:   "/",
-		MaxAge: 0, // Expire on browser close
-	}
-	return store, nil
+	return sessKeyPair
 }
 
 // GetSession returns a session based on the http request.

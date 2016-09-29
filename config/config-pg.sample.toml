@@ -148,6 +148,10 @@ httpsPort = 443
 ## Enable/disable HTTP redirect to HTTPS
 # redirectHttpToHttps = false
 
+## SessionStore is how sessions will be stored.
+## Valid values: filesystem, database
+# sessionStore = "database"
+
 ## The name given to the cookie on the client that stores a session token
 sessionName = "packet-guardian"
 

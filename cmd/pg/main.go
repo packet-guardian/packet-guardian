@@ -85,16 +85,16 @@ func main() {
 		time.Sleep(2)
 	}(e)
 
-	e.Sessions, err = common.NewSessionStore(e.Config)
-	if err != nil {
-		e.Log.Fatalf("Error loading session store: %s", err.Error())
-	}
-
 	e.DB, err = common.NewDatabaseAccessor(e.Config)
 	if err != nil {
 		e.Log.Fatalf("Error loading database: %s", err.Error())
 	}
 	e.Log.Debugf("Using %s database at %s", e.Config.Database.Type, e.Config.Database.Address)
+
+	e.Sessions, err = common.NewSessionStore(e)
+	if err != nil {
+		e.Log.Fatalf("Error loading session store: %s", err.Error())
+	}
 
 	e.Views, err = common.NewViews(e, "templates")
 	if err != nil {
