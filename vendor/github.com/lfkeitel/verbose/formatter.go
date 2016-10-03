@@ -24,20 +24,17 @@ func (j *JSONFormatter) FormatByte(e *Entry) []byte {
 	buf.WriteString(fmt.Sprintf(`"level":"%s",`, strings.ToUpper(e.Level.String())))
 	buf.WriteString(fmt.Sprintf(`"logger":"%s",`, e.Logger.Name()))
 	buf.WriteString(fmt.Sprintf(`"message":"%s",`, e.Message))
-	buf.WriteString(`"data":[`)
+	buf.WriteString(`"data":{`)
 	dataLen := len(e.Data)
-	i := 1
 	for k, v := range e.Data {
-		buf.WriteByte('{')
 		buf.WriteString(fmt.Sprintf(`"%s":"%s"`, k, v))
-		buf.WriteByte('}')
-		if i < dataLen {
+		if dataLen > 1 {
 			buf.WriteByte(',')
 		}
-		i++
+		dataLen--
 	}
-	buf.WriteByte(']')
-	buf.WriteByte('}')
+	buf.WriteByte('}') // End data key
+	buf.WriteByte('}') // End complete object
 	buf.WriteByte('\n')
 	return buf.Bytes()
 }
@@ -58,15 +55,16 @@ func (l *LineFormatter) FormatByte(e *Entry) []byte {
 		e.Logger.Name(),
 		e.Message,
 	)
-	buf.WriteString(" |")
 	dataLen := len(e.Data)
-	i := 1
-	for k, v := range e.Data {
-		fmt.Fprintf(buf, ` "%s": "%v"`, k, v)
-		if i < dataLen {
-			buf.WriteByte(',')
+	if dataLen > 0 {
+		buf.WriteString(" |")
+		for k, v := range e.Data {
+			fmt.Fprintf(buf, ` "%s": "%v"`, k, v)
+			if dataLen > 1 {
+				buf.WriteByte(',')
+			}
+			dataLen--
 		}
-		i++
 	}
 	buf.WriteByte('\n')
 	return buf.Bytes()
@@ -92,15 +90,16 @@ func (l *ColoredLineFormatter) FormatByte(e *Entry) []byte {
 		ColorReset,
 		e.Message,
 	)
-	buf.WriteString(" |")
 	dataLen := len(e.Data)
-	i := 1
-	for k, v := range e.Data {
-		fmt.Fprintf(buf, ` "%s": "%v"`, k, v)
-		if i < dataLen {
-			buf.WriteByte(',')
+	if dataLen > 0 {
+		buf.WriteString(" |")
+		for k, v := range e.Data {
+			fmt.Fprintf(buf, ` "%s": "%v"`, k, v)
+			if dataLen > 1 {
+				buf.WriteByte(',')
+			}
+			dataLen--
 		}
-		i++
 	}
 	buf.WriteByte('\n')
 	return buf.Bytes()
