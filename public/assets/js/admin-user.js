@@ -184,6 +184,7 @@ $.onReady(function () {
         }
 
         $.post('/api/user', formData, function(resp, req) {
+            window.scroll(0,0);
             if (req.status > 204) {
                 resp = JSON.parse(resp);
                 c.FlashMessage(resp.Message);

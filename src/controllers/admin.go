@@ -81,6 +81,7 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 		"canDeleteDevice":    sessionUser.Can(models.DeleteDevice),
 		"canReassignDevice":  sessionUser.Can(models.ReassignDevice),
 		"canManageBlacklist": sessionUser.Can(models.ManageBlacklist),
+		"canEditUser":        sessionUser.Can(models.EditUser),
 	}
 
 	a.e.Views.NewView("admin-manage", r).Render(w, data)
@@ -130,6 +131,7 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 		"canDeleteDevice":    sessionUser.Can(models.DeleteDevice),
 		"canReassignDevice":  sessionUser.Can(models.ReassignDevice),
 		"canManageBlacklist": sessionUser.Can(models.ManageBlacklist),
+		"canEditUser":        sessionUser.Can(models.EditUser),
 	}
 
 	a.e.Views.NewView("admin-manage-device", r).Render(w, data)

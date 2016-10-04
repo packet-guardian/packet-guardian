@@ -87,6 +87,14 @@ header img {
   max-width: 20em;
 }
 
+.edit-property {
+    cursor: pointer;
+}
+
+.no-color-link {
+    color: black;
+}
+
 .main {
     min-height: calc(100% - 220px);
 }

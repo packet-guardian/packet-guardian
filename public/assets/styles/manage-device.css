@@ -26,10 +26,6 @@ hr.lease-separator {
     margin-top: 15px;
 }
 
-.edit-property {
-    cursor: pointer;
-}
-
 #edit-expire-controls, #confirmation-icons, #dev-exp-val {
     display: none;
 }
