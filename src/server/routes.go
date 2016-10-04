@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/gorilla/context"
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
 
@@ -68,6 +69,7 @@ func midStack(e *common.Environment, h http.Handler) http.Handler {
 	h = mid.BlacklistCheck(e, h) // Enforce a blacklist check
 	h = mid.Cache(e, h)          // Set cache headers if needed
 	h = mid.SetSessionInfo(e, h) // Adds Environment and user information to requet context
+	h = context.ClearHandler(h)  // Clear Gorilla sessions
 	return h
 }
 
