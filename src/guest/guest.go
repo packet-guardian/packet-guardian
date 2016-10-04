@@ -51,10 +51,46 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	}
 	defer guest.Release()
 	guest.DeviceLimit = models.UserDeviceLimit(e.Config.Guest.DeviceLimit)
-	// TODO: Honor configuration settings
-	guest.DeviceExpiration = &models.UserDeviceExpiration{
-		Mode:  models.UserDeviceExpirationDaily,
-		Value: int64((time.Duration(24) * time.Hour) / time.Second),
+	guest.DeviceExpiration = &models.UserDeviceExpiration{}
+
+	switch e.Config.Guest.DeviceExpirationType {
+	case "never":
+		guest.DeviceExpiration.Mode = models.UserDeviceExpirationNever
+	case "date":
+		guest.DeviceExpiration.Mode = models.UserDeviceExpirationSpecific
+		expTime, err := time.ParseInLocation(common.TimeFormat, e.Config.Guest.DeviceExpiration, time.Local)
+		if err != nil {
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "guest",
+			}).Error("Error parsing time")
+			return errors.New("Internal Server Error")
+		}
+		guest.DeviceExpiration.Value = expTime.Unix()
+	case "duration":
+		guest.DeviceExpiration.Mode = models.UserDeviceExpirationDuration
+		dur, err := time.ParseDuration(e.Config.Guest.DeviceExpiration)
+		if err != nil {
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "guest",
+			}).Error("Error parsing time")
+			return errors.New("Internal Server Error")
+		}
+		guest.DeviceExpiration.Value = int64(dur / time.Second)
+	case "daily":
+		var err error
+		guest.DeviceExpiration.Mode = models.UserDeviceExpirationDaily
+		guest.DeviceExpiration.Value, err = common.ParseTime(e.Config.Guest.DeviceExpiration)
+		if err != nil {
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "guest",
+			}).Error("Error parsing time")
+			return errors.New("Internal Server Error")
+		}
+	default:
+		return errors.New(e.Config.Guest.DeviceExpirationType + " is not a valid device expiration type")
 	}
 
 	// Get and enforce the device limit
