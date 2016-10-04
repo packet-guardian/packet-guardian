@@ -100,13 +100,12 @@ enabled = true
 ## Device limit for each guest. 0 means unlimited (default).
 deviceLimit = 10
 
-## See registrations config section. Default is daily
+## See registrations config section. Valid values: never, daily, duration, date.
 # deviceExpirationType = "daily"
 
-## See registrations config section
-# rollingExpirationLength =
-
-## See registrations config section. Default is 24:00
+## date - Specific date in yyyy-mm-dd format
+## duration - Duration of device in Go time.Duration syntax: 1h = 1 hour, 7d = 7 days
+## daily - Time each day the device will expire in HH:mm format (24 hour time)
 # deviceExpiration = "24:00"
 
 ## The duration in minutes a verification code will be usable

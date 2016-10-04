@@ -47,14 +47,13 @@ type Config struct {
 		ManualRegPlatforms          []string
 	}
 	Guest struct {
-		Enabled                 bool
-		GuestOnly               bool
-		DeviceLimit             int
-		DeviceExpirationType    string
-		RollingExpirationLength string
-		DeviceExpiration        string
-		Checker                 string
-		VerifyCodeExpiration    int
+		Enabled              bool
+		GuestOnly            bool
+		DeviceLimit          int
+		DeviceExpirationType string
+		DeviceExpiration     string
+		Checker              string
+		VerifyCodeExpiration int
 
 		Email struct {
 		}
@@ -202,10 +201,6 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	// Guest registrations
 	c.Guest.DeviceExpirationType = setStringOrDefault(c.Guest.DeviceExpirationType, "daily")
 	c.Guest.DeviceExpiration = setStringOrDefault(c.Guest.DeviceExpiration, "24:00")
-	c.Guest.RollingExpirationLength = setStringOrDefault(c.Guest.RollingExpirationLength, "4380h")
-	if _, err := time.ParseDuration(c.Guest.RollingExpirationLength); err != nil {
-		c.Guest.RollingExpirationLength = "4380h"
-	}
 	c.Guest.Checker = setStringOrDefault(c.Guest.Checker, "email")
 	c.Guest.VerifyCodeExpiration = setIntOrDefault(c.Guest.VerifyCodeExpiration, 3)
 

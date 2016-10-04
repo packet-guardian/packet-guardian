@@ -8,6 +8,7 @@ var (
 	BlacklistTableCols = []string{
 		"id",
 		"value",
+		"comment",
 	}
 
 	DeviceTableRows = []string{
