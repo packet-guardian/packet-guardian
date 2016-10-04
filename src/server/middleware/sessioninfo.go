@@ -7,6 +7,7 @@ package middleware
 import (
 	"net/http"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
@@ -16,7 +17,11 @@ func SetSessionInfo(e *common.Environment, next http.Handler) http.Handler {
 		session := e.Sessions.GetSession(r)
 		sessionUser, err := models.GetUserByUsername(e, session.GetString("username"))
 		if err != nil {
-			e.Log.Error("Failed to get session user: " + err.Error())
+			e.Log.WithFields(verbose.Fields{
+				"error":    err,
+				"package":  "middleware:session",
+				"username": session.GetString("username"),
+			}).Error("Error getting session user")
 		}
 		r = common.SetSessionToContext(r, session)
 		r = common.SetEnvironmentToContext(r, e)

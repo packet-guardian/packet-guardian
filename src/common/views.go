@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/lfkeitel/verbose"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
@@ -123,6 +124,10 @@ func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
 	data["config"] = v.e.Config
 	data["flashMessage"] = flash
 	if err := v.t.ExecuteTemplate(w, v.name, data); err != nil {
-		v.e.Log.Errorf("Error rendering template %s", err.Error())
+		v.e.Log.WithFields(verbose.Fields{
+			"template": v.name,
+			"error":    err,
+			"package":  "common:views",
+		}).Error("Error rendering template")
 	}
 }

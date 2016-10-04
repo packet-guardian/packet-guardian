@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
@@ -24,7 +25,10 @@ func GetLeaseStats(e *common.Environment) LeaseStats {
 	sql := `SELECT "network", "registered", COUNT(*) FROM "lease" WHERE "end" > ? GROUP BY "network", "registered";`
 	rows, err := e.DB.Query(sql, time.Now().Unix())
 	if err != nil {
-		e.Log.WithField("ErrMsg", err).Error("SQL statement failed")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "stats",
+		}).Error("SQL statement failed")
 		return nil
 	}
 	defer rows.Close()
@@ -60,7 +64,10 @@ func GetDeviceStats(e *common.Environment) (int, int) {
 	total := 0
 	distinct := 0
 	if err := row.Scan(&total, &distinct); err != nil {
-		e.Log.WithField("ErrMsg", err).Error("SQL statement failed")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "stats",
+		}).Error("SQL statement failed")
 		return 0, 0
 	}
 	if distinct == 0 {

@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/pg-dhcp"
 )
@@ -150,7 +151,10 @@ func (l *LeaseStore) doDatabaseQuery(where string, values ...interface{}) ([]*dh
 			&registered,
 		)
 		if err != nil {
-			l.e.Log.WithField("Err", err).Error("Failed to scan lease into struct")
+			l.e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "models:leasestore",
+			}).Error("Failed to scan lease into struct")
 			continue
 		}
 

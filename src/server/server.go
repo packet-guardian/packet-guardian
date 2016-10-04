@@ -53,7 +53,7 @@ func (s *Server) startRedirector() {
 	s.e.Log.WithFields(verbose.Fields{
 		"address": s.address,
 		"port":    s.httpPort,
-	}).Debug()
+	}).Debug("Starting HTTP->HTTPS redirector")
 	timeout := 1 * time.Second
 	if s.e.IsDev() {
 		timeout = 1 * time.Millisecond
@@ -71,7 +71,7 @@ func (s *Server) startHttp() {
 	s.e.Log.WithFields(verbose.Fields{
 		"address": s.address,
 		"port":    s.httpPort,
-	}).Debug()
+	}).Debug("Starting HTTP server")
 	timeout := 5 * time.Second
 	if s.e.IsDev() {
 		timeout = 1 * time.Millisecond
@@ -89,7 +89,7 @@ func (s *Server) startHttps() {
 	s.e.Log.WithFields(verbose.Fields{
 		"address": s.address,
 		"port":    s.httpsPort,
-	}).Debug()
+	}).Debug("Starting HTTPS server")
 	timeout := 5 * time.Second
 	if s.e.IsDev() {
 		timeout = 1 * time.Millisecond

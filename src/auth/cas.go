@@ -31,8 +31,9 @@ func (c *casAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) boo
 		casUrl, err := url.Parse(casUrlStr)
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
-				"Err Msg": err,
-				"CasURL":  casUrlStr,
+				"error":   err,
+				"url":     casUrlStr,
+				"package": "auth:cas",
 			}).Error("Failed to parse CAS url")
 			return false
 		}
@@ -46,17 +47,26 @@ func (c *casAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) boo
 		return false
 	}
 	if err != nil {
-		e.Log.WithField("Err Msg", err).Error("Error communicating with CAS server")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "auth:cas",
+		}).Error("Error communicating with CAS server")
 		return false
 	}
 
 	user, err := models.GetUserByUsername(e, r.FormValue("username"))
 	if err != nil {
-		e.Log.WithField("Err", err).Error("Error getting user")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "auth:cas",
+		}).Error("Error getting user")
 		return false
 	}
 	if user.IsExpired() {
-		e.Log.WithField("username", user.Username).Info("User expired")
+		e.Log.WithFields(verbose.Fields{
+			"username": user.Username,
+			"package":  "auth:cas",
+		}).Info("User expired")
 		user.Release()
 		return false
 	}

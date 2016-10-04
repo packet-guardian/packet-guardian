@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
@@ -22,7 +23,10 @@ func cleanUpOldDevices(e *common.Environment) (string, error) {
 	now := time.Now()
 	d, err := time.ParseDuration(e.Config.Registration.RollingExpirationLength)
 	if err != nil {
-		e.Log.Error("Invalid RollingExpirationLength setting. Defaulting to 4380h")
+		e.Log.WithFields(verbose.Fields{
+			"package": "tasks:old-devices",
+			"default": "4380h",
+		}).Notice("Invalid RollingExpirationLength setting, using default")
 		d = time.Duration(4380) * time.Hour
 	}
 	d = -d // This is how long ago a device was last seen, must be negative
@@ -38,12 +42,12 @@ func cleanUpOldDevices(e *common.Environment) (string, error) {
 	for rows.Next() {
 		var mac string
 		rows.Scan(&mac)
-		e.Log.Infof("Purging device %s", mac)
+		e.Log.WithField("mac", mac).Info("TASK - Deleting device")
 		i++
 	}
 
 	if i == 0 {
-		return "No devices to purge", nil
+		return "No devices to delete", nil
 	}
 
 	sql := `DELETE FROM "device" WHERE "expires" != 0 AND ("last_seen" < ? OR ("expires" != 1 AND "expires" < ?))`
@@ -52,5 +56,5 @@ func cleanUpOldDevices(e *common.Environment) (string, error) {
 		return "", err
 	}
 	numOfRows, _ := results.RowsAffected()
-	return fmt.Sprintf("Purged %d devices", numOfRows), nil
+	return fmt.Sprintf("Deleted %d devices", numOfRows), nil
 }

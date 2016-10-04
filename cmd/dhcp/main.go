@@ -19,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	"github.com/usi-lfkeitel/pg-dhcp"
@@ -78,6 +79,7 @@ func main() {
 	}
 
 	e.Log = common.NewLogger(e.Config, "dhcp")
+	common.SystemLogger = e.Log
 	e.Log.Debugf("Configuration loaded from %s", configFile)
 
 	if !common.FileExists(e.Config.DHCP.ConfigFile) {
@@ -95,25 +97,28 @@ func main() {
 
 	e.DB, err = common.NewDatabaseAccessor(e.Config)
 	if err != nil {
-		e.Log.Fatalf("Error loading database: %s", err.Error())
+		e.Log.WithField("error", err).Fatal("Error loading database")
 	}
-	e.Log.Debugf("Using %s database at %s", e.Config.Database.Type, e.Config.Database.Address)
+	e.Log.WithFields(verbose.Fields{
+		"type":    e.Config.Database.Type,
+		"address": e.Config.Database.Address,
+	}).Debug("Loaded database")
 
 	dhcpConfig, err := dhcp.ParseFile(e.Config.DHCP.ConfigFile)
 	if err != nil {
-		e.Log.WithField("ErrMsg", err).Fatal("Error loading DHCP configuration")
+		e.Log.WithField("error", err).Fatal("Error loading DHCP configuration")
 	}
 
 	dhcpPkgConfig := &dhcp.ServerConfig{
 		LeaseStore:  models.NewLeaseStore(e),
 		DeviceStore: models.NewDeviceStore(e),
-		LogPath:     e.Config.Logging.Path,
 		Env:         dhcp.EnvDev,
+		Log:         common.NewLogger(e.Config, "dhcp").Logger,
 	}
 
 	handler := dhcp.NewDHCPServer(dhcpConfig, dhcpPkgConfig)
 	if err := handler.LoadLeases(); err != nil {
-		e.Log.WithField("ErrMsg", err).Fatal("Couldn't load leases")
+		e.Log.WithField("error", err).Fatal("Couldn't load leases")
 	}
 	e.Log.Fatal(handler.ListenAndServe())
 }

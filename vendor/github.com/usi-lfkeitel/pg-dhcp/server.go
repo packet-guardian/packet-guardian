@@ -32,7 +32,9 @@ type Handler struct {
 
 // NewDHCPServer creates and sets up a new DHCP Handler with the give configuration.
 func NewDHCPServer(conf *Config, s *ServerConfig) *Handler {
-	startLogger(s)
+	if s.Log == nil {
+		s.Log = createLogger(s.LogPath)
+	}
 	c = conf
 	return &Handler{
 		c:            s,
@@ -41,29 +43,21 @@ func NewDHCPServer(conf *Config, s *ServerConfig) *Handler {
 	}
 }
 
-func startLogger(c *ServerConfig) {
-	logger := verbose.New("DHCP")
-	c.Log = logger
-	if c.LogPath == "" {
-		// 	if c.IsTesting() {
-		// 		sh := verbose.NewStdoutHandler()
-		// 		sh.SetMinLevel(verbose.LogLevelDebug)
-		// 		sh.SetMaxLevel(verbose.LogLevelFatal)
-		// 		logger.AddHandler("stdout", sh)
-		// 	}
-		return
-	}
+func createLogger(logPath string) *verbose.Logger {
+	logger := verbose.New("dhcp")
 
+	// Add standard output handler
 	sh := verbose.NewStdoutHandler(true)
-	fh, _ := verbose.NewFileHandler(c.LogPath)
 	logger.AddHandler("stdout", sh)
-	logger.AddHandler("file", fh)
-
 	sh.SetMinLevel(verbose.LogLevelInfo)
-	fh.SetMinLevel(verbose.LogLevelInfo)
-	// The verbose package sets the default max to Emergancy
-	sh.SetMaxLevel(verbose.LogLevelFatal)
-	fh.SetMaxLevel(verbose.LogLevelFatal)
+
+	// Add a file handler if a path is given
+	if logPath != "" {
+		fh, _ := verbose.NewFileHandler(logPath)
+		logger.AddHandler("file", fh)
+		fh.SetMinLevel(verbose.LogLevelInfo)
+	}
+	return logger
 }
 
 // ListenAndServe starts the DHCP Handler listening on port 67 for packets.

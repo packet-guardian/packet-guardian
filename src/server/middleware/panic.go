@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"runtime"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
@@ -18,7 +19,10 @@ func Panic(e *common.Environment, next http.Handler) http.Handler {
 				if _, ok := r.(runtime.Error); ok {
 					buf := make([]byte, 2048)
 					runtime.Stack(buf, false)
-					e.Log.WithField("Stack", string(buf)).Alert()
+					e.Log.WithFields(verbose.Fields{
+						"package": "middleware:panic",
+						"stack":   string(buf),
+					}).Alert()
 				}
 				e.Log.Alert(r)
 				w.WriteHeader(http.StatusInternalServerError)

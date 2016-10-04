@@ -56,28 +56,28 @@ func (s smseagle) sendCode(e *common.Environment, phone, code string) error {
 
 	resp, err := http.Get(address + "/index.php/http_api/send_sms?" + p.Encode())
 	if err != nil {
-		e.Log.WithField("Err", err).Error("")
+		e.Log.WithField("error", err).Error("Error sending verification code")
 		return errors.New("Error sending verification code")
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		e.Log.WithField("Err", err).Error("")
+		e.Log.WithField("error", err).Error("Error sending verification code")
 		return errors.New("Error sending verification code")
 	}
 
 	// For some reason the SMSEagle API doesn't use proper HTTP codes, so this
 	// is probably unnecassary but it's a good catch just in case.
 	if resp.StatusCode != 200 {
-		e.Log.WithField("Err", body).Error("")
+		e.Log.WithField("error", body).Error("Error sending verification code")
 		return errors.New("Error sending verification code")
 	}
 
 	// A good response looks like "OK; ID=[ID of message in outbox]"
 	// I don't care about the ID
 	if !bytes.HasPrefix(body, []byte("OK")) {
-		e.Log.WithField("Err", body).Error("")
+		e.Log.WithField("error", body).Error("Error sending verification code")
 		return errors.New("Error sending verification code")
 	}
 

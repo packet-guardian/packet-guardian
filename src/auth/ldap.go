@@ -39,8 +39,9 @@ func (l *ldapAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bo
 	ok, _, err := l.client.Authenticate(r.FormValue("username"), r.FormValue("password"))
 	if err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultInvalidCredentials) {
 		e.Log.WithFields(verbose.Fields{
-			"Err":      err,
-			"Username": r.FormValue("username"),
+			"error":    err,
+			"username": r.FormValue("username"),
+			"package":  "auth:ldap",
 		}).Error("Error authenticating with LDAP server")
 	}
 
@@ -50,11 +51,17 @@ func (l *ldapAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bo
 
 	user, err := models.GetUserByUsername(e, r.FormValue("username"))
 	if err != nil {
-		e.Log.WithField("Err", err).Error("Error getting user")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "auth:ldap",
+		}).Error("Error getting user")
 		return false
 	}
 	if user.IsExpired() {
-		e.Log.WithField("username", user.Username).Info("User expired")
+		e.Log.WithFields(verbose.Fields{
+			"username": user.Username,
+			"package":  "auth:ldap",
+		}).Info("User expired")
 		user.Release()
 		return false
 	}

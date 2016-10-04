@@ -11,6 +11,7 @@ import (
 	"sort"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	"github.com/usi-lfkeitel/packet-guardian/src/reports"
@@ -63,7 +64,11 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 
 	results, err := models.GetDevicesForUser(a.e, user)
 	if err != nil {
-		a.e.Log.Errorf("Error getting devices for user %s: %s", user.Username, err.Error())
+		a.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:admin",
+			"username": user.Username,
+		}).Error("Error getting devices")
 		a.e.Views.RenderError(w, r, nil)
 		return
 	}
@@ -99,13 +104,21 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 	}
 	device, err := models.GetDeviceByMAC(a.e, mac)
 	if err != nil {
-		a.e.Log.Errorf("Error showing device %s", err.Error())
+		a.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:admin",
+			"mac":     mac.String(),
+		}).Error("Error getting device")
 		a.e.Views.RenderError(w, r, nil)
 		return
 	}
 	user, err := models.GetUserByUsername(a.e, device.Username)
 	if err != nil {
-		a.e.Log.Errorf("Error getting user %s", err.Error())
+		a.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:admin",
+			"username": device.Username,
+		}).Error("Error getting user")
 		a.e.Views.RenderError(w, r, nil)
 		return
 	}
@@ -194,7 +207,10 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	}
 
 	if err != nil {
-		a.e.Log.Errorf("Error getting search results: %s", err.Error())
+		a.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:admin",
+		}).Error("Error getting search results")
 	}
 
 	data := map[string]interface{}{
@@ -215,7 +231,10 @@ func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request, _ h
 
 	users, err := models.GetAllUsers(a.e)
 	if err != nil {
-		a.e.Log.Errorf("Error getting all users: %s", err.Error())
+		a.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:admin",
+		}).Error("Error getting users")
 	}
 
 	data := map[string]interface{}{
@@ -238,7 +257,11 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request, p httpr
 	username := p.ByName("username")
 	user, err := models.GetUserByUsername(a.e, username)
 	if err != nil {
-		a.e.Log.Errorf("Error getting user %s: %s", username, err.Error())
+		a.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:admin",
+			"username": username,
+		}).Error("Error getting user")
 	}
 
 	data := map[string]interface{}{

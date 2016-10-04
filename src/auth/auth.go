@@ -39,12 +39,17 @@ func LoginUser(r *http.Request, w http.ResponseWriter) bool {
 				e.Log.WithFields(verbose.Fields{
 					"username": username,
 					"method":   method,
+					"action":   "login",
+					"package":  "auth",
 				}).Info("Logged in user")
 				return true
 			}
 		}
 	}
-	e.Log.WithField("username", username).Info("Failed login")
+	e.Log.WithFields(verbose.Fields{
+		"username": username,
+		"package":  "auth",
+	}).Info("Failed login")
 	return false
 }
 
@@ -67,5 +72,7 @@ func LogoutUser(r *http.Request, w http.ResponseWriter) {
 	e.Log.WithFields(verbose.Fields{
 		"username": user.Username,
 		"method":   sess.GetString("_authMethod"),
+		"action":   "logout",
+		"package":  "auth",
 	}).Info("Logged out user")
 }

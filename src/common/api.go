@@ -7,6 +7,8 @@ package common
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/lfkeitel/verbose"
 )
 
 // A APIResponse is returned as a JSON struct to the client
@@ -31,7 +33,10 @@ func NewEmptyAPIResponse() *APIResponse {
 func (a *APIResponse) Encode() []byte {
 	b, err := json.Marshal(a)
 	if err != nil {
-		// Do something
+		SystemLogger.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "common",
+		}).Error("Error encoding API response data")
 	}
 	return b
 }

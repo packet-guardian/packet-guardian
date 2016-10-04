@@ -37,7 +37,7 @@ func cleanFileSystemSessions(e *common.Environment) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("Purged %d sessions", w.c), nil
+	return fmt.Sprintf("Deleted %d sessions", w.c), nil
 }
 
 type sessionWalker struct {
@@ -63,5 +63,5 @@ func cleanDBSessions(e *common.Environment) (string, error) {
 		return "", err
 	}
 	rowsAffected, _ := results.RowsAffected()
-	return fmt.Sprintf("Purged %d sessions", rowsAffected), nil
+	return fmt.Sprintf("Deleted %d sessions", rowsAffected), nil
 }

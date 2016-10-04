@@ -73,7 +73,7 @@ $.onReady(function() {
     }
 
     function getUsername() {
-        return $('#username').text();
+        return $('#username').value();
     }
 
     function getDescription() {

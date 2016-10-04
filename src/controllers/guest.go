@@ -94,7 +94,7 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 		g.showGuestRegPage(w, r)
 		return
 	}
-	g.e.Log.Debugf("Verification Code: %s", verifyCode)
+	g.e.Log.WithField("verify-code", verifyCode).Debug("Guest code")
 	http.Redirect(w, r, "/register/guest/verify", http.StatusSeeOther)
 }
 

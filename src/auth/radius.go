@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/oec/goradius"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
@@ -32,7 +33,10 @@ func (rad *radAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 	}
 	ok, err := rad.auther.Authenticate(r.FormValue("username"), r.FormValue("password"))
 	if err != nil {
-		e.Log.Errorf("Error authenticating against radius: %s", err.Error())
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "auth:radius",
+		}).Error("Error authenticating against radius server")
 		return false
 	}
 
@@ -42,11 +46,17 @@ func (rad *radAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 
 	user, err := models.GetUserByUsername(e, r.FormValue("username"))
 	if err != nil {
-		e.Log.WithField("Err", err).Errorf("Error getting user")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "auth:radius",
+		}).Error("Error getting user")
 		return false
 	}
 	if user.IsExpired() {
-		e.Log.WithField("username", user.Username).Info("User expired")
+		e.Log.WithFields(verbose.Fields{
+			"username": user.Username,
+			"package":  "auth:radius",
+		}).Info("User expired")
 		user.Release()
 		return false
 	}

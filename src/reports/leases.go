@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
@@ -27,7 +28,10 @@ func leaseReport(e *common.Environment, w http.ResponseWriter, r *http.Request) 
 		networkName, registered, time.Now().Unix(),
 	)
 	if err != nil {
-		e.Log.WithField("Err", err).Error("Failed to get leases")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "reports:leases",
+		}).Error("Failed to get leases")
 		return nil
 	}
 

@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/lfkeitel/verbose"
 
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
@@ -175,7 +176,11 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	e := common.GetEnvironmentFromContext(r)
 	reg, err := dhcp.IsRegisteredByIP(models.GetLeaseStore(e), common.GetIPFromContext(r))
 	if err != nil {
-		e.Log.WithField("Err", err).Notice("Couldn't get registration status")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "routes",
+			"ip":      common.GetIPFromContext(r).String(),
+		}).Error("Error getting registration status")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}
