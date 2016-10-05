@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/lfkeitel/verbose"
-	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
 type Views struct {

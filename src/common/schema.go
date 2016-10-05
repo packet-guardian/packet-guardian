@@ -5,6 +5,15 @@
 package common
 
 var (
+	DatabaseTableNames = []string{
+		"blacklist",
+		"device",
+		"lease",
+		"sessions",
+		"settings",
+		"user",
+	}
+
 	BlacklistTableCols = []string{
 		"id",
 		"value",
@@ -49,5 +58,17 @@ var (
 		"valid_start",
 		"valid_end",
 		"valid_forever",
+	}
+
+	SessionTableCols = []string{
+		"id",
+		"session_data",
+		"created_on",
+		"modified_on",
+	}
+
+	SettingTableCols = []string{
+		"id",
+		"value",
 	}
 )

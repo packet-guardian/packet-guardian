@@ -141,9 +141,6 @@ upgrade() {
     cp $APP_DIR/scripts/pg-upgrade.sh /usr/local/bin/pg-upgrade
     cp $APP_DIR/scripts/uninstall.sh $DATA_DIR/uninstall.sh
 
-    # Perform any necessary SQL migrations
-    # sqlite3 $DATA_DIR/database.sqlite3 < $APP_DIR/config/db-schema-sqlite.sql
-
     setPermissions
     installService
     setKernalPermissions
