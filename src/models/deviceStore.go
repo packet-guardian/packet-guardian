@@ -11,14 +11,14 @@ import (
 	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
-type DeviceStore struct {
+type DHCPDeviceStore struct {
 	e *common.Environment
 }
 
-func NewDeviceStore(e *common.Environment) *DeviceStore {
-	return &DeviceStore{e: e}
+func NewDHCPDeviceStore(e *common.Environment) *DHCPDeviceStore {
+	return &DHCPDeviceStore{e: e}
 }
 
-func (d *DeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (dhcp.Device, error) {
+func (d *DHCPDeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (dhcp.Device, error) {
 	return GetDeviceByMAC(d.e, mac)
 }

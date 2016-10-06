@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"strings"
 
-	_ "github.com/go-sql-driver/mysql" // MySQL driver
+	"github.com/go-sql-driver/mysql" // MySQL driver
 )
 
 func init() {

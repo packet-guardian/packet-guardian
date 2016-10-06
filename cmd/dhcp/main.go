@@ -111,7 +111,7 @@ func main() {
 
 	dhcpPkgConfig := &dhcp.ServerConfig{
 		LeaseStore:  models.NewLeaseStore(e),
-		DeviceStore: models.NewDeviceStore(e),
+		DeviceStore: models.NewDHCPDeviceStore(e),
 		Env:         dhcp.EnvDev,
 		Log:         common.NewLogger(e.Config, "dhcp").Logger,
 	}
