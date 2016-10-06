@@ -267,5 +267,11 @@ func (d *Device) saveNew() error {
 func (d *Device) Delete() error {
 	sql := `DELETE FROM "device" WHERE "id" = ?`
 	_, err := d.e.DB.Exec(sql, d.ID)
-	return err
+	if err != nil {
+		return err
+	}
+	if d.e.Config.Leases.DeleteWithDevice {
+		ClearLeaseHistory(d.e, d.MAC)
+	}
+	return nil
 }

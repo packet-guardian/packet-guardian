@@ -46,6 +46,11 @@ type Config struct {
 		DefaultDeviceExpiration     string
 		ManualRegPlatforms          []string
 	}
+	Leases struct {
+		HistoryEnabled   bool
+		DeleteWithDevice bool
+		DeleteAfter      string
+	}
 	Guest struct {
 		Enabled              bool
 		GuestOnly            bool
@@ -196,6 +201,12 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Registration.RollingExpirationLength = setStringOrDefault(c.Registration.RollingExpirationLength, "4380h")
 	if _, err := time.ParseDuration(c.Registration.RollingExpirationLength); err != nil {
 		c.Registration.RollingExpirationLength = "4380h"
+	}
+
+	// Leases
+	c.Leases.DeleteAfter = setStringOrDefault(c.Leases.DeleteAfter, "96h")
+	if _, err := time.ParseDuration(c.Leases.DeleteAfter); err != nil {
+		c.Leases.DeleteAfter = "96h"
 	}
 
 	// Guest registrations

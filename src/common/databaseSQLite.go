@@ -79,6 +79,11 @@ func init() {
 				return err
 			}
 		}
+		if !tables["lease_history"] {
+			if err := createSQLiteLeaseHistoryTable(d); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 }
@@ -124,6 +129,20 @@ func createSQLiteLeaseTable(d *DatabaseAccessor) error {
 	    "hostname" TEXT NOT NULL,
 	    "abandoned" INTEGER DEFAULT 0,
 	    "registered" INTEGER DEFAULT 0
+	)`
+
+	_, err := d.DB.Exec(sql)
+	return err
+}
+
+func createSQLiteLeaseHistoryTable(d *DatabaseAccessor) error {
+	sql := `CREATE TABLE "lease_history" (
+	    "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	    "ip" TEXT NOT NULL UNIQUE ON CONFLICT ROLLBACK,
+	    "mac" TEXT NOT NULL,
+	    "network" TEXT NOT NULL,
+	    "start" INTEGER NOT NULL,
+	    "end" INTEGER NOT NULL
 	)`
 
 	_, err := d.DB.Exec(sql)
