@@ -27,7 +27,7 @@ func (j *JSONFormatter) FormatByte(e *Entry) []byte {
 	buf.WriteString(`"data":{`)
 	dataLen := len(e.Data)
 	for k, v := range e.Data {
-		buf.WriteString(fmt.Sprintf(`"%s":"%s"`, k, v))
+		buf.WriteString(fmt.Sprintf(`"%s":"%v"`, k, v))
 		if dataLen > 1 {
 			buf.WriteByte(',')
 		}

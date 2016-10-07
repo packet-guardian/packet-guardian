@@ -10,6 +10,7 @@ Here's a quick run down of the main sections of the configuration:
 - **Logging**: Where and how much to log. The default logging level is "notice". Standard syslog levels are valid plus `fatal`.
 - **Database**: Where and how to store data. Currently only SQLite is support but there are plans to include support for PostgreSQL and MySQL.
 - **Registration**: How to handle device registrations and setting defaults such as how many devices each user can have and the method used to expire a device.
+- **Leases**: Enable/disable lease history and settings that pertain to it.
 - **Guest**: Guest specific registration settings. It has many of the same types of settings as Registration, but is only for "guest" users. Here is also where you specify the method used to verify guest users. Currently only Twilio is support but more are coming soon.
     - **Email**: Settings pertaining to email verification for guest registrations. Not implemented yet.
     - **Twilio**: Settings pertaining to using Twilio SMS messaging to verify users. One text message is sent with a verification code for the user to enter.
