@@ -9,6 +9,7 @@ var (
 		"blacklist",
 		"device",
 		"lease",
+		"lease_history",
 		"sessions",
 		"settings",
 		"user",
@@ -44,6 +45,15 @@ var (
 		"hostname",
 		"abandoned",
 		"registered",
+	}
+
+	LeaseHistoryTableCols = []string{
+		"id",
+		"ip",
+		"mac",
+		"network",
+		"start",
+		"end",
 	}
 
 	UserTableCols = []string{

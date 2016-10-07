@@ -98,6 +98,11 @@ func init() {
 				return err
 			}
 		}
+		if !tables["lease_history"] {
+			if err := createMySQLLeaseHistoryTable(d); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 }
@@ -143,6 +148,20 @@ func createMySQLLeaseTable(d *DatabaseAccessor) error {
 	    "hostname" TEXT NOT NULL,
 	    "abandoned" TINYINT DEFAULT 0,
 	    "registered" TINYINT DEFAULT 0
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1`
+
+	_, err := d.DB.Exec(sql)
+	return err
+}
+
+func createMySQLLeaseHistoryTable(d *DatabaseAccessor) error {
+	sql := `CREATE TABLE "lease_history" (
+	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
+	    "ip" VARCHAR(15) NOT NULL UNIQUE KEY,
+	    "mac" VARCHAR(17) NOT NULL,
+	    "network" TEXT NOT NULL,
+	    "start" INTEGER NOT NULL,
+	    "end" INTEGER NOT NULL
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1`
 
 	_, err := d.DB.Exec(sql)

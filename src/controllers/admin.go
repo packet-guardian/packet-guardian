@@ -113,6 +113,7 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 		a.e.Views.RenderError(w, r, nil)
 		return
 	}
+	device.LoadLeaseHistory()
 	user, err := models.GetUserByUsername(a.e, device.Username)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{

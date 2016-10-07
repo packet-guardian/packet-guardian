@@ -14,7 +14,8 @@ import (
 )
 
 type LeaseStore struct {
-	e *common.Environment
+	e        *common.Environment
+	histChan chan *dhcp.Lease
 }
 
 var leaseStore *LeaseStore
@@ -23,7 +24,13 @@ var leaseStore *LeaseStore
 // Client code should use GetLeaseStore unless it's absolutly necessary to have
 // a new LeaseStore object.
 func NewLeaseStore(e *common.Environment) *LeaseStore {
-	return &LeaseStore{e: e}
+	histChan := make(chan *dhcp.Lease, 20)
+	go addToLeaseHistory(e, histChan)
+
+	return &LeaseStore{
+		e:        e,
+		histChan: histChan,
+	}
 }
 
 // GetLeaseStore will return an existing LeaseStore if one has been made already,
@@ -44,6 +51,7 @@ func GetLeaseStore(e *common.Environment) *LeaseStore {
 func (l *LeaseStore) GetAllLeases() ([]*dhcp.Lease, error) {
 	return l.doDatabaseQuery("")
 }
+
 func (l *LeaseStore) GetLeaseByIP(ip net.IP) (*dhcp.Lease, error) {
 	sql := `WHERE "ip" = ?`
 	leases, err := l.doDatabaseQuery(sql, ip.String())
@@ -65,6 +73,7 @@ func (l *LeaseStore) GetRecentLeaseByMAC(mac net.HardwareAddr) (*dhcp.Lease, err
 	}
 	return leases[0], nil
 }
+
 func (l *LeaseStore) GetAllLeasesByMAC(mac net.HardwareAddr) ([]*dhcp.Lease, error) {
 	return l.doDatabaseQuery(`WHERE "mac" = ?`, mac.String())
 }
@@ -88,8 +97,34 @@ func (l *LeaseStore) CreateLease(lease *dhcp.Lease) error {
 	}
 	id, _ := result.LastInsertId()
 	lease.ID = int(id)
+	l.histChan <- lease
 	return nil
 }
+
+func (l *LeaseStore) GetLeaseHistory(mac net.HardwareAddr) ([]*LeaseHistory, error) {
+	if l.e.Config.Leases.HistoryEnabled {
+		return GetLeaseHistory(l.e, mac)
+	}
+	leases, err := l.SearchLeases(
+		`"mac" = ? ORDER BY "start" DESC`,
+		mac.String(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	leaseHistory := make([]*LeaseHistory, len(leases))
+	for i, lease := range leases {
+		leaseHistory[i] = &LeaseHistory{
+			IP:      lease.IP,
+			MAC:     lease.MAC,
+			Network: lease.Network,
+			Start:   lease.Start,
+			End:     lease.End,
+		}
+	}
+	return leaseHistory, nil
+}
+
 func (l *LeaseStore) UpdateLease(lease *dhcp.Lease) error {
 	sql := `UPDATE "lease" SET "mac" = ?, "start" = ?, "end" = ?, "hostname" = ?, "abandoned" = ? WHERE "id" = ?`
 
@@ -102,8 +137,13 @@ func (l *LeaseStore) UpdateLease(lease *dhcp.Lease) error {
 		lease.IsAbandoned,
 		lease.ID,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	l.histChan <- lease
+	return nil
 }
+
 func (l *LeaseStore) DeleteLease(lease *dhcp.Lease) error {
 	if lease.ID == 0 {
 		return nil
