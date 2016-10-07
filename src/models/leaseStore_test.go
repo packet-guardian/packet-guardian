@@ -20,7 +20,6 @@ func TestLeaseSaveNoHistory(t *testing.T) {
 
 	e := common.NewTestEnvironment()
 	e.DB = &common.DatabaseAccessor{DB: db}
-	e.Config.Leases.HistoryEnabled = false // Disable history save because of go routine
 
 	lease := dhcp.NewLease(NewLeaseStore(e))
 	lease.IP = net.ParseIP("192.168.1.1")

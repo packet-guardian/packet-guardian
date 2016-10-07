@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 // Device represents a device in the system
@@ -27,7 +26,7 @@ type Device struct {
 	UserAgent      string
 	blacklisted    bool
 	LastSeen       time.Time
-	Leases         []*dhcp.Lease
+	Leases         []*LeaseHistory
 }
 
 func NewDevice(e *common.Environment) *Device {
@@ -178,34 +177,39 @@ func (d *Device) SetLastSeen(t time.Time) {
 	d.LastSeen = t
 }
 
-func (d *Device) LoadKnownLeases() error {
-	leases, err := GetLeaseStore(d.e).SearchLeases(
-		`"mac" = ? ORDER BY "start" DESC`,
-		d.MAC.String(),
-	)
+// LoadLeaseHistory gets the device's lease history from the lease_history
+// table. If lease history is disabled, this function will use the active lease
+// table which won't be as accurate, and won't show continuity.
+func (d *Device) LoadLeaseHistory() error {
+	leases, err := GetLeaseStore(d.e).GetLeaseHistory(d.MAC)
 	if err != nil {
 		return err
 	}
-	if leases != nil {
-		d.Leases = leases
-	}
+	d.Leases = leases
 	return nil
 }
 
 // GetCurrentLease will return the last known lease for the device that has
 // not expired. If two leases are currently active, it will return the lease
 // with the newest start date. If no current lease is found, returns nil.
-func (d *Device) GetCurrentLease() *dhcp.Lease {
-	if d.Leases == nil {
-		d.LoadKnownLeases()
-	}
-	if d.Leases == nil || len(d.Leases) == 0 {
+func (d *Device) GetCurrentLease() *LeaseHistory {
+	// Instead of using the lease history table, this always uses the active
+	// lease table. Lease history may be disabled so it can't be relied on.
+	// Since this is the current Active lease, it makes sense to use the active table.
+	lease, err := GetLeaseStore(d.e).SearchLeases(
+		`"mac" = ? ORDER BY "start" DESC LIMIT 1`,
+		d.MAC.String(),
+	)
+	if err != nil || lease == nil || len(lease) == 0 || lease[0].End.Before(time.Now()) {
 		return nil
 	}
-	if d.Leases[0].End.Before(time.Now()) {
-		return nil
+	return &LeaseHistory{
+		IP:      lease[0].IP,
+		MAC:     lease[0].MAC,
+		Network: lease[0].Network,
+		Start:   lease[0].Start,
+		End:     lease[0].End,
 	}
-	return d.Leases[0]
 }
 
 func (d *Device) IsExpired() bool {

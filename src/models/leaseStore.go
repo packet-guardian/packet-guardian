@@ -101,6 +101,30 @@ func (l *LeaseStore) CreateLease(lease *dhcp.Lease) error {
 	return nil
 }
 
+func (l *LeaseStore) GetLeaseHistory(mac net.HardwareAddr) ([]*LeaseHistory, error) {
+	if l.e.Config.Leases.HistoryEnabled {
+		return GetLeaseHistory(l.e, mac)
+	}
+	leases, err := l.SearchLeases(
+		`"mac" = ? ORDER BY "start" DESC`,
+		mac.String(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	leaseHistory := make([]*LeaseHistory, len(leases))
+	for i, lease := range leases {
+		leaseHistory[i] = &LeaseHistory{
+			IP:      lease.IP,
+			MAC:     lease.MAC,
+			Network: lease.Network,
+			Start:   lease.Start,
+			End:     lease.End,
+		}
+	}
+	return leaseHistory, nil
+}
+
 func (l *LeaseStore) UpdateLease(lease *dhcp.Lease) error {
 	sql := `UPDATE "lease" SET "mac" = ?, "start" = ?, "end" = ?, "hostname" = ?, "abandoned" = ? WHERE "id" = ?`
 

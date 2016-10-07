@@ -11,13 +11,12 @@ import (
 )
 
 type LeaseHistory struct {
-	ID       int
-	IP       net.IP
-	MAC      net.HardwareAddr
-	Network  string
-	Start    time.Time
-	End      time.Time
-	Hostname string
+	ID      int
+	IP      net.IP
+	MAC     net.HardwareAddr
+	Network string
+	Start   time.Time
+	End     time.Time
 }
 
 func GetLeaseHistory(e *common.Environment, mac net.HardwareAddr) ([]*LeaseHistory, error) {
