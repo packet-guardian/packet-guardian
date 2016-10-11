@@ -53,7 +53,7 @@ dhcp:
 management:
 	GOBIN=$(PWD)/bin go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
 
-dist: vet local-install
+dist: vet all
 	@rm -rf ./dist
 	@mkdir -p dist/packet-guardian
 	@cp -R config dist/packet-guardian/
@@ -79,7 +79,7 @@ clean:
 	rm -rf ./logs/*
 	rm -rf ./sessions/*
 
-docker:
+docker: dist
 	@rm -rf docker/tmp
 	@mkdir docker/tmp
 	cp dist/pg-dist* docker/tmp/dist.tar.gz

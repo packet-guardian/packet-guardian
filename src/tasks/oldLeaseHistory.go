@@ -30,7 +30,7 @@ func cleanUpOldLeaseHistory(e *common.Environment) (string, error) {
 	}
 	d = -d
 
-	sql := `DELETE FROM "lease_history" WHERE "end" < ?)`
+	sql := `DELETE FROM "lease_history" WHERE "end" < ?`
 	results, err := e.DB.Exec(sql, now.Add(d).Unix())
 	if err != nil {
 		return "", err
