@@ -157,7 +157,7 @@ func createMySQLLeaseTable(d *DatabaseAccessor) error {
 func createMySQLLeaseHistoryTable(d *DatabaseAccessor) error {
 	sql := `CREATE TABLE "lease_history" (
 	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
-	    "ip" VARCHAR(15) NOT NULL UNIQUE KEY,
+	    "ip" VARCHAR(15) NOT NULL,
 	    "mac" VARCHAR(17) NOT NULL,
 	    "network" TEXT NOT NULL,
 	    "start" INTEGER NOT NULL,

@@ -5,3 +5,4 @@ database.sqlite3
 logs/
 bin/
 dist/
+.vscode/

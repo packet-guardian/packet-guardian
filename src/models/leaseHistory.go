@@ -67,7 +67,7 @@ func GetLeaseHistory(e *common.Environment, mac net.HardwareAddr) ([]*LeaseHisto
 }
 
 func getActiveLeaseHistory(e *common.Environment, mac net.HardwareAddr, ip net.IP) (*LeaseHistory, error) {
-	stmt := `SELECT "id" FROM "lease_history" WHERE "mac" = ? AND ip = ? AND "start" < ? AND "end" > ? ORDER BY "start" DESC LIMIT 1`
+	stmt := `SELECT "id" FROM "lease_history" WHERE "mac" = ? AND ip = ? AND "start" <= ? AND "end" >= ? ORDER BY "start" DESC LIMIT 1`
 
 	now := time.Now().Unix()
 	row := e.DB.QueryRow(stmt, mac.String(), ip.String(), now, now)

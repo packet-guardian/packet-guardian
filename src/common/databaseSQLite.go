@@ -138,7 +138,7 @@ func createSQLiteLeaseTable(d *DatabaseAccessor) error {
 func createSQLiteLeaseHistoryTable(d *DatabaseAccessor) error {
 	sql := `CREATE TABLE "lease_history" (
 	    "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	    "ip" TEXT NOT NULL UNIQUE ON CONFLICT ROLLBACK,
+	    "ip" TEXT NOT NULL,
 	    "mac" TEXT NOT NULL,
 	    "network" TEXT NOT NULL,
 	    "start" INTEGER NOT NULL,
