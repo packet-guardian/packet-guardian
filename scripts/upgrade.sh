@@ -157,10 +157,5 @@ upgrade() {
     echo
 }
 
-if [[ -z $(which sqlite3) ]]; then
-    echo "sqlite3 is required to install Packet Guardian"
-    exit 1
-fi
-
 confirm "This will upgrade Packet Guardian. Are you sure?"
 upgrade

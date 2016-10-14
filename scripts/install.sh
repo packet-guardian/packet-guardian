@@ -168,10 +168,5 @@ install() {
     echo
 }
 
-if [[ -z $(which sqlite3 2> /dev/null) ]]; then
-    echo "sqlite3 is required to install Packet Guardian"
-    exit 1
-fi
-
 confirm "This will install Packet Guardian. Are you sure?"
 install
