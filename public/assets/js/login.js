@@ -1,7 +1,7 @@
 // This source file is part of the Packet Guardian project.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
-$.onReady(function () {
+$.onReady(function() {
     'use strict';
     var login = function() {
         $('#login-btn').prop('disabled', true);
@@ -16,7 +16,7 @@ $.onReady(function () {
 
         $('#login-btn').text("Logging in...");
 
-        $.post('/login', data, function(resp, req) {
+        API.login(data, function() {
             location.href = '/';
         }, function(req) {
             $('#login-btn').text("Login >");

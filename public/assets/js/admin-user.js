@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 /*jslint browser:true */
 /*globals $*/
-$.onReady(function () {
+$.onReady(function() {
     'use strict';
 
     var devExpirationTypes = {
@@ -131,19 +131,13 @@ $.onReady(function () {
     });
 
     $('[name=delete-btn]').click(function() {
-        var username = $('[name=username]').value();
-        $.ajax({
-            method: "DELETE",
-            url: '/api/user',
-            params: {"username": username},
-            success: function(resp, req) {
-                if (req.status > 204) {
-                    resp = JSON.parse(resp);
-                    c.FlashMessage(resp.Message);
-                    return;
-                }
-                location.href = "/admin/users";
-            },
+        API.deleteUser($('[name=username]').value(), function(resp, req) {
+            if (req.status > 204) {
+                resp = JSON.parse(resp);
+                c.FlashMessage(resp.Message);
+                return;
+            }
+            location.href = "/admin/users";
         });
     });
 
@@ -183,8 +177,8 @@ $.onReady(function () {
             formData.valid_end = $('[name=valid-before]').value();
         }
 
-        $.post('/api/user', formData, function(resp, req) {
-            window.scroll(0,0);
+        API.saveUser(formData, function(resp, req) {
+            window.scroll(0, 0);
             if (req.status > 204) {
                 resp = JSON.parse(resp);
                 c.FlashMessage(resp.Message);
@@ -209,12 +203,12 @@ $.onReady(function () {
     function setTextboxToToday(el) {
         var date = new Date();
         var dateStr = date.getFullYear() + '-' +
-            ('0' + (date.getMonth()+1)).slice(-2) + '-' +
+            ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
             ('0' + date.getDate()).slice(-2);
 
         var timeStr = ('0' + date.getHours()).slice(-2) + ':' +
             ('0' + (date.getMinutes())).slice(-2);
-        $(el).value(dateStr+" "+timeStr);
+        $(el).value(dateStr + " " + timeStr);
     }
 
     function setExpirationToolTop(tip) {

@@ -3,9 +3,9 @@
 // license that can be found in the LICENSE file.
 /*jslint browser:true */
 /*globals $*/
-$.onReady(function () {
+$.onReady(function() {
     'use strict';
-    var register = function () {
+    var register = function() {
         disableRegBtn();
         var data = {
             "username": "",
@@ -43,7 +43,7 @@ $.onReady(function () {
         }
 
         if (data.password) { // Need to login first
-            $.post('/login', {"username": data.username, "password": data.password}, function(resp, req) {
+            API.login({ "username": data.username, "password": data.password }, function(resp, req) {
                 registerDevice(data);
             }, function(req) {
                 window.scrollTo(0, 0);
@@ -70,7 +70,7 @@ $.onReady(function () {
     }
 
     function registerDevice(data) {
-        $.post('/api/device', data, function(resp, req) {
+        API.registerDevice(data, function(resp, req) {
             resp = JSON.parse(resp);
             window.scrollTo(0, 0);
             c.FlashMessage("Registration successful", 'success');
@@ -80,7 +80,7 @@ $.onReady(function () {
                 // If the use had to login to register, let's log them out.
                 // It may be a bit confusing if they go back and forget they
                 // had to enter a password.
-                $.get('/logout?noredirect');
+                API.logout();
             }
 
             if (data["mac-address"] === "") {
@@ -90,23 +90,23 @@ $.onReady(function () {
 
             $('#suc-msg-manual').show();
             setTimeout(function() { location.href = resp.Data.Location; }, 3000);
-        }, function (req) {
+        }, function(req) {
             window.scrollTo(0, 0);
             enableRegBtn();
             var resp = JSON.parse(req.responseText);
-            switch(req.status) {
+            switch (req.status) {
                 case 500:
-                    c.FlashMessage("Internal Server Error - "+resp.Message);
+                    c.FlashMessage("Internal Server Error - " + resp.Message);
                     break;
                 default:
                     c.FlashMessage(resp.Message);
                     break;
             }
             if (data.password) {
-                // If the use had to login to register, let's log them out.
+                // If the user had to login to register, let's log them out.
                 // It may be a bit confusing if they go back and forget they
                 // had to enter a password.
-                $.get('/logout?noredirect');
+                API.logout();
             }
         });
     }

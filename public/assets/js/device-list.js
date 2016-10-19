@@ -18,7 +18,7 @@ $.onReady(function() {
     });
 
     function expandBody(bodyNum) {
-        var thebody = $("#device-body-"+bodyNum);
+        var thebody = $("#device-body-" + bodyNum);
         // Get the max-height value before setting it back to 0
         var mh = thebody.style("max-height");
         if (!stayOpen) {

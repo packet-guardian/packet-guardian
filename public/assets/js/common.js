@@ -5,7 +5,7 @@
 var c = {
     flashTimeout: 0,
 
-    FlashMessage: function (text, type) {
+    FlashMessage: function(text, type) {
         var flash = $('#flashDiv'),
             flashClass = (type === 'success') ? 'flashSuccess' : 'flashFailure';
 

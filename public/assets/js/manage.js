@@ -7,7 +7,7 @@ $.onReady(function() {
         isAdmin = $(e.target).data("admin");
         user = $('[name=username]').value();
         if (isAdmin !== null) {
-            location.href = "/register?manual=1&username="+user;
+            location.href = "/register?manual=1&username=" + user;
         } else {
             location.href = "/register?manual=1";
         }
@@ -37,46 +37,38 @@ $.onReady(function() {
         e.stopPropagation();
         id = $(e.target).data("device");
         var pmodal = new jsPrompt();
-        pmodal.show("Device Description:", $('#device-'+id+'-desc').text(), function(desc) {
+        pmodal.show("Device Description:", $('#device-' + id + '-desc').text(), function(desc) {
             editDeviceDescription(id, desc);
         });
     });
 
     // Event callbacks
     function editDeviceDescription(id, desc) {
-        mac = $('#device-'+id+'-mac').text();
-        $.post(
-            '/api/device/mac/'+encodeURIComponent(mac)+'/description',
-            {"description": desc}, function(resp, req) {
-                $('#device-'+id+'-desc').text(desc);
-                c.FlashMessage("Device description saved", 'success');
-            }, function(req) {
-                var resp = JSON.parse(req.responseText);
-                switch(req.status) {
-                    case 500:
-                        c.FlashMessage("Internal Server Error - "+resp.Message);
-                        break;
-                    default:
-                        c.FlashMessage(resp.Message);
-                        break;
-                    }
+        mac = $('#device-' + id + '-mac').text();
+        API.saveDeviceDescription(mac, desc, function(resp, req) {
+            $('#device-' + id + '-desc').text(desc);
+            c.FlashMessage("Device description saved", 'success');
+        }, function(req) {
+            var resp = JSON.parse(req.responseText);
+            switch (req.status) {
+                case 500:
+                    c.FlashMessage("Internal Server Error - " + resp.Message);
+                    break;
+                default:
+                    c.FlashMessage(resp.Message);
+                    break;
             }
+        }
         );
     }
 
     // Delete buttons
     function deleteAllDevices() {
-        var username = $('[name=username]').value();
-        $.ajax({
-            method: "DELETE",
-            url: "/api/device/user/"+username,
-            success: function() {
-                location.reload();
-            },
-            error: function() {
-                c.FlashMessage("Error deleting devices");
-            }
-        });
+        API.deleteDevices($('[name=username]').value(), [], function() {
+            location.reload();
+        }, function() {
+            c.FlashMessage("Error deleting devices");
+        })
     }
 
     function deleteSelectedDevices() {
@@ -85,22 +77,15 @@ $.onReady(function() {
             return;
         }
 
-        var username = $('[name=username]').value();
         var devicesToRemove = [];
         for (var i = 0; i < checked.length; i++) {
             devicesToRemove.push(checked[i].value);
         }
 
-        $.ajax({
-            method: 'DELETE',
-            url: '/api/device/user/'+username,
-            params: {"mac": devicesToRemove.join(',')},
-            success: function() {
-                location.reload();
-            },
-            error: function() {
-                c.FlashMessage("Error deleting devices");
-            }
-        });
+        API.deleteDevices($('[name=username]').value(), devicesToRemove, function() {
+            location.reload();
+        }, function() {
+            c.FlashMessage("Error deleting devices");
+        })
     }
 });
