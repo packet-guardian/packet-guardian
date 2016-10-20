@@ -23,7 +23,7 @@ func GetLeaseHistory(e *common.Environment, mac net.HardwareAddr) ([]*LeaseHisto
 	if !e.Config.Leases.HistoryEnabled {
 		return make([]*LeaseHistory, 0), nil
 	}
-	stmt := `SELECT "id", "ip", "network", "start", "end" FROM "lease_history" WHERE "mac" = ?`
+	stmt := `SELECT "id", "ip", "network", "start", "end" FROM "lease_history" WHERE "mac" = ? ORDER BY "start" DESC`
 
 	rows, err := e.DB.Query(stmt, mac.String())
 	if err != nil {
