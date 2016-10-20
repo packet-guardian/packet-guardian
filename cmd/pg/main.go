@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/server"
 	"github.com/usi-lfkeitel/packet-guardian/src/tasks"
@@ -70,11 +71,12 @@ func main() {
 
 	e.Config, err = common.NewConfig(configFile)
 	if err != nil {
-		fmt.Printf("Error loading configuration: %s\n", err.Error())
+		fmt.Printf("Error loading configuration: %s\n", err)
 		os.Exit(1)
 	}
 
 	e.Log = common.NewLogger(e.Config, "app")
+	common.SystemLogger = e.Log
 	e.Log.Debugf("Configuration loaded from %s", configFile)
 
 	c := make(chan os.Signal, 1)
@@ -85,20 +87,23 @@ func main() {
 		time.Sleep(2)
 	}(e)
 
-	e.Sessions, err = common.NewSessionStore(e.Config)
-	if err != nil {
-		e.Log.Fatalf("Error loading session store: %s", err.Error())
-	}
-
 	e.DB, err = common.NewDatabaseAccessor(e.Config)
 	if err != nil {
-		e.Log.Fatalf("Error loading database: %s", err.Error())
+		e.Log.WithField("error", err).Fatal("Error loading database")
 	}
-	e.Log.Debugf("Using %s database at %s", e.Config.Database.Type, e.Config.Database.Address)
+	e.Log.WithFields(verbose.Fields{
+		"type":    e.Config.Database.Type,
+		"address": e.Config.Database.Address,
+	}).Debug("Loaded database")
+
+	e.Sessions, err = common.NewSessionStore(e)
+	if err != nil {
+		e.Log.WithField("error", err).Fatal("Error loading session store")
+	}
 
 	e.Views, err = common.NewViews(e, "templates")
 	if err != nil {
-		e.Log.Fatalf("Error loading frontend templates: %s", err.Error())
+		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
 	}
 
 	go tasks.StartTaskScheduler(e)

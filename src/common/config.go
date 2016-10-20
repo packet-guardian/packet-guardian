@@ -46,14 +46,19 @@ type Config struct {
 		DefaultDeviceExpiration     string
 		ManualRegPlatforms          []string
 	}
+	Leases struct {
+		HistoryEnabled   bool
+		DeleteWithDevice bool
+		DeleteAfter      string
+	}
 	Guest struct {
-		Enabled                 bool
-		DeviceLimit             int
-		DeviceExpirationType    string
-		RollingExpirationLength string
-		DeviceExpiration        string
-		Checker                 string
-		VerifyCodeExpiration    int
+		Enabled              bool
+		GuestOnly            bool
+		DeviceLimit          int
+		DeviceExpirationType string
+		DeviceExpiration     string
+		Checker              string
+		VerifyCodeExpiration int
 
 		Email struct {
 		}
@@ -79,6 +84,7 @@ type Config struct {
 		TLSCertFile         string
 		TLSKeyFile          string
 		RedirectHttpToHttps bool
+		SessionStore        string
 		SessionName         string
 		SessionsDir         string
 		SessionsAuthKey     string
@@ -197,13 +203,15 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 		c.Registration.RollingExpirationLength = "4380h"
 	}
 
+	// Leases
+	c.Leases.DeleteAfter = setStringOrDefault(c.Leases.DeleteAfter, "96h")
+	if _, err := time.ParseDuration(c.Leases.DeleteAfter); err != nil {
+		c.Leases.DeleteAfter = "96h"
+	}
+
 	// Guest registrations
 	c.Guest.DeviceExpirationType = setStringOrDefault(c.Guest.DeviceExpirationType, "daily")
 	c.Guest.DeviceExpiration = setStringOrDefault(c.Guest.DeviceExpiration, "24:00")
-	c.Guest.RollingExpirationLength = setStringOrDefault(c.Guest.RollingExpirationLength, "4380h")
-	if _, err := time.ParseDuration(c.Guest.RollingExpirationLength); err != nil {
-		c.Guest.RollingExpirationLength = "4380h"
-	}
 	c.Guest.Checker = setStringOrDefault(c.Guest.Checker, "email")
 	c.Guest.VerifyCodeExpiration = setIntOrDefault(c.Guest.VerifyCodeExpiration, 3)
 
@@ -212,6 +220,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Webserver.HttpsPort = setIntOrDefault(c.Webserver.HttpsPort, 1443)
 	c.Webserver.SessionName = setStringOrDefault(c.Webserver.SessionName, "packet-guardian")
 	c.Webserver.SessionsDir = setStringOrDefault(c.Webserver.SessionsDir, "sessions")
+	c.Webserver.SessionStore = setStringOrDefault(c.Webserver.SessionStore, "filesystem")
 
 	// Authentication
 	if len(c.Auth.AuthMethod) == 0 {

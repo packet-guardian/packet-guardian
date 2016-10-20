@@ -14,14 +14,14 @@
         <div class="device-info">
             <div class="device-info-label">MAC Address</div>
             {{if $.linkMac}}
-            <div class="device-info-text"><a href="/admin/manage/device/{{urlquery .MAC}}">{{.MAC}}</a></div>
+            <div class="device-info-text" id="device-{{.ID}}-mac"><a href="/admin/manage/device/{{urlquery .MAC}}">{{.MAC}}</a></div>
             {{else}}
-            <div class="device-info-text">{{.MAC}}</div>
+            <div class="device-info-text" id="device-{{.ID}}-mac">{{.MAC}}</div>
             {{end}}
         </div>
         <div class="device-info">
-            <div class="device-info-label">Description</div>
-            <div class="device-info-text">{{.Description}}</div>
+            <div class="device-info-label">Description <i class="fa fa-pencil edit-dev-desc" aria-hidden="true" data-device="{{.ID}}"></i></div>
+            <div class="device-info-text" id="device-{{.ID}}-desc">{{.Description}}</div>
         </div>
         <div class="device-info">
             <div class="device-info-label">Last Seen</div>

@@ -39,10 +39,10 @@
 			"revisionTime": "2016-08-16T22:23:38Z"
 		},
 		{
-			"checksumSHA1": "oSx9IYMY+lnnX3op2Pnh376tIe4=",
+			"checksumSHA1": "f1dfF3vmO95G/hbwMYlFru/FfMo=",
 			"path": "github.com/gorilla/sessions",
-			"revision": "1bbba13ba476e132b5a0739b18f1653c3e57d3c1",
-			"revisionTime": "2016-08-16T18:50:42Z"
+			"revision": "ca9ada44574153444b00d3fd9c8559e4cc95f896",
+			"revisionTime": "2016-09-22T14:58:04Z"
 		},
 		{
 			"checksumSHA1": "Drsz3oT4NmM2tVQCRk+occxVvPA=",
@@ -57,10 +57,10 @@
 			"revisionTime": "2016-04-23T15:30:15Z"
 		},
 		{
-			"checksumSHA1": "V+dueNW80HEGwdToMb94J/veUgY=",
+			"checksumSHA1": "J9pvXe7xkU6kn73rcTQ2/4taHj0=",
 			"path": "github.com/lfkeitel/verbose",
-			"revision": "6638292f115274c9468fe7570338898a80a99ef2",
-			"revisionTime": "2016-06-09T01:29:02Z"
+			"revision": "bedeece5650ec22f3eee9bca43110f045d0845f0",
+			"revisionTime": "2016-10-07T15:19:22Z"
 		},
 		{
 			"checksumSHA1": "KvUWnb+svMKP6VEKobmj9Y/sI4w=",
@@ -99,10 +99,10 @@
 			"revisionTime": "2016-06-08T14:48:14Z"
 		},
 		{
-			"checksumSHA1": "2eihtwrllLGgtPUurPjxv+3wsTU=",
+			"checksumSHA1": "gTN7Lr7uuAB5dQ22cRX0G6lV/co=",
 			"path": "github.com/usi-lfkeitel/pg-dhcp",
-			"revision": "f71067c7b632af68d59c666a302c8e6712063046",
-			"revisionTime": "2016-08-25T02:14:35Z"
+			"revision": "61918bbc619793e30d7fcd81413fde5f58a76a8b",
+			"revisionTime": "2016-10-03T22:15:34Z"
 		},
 		{
 			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",

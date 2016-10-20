@@ -3,7 +3,6 @@ export GO15VENDOREXPERIMENT=1
 # variable definitions
 NAME := packet-guardian
 DESC := A captive portal for today's networks
-PREFIX ?= usr/local
 VERSION := $(shell git describe --tags --always --dirty)
 GOVERSION := $(shell go version)
 BUILDTIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -17,19 +16,24 @@ LDFLAGS := -X 'main.version=$(VERSION)' \
 			-X 'main.builder=$(BUILDER)' \
 			-X 'main.goversion=$(GOVERSION)'
 
+.PHONY: all doc fmt alltests test coverage benchmark lint vet dhcp management dist clean docker
+
+all: test management dhcp
+
 # development tasks
 doc:
-	godoc -http=:6060 -index
+	@godoc -http=:6060 -index
 
 fmt:
-	go fmt $$(go list ./src/...)
+	@go fmt $$(go list ./src/...)
+
+alltests: test lint vet
 
 test:
-	go test $$(go list ./src/...)
+	@go test -race $$(go list ./src/...)
 
 coverage:
-	@-go test -v -coverprofile=cover.out $$(go list ./src/...)
-	@-go tool cover -html=cover.out -o cover.html
+	@go test -cover $$(go list ./src/...)
 
 benchmark:
 	@echo "Running tests..."
@@ -38,29 +42,18 @@ benchmark:
 # https://github.com/golang/lint
 # go get github.com/golang/lint/golint
 lint:
-	golint $$(go list ./src/...)
+	@golint ./src/...
 
 vet:
-	go vet $$(go list ./src/...)
+	@go vet $$(go list ./src/...)
 
-CMD_SOURCES := $(shell find cmd -name main.go)
-TARGETS := $(patsubst cmd/%/main.go,bin/%,$(CMD_SOURCES))
-
-bin/%: cmd/%/main.go
-	go build -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' -o $@ $<
-
-local-install: test
-	GOBIN=$(PWD)/bin go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
+dhcp:
 	GOBIN=$(PWD)/bin go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
 
-install: test
-	go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
-	go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
+management:
+	GOBIN=$(PWD)/bin go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
 
-all: $(TARGETS)
-.DEFAULT_GOAL := all
-
-dist: vet local-install
+dist: vet all
 	@rm -rf ./dist
 	@mkdir -p dist/packet-guardian
 	@cp -R config dist/packet-guardian/
@@ -86,7 +79,7 @@ clean:
 	rm -rf ./logs/*
 	rm -rf ./sessions/*
 
-docker:
+docker: dist
 	@rm -rf docker/tmp
 	@mkdir docker/tmp
 	cp dist/pg-dist* docker/tmp/dist.tar.gz
@@ -104,5 +97,3 @@ docker:
 	sudo docker build -t pg-dhcp --rm .
 
 	@rm -rf docker/tmp
-
-.PHONY: all test local-install coverage clean dist vet lint benchmark fmt doc $(CMD_SOURCES) docker

@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 /*jslint browser:true */
 /*globals $*/
-$.onReady(function () {
+$.onReady(function() {
     'use strict';
 
     // Form submittion
@@ -11,7 +11,7 @@ $.onReady(function () {
         e.preventDefault();
         var username = $("[name=username]").value();
         if (username !== "") {
-            location.href = "/admin/users/"+username;
+            location.href = "/admin/users/" + username;
         }
     });
 });

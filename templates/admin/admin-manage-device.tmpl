@@ -9,7 +9,12 @@
                 {{if eq .device.ID 0}}
                 <span class="username unregistered">UNREGISTERED</span>
                 {{else}}
-                <span class="username">{{.user.Username}}</span>
+                <span class="username">
+                    {{.user.Username}}
+                    {{if .canEditUser}}
+                    <a href="/admin/users/{{.user.Username}}" class="no-color-link"><span class="fa fa-pencil edit-property"></span></a>
+                    {{end}}
+                </span>
                 {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
                 {{end}}
             </section>
@@ -55,7 +60,7 @@
             {{if ne .ID 0}}
             <p>
                 <span class="label">Description</span>:
-                <span class="data">{{.Description}}</span>
+                <span class="data" id="device-desc">{{.Description}}</span> <i class="fa fa-pencil edit-property" id="edit-dev-desc" aria-hidden="true"></i>
             </p>
             <p>
                 <span class="label">Registered From</span>:
@@ -71,13 +76,27 @@
             </p>
             <p>
                 <span class="label">Expires</span>:
+                <span id="edit-expire-controls">
+                    <select id="dev-exp-sel">
+                        <option value="global">Global</option>
+                        <option value="never">Never</option>
+                        <option value="rolling">Rolling</option>
+                        <option value="specific">Specific</option>
+                    </select>
+                    <input type="text" id="dev-exp-val" value="">
+                </span>
                 {{if eq .Expires.Unix 0}}
-                <span class="data">Never</span>
+                <span class="data" id="device-expiration">Never</span>
                 {{else if eq .Expires.Unix 1}}
-                <span class="data">Rolling</span>
+                <span class="data" id="device-expiration">Rolling</span>
                 {{else}}
-                <span class="data">{{.Expires.Format "2006-01-02 15:04"}}</span>
+                <span class="data" id="device-expiration">{{.Expires.Format "2006-01-02 15:04"}}</span>
                 {{end}}
+                <i class="fa fa-pencil edit-property" id="edit-dev-expiration" aria-hidden="true"></i>
+                <span id="confirmation-icons">
+                    <i class="fa fa-check edit-property" id="dev-expiration-ok" aria-hidden="true"></i>
+                    <i class="fa fa-times edit-property" id="dev-expiration-cancel" aria-hidden="true"></i>
+                </span>
             </p>
             <p>
                 <span class="label">Registered</span>:

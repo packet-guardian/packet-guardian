@@ -15,16 +15,16 @@ function jsOverlay() {
     };
 }
 
-function jsAlert(){
-    this._okCallback = function(){};
+function jsAlert() {
+    this._okCallback = function() { };
     this._overlay = new jsOverlay();
     this._container = null;
 
-	this.show = function(dialog, callback){
-        this._okCallback = (callback) ? callback : function(){};
-		var winW = window.innerWidth;
-	    var winH = window.innerHeight;
-	    var dialogbox = document.getElementById('dialogbox');
+    this.show = function(dialog, callback) {
+        this._okCallback = (callback) ? callback : function() { };
+        var winW = window.innerWidth;
+        var winH = window.innerHeight;
+        var dialogbox = document.getElementById('dialogbox');
 
         this._container = document.createElement("div");
 
@@ -51,31 +51,31 @@ function jsAlert(){
         var jContainer = $(this._container);
         jContainer.addClass("js-modal");
         document.body.insertBefore(this._container, document.body.firstChild);
-        jContainer.style("left", (winW/2) - (500 * 0.5)+"px");
-        jContainer.style("top", (winH/2) - (250 * 0.5)+"px");
+        jContainer.style("left", (winW / 2) - (500 * 0.5) + "px");
+        jContainer.style("top", (winH / 2) - (250 * 0.5) + "px");
 
         this._overlay = new jsOverlay();
         this._overlay.show();
         jContainer.show();
-	};
+    };
 
-	this.ok = function(){
+    this.ok = function() {
         $(this._container).hide();
         this._overlay.hide();
         this._okCallback();
         document.body.removeChild(document.getElementsByClassName("js-modal")[0]);
-	};
+    };
 }
 
-function jsConfirm(){
-    this._okCallback = function(){};
-    this._cancelCallback = function(){};
+function jsConfirm() {
+    this._okCallback = function() { };
+    this._cancelCallback = function() { };
     this._overlay = null;
     this._container = null;
 
-    this.show = function(dialog, okCallback, cnlCallback){
-        this._okCallback = (okCallback) ? okCallback : function(){};
-        this._cancelCallback = (cnlCallback) ? cnlCallback : function(){};
+    this.show = function(dialog, okCallback, cnlCallback) {
+        this._okCallback = (okCallback) ? okCallback : function() { };
+        this._cancelCallback = (cnlCallback) ? cnlCallback : function() { };
         var winW = window.innerWidth;
         var winH = window.innerHeight;
         var dialogbox = document.getElementById('dialogbox');
@@ -109,22 +109,22 @@ function jsConfirm(){
         var jContainer = $(this._container);
         jContainer.addClass("js-modal");
         document.body.insertBefore(this._container, document.body.firstChild);
-        jContainer.style("left", (winW/2) - (500 * 0.5)+"px");
-        jContainer.style("top", (winH/2) - (250 * 0.5)+"px");
+        jContainer.style("left", (winW / 2) - (500 * 0.5) + "px");
+        jContainer.style("top", (winH / 2) - (250 * 0.5) + "px");
 
         this._overlay = new jsOverlay();
         this._overlay.show();
         jContainer.show();
     };
 
-    this.ok = function(){
+    this.ok = function() {
         $(this._container).hide();
         this._overlay.hide();
         this._okCallback();
         document.body.removeChild(document.getElementsByClassName("js-modal")[0]);
     };
 
-    this.cancel = function(){
+    this.cancel = function() {
         $(this._container).hide();
         this._overlay.hide();
         this._cancelCallback();
@@ -132,15 +132,21 @@ function jsConfirm(){
     };
 }
 
-function jsPrompt(){
-    this._okCallback = function(){};
-    this._cancelCallback = function(){};
+function jsPrompt() {
+    this._okCallback = function() { };
+    this._cancelCallback = function() { };
     this._overlay = new jsOverlay();
     this._container = null;
 
-    this.show = function(dialog, okkCallback, cnlCallback){
-        this._okCallback = (okkCallback) ? okkCallback : function(){};
-        this._cancelCallback = (cnlCallback) ? cnlCallback : function(){};
+    this.show = function(dialog, value, okkCallback, cnlCallback) {
+        if (typeof value === "function") {
+            // Shift variables
+            cnlCallback = okkCallback;
+            okkCallback = value;
+            value = "";
+        }
+        this._okCallback = (okkCallback) ? okkCallback : function() { };
+        this._cancelCallback = (cnlCallback) ? cnlCallback : function() { };
         var winW = window.innerWidth;
         var winH = window.innerHeight;
         var dialogbox = document.getElementById('dialogbox');
@@ -166,6 +172,7 @@ function jsPrompt(){
         input.type = "text";
         input.id = "js-modal-prompt-input";
         input.size = 50;
+        input.value = value;
         // Add input to form
         form.appendChild(input);
         // Add form to body
@@ -189,8 +196,8 @@ function jsPrompt(){
         jContainer.addClass("js-modal");
         jContainer.prop("id", "js-modal-container");
         document.body.insertBefore(this._container, document.body.firstChild);
-        jContainer.style("left", (winW/2) - (500 * 0.5)+"px");
-        jContainer.style("top", (winH/2) - (250 * 0.5)+"px");
+        jContainer.style("left", (winW / 2) - (500 * 0.5) + "px");
+        jContainer.style("top", (winH / 2) - (250 * 0.5) + "px");
 
         this._overlay = new jsOverlay();
         this._overlay.show();
@@ -201,21 +208,21 @@ function jsPrompt(){
 
     // This is called when a user presses enter in the input box
     // It stops the form submittion and calls the ok function
-    this.enter = function(e){
+    this.enter = function(e) {
         e.preventDefault();
         e.stopPropagation();
         this.ok();
         return false;
     };
 
-    this.ok = function(){
+    this.ok = function() {
         $(this._container).hide();
         this._overlay.hide();
         this._okCallback($("#js-modal-prompt-input").value());
         document.body.removeChild(document.getElementsByClassName("js-modal")[0]);
     };
 
-    this.cancel = function(){
+    this.cancel = function() {
         $(this._container).hide();
         this._overlay.hide();
         this._cancelCallback();
@@ -226,18 +233,18 @@ function jsPrompt(){
 function bindMouseMove(binderID, movediv) {
     var binder = $(binderID);
     binder.on("mousedown", function(e) {
-    	if (e.which !== 1) { return; }
+        if (e.which !== 1) { return; }
         var self = $(e.target);
         var mover = $(movediv);
         self.style("position", "relative");
 
         document.onmousemove = function(e) {
-            mover.style("left", e.pageX-250+'px');
-            mover.style("top", e.pageY-10+'px');
+            mover.style("left", e.pageX - 250 + 'px');
+            mover.style("top", e.pageY - 10 + 'px');
         };
     });
     binder.on("mouseup", function() {
-    	document.onmousemove = null;
+        document.onmousemove = null;
     });
 
     binder.on("dragstart", function() { return false; });

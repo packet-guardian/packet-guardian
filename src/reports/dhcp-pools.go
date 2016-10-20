@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	"github.com/usi-lfkeitel/pg-dhcp"
@@ -16,7 +17,10 @@ func init() {
 func poolReport(e *common.Environment, w http.ResponseWriter, r *http.Request) error {
 	dhcpConfig, err := dhcp.ParseFile(e.Config.DHCP.ConfigFile)
 	if err != nil {
-		e.Log.WithField("ErrMsg", err).Fatal("Error loading DHCP configuration")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "reports:dhcp-pools",
+		}).Error("Error loading DHCP configuration")
 		return err
 	}
 

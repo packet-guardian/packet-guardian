@@ -1,7 +1,6 @@
 package verbose
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path"
@@ -12,11 +11,12 @@ import (
 
 // FileHandler writes log messages to a file to a directory
 type FileHandler struct {
-	min      LogLevel
-	max      LogLevel
-	path     string
-	separate bool
-	m        sync.Mutex
+	min       LogLevel
+	max       LogLevel
+	path      string
+	separate  bool
+	formatter Formatter
+	m         sync.Mutex
 }
 
 // NewFileHandler takes the path and returns a FileHandler. If the path exists,
@@ -26,10 +26,11 @@ type FileHandler struct {
 // In directory mode, each level is written to it's own file.
 func NewFileHandler(path string) (*FileHandler, error) {
 	f := &FileHandler{
-		min:  LogLevelDebug,
-		max:  LogLevelFatal,
-		path: path,
-		m:    sync.Mutex{},
+		min:       LogLevelDebug,
+		max:       LogLevelFatal,
+		path:      path,
+		formatter: &LineFormatter{},
+		m:         sync.Mutex{},
 	}
 
 	// Determine of the path is a file or directory
@@ -82,6 +83,11 @@ func (f *FileHandler) SetMaxLevel(l LogLevel) {
 	f.max = l
 }
 
+// SetFormatter gives FileHandler a formatter for log messages.
+func (f *FileHandler) SetFormatter(fo Formatter) {
+	f.formatter = fo
+}
+
 // Handles returns whether the handler handles log level l.
 func (f *FileHandler) Handles(l LogLevel) bool {
 	return (f.min <= l && l <= f.max)
@@ -97,20 +103,6 @@ func (f *FileHandler) WriteLog(e *Entry) {
 		logfile = path.Join(f.path, logfile)
 	}
 
-	buf := &bytes.Buffer{}
-	fmt.Fprintf(
-		buf,
-		"%s: %s: %s: %s",
-		e.Timestamp.Format("2006-01-02 15:04:05 MST"),
-		strings.ToUpper(e.Level.String()),
-		e.Logger.Name(),
-		e.Message,
-	)
-	for k, v := range e.Data {
-		fmt.Fprintf(buf, " %s=%v", k, v)
-	}
-	buf.WriteByte('\n')
-
 	f.m.Lock()
 	defer f.m.Unlock()
 
@@ -120,7 +112,7 @@ func (f *FileHandler) WriteLog(e *Entry) {
 	}
 	defer file.Close()
 
-	_, err = file.Write(buf.Bytes())
+	_, err = file.Write(f.formatter.FormatByte(e))
 	if err != nil {
 		fmt.Printf("Error writing to log file: %v\n", err)
 	}

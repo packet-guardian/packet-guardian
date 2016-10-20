@@ -2,6 +2,12 @@
 
 For instructions on setting up the full captive portal stack, please see the [Full Stack](full-stack.md) documentation.
 
+## Database Setup
+
+Regardless of which method is used, a database is needed to save data. If you're using an SQLite database, no extra action is needed as the file will be created at first run.
+
+If you're going to use MySQL, you will need create a table for Packet Guardian before starting it. The application will create the tables as needed. Make sure to set the correct settings in the configuration file.
+
 ## Automatic Installation (recommended)
 
 1. Get a copy of the distribution package from the Github releases page.
@@ -28,7 +34,6 @@ Before going to much further, it is highly recommended that you use the automati
 1. Get a copy of the distribution package from the Github releases page.
 2. Extract the tarball to a directory. It will create a packet-guardian folder when extracted.
 3. The configuration files are located in the config directory. There are sample files for the webserver component and the DHCP component. It's recommended to copy the sample files and edit as needed. The .toml files are the given to the binary at runtime. The dhcp-config.conf file is where the DHCP scopes and server settings are defined. See the relevant documentation for those file formats. You WILL NEED to edit the configuration and set the correct paths. The defaults paths assume the installation method is the automatic install script.
-4. Initialize the database by running `sqlite3 config/database.sqlite3 < config/db-schema-sqlite.sql`.
 4. To start the system, run the following commands with the current directory being the packet-guardian folder extracted earlier: `bin/pg -c $path_to_config` and `bin/dhcp -c $path_to_config`. Both binaries take the .toml file as the -c option. The path to the DHCP scope configuration is defined in the toml file.
 5. To setup AppArmor or run the binaries as services, please read the [Additional Installation](additional-installation.md) documentation.
 

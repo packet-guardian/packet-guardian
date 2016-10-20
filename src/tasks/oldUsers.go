@@ -29,12 +29,12 @@ func cleanUpExpiredUsers(e *common.Environment) (string, error) {
 	for rows.Next() {
 		var username string
 		rows.Scan(&username)
-		e.Log.Infof("Purging user %s", username)
+		e.Log.WithField("username", username).Info("TASK - Deleting user")
 		i++
 	}
 
 	if i == 0 {
-		return "No users to purge", nil
+		return "No users to delete", nil
 	}
 
 	sql := `DELETE FROM "user" WHERE "valid_forever" = 0 AND "valid_end" < ?`
@@ -43,5 +43,5 @@ func cleanUpExpiredUsers(e *common.Environment) (string, error) {
 		return "", err
 	}
 	numOfRows, _ := results.RowsAffected()
-	return fmt.Sprintf("Purged %d users", numOfRows), nil
+	return fmt.Sprintf("Deleted %d users", numOfRows), nil
 }

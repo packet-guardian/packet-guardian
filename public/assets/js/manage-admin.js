@@ -11,10 +11,10 @@ $.onReady(function() {
                 var isBl = (self.data("blacklisted") === "true");
                 if (isBl) {
                     cmodal.show("Remove username from blacklist?",
-                        function(){ blacklistUsername(true); });
+                        function() { blacklistUsername(true); });
                 } else {
                     cmodal.show("Add username to blacklist?",
-                        function(){ blacklistUsername(false); });
+                        function() { blacklistUsername(false); });
                 }
                 break;
             case "black-all":
@@ -25,11 +25,11 @@ $.onReady(function() {
                 break;
             case "black-sel":
                 cmodal.show("Add selected user's devices to blacklist?",
-                    function(){ blacklistSelectedDevices(true); });
+                    function() { blacklistSelectedDevices(true); });
                 break;
             case "unblack-sel":
                 cmodal.show("Remove selected user's devices from blacklist?",
-                    function(){ blacklistSelectedDevices(false); });
+                    function() { blacklistSelectedDevices(false); });
                 break;
         }
         self.value("");
@@ -57,21 +57,14 @@ $.onReady(function() {
     }
 
     function blacklistUsername(isBlacklisted) {
-        var method = "POST";
-        if (isBlacklisted) {
-            method = "DELETE";
-        }
+        var success = function() { location.reload(); };
+        var error = function() { c.FlashMessage("Error blacklisting user"); };
 
-        $.ajax({
-            method: method,
-            url: '/api/blacklist/user/'+getUsername(),
-            success: function() {
-                location.reload();
-            },
-            error: function() {
-                c.FlashMessage("Error blacklisting user");
-            }
-        });
+        if (isBlacklisted) {
+            API.unblacklistUser(getUsername(), success, error);
+        } else {
+            API.blacklistUser(getUsername(), success, error);
+        }
     }
 
     function getCheckedDevices() {
@@ -92,7 +85,6 @@ $.onReady(function() {
     }
 
     function blacklistDevices(devices, add) {
-        devices = devices.join(',');
         if (add) {
             addDevicesToBlacklist(devices);
         } else {
@@ -101,8 +93,8 @@ $.onReady(function() {
     }
 
     function addDevicesToBlacklist(devices) {
-        if (!devices) { devices = ""; }
-        $.post('/api/blacklist/device/'+getUsername(), {"mac": devices}, function() {
+        if (!devices) { devices = []; }
+        API.blacklistDevices(getUsername(), devices, function() {
             location.reload();
         }, function() {
             c.FlashMessage("Error blacklisting devices");
@@ -110,17 +102,11 @@ $.onReady(function() {
     }
 
     function removeDevicesFromBlacklist(devices) {
-        if (!devices) { devices = ""; }
-        $.ajax({
-            method: 'DELETE',
-            url: '/api/blacklist/device/'+getUsername(),
-            params: {"mac": devices},
-            success: function() {
-                location.reload();
-            },
-            error: function() {
-                c.FlashMessage("Error removing devices from blacklist");
-            }
+        if (!devices) { devices = []; }
+        API.unblacklistDevices(getUsername(), devices, function() {
+            location.reload();
+        }, function() {
+            c.FlashMessage("Error removing devices from blacklist");
         });
     }
 
@@ -129,10 +115,11 @@ $.onReady(function() {
         if (devices.length === 0 || !username) {
             return;
         }
-        $.post("/api/device/reassign", {"username": username, "macs": devices.join(',')}, function() {
+
+        API.reassignDevices(username, devices, function() {
             location.reload();
         }, function() {
             c.FlashMessage("Error reassigning devices");
-        });
+        })
     }
 });

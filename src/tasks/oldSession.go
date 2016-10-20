@@ -15,17 +15,29 @@ import (
 
 const sessionsDir string = "sessions"
 
+var sessionExpiration = time.Duration(-24) * time.Hour
+
 func init() {
 	RegisterJob("Purge old web sessions", cleanUpExpiredSessions)
 }
 
 func cleanUpExpiredSessions(e *common.Environment) (string, error) {
-	w := sessionWalker{n: time.Now().Add(time.Duration(-24) * time.Hour)}
+	switch e.Config.Webserver.SessionStore {
+	case "filesystem":
+		return cleanFileSystemSessions(e)
+	case "database":
+		return cleanDBSessions(e)
+	}
+	return "", nil
+}
+
+func cleanFileSystemSessions(e *common.Environment) (string, error) {
+	w := sessionWalker{n: time.Now().Add(sessionExpiration)}
 	err := filepath.Walk(sessionsDir, w.sessionDirWalker)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("Purged %d sessions", w.c), nil
+	return fmt.Sprintf("Deleted %d sessions", w.c), nil
 }
 
 type sessionWalker struct {
@@ -42,4 +54,14 @@ func (s sessionWalker) sessionDirWalker(path string, info os.FileInfo, err error
 		return os.Remove(path)
 	}
 	return nil
+}
+
+func cleanDBSessions(e *common.Environment) (string, error) {
+	expired := time.Now().Add(sessionExpiration)
+	results, err := e.DB.Exec(`DELETE FROM "sessions" WHERE "modified_on" < ?`, expired.Unix())
+	if err != nil {
+		return "", err
+	}
+	rowsAffected, _ := results.RowsAffected()
+	return fmt.Sprintf("Deleted %d sessions", rowsAffected), nil
 }

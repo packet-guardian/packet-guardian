@@ -90,21 +90,36 @@ defaultDeviceExpirationType = "rolling"
 ## Automatic registrations will determine the platform based on the user agent.
 manualRegPlatforms = []
 
+[leases]
+## The history feature is experimental, enable at your own risk. If history is
+## disabled, the old history mechanism will be used.
+
+## Enables lease history
+historyEnabled = true
+
+## Delete lease history when device is deleted
+deleteWithDevice = true
+
+## Delete lease history for a device after this duration. Default is 4 weeks
+# deleteAfter = "96h"
+
 [guest]
 ## Enabled guest registrations
 enabled = true
 
+## Skip the normal registration page and go straight to the guest page
+# guestOnly = false
+
 ## Device limit for each guest. 0 means unlimited (default).
-DeviceLimit = 10
+deviceLimit = 10
 
-## See registrations config section. Default is daily
-# DeviceExpirationType = "daily"
+## See registrations config section. Valid values: never, daily, duration, date.
+# deviceExpirationType = "daily"
 
-## See registrations config section
-# RollingExpirationLength =
-
-## See registrations config section. Default is 24:00
-# DeviceExpiration = "24:00"
+## date - Specific date in yyyy-mm-dd format
+## duration - Duration of device in Go time.Duration syntax: 1h = 1 hour, 7d = 7 days
+## daily - Time each day the device will expire in HH:mm format (24 hour time)
+# deviceExpiration = "24:00"
 
 ## The duration in minutes a verification code will be usable
 # verifyCodeExpiration = 3
@@ -147,6 +162,10 @@ httpsPort = 443
 
 ## Enable/disable HTTP redirect to HTTPS
 # redirectHttpToHttps = false
+
+## SessionStore is how sessions will be stored.
+## Valid values: filesystem, database
+# sessionStore = "database"
 
 ## The name given to the cookie on the client that stores a session token
 sessionName = "packet-guardian"

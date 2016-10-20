@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sort"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
@@ -18,7 +19,10 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 	sql := `SELECT "value" FROM "blacklist";`
 	blkUserRows, err := e.DB.Query(sql)
 	if err != nil {
-		e.Log.WithField("ErrMsg", err).Error("SQL statement failed")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "reports:blacklist",
+		}).Error("SQL statement failed")
 		return errors.New("SQL Query Failed")
 	}
 	defer blkUserRows.Close()
@@ -28,12 +32,19 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 	for blkUserRows.Next() {
 		var username string
 		if err := blkUserRows.Scan(&username); err != nil {
-			e.Log.WithField("ErrMsg", err).Error("")
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "reports:blacklist",
+			}).Error("Error scanning from SQL")
 			continue
 		}
 		user, err := models.GetUserByUsername(e, username)
 		if err != nil {
-			e.Log.WithField("ErrMsg", err).Error("")
+			e.Log.WithFields(verbose.Fields{
+				"error":    err,
+				"package":  "reports:blacklist",
+				"username": username,
+			}).Error("Error getting user")
 			continue
 		}
 		blacklistedUsers = append(blacklistedUsers, user)
@@ -53,7 +64,10 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 func blacklistedDevicesReport(e *common.Environment, w http.ResponseWriter, r *http.Request) error {
 	devices, err := models.SearchDevicesByField(e, "blacklisted", "1")
 	if err != nil {
-		e.Log.WithField("ErrMsg", err).Error("")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "reports:blacklist",
+		}).Error("Error getting devices")
 		return errors.New("SQL Query Failed")
 	}
 

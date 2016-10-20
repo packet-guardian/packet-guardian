@@ -5,9 +5,20 @@
 package common
 
 var (
+	DatabaseTableNames = []string{
+		"blacklist",
+		"device",
+		"lease",
+		"lease_history",
+		"sessions",
+		"settings",
+		"user",
+	}
+
 	BlacklistTableCols = []string{
 		"id",
 		"value",
+		"comment",
 	}
 
 	DeviceTableRows = []string{
@@ -36,6 +47,15 @@ var (
 		"registered",
 	}
 
+	LeaseHistoryTableCols = []string{
+		"id",
+		"ip",
+		"mac",
+		"network",
+		"start",
+		"end",
+	}
+
 	UserTableCols = []string{
 		"id",
 		"username",
@@ -48,5 +68,17 @@ var (
 		"valid_start",
 		"valid_end",
 		"valid_forever",
+	}
+
+	SessionTableCols = []string{
+		"id",
+		"session_data",
+		"created_on",
+		"modified_on",
+	}
+
+	SettingTableCols = []string{
+		"id",
+		"value",
 	}
 )

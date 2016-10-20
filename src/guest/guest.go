@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
@@ -41,21 +42,64 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	// Build guest user model
 	guest, err := models.GetUserByUsername(e, credential)
 	if err != nil {
-		e.Log.WithField("Err", err).Error("Failed to get guest user")
+		e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "guest",
+			"username": credential,
+		}).Error("Error getting guest")
 		return err
 	}
 	defer guest.Release()
 	guest.DeviceLimit = models.UserDeviceLimit(e.Config.Guest.DeviceLimit)
-	// TODO: Honor configuration settings
-	guest.DeviceExpiration = &models.UserDeviceExpiration{
-		Mode:  models.UserDeviceExpirationDaily,
-		Value: int64((time.Duration(24) * time.Hour) / time.Second),
+	guest.DeviceExpiration = &models.UserDeviceExpiration{}
+
+	switch e.Config.Guest.DeviceExpirationType {
+	case "never":
+		guest.DeviceExpiration.Mode = models.UserDeviceExpirationNever
+	case "date":
+		guest.DeviceExpiration.Mode = models.UserDeviceExpirationSpecific
+		expTime, err := time.ParseInLocation(common.TimeFormat, e.Config.Guest.DeviceExpiration, time.Local)
+		if err != nil {
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "guest",
+			}).Error("Error parsing time")
+			return errors.New("Internal Server Error")
+		}
+		guest.DeviceExpiration.Value = expTime.Unix()
+	case "duration":
+		guest.DeviceExpiration.Mode = models.UserDeviceExpirationDuration
+		dur, err := time.ParseDuration(e.Config.Guest.DeviceExpiration)
+		if err != nil {
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "guest",
+			}).Error("Error parsing time")
+			return errors.New("Internal Server Error")
+		}
+		guest.DeviceExpiration.Value = int64(dur / time.Second)
+	case "daily":
+		var err error
+		guest.DeviceExpiration.Mode = models.UserDeviceExpirationDaily
+		guest.DeviceExpiration.Value, err = common.ParseTime(e.Config.Guest.DeviceExpiration)
+		if err != nil {
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "guest",
+			}).Error("Error parsing time")
+			return errors.New("Internal Server Error")
+		}
+	default:
+		return errors.New(e.Config.Guest.DeviceExpirationType + " is not a valid device expiration type")
 	}
 
 	// Get and enforce the device limit
 	deviceCount, err := models.GetDeviceCountForUser(e, guest)
 	if err != nil {
-		e.Log.Errorf("Error getting device count: %s", err.Error())
+		e.Log.WithFields(verbose.Fields{
+			"package": "guest",
+			"error":   err,
+		}).Error("Error getting device count")
 	}
 	if guest.DeviceLimit != models.UserDeviceLimitUnlimited && deviceCount >= int(guest.DeviceLimit) {
 		return errors.New("Device limit reached")
@@ -68,10 +112,17 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	// Automatic registration
 	lease, err := models.GetLeaseStore(e).GetLeaseByIP(ip)
 	if err != nil {
-		e.Log.Errorf("Failed to get MAC for IP %s: %s", ip, err.Error())
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "guest",
+			"ip":      ip.String(),
+		}).Error("Error getting MAC for IP")
 		return errors.New("Internal Server Error")
 	} else if lease.ID == 0 {
-		e.Log.Errorf("Attempted automatic registration on non-leased device %s", ip)
+		e.Log.WithFields(verbose.Fields{
+			"package": "guest",
+			"ip":      ip.String(),
+		}).Notice("Attempted auto reg from non-leased device")
 		return errors.New("Error detecting MAC address")
 	}
 	mac = lease.MAC
@@ -79,12 +130,21 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	// Get device from database
 	device, err := models.GetDeviceByMAC(e, mac)
 	if err != nil {
-		e.Log.Errorf("Error getting device: %s", err.Error())
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "guest",
+			"mac":     mac.String(),
+		}).Error("Error getting device")
+		return errors.New("Database error")
 	}
 
 	// Check if device is already registered
 	if device.ID != 0 {
-		e.Log.Noticef("Attempted duplicate registration of MAC %s to user %s", mac.String(), credential)
+		e.Log.WithFields(verbose.Fields{
+			"package":  "guest",
+			"mac":      mac.String(),
+			"username": credential,
+		}).Notice("Attempted duplicate registration")
 		return errors.New("This device is already registered")
 	}
 
@@ -103,9 +163,18 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 
 	// Save new device
 	if err := device.Save(); err != nil {
-		e.Log.Errorf("Error registering device: %s", err.Error())
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "guest",
+		}).Error("Error saving device")
 		return errors.New("Error registering device")
 	}
-	e.Log.Infof("Successfully registered MAC %s to guest %s <%s>", mac.String(), name, credential)
+	e.Log.WithFields(verbose.Fields{
+		"package":  "guest",
+		"mac":      mac.String(),
+		"name":     name,
+		"username": credential,
+		"action":   "register-guest-device",
+	}).Info("Device registered")
 	return nil
 }

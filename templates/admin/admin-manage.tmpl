@@ -6,7 +6,12 @@
         <div class="user-info">
             <section>
                 <span class="text-label">Username:</span>
-                <span class="username">{{.user.Username}}</span>
+                <span class="username">
+                    {{.user.Username}}
+                    {{if .canEditUser}}
+                    <a href="/admin/users/{{.user.Username}}" class="no-color-link"><span class="fa fa-pencil edit-property"></span></a>
+                    {{end}}
+                </span>
                 {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
             </section>
             <section>

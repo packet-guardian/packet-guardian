@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
@@ -41,7 +42,11 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 
 	user, err := models.GetUserByUsername(u.e, username)
 	if err != nil {
-		u.e.Log.Errorf("Error saving user: %s", err.Error())
+		u.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:api:user",
+			"username": username,
+		}).Error("Error getting user")
 		common.NewAPIResponse("Error saving user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
@@ -69,7 +74,6 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 	if limitStr != "" {
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil {
-			u.e.Log.Errorf("Error saving user: %s", err.Error())
 			common.NewAPIResponse("device_limit must be a number", nil).WriteResponse(w, http.StatusBadRequest)
 			return
 		}
@@ -88,7 +92,6 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 
 		expType, err := strconv.Atoi(expTypeStr)
 		if err != nil {
-			u.e.Log.Errorf("Error saving user: %s", err.Error())
 			common.NewAPIResponse("Expiration type must be an integer", nil).WriteResponse(w, http.StatusBadRequest)
 			return
 		}
@@ -183,31 +186,55 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 	isNewUser := user.IsNew() // This will always be false after a call to Save()
 
 	if err := user.Save(); err != nil {
-		u.e.Log.Errorf("Error saving user: %s", err.Error())
+		u.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:api:user",
+		}).Error("Error saving user")
 		common.NewAPIResponse("Error saving user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
 
 	if isNewUser {
-		u.e.Log.Infof("Admin %s created user %s", models.GetUserFromContext(r).Username, user.Username)
+		u.e.Log.WithFields(verbose.Fields{
+			"package":    "controllers:api:user",
+			"action":     "create-user",
+			"username":   user.Username,
+			"changed-by": sessionUser.Username,
+		}).Info("User created")
 	} else {
-		u.e.Log.Infof("Admin %s edited user %s", models.GetUserFromContext(r).Username, user.Username)
+		u.e.Log.WithFields(verbose.Fields{
+			"package":    "controllers:api:user",
+			"action":     "edit-user",
+			"username":   user.Username,
+			"changed-by": sessionUser.Username,
+		}).Info("User edited")
 	}
 
 	if updateDeviceExpirations {
 		devices, err := models.GetDevicesForUser(u.e, user)
 		if err != nil {
-			u.e.Log.WithField("Err", err).Error("Failed to update user's device expirations")
+			u.e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "controllers:api:user",
+			}).Error("Error getting devices")
 			common.NewAPIResponse("User saved, but devices not updated", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
+		errOccured := false
 		for _, d := range devices {
 			d.Expires = user.DeviceExpiration.NextExpiration(u.e, d.DateRegistered)
 			if err := d.Save(); err != nil {
-				u.e.Log.WithField("Err", err).Error("Failed to save device")
-				common.NewAPIResponse("User saved, but some devices not updated", nil).WriteResponse(w, http.StatusInternalServerError)
-				return
+				u.e.Log.WithFields(verbose.Fields{
+					"error":   err,
+					"package": "controllers:api:user",
+					"mac":     d.MAC.String(),
+				}).Error("Error saving device")
+				errOccured = true
 			}
+		}
+		if errOccured {
+			common.NewAPIResponse("User saved, but some devices not updated", nil).WriteResponse(w, http.StatusInternalServerError)
+			return
 		}
 	}
 
@@ -233,17 +260,30 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 
 	user, err := models.GetUserByUsername(u.e, username)
 	if err != nil {
-		u.e.Log.Errorf("Error getting user for deletion: %s", err.Error())
+		u.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:api:user",
+			"username": username,
+		}).Error("Error getting user")
 		common.NewAPIResponse("Error deleting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
 	defer user.Release()
 
 	if err := user.Delete(); err != nil {
-		u.e.Log.Errorf("Error deleting user: %s", err.Error())
+		u.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:api:user",
+		}).Error("Error deleting user")
 		common.NewAPIResponse("Error deleting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	u.e.Log.Infof("Admin %s deleted user %s", models.GetUserFromContext(r).Username, user.Username)
+
+	u.e.Log.WithFields(verbose.Fields{
+		"package":    "controllers:api:user",
+		"action":     "delete-user",
+		"username":   user.Username,
+		"changed-by": sessionUser.Username,
+	}).Info("User deleted")
 	common.NewAPIResponse("User deleted", nil).WriteResponse(w, http.StatusNoContent)
 }

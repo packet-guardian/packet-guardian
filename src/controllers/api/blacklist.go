@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
@@ -35,7 +36,11 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 
 	user, err := models.GetUserByUsername(b.e, username)
 	if err != nil {
-		b.e.Log.Errorf("Error getting user: %s", err.Error())
+		b.e.Log.WithFields(verbose.Fields{
+			"username": username,
+			"error":    err,
+			"package":  "controllers:api:blacklist",
+		}).Error("Error getting user")
 		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
@@ -48,22 +53,37 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := user.SaveToBlacklist(); err != nil {
-		b.e.Log.Errorf("Error blacklisting user: %s", err.Error())
+		b.e.Log.WithFields(verbose.Fields{
+			"username": user.Username,
+			"error":    err,
+			"package":  "controllers:api:blacklist",
+		}).Error("Error blacklisting user")
 		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
 
 	if r.Method == "POST" {
-		b.e.Log.Infof("Admin %s blacklisted user %s", models.GetUserFromContext(r).Username, user.Username)
+		b.e.Log.WithFields(verbose.Fields{
+			"package":    "controllers:api:blacklist",
+			"action":     "blacklist",
+			"changed-by": models.GetUserFromContext(r).Username,
+			"username":   user.Username,
+		}).Info("User added to blacklisted")
 		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusNoContent)
 	} else if r.Method == "DELETE" {
-		b.e.Log.Infof("Admin %s unblacklisted user %s", models.GetUserFromContext(r).Username, user.Username)
+		b.e.Log.WithFields(verbose.Fields{
+			"package":    "controllers:api:blacklist",
+			"action":     "unblacklist",
+			"changed-by": models.GetUserFromContext(r).Username,
+			"username":   user.Username,
+		}).Info("User removed from blacklist")
 		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusNoContent)
 	}
 }
 
 func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	if !models.GetUserFromContext(r).Can(models.ManageBlacklist) {
+	sessionUser := models.GetUserFromContext(r)
+	if !sessionUser.Can(models.ManageBlacklist) {
 		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
 		return
 	}
@@ -76,7 +96,11 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 
 	user, err := models.GetUserByUsername(b.e, username)
 	if err != nil {
-		b.e.Log.Errorf("Error getting user: %s", err.Error())
+		b.e.Log.WithFields(verbose.Fields{
+			"username": username,
+			"error":    err,
+			"package":  "controllers:api:blacklist",
+		}).Error("Error getting user")
 		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
@@ -86,7 +110,10 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 	macsToBlacklist := strings.Split(r.FormValue("mac"), ",")
 	usersDevices, err := models.GetDevicesForUser(b.e, user)
 	if err != nil {
-		b.e.Log.Errorf("Error blacklisting devices: %s", err.Error())
+		b.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:api:blacklist",
+		}).Error("Error blacklisting devices")
 		common.NewAPIResponse("Error blacklisting devices", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
@@ -104,15 +131,31 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 
 		device.SetBlacklist(r.Method == "POST")
 		if err := device.Save(); err != nil {
-			b.e.Log.Errorf("Error blacklisting device %s: %s", device.MAC.String(), err.Error())
+			b.e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"mac":     device.MAC.String(),
+				"package": "controllers:api:blacklist",
+			}).Error("Error blacklisting device")
 			finishedWithErrors = true
 			continue
 		}
 
 		if device.IsBlacklisted() {
-			b.e.Log.Infof("Blacklisted device %s for user %s", device.MAC.String(), user.Username)
+			b.e.Log.WithFields(verbose.Fields{
+				"package":    "controllers:api:blacklist",
+				"action":     "blacklist",
+				"mac":        device.MAC.String(),
+				"changed-by": sessionUser.Username,
+				"username":   user.Username,
+			}).Info("Device added to blacklist")
 		} else {
-			b.e.Log.Infof("Removed device %s from blacklist for user %s", device.MAC.String(), user.Username)
+			b.e.Log.WithFields(verbose.Fields{
+				"package":    "controllers:api:blacklist",
+				"action":     "unblacklist",
+				"mac":        device.MAC.String(),
+				"changed-by": sessionUser.Username,
+				"username":   user.Username,
+			}).Info("Device removed from blacklist")
 		}
 	}
 

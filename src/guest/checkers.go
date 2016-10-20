@@ -8,6 +8,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
@@ -23,7 +24,10 @@ var checkers = make(map[string]guestChecker)
 func GetInputLabel(e *common.Environment) string {
 	f, ok := checkers[e.Config.Guest.Checker]
 	if !ok {
-		e.Log.Errorf("%s is not a guest checker type", e.Config.Guest.Checker)
+		e.Log.WithFields(verbose.Fields{
+			"package": "guest",
+			"checker": e.Config.Guest.Checker,
+		}).Error("Invalid guest checker")
 		return ""
 	}
 	return f.getInputLabel()
@@ -33,7 +37,10 @@ func GetInputLabel(e *common.Environment) string {
 func SendGuestCode(e *common.Environment, c, code string) error {
 	f, ok := checkers[e.Config.Guest.Checker]
 	if !ok {
-		e.Log.Errorf("%s is not a guest checker type", e.Config.Guest.Checker)
+		e.Log.WithFields(verbose.Fields{
+			"package": "guest",
+			"checker": e.Config.Guest.Checker,
+		}).Error("Invalid guest checker")
 		return errors.New("Internal server error")
 	}
 	return f.sendCode(e, c, code)

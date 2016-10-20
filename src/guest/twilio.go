@@ -39,7 +39,7 @@ func (t twilio) sendCode(e *common.Environment, phone, code string) error {
 
 	resp, err := client.Request(msg)
 	if err != nil {
-		e.Log.Errorf("Error sending text message: %v", err)
+		e.Log.WithField("error", err).Error("Error sending text message")
 		return errors.New("Error sending verification code")
 	}
 

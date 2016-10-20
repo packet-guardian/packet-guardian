@@ -43,7 +43,7 @@ func removeLogger(l *Logger) {
 // FileHandler is named "file"
 func Classic(n, path string) (*Logger, error) {
 	l := New(n)
-	l.AddHandler("stdout", NewStdoutHandler())
+	l.AddHandler("stdout", NewStdoutHandler(true))
 	if path != "" {
 		f, err := NewFileHandler(path)
 		if err != nil {

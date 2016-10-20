@@ -151,8 +151,6 @@ install() {
     cp $APP_DIR/scripts/pg-upgrade.sh /usr/local/bin/pg-upgrade
     cp $APP_DIR/scripts/uninstall.sh $DATA_DIR/uninstall.sh
 
-    sqlite3 $DATA_DIR/database.sqlite3 < $APP_DIR/config/db-schema-sqlite.sql
-
     setPermissions
     installService
     setKernalPermissions
@@ -169,11 +167,6 @@ install() {
     echo "service pg-dhcp start OR systemctl start pg-dhcp"
     echo
 }
-
-if [[ -z $(which sqlite3 2> /dev/null) ]]; then
-    echo "sqlite3 is required to install Packet Guardian"
-    exit 1
-fi
 
 confirm "This will install Packet Guardian. Are you sure?"
 install

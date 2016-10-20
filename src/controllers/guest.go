@@ -31,6 +31,11 @@ func (g *Guest) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !g.e.Config.Guest.Enabled {
+		g.e.Views.NewView("register-guest", r).Render(w, nil)
+		return
+	}
+
 	ip := common.GetIPFromContext(r)
 	reg, _ := dhcp.IsRegisteredByIP(models.GetLeaseStore(g.e), ip)
 	if reg {
@@ -89,7 +94,7 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 		g.showGuestRegPage(w, r)
 		return
 	}
-	g.e.Log.Debugf("Verification Code: %s", verifyCode)
+	g.e.Log.WithField("verify-code", verifyCode).Debug("Guest code")
 	http.Redirect(w, r, "/register/guest/verify", http.StatusSeeOther)
 }
 

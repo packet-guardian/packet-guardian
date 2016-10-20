@@ -7,6 +7,7 @@ package auth
 import (
 	"net/http"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	"golang.org/x/crypto/bcrypt"
@@ -23,7 +24,10 @@ func (l *localAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 	user, err := models.GetUserByUsername(e, r.FormValue("username"))
 	defer user.Release()
 	if err != nil {
-		e.Log.WithField("Err", err).Errorf("Error getting user")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "auth:local",
+		}).Errorf("Error getting user")
 		return false
 	}
 
@@ -34,14 +38,20 @@ func (l *localAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 	err = bcrypt.CompareHashAndPassword([]byte(testPass), []byte(r.FormValue("password")))
 	if err != nil {
 		if err != bcrypt.ErrMismatchedHashAndPassword {
-			e.Log.WithField("Err", err).Debug("Bcrypt failed")
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "auth:local",
+			}).Debug("Bcrypt failed")
 		}
 		return false
 	}
 
 	// If the passwords match, check if the user is still valid
 	if user.IsExpired() {
-		e.Log.WithField("username", user.Username).Info("User expired")
+		e.Log.WithFields(verbose.Fields{
+			"username": user.Username,
+			"package":  "auth:local",
+		}).Info("User expired")
 		return false
 	}
 	return true

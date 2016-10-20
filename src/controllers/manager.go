@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
@@ -31,6 +32,10 @@ func NewManagerController(e *common.Environment) *Manager {
 }
 
 func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
+	if m.e.Config.Guest.GuestOnly {
+		http.Redirect(w, r, "/register/guest", http.StatusTemporaryRedirect)
+		return
+	}
 	sessionUser := models.GetUserFromContext(r)
 	man := (r.FormValue("manual") == "1")
 	loggedIn := auth.IsLoggedIn(r)
@@ -79,7 +84,11 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 
 	results, err := models.GetDevicesForUser(m.e, sessionUser)
 	if err != nil {
-		m.e.Log.Errorf("Error getting devices for user %s: %s", sessionUser.Username, err.Error())
+		m.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:manager",
+			"username": sessionUser.Username,
+		}).Error("Error getting devices")
 		m.e.Views.RenderError(w, r, nil)
 		return
 	}

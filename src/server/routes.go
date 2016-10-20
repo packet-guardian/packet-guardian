@@ -11,7 +11,9 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/gorilla/context"
 	"github.com/julienschmidt/httprouter"
+	"github.com/lfkeitel/verbose"
 
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
@@ -67,6 +69,7 @@ func midStack(e *common.Environment, h http.Handler) http.Handler {
 	h = mid.BlacklistCheck(e, h) // Enforce a blacklist check
 	h = mid.Cache(e, h)          // Set cache headers if needed
 	h = mid.SetSessionInfo(e, h) // Adds Environment and user information to requet context
+	h = context.ClearHandler(h)  // Clear Gorilla sessions
 	return h
 }
 
@@ -143,6 +146,8 @@ func apiRouter(e *common.Environment) http.Handler {
 	r.POST("/api/device", deviceApiController.RegistrationHandler)
 	r.DELETE("/api/device/user/:username", deviceApiController.DeleteHandler)
 	r.POST("/api/device/reassign", deviceApiController.ReassignHandler)
+	r.POST("/api/device/mac/:mac/description", deviceApiController.EditDescriptionHandler)
+	r.POST("/api/device/mac/:mac/expiration", deviceApiController.EditExpirationHandler)
 
 	blacklistController := api.NewBlacklistController(e)
 	r.POST("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)
@@ -173,7 +178,11 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	e := common.GetEnvironmentFromContext(r)
 	reg, err := dhcp.IsRegisteredByIP(models.GetLeaseStore(e), common.GetIPFromContext(r))
 	if err != nil {
-		e.Log.WithField("Err", err).Notice("Couldn't get registration status")
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "routes",
+			"ip":      common.GetIPFromContext(r).String(),
+		}).Error("Error getting registration status")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
 	}

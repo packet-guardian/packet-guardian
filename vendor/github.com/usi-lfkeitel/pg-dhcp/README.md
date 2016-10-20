@@ -13,3 +13,5 @@ Features:
 - The most used options are implement, more to come
 - Seperation of registered vs unregistered devices (known/unknown)
 - Storage independent (the calling project is responsible for storage)
+
+[Configuration File Format](configurationFileFormat.md)

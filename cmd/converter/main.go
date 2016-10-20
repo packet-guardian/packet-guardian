@@ -50,7 +50,7 @@ func main() {
 	}
 
 	logger := verbose.New("converter")
-	logger.AddHandler("stdout", verbose.NewStdoutHandler())
+	logger.AddHandler("stdout", verbose.NewStdoutHandler(true))
 	e.Log = &common.Logger{Logger: logger}
 	e.Log.Debugf("Configuration loaded from %s", configFile)
 

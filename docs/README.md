@@ -3,14 +3,14 @@
 All official documentation can be found here.
 
 ## Installation
-- [Packet Guardian Installation](installation.md)
+- [Installation](installation.md)
 - [Uninstall](uninstall.md)
 - [Upgrade](upgrade.md)
 - [Full Stack Setup](full-stack.md)
 
 ## Configuration
 - [Configuration](configuration.md)
-- [DHCP Configuration](dhcp-configuration.md)
+- [DHCP Configuration](https://github.com/usi-lfkeitel/pg-dhcp/tree/develop/docs) (goes to DHCP repo)
 - [Additional Installation](additional-installation.md) (service, AppArmor)
 
 ## Troubleshooting

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
@@ -32,7 +33,11 @@ func BlacklistCheck(e *common.Environment, next http.Handler) http.Handler {
 		if err == nil && lease.ID != 0 {
 			device, err := models.GetDeviceByMAC(e, lease.MAC)
 			if err != nil {
-				e.Log.Errorf("Error getting device for blacklist check: %s", err.Error())
+				e.Log.WithFields(verbose.Fields{
+					"error":   err,
+					"package": "middlware:blacklist",
+					"mac":     lease.MAC.String(),
+				}).Critical("Error getting device")
 			} else if device.IsBlacklisted() {
 				e.Views.NewView("blacklisted", r).Render(w, nil)
 				return

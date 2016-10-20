@@ -5,15 +5,27 @@ import "log"
 // A Handler is an object that can be used by the Logger to log a message
 type Handler interface {
 	// Handles returns if it wants to handle a particular log level
-	// This can be used to suppress the higher log levels in production
-	Handles(level LogLevel) bool
+	// This can be used to suppress the higher log levels in production.
+	Handles(LogLevel) bool
 
 	// WriteLog actually logs the message using any system the Handler wishes.
 	// The Handler only needs to accept an Event.
-	WriteLog(e *Entry)
+	WriteLog(*Entry)
 
-	// Close is used to give a handler a chance to close any open resources
+	// Close is used to give a handler a chance to close any open resources.
 	Close()
+
+	// SetFormatter replaces the handler's formatter with a specific one.
+	SetFormatter(Formatter)
+
+	// SetLevel will configure the handler to only handle a specific log level
+	SetLevel(LogLevel)
+
+	// SetMinLevel sets the minimum log level the handler will handle
+	SetMinLevel(LogLevel)
+
+	// SetMaxLevel sets the maximum log level the handler will handle
+	SetMaxLevel(LogLevel)
 }
 
 // Won't compile if StdLogger can't be realized by a log.Logger
