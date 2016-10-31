@@ -94,6 +94,7 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	guestUser, err := models.GetUserByUsername(g.e, guestCred)
+	defer guestUser.Release()
 	if err != nil {
 		g.e.Log.WithFields(verbose.Fields{
 			"error":    err,

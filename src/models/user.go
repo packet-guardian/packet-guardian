@@ -143,6 +143,7 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 
 		user := appUserPool.getUser()
 		user.e = e
+		user.blacklist = newBlacklistItem(getBlacklistStore(e))
 		user.ID = id
 		user.Username = username
 		user.HasPassword = (password != "")
