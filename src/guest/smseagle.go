@@ -22,7 +22,7 @@ func init() {
 type smseagle struct{}
 
 func (s smseagle) getInputLabel() string {
-	return "Phone Number"
+	return "Phone Number (with area code)"
 }
 
 func (s smseagle) getInputText() string {
@@ -31,6 +31,11 @@ func (s smseagle) getInputText() string {
 
 func (s smseagle) getVerificationText() string {
 	return "Please enter the verification code that was texted to you."
+}
+
+func (s smseagle) normalizeCredential(c string) string {
+	c, _ = formatPhoneNumber(c)
+	return c
 }
 
 func (s smseagle) sendCode(e *common.Environment, phone, code string) error {

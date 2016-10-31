@@ -32,7 +32,7 @@ func NewManagerController(e *common.Environment) *Manager {
 }
 
 func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
-	if m.e.Config.Guest.GuestOnly {
+	if m.e.Config.Guest.GuestOnly && !auth.IsLoggedIn(r) {
 		http.Redirect(w, r, "/register/guest", http.StatusTemporaryRedirect)
 		return
 	}

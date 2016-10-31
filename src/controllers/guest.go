@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dchest/captcha"
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/guest"
@@ -83,11 +84,29 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	guestCred := r.FormValue("guest-cred")
+	guestCred := guest.NormalizeCredential(g.e, r.FormValue("guest-cred"))
 	guestName := r.FormValue("guest-name")
 
 	if guestCred == "" || guestName == "" {
 		session.AddFlash("Please fill in all required fields")
+		g.showGuestRegPage(w, r)
+		return
+	}
+
+	guestUser, err := models.GetUserByUsername(g.e, guestCred)
+	defer guestUser.Release()
+	if err != nil {
+		g.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:guest",
+			"username": guestCred,
+		}).Error("Error getting user")
+		g.e.Views.RenderError(w, r, nil)
+		return
+	}
+
+	if guestUser.IsBlacklisted() {
+		session.AddFlash("Permission Denied")
 		g.showGuestRegPage(w, r)
 		return
 	}

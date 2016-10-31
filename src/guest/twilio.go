@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	"bitbucket.org/ckvist/twilio/twirest"
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
@@ -18,7 +19,7 @@ func init() {
 type twilio struct{}
 
 func (t twilio) getInputLabel() string {
-	return "Phone Number"
+	return "Phone Number (with area code)"
 }
 
 func (t twilio) getInputText() string {
@@ -29,11 +30,24 @@ func (t twilio) getVerificationText() string {
 	return "Please enter the verification code that was texted to you."
 }
 
+func (t twilio) normalizeCredential(c string) string {
+	c, _ = formatPhoneNumber(c)
+	return c
+}
+
 func (t twilio) sendCode(e *common.Environment, phone, code string) error {
 	accountSid := e.Config.Guest.Twilio.AccountSID
 	authToken := e.Config.Guest.Twilio.AuthToken
-	from := e.Config.Guest.Twilio.PhoneNumber
-	phone, err := formatPhoneNumber(phone)
+	from, err := formatPhoneNumber(e.Config.Guest.Twilio.PhoneNumber)
+	if err != nil {
+		e.Log.WithFields(verbose.Fields{
+			"package": "Twilio guest checker",
+			"error":   err,
+		}).Error("Error found in Twilio 'from' phone number")
+		return err
+	}
+
+	phone, err = formatPhoneNumber(phone)
 	if err != nil {
 		return err
 	}
@@ -43,7 +57,7 @@ func (t twilio) sendCode(e *common.Environment, phone, code string) error {
 	msg := twirest.SendMessage{
 		Text: "Verification Code: " + code,
 		To:   "+1" + phone,
-		From: from}
+		From: "+1" + from}
 
 	resp, err := client.Request(msg)
 	if err != nil {

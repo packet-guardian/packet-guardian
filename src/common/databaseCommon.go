@@ -9,6 +9,8 @@ import (
 	"errors"
 )
 
+const dbVersion = 2
+
 type databaseInit func(*DatabaseAccessor, *Config) error
 
 var dbInits = make(map[string]databaseInit)

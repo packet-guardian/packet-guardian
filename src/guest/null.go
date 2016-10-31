@@ -24,6 +24,10 @@ func (t null) getVerificationText() string {
 	return "Look in the log file"
 }
 
+func (t null) normalizeCredential(c string) string {
+	return c
+}
+
 func (t null) sendCode(e *common.Environment, phone, code string) error {
 	return nil
 }
