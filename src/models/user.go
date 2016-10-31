@@ -23,7 +23,7 @@ func init() {
 }
 
 // When changing the User struct, make sure to update the
-// clean() method to reflect any new/editied fields.
+// clean() method to reflect any new/edited fields.
 
 // User it's a user
 type User struct {
@@ -41,9 +41,7 @@ type User struct {
 	ValidForever     bool
 	CanManage        bool
 	CanAutoreg       bool
-	blacklistCached  bool
-	blacklistSave    bool
-	blacklisted      bool
+	blacklist        *blacklistItem
 	Rights           Permission
 	pool             *userPool
 }
@@ -57,6 +55,7 @@ func NewUser(e *common.Environment) *User {
 	// User can manage their devices
 	u := appUserPool.getUser()
 	u.e = e
+	u.blacklist = newBlacklistItem(getBlacklistStore(e))
 	u.DeviceLimit = UserDeviceLimitGlobal
 	u.DeviceExpiration = &UserDeviceExpiration{Mode: UserDeviceExpirationGlobal}
 	u.ValidStart = time.Unix(0, 0)
@@ -77,7 +76,7 @@ func GetUserByUsername(e *common.Environment, username string) (*User, error) {
 
 	username = strings.ToLower(username)
 
-	sql := "WHERE \"username\" = ?"
+	sql := `WHERE "username" = ?`
 	users, err := getUsersFromDatabase(e, sql, username)
 	if users == nil || len(users) == 0 {
 		u := NewUser(e)
@@ -99,7 +98,7 @@ func GetAllUsers(e *common.Environment) ([]*User, error) {
 }
 
 func SearchUsersByField(e *common.Environment, field, pattern string) ([]*User, error) {
-	sql := "WHERE \"" + field + "\" LIKE ?"
+	sql := `WHERE "` + field + `" LIKE ?`
 	return getUsersFromDatabase(e, sql, pattern)
 }
 
@@ -225,17 +224,7 @@ func (u *User) RemovePassword() {
 }
 
 func (u *User) IsBlacklisted() bool {
-	if u.blacklistCached {
-		return u.blacklisted
-	}
-
-	sql := `SELECT "id" FROM "blacklist" WHERE "value" = ?`
-	var id int
-	row := u.e.DB.QueryRow(sql, u.Username)
-	err := row.Scan(&id)
-	u.blacklisted = (err == nil)
-	u.blacklistCached = true
-	return u.blacklisted
+	return u.blacklist.isBlacklisted(u.Username)
 }
 
 func (u *User) IsExpired() bool {
@@ -248,19 +237,15 @@ func (u *User) IsExpired() bool {
 }
 
 func (u *User) Blacklist() {
-	u.blacklistCached = true
-	u.blacklisted = true
-	u.blacklistSave = true
+	u.blacklist.blacklist()
 }
 
 func (u *User) Unblacklist() {
-	u.blacklistCached = true
-	u.blacklisted = false
-	u.blacklistSave = true
+	u.blacklist.unblacklist()
 }
 
 func (u *User) SaveToBlacklist() error {
-	return u.writeToBlacklist()
+	return u.blacklist.save(u.Username)
 }
 
 func (u *User) Save() error {
@@ -311,7 +296,7 @@ func (u *User) updateExisting() error {
 	if err != nil {
 		return err
 	}
-	return u.writeToBlacklist()
+	return u.blacklist.save(u.Username)
 }
 
 func (u *User) saveNew() error {
@@ -339,26 +324,7 @@ func (u *User) saveNew() error {
 	}
 	id, _ := result.LastInsertId()
 	u.ID = int(id)
-	return u.writeToBlacklist()
-}
-
-func (u *User) writeToBlacklist() error {
-	// We only need to do something if the blacklist setting was changed
-	if !u.blacklistSave {
-		return nil
-	}
-
-	// If blacklisted, insert into database
-	if u.blacklisted {
-		sql := `INSERT INTO "blacklist" ("value") VALUES (?)`
-		_, err := u.e.DB.Exec(sql, u.Username)
-		return err
-	}
-
-	// Otherwise remove them from the blacklist
-	sql := `DELETE FROM "blacklist" WHERE "value" = ?`
-	_, err := u.e.DB.Exec(sql, u.Username)
-	return err
+	return u.blacklist.save(u.Username)
 }
 
 func (u *User) Delete() error {
@@ -373,6 +339,7 @@ func (u *User) Delete() error {
 
 // clean sets the User object to all field defaults
 func (u *User) clean() {
+	u.blacklist = newBlacklistItem(getBlacklistStore(u.e))
 	u.ID = 0
 	u.Username = ""
 	u.Password = ""
@@ -386,9 +353,6 @@ func (u *User) clean() {
 	u.ValidForever = false
 	u.CanManage = false
 	u.CanAutoreg = false
-	u.blacklistCached = false
-	u.blacklistSave = false
-	u.blacklisted = false
 	u.Rights = Permission(0)
 }
 
