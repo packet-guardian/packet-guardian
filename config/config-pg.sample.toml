@@ -128,6 +128,8 @@ deviceLimit = 10
 ## Possible values: null, email, twilio
 # checker = "email"
 
+# disableCaptcha = false
+
 [guest.email]
 ## Settings used when the checker is email
 ## Coming soon

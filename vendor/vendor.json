@@ -15,6 +15,12 @@
 			"revisionTime": "2016-02-26T19:13:42Z"
 		},
 		{
+			"checksumSHA1": "0GvcY9P9GSq/aJQEoRB173b4Fbw=",
+			"path": "github.com/dchest/captcha",
+			"revision": "9e952142169c3cd6268c6482a3a61c121536aca2",
+			"revisionTime": "2015-07-28T12:50:59Z"
+		},
+		{
 			"checksumSHA1": "w7kBdx+SuYbRYMHazeg4WHenlc4=",
 			"path": "github.com/dragonlibs/cas",
 			"revision": "be7e57879191d005879c367d084836866b43dd43",

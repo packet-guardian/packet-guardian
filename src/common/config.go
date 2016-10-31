@@ -59,6 +59,7 @@ type Config struct {
 		DeviceExpiration     string
 		Checker              string
 		VerifyCodeExpiration int
+		DisableCaptcha       bool
 
 		Email struct {
 		}

@@ -43,3 +43,26 @@ $.onReady(function() {
         c.FlashMessage(flashMsg);
     }
 });
+
+function setSrcQuery(e, q) {
+    var src = e.src;
+    var p = src.indexOf('?');
+    if (p >= 0) {
+        src = src.substr(0, p);
+    }
+    e.src = src + "?" + q
+}
+
+function playAudio() {
+    var e = document.getElementById('captchaAudio')
+    setSrcQuery(e, "lang=en")
+    e.style.display = 'block';
+    e.autoplay = 'true';
+    return false;
+}
+
+function reload() {
+    setSrcQuery(document.getElementById('captchaImage'), "reload=" + (new Date()).getTime());
+    setSrcQuery(document.getElementById('captchaAudio'), (new Date()).getTime());
+    return false;
+}

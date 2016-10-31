@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dchest/captcha"
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/guest"
@@ -60,6 +61,7 @@ func (g *Guest) showGuestRegPage(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"policy":         common.LoadPolicyText(g.e.Config.Registration.RegistrationPolicyFile),
 		"guestCredLabel": label,
+		"captchaID":      captcha.New(),
 	}
 
 	g.e.Views.NewView("register-guest", r).Render(w, data)
@@ -72,6 +74,13 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session := common.GetSessionFromContext(r)
+
+	if !g.e.Config.Guest.DisableCaptcha &&
+		!captcha.VerifyString(r.FormValue("captchaId"), r.FormValue("captchaSolution")) {
+		session.AddFlash("Incorrect Captcha answer")
+		g.showGuestRegPage(w, r)
+		return
+	}
 
 	guestCred := r.FormValue("guest-cred")
 	guestName := r.FormValue("guest-name")
