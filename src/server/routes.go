@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/dchest/captcha"
 	"github.com/gorilla/context"
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
@@ -53,6 +54,8 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	r.Handler("GET", "/admin/*a", midStack(e, adminRouter(e)))
 	r.Handler("POST", "/api/*a", midStack(e, apiRouter(e)))
 	r.Handler("DELETE", "/api/*a", midStack(e, apiRouter(e)))
+
+	r.Handler("GET", "/captcha/*a", captcha.Server(captcha.StdWidth, captcha.StdHeight))
 
 	if e.IsDev() {
 		r.Handler("GET", "/dev/*a", midStack(e, devRouter(e)))

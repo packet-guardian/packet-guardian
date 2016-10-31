@@ -12,6 +12,22 @@
                 <label for="guest-cred">{{.guestCredLabel}}*:</label>
                 <input type="text" name="guest-cred">
             </p>
+            {{if not .config.Guest.DisableCaptcha}}
+            <p><img id="captchaImage" src="/captcha/{{.captchaID}}.png" alt="Captcha image"></p>
+
+            <a href="#" onclick="reload()">Reload</a> | <a href="#" onclick="playAudio()">Play Audio</a>
+
+            <audio id="captchaAudio" controls style="display:none" src="/captcha/{{.captchaID}}.wav?lang=en" preload="none">
+                You browser doesn't support audio.
+                <a href="/captcha/download/{{.captchaID}}.wav">Download file</a> to play it in the external player.
+            </audio>
+
+            <input type="hidden" name="captchaId" value="{{.captchaID}}"><br>
+            <p>
+                <label for="captchaSolution">Captcha Answer*:</label>
+                <input type="text" name="captchaSolution">
+            </p>
+            {{end}}
         </fieldset>
 
         <div class="reg-policy">
@@ -33,5 +49,5 @@
         {{end}}
     </form>
 </div>
-{{template "footer" dict "main" $ "js" (list "register-guest")}}
+{{template "footer" dict "main" $}}
 {{end}}
