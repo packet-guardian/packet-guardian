@@ -21,6 +21,14 @@ func (t twilio) getInputLabel() string {
 	return "Phone Number"
 }
 
+func (t twilio) getInputText() string {
+	return "You will receive a text message. Data rates may apply."
+}
+
+func (t twilio) getVerificationText() string {
+	return "Please enter the verification code that was texted to you."
+}
+
 func (t twilio) sendCode(e *common.Environment, phone, code string) error {
 	accountSid := e.Config.Guest.Twilio.AccountSID
 	authToken := e.Config.Guest.Twilio.AuthToken

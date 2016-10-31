@@ -61,6 +61,7 @@ func (g *Guest) showGuestRegPage(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"policy":         common.LoadPolicyText(g.e.Config.Registration.RegistrationPolicyFile),
 		"guestCredLabel": label,
+		"guestCredText":  guest.GetInputText(g.e),
 		"captchaID":      captcha.New(),
 	}
 
@@ -140,7 +141,10 @@ func (g *Guest) VerificationHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *Guest) showGuestVerifyPage(w http.ResponseWriter, r *http.Request) {
-	g.e.Views.NewView("register-guest-verify", r).Render(w, nil)
+	data := map[string]interface{}{
+		"guestVerText": guest.GetVerificationText(g.e),
+	}
+	g.e.Views.NewView("register-guest-verify", r).Render(w, data)
 }
 
 func (g *Guest) verifyGuestRegistration(w http.ResponseWriter, r *http.Request) {

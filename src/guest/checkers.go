@@ -13,7 +13,9 @@ import (
 )
 
 type guestChecker interface {
-	getInputLabel() string
+	getInputLabel() string       // Show about the input textbox
+	getInputText() string        // Show next to the label for explanations
+	getVerificationText() string // Show on the verification screen, again just for explanations
 	sendCode(*common.Environment, string, string) error
 }
 
@@ -31,6 +33,30 @@ func GetInputLabel(e *common.Environment) string {
 		return ""
 	}
 	return f.getInputLabel()
+}
+
+func GetInputText(e *common.Environment) string {
+	f, ok := checkers[e.Config.Guest.Checker]
+	if !ok {
+		e.Log.WithFields(verbose.Fields{
+			"package": "guest",
+			"checker": e.Config.Guest.Checker,
+		}).Error("Invalid guest checker")
+		return ""
+	}
+	return f.getInputText()
+}
+
+func GetVerificationText(e *common.Environment) string {
+	f, ok := checkers[e.Config.Guest.Checker]
+	if !ok {
+		e.Log.WithFields(verbose.Fields{
+			"package": "guest",
+			"checker": e.Config.Guest.Checker,
+		}).Error("Invalid guest checker")
+		return ""
+	}
+	return f.getVerificationText()
 }
 
 // SendGuestCode will send the verification code using the congifured checker.

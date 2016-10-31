@@ -25,6 +25,14 @@ func (s smseagle) getInputLabel() string {
 	return "Phone Number"
 }
 
+func (s smseagle) getInputText() string {
+	return "You will receive a text message. Data rates may apply."
+}
+
+func (s smseagle) getVerificationText() string {
+	return "Please enter the verification code that was texted to you."
+}
+
 func (s smseagle) sendCode(e *common.Environment, phone, code string) error {
 	address := e.Config.Guest.Smseagle.Address
 	username := e.Config.Guest.Smseagle.Username

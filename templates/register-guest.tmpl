@@ -9,7 +9,7 @@
                 <input type="text" name="guest-name" autofocus="autofocus">
             </p>
             <p>
-                <label for="guest-cred">{{.guestCredLabel}}*:</label>
+                <label for="guest-cred">{{.guestCredLabel}}*:</label> {{.guestCredText}}
                 <input type="text" name="guest-cred">
             </p>
             {{if not .config.Guest.DisableCaptcha}}
