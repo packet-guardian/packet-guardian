@@ -179,12 +179,13 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	e := common.GetEnvironmentFromContext(r)
-	reg, err := dhcp.IsRegisteredByIP(models.GetLeaseStore(e), common.GetIPFromContext(r))
+	ip := common.GetIPFromContext(r)
+	reg, err := dhcp.IsRegisteredByIP(models.GetLeaseStore(e), ip)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
 			"package": "routes",
-			"ip":      common.GetIPFromContext(r).String(),
+			"ip":      ip.String(),
 		}).Error("Error getting registration status")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return
