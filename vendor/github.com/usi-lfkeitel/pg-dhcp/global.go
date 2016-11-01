@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"net"
 	"time"
-
-	"github.com/onesimus-systems/dhcp4"
 )
 
 type global struct {
@@ -33,74 +31,67 @@ func newGlobal() *global {
 // If req is 0 then the default lease time is returned. Otherwise it will return the lower of
 // req and the maximum lease time. If a duration is not set for either, they will both be 1 week.
 func (g *global) getLeaseTime(req time.Duration, registered bool) time.Duration {
-	// TODO: Clean this up
-	if registered {
-		if req == 0 {
-			if g.registeredSettings.defaultLeaseTime != 0 {
-				return g.registeredSettings.defaultLeaseTime
-			}
-			return g.settings.defaultLeaseTime
+	if req <= 0 { // Default lease time
+		if registered && g.registeredSettings.defaultLeaseTime > 0 {
+			return g.registeredSettings.defaultLeaseTime
 		}
-
-		if g.registeredSettings.maxLeaseTime != 0 {
-			if req < g.registeredSettings.maxLeaseTime {
-				return req
-			}
-			return g.registeredSettings.maxLeaseTime
-		}
-
-		if req < g.settings.maxLeaseTime {
-			return req
-		}
-		return g.settings.maxLeaseTime
-	}
-
-	if req == 0 {
-		if g.unregisteredSettings.defaultLeaseTime != 0 {
+		if !registered && g.unregisteredSettings.defaultLeaseTime > 0 {
 			return g.unregisteredSettings.defaultLeaseTime
 		}
 		return g.settings.defaultLeaseTime
 	}
 
-	if g.unregisteredSettings.maxLeaseTime != 0 {
-		if req < g.unregisteredSettings.maxLeaseTime {
+	// Client requested specific lease time
+	if registered {
+		// Client's request is less than or equal to max
+		if g.registeredSettings.maxLeaseTime > 0 {
+			if req <= g.registeredSettings.maxLeaseTime {
+				return req
+			}
+			return g.registeredSettings.maxLeaseTime
+		}
+
+		// Fallback to truly global settings
+		if req <= g.settings.maxLeaseTime {
+			return req
+		}
+		return g.settings.maxLeaseTime
+	}
+
+	// maxLeaseTime for unregistered
+	// Client's request is less than or equal to max
+	if g.unregisteredSettings.maxLeaseTime > 0 {
+		if req <= g.unregisteredSettings.maxLeaseTime {
 			return req
 		}
 		return g.unregisteredSettings.maxLeaseTime
 	}
 
-	if req < g.settings.maxLeaseTime {
+	// Fallback to truly global settings
+	if req <= g.settings.maxLeaseTime {
 		return req
 	}
 	return g.settings.maxLeaseTime
 }
 
-func (g *global) getOptions(registered bool) dhcp4.Options {
+func (g *global) getSettings(registered bool) *settings {
 	if registered && g.regOptionsCached {
-		return g.registeredSettings.options
+		return g.registeredSettings
 	} else if !registered && g.unregOptionsCached {
-		return g.unregisteredSettings.options
+		return g.unregisteredSettings
 	}
 
 	if registered {
 		// Merge "global" settings into registered settings
-		for c, v := range g.settings.options {
-			if _, ok := g.registeredSettings.options[c]; !ok {
-				g.registeredSettings.options[c] = v
-			}
-		}
+		mergeSettings(g.registeredSettings, g.settings)
 		g.regOptionsCached = true
-		return g.registeredSettings.options
+		return g.registeredSettings
 	}
 
 	// Merge network "global" settings into unregistered settings
-	for c, v := range g.settings.options {
-		if _, ok := g.unregisteredSettings.options[c]; !ok {
-			g.unregisteredSettings.options[c] = v
-		}
-	}
+	mergeSettings(g.unregisteredSettings, g.settings)
 	g.unregOptionsCached = true
-	return g.unregisteredSettings.options
+	return g.unregisteredSettings
 }
 
 func (g *global) print() {
