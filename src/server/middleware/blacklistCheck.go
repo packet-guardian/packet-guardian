@@ -16,7 +16,9 @@ import (
 func BlacklistCheck(e *common.Environment, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Public assets are available to everyone
-		if strings.HasPrefix(r.URL.Path, "/public") || strings.HasPrefix(r.URL.Path, "/login") {
+		if strings.HasPrefix(r.URL.Path, "/public") ||
+			strings.HasPrefix(r.URL.Path, "/login") ||
+			strings.HasPrefix(r.URL.Path, "/logout") {
 			next.ServeHTTP(w, r)
 			return
 		}
