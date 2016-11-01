@@ -48,7 +48,7 @@ func (p *pool) getCountOfIPs() int {
 // it will get the duration from its subnet.
 func (p *pool) getLeaseTime(req time.Duration, registered bool) time.Duration {
 	if req == 0 {
-		if p.settings.defaultLeaseTime != 0 {
+		if p.settings.defaultLeaseTime > 0 {
 			return p.settings.defaultLeaseTime
 		}
 		// Save the result for later
@@ -56,7 +56,7 @@ func (p *pool) getLeaseTime(req time.Duration, registered bool) time.Duration {
 		return p.settings.defaultLeaseTime
 	}
 
-	if p.settings.maxLeaseTime != 0 {
+	if p.settings.maxLeaseTime > 0 {
 		if req < p.settings.maxLeaseTime {
 			return req
 		}
@@ -66,7 +66,7 @@ func (p *pool) getLeaseTime(req time.Duration, registered bool) time.Duration {
 	// Save the result for later
 	p.settings.maxLeaseTime = p.subnet.getLeaseTime(req, registered)
 
-	if req < p.settings.maxLeaseTime {
+	if req <= p.settings.maxLeaseTime {
 		return req
 	}
 	return p.settings.maxLeaseTime
@@ -90,8 +90,8 @@ func (p *pool) getOptions(registered bool) dhcp4.Options {
 func (p *pool) getFreeLease(s *ServerConfig) *Lease {
 	now := time.Now()
 
-	regFreeTime := time.Duration(p.subnet.network.global.registeredSettings.freeLeaseAfter) * time.Second
-	unRegFreeTime := time.Duration(p.subnet.network.global.unregisteredSettings.freeLeaseAfter) * time.Second
+	regFreeTime := p.subnet.network.global.registeredSettings.freeLeaseAfter
+	unRegFreeTime := p.subnet.network.global.unregisteredSettings.freeLeaseAfter
 	// Find a candidate from the already used leases
 	for _, l := range p.leases {
 		if l.IsAbandoned { // IP in use by a device we don't know about

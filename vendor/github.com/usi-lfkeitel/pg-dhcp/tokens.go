@@ -5,66 +5,105 @@
 package dhcp
 
 import (
-	"bytes"
-
-	"github.com/onesimus-systems/dhcp4"
+	"fmt"
+	"strconv"
 )
 
 type token int
 
+type lexToken struct {
+	token     token
+	value     interface{}
+	line, pos int
+}
+
 const (
-	tkEnd token = iota
-	tkGlobal
-	tkNetwork
-	tkSubnet
-	tkPool
-	tkRegistered
-	tkUnregistered
+	ILLEGAL token = iota
+	EOF
+	COMMENT
 
-	tkServerIdentifier
-	tkRange
-	tkFreeLeaseAfter
+	literal_beg
+	NUMBER
+	STRING
+	IP_ADDRESS
+	BOOLEAN
+	literal_end
 
-	beginSettings
-	tkOption
-	tkDefaultLeaseTime
-	tkMaxLeaseTime
-	endSettings
+	keyword_beg
+	END
+	GLOBAL
+	NETWORK
+	SUBNET
+	POOL
+	REGISTERED
+	UNREGISTERED
+	SERVER_IDENTIFIER
+	RANGE
+
+	setting_beg
+	OPTION
+	FREE_LEASE_AFTER
+	DEFAULT_LEASE_TIME
+	MAX_LEASE_TIME
+	setting_end
+	keyword_end
 )
 
-var tokens = [...][]byte{
-	tkEnd:          []byte("end"),
-	tkGlobal:       []byte("global"),
-	tkNetwork:      []byte("network"),
-	tkSubnet:       []byte("subnet"),
-	tkPool:         []byte("pool"),
-	tkRegistered:   []byte("registered"),
-	tkUnregistered: []byte("unregistered"),
+var tokens = [...]string{
+	ILLEGAL: "ILLEGAL",
+	EOF:     "EOF",
+	COMMENT: "COMMENT",
 
-	tkOption:           []byte("option"),
-	tkDefaultLeaseTime: []byte("default-lease-time"),
-	tkMaxLeaseTime:     []byte("max-lease-time"),
-	tkServerIdentifier: []byte("server-identifier"),
-	tkRange:            []byte("range"),
-	tkFreeLeaseAfter:   []byte("free-lease-after"),
+	NUMBER:     "NUMBER",
+	STRING:     "STRING",
+	IP_ADDRESS: "IP_ADDRESS",
+	BOOLEAN:    "BOOLEAN",
+
+	END:               "end",
+	GLOBAL:            "global",
+	NETWORK:           "network",
+	SUBNET:            "subnet",
+	POOL:              "pool",
+	REGISTERED:        "registered",
+	UNREGISTERED:      "unregistered",
+	SERVER_IDENTIFIER: "server-identifier",
+	RANGE:             "range",
+
+	OPTION:             "option",
+	FREE_LEASE_AFTER:   "free-lease-after",
+	DEFAULT_LEASE_TIME: "default-lease-time",
+	MAX_LEASE_TIME:     "max-lease-time",
 }
 
-func isSetting(b []byte) bool {
-	for i := beginSettings; i < endSettings; i++ {
-		if bytes.Equal(b, tokens[i]) {
-			return true
-		}
+var keywords map[string]token
+
+func (tok token) string() string {
+	s := ""
+	if 0 <= tok && tok < token(len(tokens)) {
+		s = tokens[tok]
 	}
-	return false
+	if s == "" {
+		s = "token(" + strconv.Itoa(int(tok)) + ")"
+	}
+	return s
 }
 
-// This list contains only the options we need
-// It will change as needs change
-var options = map[string]dhcp4.OptionCode{
-	"subnet-mask":                   1,
-	"router":                        3,
-	"domain-name-server":            6,
-	"domain-name":                   15,
-	"broadcast-address":             28,
-	"network-time-protocol-servers": 42,
+func (tok *lexToken) string() string {
+	return fmt.Sprintf("%s: %v", tok.token.string(), tok.value)
 }
+
+func init() {
+	keywords = make(map[string]token)
+	for i := keyword_beg + 1; i < keyword_end-1; i++ {
+		keywords[tokens[i]] = i
+	}
+}
+
+func lookup(ident string) token {
+	if tok, valid := keywords[ident]; valid {
+		return tok
+	}
+	return STRING
+}
+
+func (tok token) isSetting() bool { return setting_beg < tok && tok < setting_end }

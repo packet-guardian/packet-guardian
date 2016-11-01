@@ -10,8 +10,6 @@ import (
 	"net"
 	"strings"
 	"time"
-
-	"github.com/onesimus-systems/dhcp4"
 )
 
 type network struct {
@@ -39,115 +37,87 @@ func newNetwork(name string) *network {
 // req and the maximum lease time. If the network does not have an explicitly set duration for either,
 // it will get the duration from Global.
 func (n *network) getLeaseTime(req time.Duration, registered bool) time.Duration {
-	// TODO: Clean this up
+	if req == 0 {
+		return n.getDefaultLeaseTime(registered)
+	}
+	return n.getMaxLeaseTime(req, registered)
+}
+
+func (n *network) getDefaultLeaseTime(registered bool) time.Duration {
 	if registered {
-		if req == 0 {
-			if n.registeredSettings.defaultLeaseTime != 0 {
-				return n.registeredSettings.defaultLeaseTime
-			}
-			if n.settings.defaultLeaseTime != 0 {
-				return n.settings.defaultLeaseTime
-			}
-			// Save the result for later
-			n.registeredSettings.defaultLeaseTime = n.global.getLeaseTime(req, registered)
+		if n.registeredSettings.defaultLeaseTime > 0 {
 			return n.registeredSettings.defaultLeaseTime
 		}
+		if n.settings.defaultLeaseTime > 0 {
+			return n.settings.defaultLeaseTime
+		}
+		// Save to return early next time
+		n.registeredSettings.defaultLeaseTime = n.global.getLeaseTime(0, registered)
+		return n.registeredSettings.defaultLeaseTime
+	}
 
-		if n.registeredSettings.maxLeaseTime != 0 {
-			if req < n.registeredSettings.maxLeaseTime {
+	if n.unregisteredSettings.defaultLeaseTime > 0 {
+		return n.unregisteredSettings.defaultLeaseTime
+	}
+	if n.settings.defaultLeaseTime > 0 {
+		return n.settings.defaultLeaseTime
+	}
+	// Save to return early next time
+	n.unregisteredSettings.defaultLeaseTime = n.global.getLeaseTime(0, registered)
+	return n.unregisteredSettings.defaultLeaseTime
+}
+
+func (n *network) getMaxLeaseTime(req time.Duration, registered bool) time.Duration {
+	// Registered devices
+	if registered {
+		if n.registeredSettings.maxLeaseTime > 0 {
+			if req <= n.registeredSettings.maxLeaseTime {
 				return req
 			}
 			return n.registeredSettings.maxLeaseTime
 		}
-		if n.settings.maxLeaseTime != 0 {
-			if req < n.settings.maxLeaseTime {
+		if n.settings.maxLeaseTime > 0 {
+			if req <= n.settings.maxLeaseTime {
 				return req
 			}
 			return n.settings.maxLeaseTime
 		}
-
-		// Save the result for later
-		n.registeredSettings.maxLeaseTime = n.global.getLeaseTime(req, registered)
-
-		if req < n.registeredSettings.maxLeaseTime {
-			return req
-		}
-		return n.registeredSettings.maxLeaseTime
+		return n.global.getLeaseTime(req, registered)
 	}
 
-	if req == 0 {
-		if n.unregisteredSettings.defaultLeaseTime != 0 {
-			return n.unregisteredSettings.defaultLeaseTime
-		}
-		if n.settings.defaultLeaseTime != 0 {
-			return n.settings.defaultLeaseTime
-		}
-		// Save the result for later
-		n.unregisteredSettings.defaultLeaseTime = n.global.getLeaseTime(req, registered)
-		return n.unregisteredSettings.defaultLeaseTime
-	}
-
-	if n.unregisteredSettings.maxLeaseTime != 0 {
-		if req < n.unregisteredSettings.maxLeaseTime {
+	// Unregistered devices
+	if n.unregisteredSettings.maxLeaseTime > 0 {
+		if req <= n.unregisteredSettings.maxLeaseTime {
 			return req
 		}
 		return n.unregisteredSettings.maxLeaseTime
 	}
-	if n.settings.maxLeaseTime != 0 {
-		if req < n.settings.maxLeaseTime {
+	if n.settings.maxLeaseTime > 0 {
+		if req <= n.settings.maxLeaseTime {
 			return req
 		}
 		return n.settings.maxLeaseTime
 	}
-
-	// Save the result for later
-	n.unregisteredSettings.maxLeaseTime = n.global.getLeaseTime(req, registered)
-
-	if req < n.unregisteredSettings.maxLeaseTime {
-		return req
-	}
-	return n.unregisteredSettings.maxLeaseTime
+	return n.global.getLeaseTime(req, registered)
 }
 
-func (n *network) getOptions(registered bool) dhcp4.Options {
+func (n *network) getSettings(registered bool) *settings {
 	if registered && n.regOptionsCached {
-		return n.registeredSettings.options
+		return n.registeredSettings
 	} else if !registered && n.unregOptionsCached {
-		return n.unregisteredSettings.options
+		return n.unregisteredSettings
 	}
 
-	higher := n.global.getOptions(registered)
+	gSet := n.global.getSettings(registered)
 	if registered {
-		// Merge network "global" setting into registered settings
-		for c, v := range n.settings.options {
-			if _, ok := n.registeredSettings.options[c]; !ok {
-				n.registeredSettings.options[c] = v
-			}
-		}
-		// Merge Global setting into registered setting
-		for c, v := range higher {
-			if _, ok := n.registeredSettings.options[c]; !ok {
-				n.registeredSettings.options[c] = v
-			}
-		}
+		mergeSettings(n.registeredSettings, gSet)
 		n.regOptionsCached = true
-		return n.registeredSettings.options
+		return n.registeredSettings
 	}
 
-	// Merge network "global" setting into unregistered settings
-	for c, v := range n.settings.options {
-		if _, ok := n.unregisteredSettings.options[c]; !ok {
-			n.unregisteredSettings.options[c] = v
-		}
-	}
-	// Merge Global setting into unregistered setting
-	for c, v := range higher {
-		if _, ok := n.unregisteredSettings.options[c]; !ok {
-			n.unregisteredSettings.options[c] = v
-		}
-	}
+	mergeSettings(n.unregisteredSettings, gSet)
 	n.unregOptionsCached = true
-	return n.unregisteredSettings.options
+	return n.unregisteredSettings
 }
 
 func (n *network) includes(ip net.IP) bool {

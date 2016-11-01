@@ -33,7 +33,7 @@ func newSubnet() *subnet {
 // it will get the duration from its Network.
 func (s *subnet) getLeaseTime(req time.Duration, registered bool) time.Duration {
 	if req == 0 {
-		if s.settings.defaultLeaseTime != 0 {
+		if s.settings.defaultLeaseTime > 0 {
 			return s.settings.defaultLeaseTime
 		}
 		// Save the result for later
@@ -41,8 +41,8 @@ func (s *subnet) getLeaseTime(req time.Duration, registered bool) time.Duration 
 		return s.settings.defaultLeaseTime
 	}
 
-	if s.settings.maxLeaseTime != 0 {
-		if req < s.settings.maxLeaseTime {
+	if s.settings.maxLeaseTime > 0 {
+		if req <= s.settings.maxLeaseTime {
 			return req
 		}
 		return s.settings.maxLeaseTime
@@ -51,7 +51,7 @@ func (s *subnet) getLeaseTime(req time.Duration, registered bool) time.Duration 
 	// Save the result for later
 	s.settings.maxLeaseTime = s.network.getLeaseTime(req, registered)
 
-	if req < s.settings.maxLeaseTime {
+	if req <= s.settings.maxLeaseTime {
 		return req
 	}
 	return s.settings.maxLeaseTime
@@ -62,12 +62,7 @@ func (s *subnet) getOptions(registered bool) dhcp4.Options {
 		return s.settings.options
 	}
 
-	higher := s.network.getOptions(registered)
-	for c, v := range higher {
-		if _, ok := s.settings.options[c]; !ok {
-			s.settings.options[c] = v
-		}
-	}
+	mergeSettings(s.settings, s.network.getSettings(registered))
 	s.optionsCached = true
 	return s.settings.options
 }
