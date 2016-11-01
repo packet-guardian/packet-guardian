@@ -219,6 +219,10 @@ func (d *Device) IsExpired() bool {
 	return d.Expires.Unix() > 10 && time.Now().After(d.Expires)
 }
 
+func (d *Device) SaveToBlacklist() error {
+	return d.blacklist.save(d.MAC.String())
+}
+
 func (d *Device) Save() error {
 	if d.ID == 0 {
 		return d.saveNew()
@@ -245,7 +249,7 @@ func (d *Device) updateExisting() error {
 	if err != nil {
 		return err
 	}
-	return d.blacklist.save(d.MAC.String())
+	return d.SaveToBlacklist()
 }
 
 func (d *Device) saveNew() error {
@@ -272,7 +276,7 @@ func (d *Device) saveNew() error {
 	}
 	id, _ := result.LastInsertId()
 	d.ID = int(id)
-	return d.blacklist.save(d.MAC.String())
+	return d.SaveToBlacklist()
 }
 
 func (d *Device) Delete() error {

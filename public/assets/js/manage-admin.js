@@ -93,21 +93,19 @@ $.onReady(function() {
     }
 
     function addDevicesToBlacklist(devices) {
-        if (!devices) { devices = []; }
-        API.blacklistDevices(getUsername(), devices, function() {
-            location.reload();
-        }, function() {
-            c.FlashMessage("Error blacklisting devices");
-        });
+        if (devices) {
+            API.blacklistDevices(devices, reloadPage, errorAdding);
+        } else {
+            API.blacklistAllDevices(getUsername(), reloadPage, errorAdding);
+        }
     }
 
     function removeDevicesFromBlacklist(devices) {
-        if (!devices) { devices = []; }
-        API.unblacklistDevices(getUsername(), devices, function() {
-            location.reload();
-        }, function() {
-            c.FlashMessage("Error removing devices from blacklist");
-        });
+        if (devices) {
+            API.unblacklistDevices(devices, reloadPage, errorRemoving);
+        } else {
+            API.unblacklistAllDevices(getUsername(), reloadPage, errorRemoving);
+        }
     }
 
     function reassignSelectedDevices(username) {
@@ -121,5 +119,17 @@ $.onReady(function() {
         }, function() {
             c.FlashMessage("Error reassigning devices");
         })
+    }
+
+    function reloadPage() {
+        location.reload();
+    }
+
+    function errorAdding() {
+        c.FlashMessage("Error blacklisting devices");
+    }
+
+    function errorRemoving() {
+        c.FlashMessage("Error removing devices from blacklist");
     }
 });
