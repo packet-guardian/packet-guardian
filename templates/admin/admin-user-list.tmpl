@@ -24,7 +24,8 @@
             <th>Device Limit</th>
             <th>Valid</th>
             <th>Default Expiration</th>
-            <th>Can Manage/Autoreg</th>
+            <th>Can Manage</th>
+            <th>Can Autoreg</th>
         </tr>
         {{range .users}}
         <tr>
@@ -41,11 +42,8 @@
             {{end}}
 
             <td>{{.DeviceExpiration.String}}</td>
-            <td>
-                {{if .CanManage}}Yes{{else}}No{{end}}
-                /
-                {{if .CanAutoreg}}Yes{{else}}No{{end}}
-            </td>
+            <td>{{if .CanManage}}Yes{{else}}No{{end}}</td>
+            <td>{{if .CanAutoreg}}Yes{{else}}No{{end}}</td>
         </tr>
         {{end}}
     </table>
