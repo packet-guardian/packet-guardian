@@ -101,7 +101,11 @@
         <hr class="user-edit-separator">
         <fieldset>
             <p>
-                <button type="submit">Save</button>
+                {{if eq .user.ID 0}}
+                <button type="submit" id="submit-btn">Create</button>
+                {{else}}
+                <button type="submit"  id="submit-btn">Save</button>
+                {{end}}
                 <button type="button" name="delete-btn">Delete</button>
                 <a href="/admin/manage/user/{{.user.Username}}" class="btn">Device List</a>
                 <a href="/admin/users" class="btn">Back to User List</a>

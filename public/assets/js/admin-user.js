@@ -193,6 +193,7 @@ $.onReady(function() {
             } else {
                 $('#has-password').text("Yes");
             }
+            $('#submit-btn').text("Save");
         }, function(req) {
             var resp = JSON.parse(req.responseText);
             c.FlashMessage(resp.Message);
