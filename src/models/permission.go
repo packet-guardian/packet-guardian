@@ -33,6 +33,9 @@ const (
 	ManageBlacklist
 	BypassBlacklist
 
+	// Allow an account to login even in guest mode
+	BypassGuestLogin
+
 	// Flag to view the admin dashboard. This should be given to any group
 	// that has at lease ViewUsers or ViewDevices
 	ViewAdminPage
@@ -55,7 +58,8 @@ const (
 		ManageOwnRights |
 		ViewDevices |
 		ViewAdminPage |
-		ViewReports
+		ViewReports |
+		BypassGuestLogin
 	// ManageOwnRights is a convenience Permission combining CreateOwn, EditOwn and DeleteOwn.
 	ManageOwnRights = CreateOwn |
 		AutoRegOwn |
