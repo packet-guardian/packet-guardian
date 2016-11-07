@@ -3,13 +3,16 @@
 <div class="register-box">
     <form method="POST" action="/register/guest">
         {{if .config.Guest.Enabled}}
+        <p class="reg-policy">
+            {{.config.Guest.RegPageHeader}}
+        </p>
         <fieldset>
             <p>
-                <label for="guest-name">Name*:</label>
+                <label for="guest-name">Name:</label>
                 <input type="text" name="guest-name" autofocus="autofocus">
             </p>
             <p>
-                <label for="guest-cred">{{.guestCredLabel}}*:</label> {{.guestCredText}}
+                <label for="guest-cred">{{.guestCredLabel}}:</label> {{.guestCredText}}
                 <input type="text" name="guest-cred">
             </p>
             {{if not .config.Guest.DisableCaptcha}}
@@ -24,7 +27,7 @@
 
             <input type="hidden" name="captchaId" value="{{.captchaID}}"><br>
             <p>
-                <label for="captchaSolution">Captcha Answer*:</label>
+                <label for="captchaSolution">Captcha Answer:</label>
                 <input type="text" name="captchaSolution">
             </p>
             {{end}}

@@ -60,6 +60,7 @@ type Config struct {
 		Checker              string
 		VerifyCodeExpiration int
 		DisableCaptcha       bool
+		RegPageHeader        string
 
 		Email struct {
 		}

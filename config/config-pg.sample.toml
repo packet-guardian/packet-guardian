@@ -130,6 +130,10 @@ deviceLimit = 10
 
 # disableCaptcha = false
 
+## This text is displayed above the registration form on the guest page.
+## Use this for extra instructions or site specific information.
+# regPageHeader = ""
+
 [guest.email]
 ## Settings used when the checker is email
 ## Coming soon
