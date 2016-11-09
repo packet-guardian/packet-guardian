@@ -101,7 +101,7 @@ historyEnabled = true
 deleteWithDevice = true
 
 ## Delete lease history for a device after this duration. Default is 4 weeks
-# deleteAfter = "96h"
+# deleteAfter = "672h"
 
 [guest]
 ## Enabled guest registrations

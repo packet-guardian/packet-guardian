@@ -24,13 +24,15 @@ var leaseStore *LeaseStore
 // Client code should use GetLeaseStore unless it's absolutly necessary to have
 // a new LeaseStore object.
 func NewLeaseStore(e *common.Environment) *LeaseStore {
-	histChan := make(chan *dhcp.Lease, 20)
-	go addToLeaseHistory(e, histChan)
+	l := &LeaseStore{e: e}
 
-	return &LeaseStore{
-		e:        e,
-		histChan: histChan,
+	if e.Config.Leases.HistoryEnabled {
+		histChan := make(chan *dhcp.Lease, 20)
+		l.histChan = histChan
+		go addToLeaseHistory(e, histChan)
 	}
+
+	return l
 }
 
 // GetLeaseStore will return an existing LeaseStore if one has been made already,
@@ -97,7 +99,7 @@ func (l *LeaseStore) CreateLease(lease *dhcp.Lease) error {
 	}
 	id, _ := result.LastInsertId()
 	lease.ID = int(id)
-	l.histChan <- lease
+	l.sendHistory(lease)
 	return nil
 }
 
@@ -140,7 +142,7 @@ func (l *LeaseStore) UpdateLease(lease *dhcp.Lease) error {
 	if err != nil {
 		return err
 	}
-	l.histChan <- lease
+	l.sendHistory(lease)
 	return nil
 }
 
@@ -213,4 +215,10 @@ func (l *LeaseStore) doDatabaseQuery(where string, values ...interface{}) ([]*dh
 		results = append(results, lease)
 	}
 	return results, nil
+}
+
+func (l *LeaseStore) sendHistory(le *dhcp.Lease) {
+	if l.histChan != nil {
+		l.histChan <- le
+	}
 }
