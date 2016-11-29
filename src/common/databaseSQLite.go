@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/lfkeitel/verbose"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
@@ -98,7 +99,12 @@ func initSQLite(d *DatabaseAccessor, c *Config) error {
 	if verRow == nil {
 		return errors.New("Failed to get database version")
 	}
-	verRow.Scan(&verRow)
+	verRow.Scan(&currDBVer)
+
+	SystemLogger.WithFields(verbose.Fields{
+		"current-version": currDBVer,
+		"active-version":  dbVersion,
+	}).Debug("Database Versions")
 
 	// No migration needed
 	if currDBVer == dbVersion {

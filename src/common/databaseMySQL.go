@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/go-sql-driver/mysql" // MySQL driver
+	"github.com/lfkeitel/verbose"
 )
 
 var mysqlMigrations = []func(*DatabaseAccessor) error{
@@ -116,7 +117,12 @@ func initMySQL(d *DatabaseAccessor, c *Config) error {
 	if verRow == nil {
 		return errors.New("Failed to get database version")
 	}
-	verRow.Scan(&verRow)
+	verRow.Scan(&currDBVer)
+
+	SystemLogger.WithFields(verbose.Fields{
+		"current-version": currDBVer,
+		"active-version":  dbVersion,
+	}).Debug("Database Versions")
 
 	// No migration needed
 	if currDBVer == dbVersion {
