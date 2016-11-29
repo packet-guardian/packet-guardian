@@ -222,7 +222,7 @@ func createSQLiteUserTable(d *DatabaseAccessor) error {
 
 func migrate1to2SQLite(d *DatabaseAccessor) error {
 	// Move device blacklist to blacklist table
-	bd, err := d.DB.Query(`SELECT "mac" FROM "device" WHERE "blacklisted" == 1`)
+	bd, err := d.DB.Query(`SELECT "mac" FROM "device" WHERE "blacklisted" = 1`)
 	if err != nil {
 		return err
 	}
