@@ -8,9 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/signal"
 	"runtime"
-	"syscall"
 	"time"
 
 	"github.com/lfkeitel/verbose"
@@ -79,15 +77,14 @@ func main() {
 	common.SystemLogger = e.Log
 	e.Log.Debugf("Configuration loaded from %s", configFile)
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	c := e.SubscribeShutdown()
 	go func(e *common.Environment) {
 		<-c
 		e.Log.Notice("Shutting down...")
 		time.Sleep(2)
 	}(e)
 
-	e.DB, err = common.NewDatabaseAccessor(e.Config)
+	e.DB, err = common.NewDatabaseAccessor(e)
 	if err != nil {
 		e.Log.WithField("error", err).Fatal("Error loading database")
 	}

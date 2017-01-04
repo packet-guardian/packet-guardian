@@ -23,11 +23,23 @@ type = "sqlite"
 ## The address, socket, or filename of the database
 address = "/var/lib/packet-guardian/database.sqlite3"
 
+# Port, not needed for SQLite, defaults to database-specific default port
+# port = 0
+
 ## Username of database
 # username = ""
 
 ## Password of database
 # password = ""
+
+## Name of the database to use, not needed for SQLite
+# name = ""
+
+## Number of connection retries before failing. 0 means retry indefinitly
+# retry = 0
+
+## Timeout before the next connection retry
+# retryTimeout = "1m"
 
 [dhcp]
 ## DHCP configuration file

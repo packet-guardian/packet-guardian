@@ -30,12 +30,14 @@ type Config struct {
 		Path       string
 	}
 	Database struct {
-		Type     string
-		Address  string
-		Port     int
-		Username string
-		Password string
-		Name     string
+		Type         string
+		Address      string
+		Port         int
+		Username     string
+		Password     string
+		Name         string
+		Retry        int
+		RetryTimeout string
 	}
 	Registration struct {
 		RegistrationPolicyFile      string
@@ -196,6 +198,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	// Database
 	c.Database.Type = setStringOrDefault(c.Database.Type, "sqlite")
 	c.Database.Address = setStringOrDefault(c.Database.Address, "config/database.sqlite3")
+	c.Database.RetryTimeout = setStringOrDefault(c.Database.RetryTimeout, "1m")
 
 	// Registration
 	c.Registration.RegistrationPolicyFile = setStringOrDefault(c.Registration.RegistrationPolicyFile, "config/policy.txt")
