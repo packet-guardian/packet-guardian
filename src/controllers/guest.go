@@ -77,6 +77,11 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 
 	session := common.GetSessionFromContext(r)
 
+	// Check if a verification code has already been issued and not expired
+	if session.GetString("_verify-code", "") != "" && session.GetInt64("_expires", 0) > time.Now().Unix()+5 {
+		http.Redirect(w, r, "/register/guest/verify", http.StatusSeeOther)
+	}
+
 	if !g.e.Config.Guest.DisableCaptcha &&
 		!captcha.VerifyString(r.FormValue("captchaId"), r.FormValue("captchaSolution")) {
 		session.AddFlash("Incorrect Captcha answer")
