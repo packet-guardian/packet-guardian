@@ -2,7 +2,6 @@ package cas
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -60,7 +59,10 @@ type Client struct {
 }
 
 func (c *Client) AuthenticateUser(username, password string, r *http.Request) (*AuthenticationResponse, error) {
-	lt, et, jsession := c.getLoginToken(r)
+	lt, et, jsession, err := c.getLoginToken(r)
+	if err != nil {
+		return nil, err
+	}
 	if lt == "" {
 		return nil, errors.New("Couldn't get a login token")
 	}
@@ -123,12 +125,11 @@ func (c *Client) validateTicket(ticket string, r *http.Request) (*Authentication
 	return ParseServiceResponse(body)
 }
 
-func (c *Client) getLoginToken(r *http.Request) (string, string, *http.Cookie) {
+func (c *Client) getLoginToken(r *http.Request) (string, string, *http.Cookie, error) {
 	reqUrl, _ := c.loginUrlForRequestor(r)
 	resp, err := http.Get(reqUrl)
 	if err != nil {
-		fmt.Println(err.Error())
-		return "", "", nil
+		return "", "", nil, err
 	}
 
 	var jsession *http.Cookie
@@ -153,7 +154,7 @@ tokenLoop:
 		switch {
 		case tt == html.ErrorToken:
 			// End of the document, we're done
-			return "", "", nil
+			return "", "", nil, nil
 		case tt == html.SelfClosingTagToken:
 			t := z.Token()
 
@@ -186,7 +187,7 @@ tokenLoop:
 			}
 		}
 	}
-	return loginToken, executionToken, jsession
+	return loginToken, executionToken, jsession, nil
 }
 
 func (c *Client) loginUrlForRequestor(r *http.Request) (string, error) {
