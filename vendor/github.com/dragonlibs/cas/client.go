@@ -75,7 +75,9 @@ func (c *Client) AuthenticateUser(username, password string, r *http.Request) (*
 	form.Add("password", password)
 	form.Add("lt", lt)
 	form.Add("_eventId", "submit") // Not sure why this is needed, it's not in the spec
-	form.Add("execution", et)
+	if et != "" {
+		form.Add("execution", et)
+	}
 
 	client := &http.Client{}
 	// Force the client to never follow redirects
@@ -154,7 +156,7 @@ tokenLoop:
 		switch {
 		case tt == html.ErrorToken:
 			// End of the document, we're done
-			return "", "", nil, nil
+			break tokenLoop
 		case tt == html.SelfClosingTagToken:
 			t := z.Token()
 
