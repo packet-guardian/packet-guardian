@@ -162,7 +162,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	if query != "" {
 		if macStartRegex.MatchString(query) {
 			searchType = "mac"
-			devices, err = models.SearchDevicesByField(a.e, "mac", query+"%")
+			devices, err = models.SearchDevicesByField(a.e, "mac", "%"+query+"%")
 			if len(devices) == 1 {
 				http.Redirect(w, r,
 					"/admin/manage/device/"+url.QueryEscape(devices[0].GetMAC().String()),
@@ -179,7 +179,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 			searchType = "ip"
 			// Get leases matching IP
 			var leases []*dhcp.Lease
-			leases, err = leaseStore.SearchLeases(`"ip" LIKE ?`, query+"%")
+			leases, err = leaseStore.SearchLeases(`"ip" LIKE ?`, "%"+query+"%")
 			// Get devices corresponding to each lease
 			var d *models.Device
 			for _, l := range leases {
@@ -196,7 +196,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 			searchType = "user"
 			// Search for a local user account
 			var users []*models.User
-			users, err = models.SearchUsersByField(a.e, "username", query+"%")
+			users, err = models.SearchUsersByField(a.e, "username", "%"+query+"%")
 			if len(users) == 1 {
 				http.Redirect(w, r,
 					"/admin/manage/user/"+url.QueryEscape(users[0].Username),
@@ -207,13 +207,17 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 
 			// Search for devices with the username
 			exact := true
-			devices, err = models.SearchDevicesByField(a.e, "username", query+"%")
+			devices, err = models.SearchDevicesByField(a.e, "username", "%"+query+"%")
+			if len(devices) == 0 {
+				exact = false
+			}
 			for _, d := range devices { // Check if all the devices have the same username
 				if d.GetUsername() != query {
 					exact = false
 					break
 				}
 			}
+
 			if exact { // If they're all the same user, go directly to the user's page
 				http.Redirect(w, r,
 					"/admin/manage/user/"+url.QueryEscape(query),
