@@ -24,9 +24,9 @@ func cleanUpOldLeaseHistory(e *common.Environment) (string, error) {
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"package": "tasks:old-lease-history",
-			"default": "96h",
+			"default": "672h",
 		}).Notice("Invalid DeleteAfter setting, using default")
-		d = time.Duration(96) * time.Hour
+		d = 672 * time.Hour
 	}
 	d = -d
 

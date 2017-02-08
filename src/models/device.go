@@ -24,20 +24,23 @@ type Device struct {
 	Expires        time.Time
 	DateRegistered time.Time
 	UserAgent      string
-	blacklisted    bool
+	blacklist      *blacklistItem
 	LastSeen       time.Time
 	Leases         []*LeaseHistory
 }
 
-func NewDevice(e *common.Environment) *Device {
-	return &Device{e: e}
+func newDevice(e *common.Environment) *Device {
+	return &Device{
+		e:         e,
+		blacklist: newBlacklistItem(getBlacklistStore(e)),
+	}
 }
 
 func GetDeviceByMAC(e *common.Environment, mac net.HardwareAddr) (*Device, error) {
-	sql := "WHERE \"mac\" = ?"
+	sql := `WHERE "mac" = ?`
 	devices, err := getDevicesFromDatabase(e, sql, mac.String())
 	if devices == nil || len(devices) == 0 {
-		dev := NewDevice(e)
+		dev := newDevice(e)
 		dev.MAC = mac
 		return dev, err
 	}
@@ -45,16 +48,16 @@ func GetDeviceByMAC(e *common.Environment, mac net.HardwareAddr) (*Device, error
 }
 
 func GetDeviceByID(e *common.Environment, id int) (*Device, error) {
-	sql := "WHERE \"id\" = ?"
+	sql := `WHERE "id" = ?`
 	devices, err := getDevicesFromDatabase(e, sql, id)
 	if devices == nil || len(devices) == 0 {
-		return NewDevice(e), err
+		return newDevice(e), err
 	}
 	return devices[0], nil
 }
 
 func GetDevicesForUser(e *common.Environment, u *User) ([]*Device, error) {
-	sql := "WHERE \"username\" = ? ORDER BY \"mac\""
+	sql := `WHERE "username" = ? ORDER BY "mac"`
 	if e.DB.Driver == "sqlite" {
 		sql += " COLLATE NOCASE"
 	}
@@ -78,12 +81,12 @@ func GetAllDevices(e *common.Environment) ([]*Device, error) {
 }
 
 func SearchDevicesByField(e *common.Environment, field, pattern string) ([]*Device, error) {
-	sql := "WHERE \"" + field + "\" LIKE ?"
+	sql := `WHERE "` + field + `" LIKE ?`
 	return getDevicesFromDatabase(e, sql, pattern)
 }
 
 func getDevicesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Device, error) {
-	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted", "description", "last_seen" FROM "device" ` + where
+	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen" FROM "device" ` + where
 
 	rows, err := e.DB.Query(sql, values...)
 	if err != nil {
@@ -101,7 +104,6 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 		var expires int64
 		var dateRegistered int64
 		var ua string
-		var blacklisted bool
 		var description string
 		var lastSeen int64
 
@@ -114,7 +116,6 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 			&expires,
 			&dateRegistered,
 			&ua,
-			&blacklisted,
 			&description,
 			&lastSeen,
 		)
@@ -124,20 +125,18 @@ func getDevicesFromDatabase(e *common.Environment, where string, values ...inter
 
 		mac, _ := net.ParseMAC(macStr)
 
-		device := &Device{
-			e:              e,
-			ID:             id,
-			MAC:            mac,
-			Username:       username,
-			Description:    description,
-			RegisteredFrom: net.ParseIP(registeredFrom),
-			Platform:       platform,
-			Expires:        time.Unix(expires, 0),
-			DateRegistered: time.Unix(dateRegistered, 0),
-			UserAgent:      ua,
-			blacklisted:    blacklisted,
-			LastSeen:       time.Unix(lastSeen, 0),
-		}
+		device := newDevice(e)
+		device.ID = id
+		device.MAC = mac
+		device.Username = username
+		device.Description = description
+		device.RegisteredFrom = net.ParseIP(registeredFrom)
+		device.Platform = platform
+		device.Expires = time.Unix(expires, 0)
+		device.DateRegistered = time.Unix(dateRegistered, 0)
+		device.UserAgent = ua
+		device.LastSeen = time.Unix(lastSeen, 0)
+
 		results = append(results, device)
 	}
 	return results, nil
@@ -162,11 +161,15 @@ func (d *Device) GetUsername() string {
 }
 
 func (d *Device) IsBlacklisted() bool {
-	return d.blacklisted
+	return d.blacklist.isBlacklisted(d.MAC.String())
 }
 
 func (d *Device) SetBlacklist(b bool) {
-	d.blacklisted = b
+	if b {
+		d.blacklist.blacklist()
+		return
+	}
+	d.blacklist.unblacklist()
 }
 
 func (d *Device) IsRegistered() bool {
@@ -216,6 +219,10 @@ func (d *Device) IsExpired() bool {
 	return d.Expires.Unix() > 10 && time.Now().After(d.Expires)
 }
 
+func (d *Device) SaveToBlacklist() error {
+	return d.blacklist.save(d.MAC.String())
+}
+
 func (d *Device) Save() error {
 	if d.ID == 0 {
 		return d.saveNew()
@@ -224,7 +231,7 @@ func (d *Device) Save() error {
 }
 
 func (d *Device) updateExisting() error {
-	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "blacklisted" = ?, "description" = ?, "last_seen" = ? WHERE "id" = ?`
+	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "description" = ?, "last_seen" = ? WHERE "id" = ?`
 
 	_, err := d.e.DB.Exec(
 		sql,
@@ -235,12 +242,14 @@ func (d *Device) updateExisting() error {
 		d.Expires.Unix(),
 		d.DateRegistered.Unix(),
 		d.UserAgent,
-		d.IsBlacklisted(),
 		d.Description,
 		d.LastSeen.Unix(),
 		d.ID,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	return d.SaveToBlacklist()
 }
 
 func (d *Device) saveNew() error {
@@ -248,7 +257,7 @@ func (d *Device) saveNew() error {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "blacklisted", "description", "last_seen") VALUES (?,?,?,?,?,?,?,?,?,?)`
+	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen") VALUES (?,?,?,?,?,?,?,?,?)`
 
 	result, err := d.e.DB.Exec(
 		sql,
@@ -259,13 +268,15 @@ func (d *Device) saveNew() error {
 		d.Expires.Unix(),
 		d.DateRegistered.Unix(),
 		d.UserAgent,
-		d.IsBlacklisted(),
 		d.Description,
 		d.LastSeen.Unix(),
 	)
+	if err != nil {
+		return err
+	}
 	id, _ := result.LastInsertId()
 	d.ID = int(id)
-	return err
+	return d.SaveToBlacklist()
 }
 
 func (d *Device) Delete() error {

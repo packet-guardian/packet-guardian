@@ -2,6 +2,7 @@ package reports
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"sort"
 
@@ -27,7 +28,7 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 	}
 	defer blkUserRows.Close()
 
-	blacklistedUsers := make([]*models.User, 0)
+	var blacklistedUsers []*models.User
 
 	for blkUserRows.Next() {
 		var username string
@@ -36,6 +37,10 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 				"error":   err,
 				"package": "reports:blacklist",
 			}).Error("Error scanning from SQL")
+			continue
+		}
+		_, err := net.ParseMAC(username)
+		if err == nil { // Probably a MAC address
 			continue
 		}
 		user, err := models.GetUserByUsername(e, username)
@@ -62,13 +67,42 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 }
 
 func blacklistedDevicesReport(e *common.Environment, w http.ResponseWriter, r *http.Request) error {
-	devices, err := models.SearchDevicesByField(e, "blacklisted", "1")
+	sql := `SELECT "value" FROM "blacklist";`
+	blkDevRows, err := e.DB.Query(sql)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
 			"package": "reports:blacklist",
-		}).Error("Error getting devices")
+		}).Error("SQL statement failed")
 		return errors.New("SQL Query Failed")
+	}
+	defer blkDevRows.Close()
+
+	var devices []*models.Device
+
+	for blkDevRows.Next() {
+		var macAddr string
+		if err := blkDevRows.Scan(&macAddr); err != nil {
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "reports:blacklist",
+			}).Error("Error scanning from SQL")
+			continue
+		}
+		mac, err := net.ParseMAC(macAddr)
+		if err != nil { // Not a mac address, probably a username
+			continue
+		}
+		device, err := models.GetDeviceByMAC(e, mac)
+		if err != nil {
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "reports:blacklist",
+				"MAC":     macAddr,
+			}).Error("Error getting user")
+			continue
+		}
+		devices = append(devices, device)
 	}
 
 	sort.Sort(models.MACSorter(devices))

@@ -60,6 +60,12 @@ address = "/var/lib/packet-guardian/database.sqlite3"
 ## Name of the database to use, not needed for SQLite
 # name = ""
 
+## Number of connection retries before failing. 0 means retry indefinitly
+# retry = 0
+
+## Timeout before the next connection retry
+# retryTimeout = "1m"
+
 [registration]
 ## The file containing the policy text that's shown on the registration page
 ## HTML is allowed in the file. An empty line denotes a new paragraph
@@ -101,7 +107,7 @@ historyEnabled = true
 deleteWithDevice = true
 
 ## Delete lease history for a device after this duration. Default is 4 weeks
-# deleteAfter = "96h"
+# deleteAfter = "672h"
 
 [guest]
 ## Enabled guest registrations
@@ -127,6 +133,12 @@ deviceLimit = 10
 ## The mechanism used to send a verification code to the user.
 ## Possible values: null, email, twilio
 # checker = "email"
+
+# disableCaptcha = false
+
+## This text is displayed above the registration form on the guest page.
+## Use this for extra instructions or site specific information.
+# regPageHeader = ""
 
 [guest.email]
 ## Settings used when the checker is email

@@ -38,6 +38,7 @@
     }
 
     API.prototype.deleteUser = function(username, ok, error) {
+        username = encodeURIComponent(username);
         $.ajax({
             method: "DELETE",
             url: '/api/user',
@@ -48,10 +49,12 @@
     }
 
     API.prototype.blacklistUser = function(username, ok, error) {
+        username = encodeURIComponent(username);
         $.post('/api/blacklist/user/' + username, {}, ok, error);
     }
 
     API.prototype.unblacklistUser = function(username, ok, error) {
+        username = encodeURIComponent(username);
         $.ajax({
             method: 'DELETE',
             url: '/api/blacklist/user/' + username,
@@ -77,6 +80,7 @@
 
     // macs is an array of MAC addresses
     API.prototype.deleteDevices = function(username, macs, ok, error) {
+        username = encodeURIComponent(username);
         $.ajax({
             method: "DELETE",
             url: "/api/device/user/" + username,
@@ -87,16 +91,32 @@
     }
 
     // macs is an array of MAC addresses
-    API.prototype.blacklistDevices = function(username, macs, ok, error) {
-        $.post('/api/blacklist/device/' + username, { "mac": macs.join(',') }, ok, error);
+    API.prototype.blacklistDevices = function(macs, ok, error) {
+        $.post('/api/blacklist/device', { "mac": macs.join(',') }, ok, error);
+    }
+
+    API.prototype.blacklistAllDevices = function(username, ok, error) {
+        username = encodeURIComponent(username);
+        $.post('/api/blacklist/device', { "username": username }, ok, error);
     }
 
     // macs is an array of MAC addresses
-    API.prototype.unblacklistDevices = function(username, macs, ok, error) {
+    API.prototype.unblacklistDevices = function(macs, ok, error) {
         $.ajax({
             method: 'DELETE',
-            url: '/api/blacklist/device/' + username,
+            url: '/api/blacklist/device',
             params: { "mac": macs.join(',') },
+            success: ok,
+            error: error
+        });
+    }
+
+    API.prototype.unblacklistAllDevices = function(username, ok, error) {
+        username = encodeURIComponent(username);
+        $.ajax({
+            method: 'DELETE',
+            url: '/api/blacklist/device',
+            params: { "username": username },
             success: ok,
             error: error
         });

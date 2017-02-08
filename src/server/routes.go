@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/dchest/captcha"
 	"github.com/gorilla/context"
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
@@ -53,6 +54,8 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	r.Handler("GET", "/admin/*a", midStack(e, adminRouter(e)))
 	r.Handler("POST", "/api/*a", midStack(e, apiRouter(e)))
 	r.Handler("DELETE", "/api/*a", midStack(e, apiRouter(e)))
+
+	r.Handler("GET", "/captcha/*a", captcha.Server(captcha.StdWidth, captcha.StdHeight))
 
 	if e.IsDev() {
 		r.Handler("GET", "/dev/*a", midStack(e, devRouter(e)))
@@ -153,8 +156,8 @@ func apiRouter(e *common.Environment) http.Handler {
 	r.POST("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)
 	r.DELETE("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)
 
-	r.POST("/api/blacklist/device/:username", blacklistController.BlacklistDeviceHandler)
-	r.DELETE("/api/blacklist/device/:username", blacklistController.BlacklistDeviceHandler)
+	r.POST("/api/blacklist/device", blacklistController.BlacklistDeviceHandler)
+	r.DELETE("/api/blacklist/device", blacklistController.BlacklistDeviceHandler)
 
 	userApiController := api.NewUserController(e)
 	r.POST("/api/user", userApiController.UserHandler)
@@ -176,12 +179,13 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	e := common.GetEnvironmentFromContext(r)
-	reg, err := dhcp.IsRegisteredByIP(models.GetLeaseStore(e), common.GetIPFromContext(r))
+	ip := common.GetIPFromContext(r)
+	reg, err := dhcp.IsRegisteredByIP(models.GetLeaseStore(e), ip)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
 			"package": "routes",
-			"ip":      common.GetIPFromContext(r).String(),
+			"ip":      ip.String(),
 		}).Error("Error getting registration status")
 		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 		return

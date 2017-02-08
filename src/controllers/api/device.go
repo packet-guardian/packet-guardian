@@ -73,6 +73,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 		defer formUser.Release()
 	}
 
+	// CreateDevice is the administrative permision
 	if !sessionUser.Can(models.CreateDevice) {
 		if formUser.IsBlacklisted() {
 			d.e.Log.WithFields(verbose.Fields{

@@ -4,6 +4,8 @@
     <form method="POST" action="/register/guest/verify">
         <fieldset>
             <p>
+                {{.guestVerText}}
+                <br><br>
                 <label for="verify-code">Verification Code:</label>
                 <input type="text" name="verify-code" autofocus="autofocus">
             </p>
@@ -14,5 +16,5 @@
         </p>
     </form>
 </div>
-{{template "footer" dict "main" $ "js" (list "register-guest")}}
+{{template "footer" dict "main" $}}
 {{end}}

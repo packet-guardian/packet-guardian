@@ -15,10 +15,16 @@
 			"revisionTime": "2016-02-26T19:13:42Z"
 		},
 		{
-			"checksumSHA1": "w7kBdx+SuYbRYMHazeg4WHenlc4=",
+			"checksumSHA1": "0GvcY9P9GSq/aJQEoRB173b4Fbw=",
+			"path": "github.com/dchest/captcha",
+			"revision": "9e952142169c3cd6268c6482a3a61c121536aca2",
+			"revisionTime": "2015-07-28T12:50:59Z"
+		},
+		{
+			"checksumSHA1": "Yx2GtJxNcYhyr6SCYzWkaQe5b2s=",
 			"path": "github.com/dragonlibs/cas",
-			"revision": "be7e57879191d005879c367d084836866b43dd43",
-			"revisionTime": "2016-08-22T20:54:30Z"
+			"revision": "2b838e66629b059fce5ef2378dd1b7117643c24a",
+			"revisionTime": "2017-01-25T14:32:43Z"
 		},
 		{
 			"checksumSHA1": "jEXpLrWXoQvH/zk1lW5Si0swr6Y=",
@@ -99,10 +105,10 @@
 			"revisionTime": "2016-06-08T14:48:14Z"
 		},
 		{
-			"checksumSHA1": "gTN7Lr7uuAB5dQ22cRX0G6lV/co=",
+			"checksumSHA1": "IfQK/Zq0f7p3owXraCd6gKRW7lo=",
 			"path": "github.com/usi-lfkeitel/pg-dhcp",
-			"revision": "61918bbc619793e30d7fcd81413fde5f58a76a8b",
-			"revisionTime": "2016-10-03T22:15:34Z"
+			"revision": "219fa5621bfc633d04a93c2929ec10d758c628fa",
+			"revisionTime": "2016-10-14T20:54:11Z"
 		},
 		{
 			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",

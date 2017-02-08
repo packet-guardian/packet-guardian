@@ -17,6 +17,7 @@ type Config struct {
 
 func newConfig() *Config {
 	return &Config{
+		global:   newGlobal(),
 		networks: make(map[string]*network),
 	}
 }

@@ -89,9 +89,6 @@ func getActiveLeaseHistory(e *common.Environment, mac net.HardwareAddr, ip net.I
 // Start this a goroutine and send leases on the channel to add them to history
 func addToLeaseHistory(e *common.Environment, leaseChan <-chan *dhcp.Lease) {
 	for lease := range leaseChan {
-		if !e.Config.Leases.HistoryEnabled {
-			continue
-		}
 		if err := processLease(e, lease); err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"error":   err,

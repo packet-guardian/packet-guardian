@@ -9,6 +9,7 @@ import (
 
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 )
 
 type Auth struct {
@@ -40,11 +41,38 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	// Assume invalid until convinced otherwise
 	auth.LogoutUser(r, w)
 	resp := common.NewAPIResponse("Invalid login", nil)
-	if auth.LoginUser(r, w) {
+	ok := auth.LoginUser(r, w)
+
+	// Bad login, return unauthorized
+	if !ok {
+		resp.WriteResponse(w, http.StatusUnauthorized)
+		return
+	}
+
+	// If we're not in guest mode, we don't need to do anything else
+	if !a.e.Config.Guest.GuestOnly {
 		resp.Message = ""
 		resp.WriteResponse(w, http.StatusNoContent)
 		return
 	}
+
+	session := common.GetSessionFromContext(r)
+	user, err := models.GetUserByUsername(a.e, session.GetString("username"))
+	if err != nil {
+		resp.Message = "Error getting user"
+		resp.WriteResponse(w, http.StatusInternalServerError)
+		return
+	}
+	defer user.Release()
+
+	// If the session user can is allowed to login with guest mode, allow them
+	if user.Can(models.BypassGuestLogin) {
+		resp.Message = ""
+		resp.WriteResponse(w, http.StatusNoContent)
+		return
+	}
+
+	// Default to deny
 	resp.WriteResponse(w, http.StatusUnauthorized)
 }
 

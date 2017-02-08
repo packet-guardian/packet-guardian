@@ -8,84 +8,121 @@ package common
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"path"
 
+	"github.com/lfkeitel/verbose"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
+var sqliteMigrations = []func(*DatabaseAccessor) error{
+	1: migrate1to2SQLite,
+}
+
 func init() {
-	dbInits["sqlite"] = func(d *DatabaseAccessor, c *Config) error {
-		var err error
-		if err = os.MkdirAll(path.Dir(c.Database.Address), os.ModePerm); err != nil {
-			return fmt.Errorf("Failed to create directories: %v", err)
-		}
-		d.DB, err = sql.Open("sqlite3", c.Database.Address)
-		if err != nil {
+	dbInits["sqlite"] = initSQLite
+}
+
+func initSQLite(d *DatabaseAccessor, c *Config) error {
+	var err error
+	if err = os.MkdirAll(path.Dir(c.Database.Address), os.ModePerm); err != nil {
+		return fmt.Errorf("Failed to create directories: %v", err)
+	}
+	d.DB, err = sql.Open("sqlite3", c.Database.Address)
+	if err != nil {
+		return err
+	}
+
+	err = d.DB.Ping()
+	if err != nil {
+		return err
+	}
+
+	d.Driver = "sqlite"
+	if _, err = d.Exec("PRAGMA foreign_keys = ON"); err != nil {
+		return err
+	}
+
+	rows, err := d.DB.Query(`SELECT name FROM sqlite_master WHERE type='table'`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	tables := make(map[string]bool)
+	for _, table := range DatabaseTableNames {
+		tables[table] = false
+	}
+
+	for rows.Next() {
+		var tableName string
+		if err := rows.Scan(&tableName); err != nil {
 			return err
 		}
+		tables[tableName] = true
+	}
 
-		err = d.DB.Ping()
-		if err != nil {
+	if !tables["blacklist"] {
+		if err := createSQLiteBlacklistTable(d); err != nil {
 			return err
 		}
-
-		d.Driver = "sqlite"
-		if _, err = d.Exec("PRAGMA foreign_keys = ON"); err != nil {
+	}
+	if !tables["device"] {
+		if err := createSQLiteDeviceTable(d); err != nil {
 			return err
 		}
-
-		rows, err := d.DB.Query(`SELECT name FROM sqlite_master WHERE type='table'`)
-		if err != nil {
+	}
+	if !tables["lease"] {
+		if err := createSQLiteLeaseTable(d); err != nil {
 			return err
 		}
-		defer rows.Close()
-		tables := make(map[string]bool)
-		for _, table := range DatabaseTableNames {
-			tables[table] = false
+	}
+	if !tables["settings"] {
+		if err := createSQLiteSettingTable(d); err != nil {
+			return err
 		}
+	}
+	if !tables["user"] {
+		if err := createSQLiteUserTable(d); err != nil {
+			return err
+		}
+	}
+	if !tables["lease_history"] {
+		if err := createSQLiteLeaseHistoryTable(d); err != nil {
+			return err
+		}
+	}
 
-		for rows.Next() {
-			var tableName string
-			if err := rows.Scan(&tableName); err != nil {
-				return err
-			}
-			tables[tableName] = true
-		}
+	var currDBVer int
+	verRow := d.DB.QueryRow(`SELECT "value" FROM "settings" WHERE "id" = 'db_version'`)
+	if verRow == nil {
+		return errors.New("Failed to get database version")
+	}
+	verRow.Scan(&currDBVer)
 
-		if !tables["blacklist"] {
-			if err := createSQLiteBlacklistTable(d); err != nil {
-				return err
-			}
-		}
-		if !tables["device"] {
-			if err := createSQLiteDeviceTable(d); err != nil {
-				return err
-			}
-		}
-		if !tables["lease"] {
-			if err := createSQLiteLeaseTable(d); err != nil {
-				return err
-			}
-		}
-		if !tables["settings"] {
-			if err := createSQLiteSettingTable(d); err != nil {
-				return err
-			}
-		}
-		if !tables["user"] {
-			if err := createSQLiteUserTable(d); err != nil {
-				return err
-			}
-		}
-		if !tables["lease_history"] {
-			if err := createSQLiteLeaseHistoryTable(d); err != nil {
-				return err
-			}
-		}
+	SystemLogger.WithFields(verbose.Fields{
+		"current-version": currDBVer,
+		"active-version":  dbVersion,
+	}).Debug("Database Versions")
+
+	// No migration needed
+	if currDBVer == dbVersion {
 		return nil
 	}
+
+	neededMigrations := sqliteMigrations[currDBVer:dbVersion]
+	for _, migrate := range neededMigrations {
+		if migrate == nil {
+			continue
+		}
+		if err := migrate(d); err != nil {
+			return err
+		}
+	}
+
+	_, err = d.DB.Exec(`UPDATE "settings" SET "value" = ? WHERE "id" = 'db_version'`, dbVersion)
+	return err
 }
 
 func createSQLiteBlacklistTable(d *DatabaseAccessor) error {
@@ -109,7 +146,6 @@ func createSQLiteDeviceTable(d *DatabaseAccessor) error {
 	    "expires" INTEGER DEFAULT 0,
 	    "date_registered" INTEGER NOT NULL,
 	    "user_agent" TEXT DEFAULT '',
-	    "blacklisted" INTEGER DEFAULT 0,
 	    "description" TEXT DEFAULT '',
 	    "last_seen" INT NOT NULL
 	)`
@@ -159,7 +195,7 @@ func createSQLiteSettingTable(d *DatabaseAccessor) error {
 		return err
 	}
 
-	_, err := d.DB.Exec(`INSERT INTO "settings" ("id", "value") VALUES ('db_version', 1)`)
+	_, err := d.DB.Exec(`INSERT INTO "settings" ("id", "value") VALUES ('db_version', ?)`, dbVersion)
 	return err
 }
 
@@ -188,4 +224,35 @@ func createSQLiteUserTable(d *DatabaseAccessor) error {
 			(2, 'helpdesk', '$2a$10$ICCdq/OyZBBoNPTRmfgntOnujD6INGv7ZAtA/Xq6JIdRMO65xCuNC'),
 			(3, 'readonly', '$2a$10$02NG6kQV.4UicpCnz8hyeefBD4JHKAlZToL2K0EN1HV.u6sXpP1Xy')`)
 	return err
+}
+
+func migrate1to2SQLite(d *DatabaseAccessor) error {
+	// Move device blacklist to blacklist table
+	bd, err := d.DB.Query(`SELECT "mac" FROM "device" WHERE "blacklisted" = 1`)
+	if err != nil {
+		return err
+	}
+	defer bd.Close()
+
+	rowCount := 0
+	sql := `INSERT INTO "blacklist" ("value") VALUES `
+
+	for bd.Next() {
+		var mac string
+		if err := bd.Scan(&mac); err != nil {
+			return err
+		}
+		sql += "('" + mac + "'), "
+		rowCount++
+	}
+
+	if rowCount == 0 {
+		return nil
+	}
+
+	sql = sql[:len(sql)-2]
+	if _, err := d.DB.Exec(sql); err != nil {
+		return err
+	}
+	return nil
 }

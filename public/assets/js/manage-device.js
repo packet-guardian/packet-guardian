@@ -8,11 +8,10 @@ $.onReady(function() {
     $('#delete-btn').click(function() {
         var cmodal = new jsConfirm();
         cmodal.show("Are you sure you want to delete this device?", function() {
-            // var mac = getMacAddress();
             var username = getUsername();
 
             API.deleteDevices(username, [getMacAddress()], function() {
-                location.href = '/admin/manage/user/' + username;
+                location.reload();
             }, function() {
                 c.FlashMessage("Error deleting device");
             })
@@ -22,7 +21,7 @@ $.onReady(function() {
     $('#unblacklist-btn').click(function() {
         var cmodal = new jsConfirm();
         cmodal.show("Are you sure you want to remove this device from the blacklist?", function() {
-            API.unblacklistDevices(getUsername(), [getMacAddress()], function() {
+            API.unblacklistDevices([getMacAddress()], function() {
                 location.reload();
             }, function() {
                 c.FlashMessage("Error removing device from blacklist");
@@ -33,7 +32,7 @@ $.onReady(function() {
     $('#blacklist-btn').click(function() {
         var cmodal = new jsConfirm();
         cmodal.show("Are you sure you want to blacklist this device?", function() {
-            API.blacklistDevices(getUsername(), [getMacAddress()], function() {
+            API.blacklistDevices([getMacAddress()], function() {
                 location.reload();
             }, function() {
                 c.FlashMessage("Error blacklisting device");

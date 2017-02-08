@@ -15,8 +15,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/lfkeitel/verbose"
@@ -86,16 +84,14 @@ func main() {
 		e.Log.Fatalf("DHCP configuration file not found: %s", e.Config.DHCP.ConfigFile)
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	c := e.SubscribeShutdown()
 	go func(e *common.Environment) {
 		<-c
 		e.Log.Notice("Shutting down...")
 		time.Sleep(2)
-		os.Exit(0)
 	}(e)
 
-	e.DB, err = common.NewDatabaseAccessor(e.Config)
+	e.DB, err = common.NewDatabaseAccessor(e)
 	if err != nil {
 		e.Log.WithField("error", err).Fatal("Error loading database")
 	}

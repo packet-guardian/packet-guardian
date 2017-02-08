@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dchest/captcha"
+	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/guest"
@@ -60,6 +62,8 @@ func (g *Guest) showGuestRegPage(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"policy":         common.LoadPolicyText(g.e.Config.Registration.RegistrationPolicyFile),
 		"guestCredLabel": label,
+		"guestCredText":  guest.GetInputText(g.e),
+		"captchaID":      captcha.New(),
 	}
 
 	g.e.Views.NewView("register-guest", r).Render(w, data)
@@ -73,11 +77,41 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 
 	session := common.GetSessionFromContext(r)
 
-	guestCred := r.FormValue("guest-cred")
+	// Check if a verification code has already been issued and not expired
+	if session.GetString("_verify-code", "") != "" && session.GetInt64("_expires", 0) > time.Now().Unix()+5 {
+		http.Redirect(w, r, "/register/guest/verify", http.StatusSeeOther)
+	}
+
+	if !g.e.Config.Guest.DisableCaptcha &&
+		!captcha.VerifyString(r.FormValue("captchaId"), r.FormValue("captchaSolution")) {
+		session.AddFlash("Incorrect Captcha answer")
+		g.showGuestRegPage(w, r)
+		return
+	}
+
+	guestCred := guest.NormalizeCredential(g.e, r.FormValue("guest-cred"))
 	guestName := r.FormValue("guest-name")
 
 	if guestCred == "" || guestName == "" {
 		session.AddFlash("Please fill in all required fields")
+		g.showGuestRegPage(w, r)
+		return
+	}
+
+	guestUser, err := models.GetUserByUsername(g.e, guestCred)
+	defer guestUser.Release()
+	if err != nil {
+		g.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:guest",
+			"username": guestCred,
+		}).Error("Error getting user")
+		g.e.Views.RenderError(w, r, nil)
+		return
+	}
+
+	if guestUser.IsBlacklisted() {
+		session.AddFlash("Permission Denied")
 		g.showGuestRegPage(w, r)
 		return
 	}
@@ -131,7 +165,10 @@ func (g *Guest) VerificationHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *Guest) showGuestVerifyPage(w http.ResponseWriter, r *http.Request) {
-	g.e.Views.NewView("register-guest-verify", r).Render(w, nil)
+	data := map[string]interface{}{
+		"guestVerText": guest.GetVerificationText(g.e),
+	}
+	g.e.Views.NewView("register-guest-verify", r).Render(w, data)
 }
 
 func (g *Guest) verifyGuestRegistration(w http.ResponseWriter, r *http.Request) {

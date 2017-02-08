@@ -27,7 +27,6 @@
                 <a href="/logout" class="btn">Logout</a>
             </section>
             <section>
-                {{if ne .device.ID 0}}
                 {{if .canManageBlacklist}}
                 {{if .device.IsBlacklisted}}
                 <button type="button" class="admin-btn" id="unblacklist-btn">Remove From Blacklist</button>
@@ -35,6 +34,7 @@
                 <button type="button" class="admin-btn" id="blacklist-btn">Blacklist</button>
                 {{end}}
                 {{end}}
+                {{if ne .device.ID 0}}
                 {{if .canReassignDevice}}
                 <button type="button" id="reassign-btn" class="admin-btn">Reassign</button>
                 {{end}}
