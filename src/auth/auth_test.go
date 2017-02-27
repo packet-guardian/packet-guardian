@@ -21,14 +21,14 @@ func init() {
 
 type testAuthOne struct{}
 
-func (t *testAuthOne) loginUser(r *http.Request, w http.ResponseWriter) bool {
-	return (r.FormValue("username") == "tester1")
+func (t *testAuthOne) checkLogin(username, password string, r *http.Request) bool {
+	return (username == "tester1")
 }
 
 type testAuthTwo struct{}
 
-func (t *testAuthTwo) loginUser(r *http.Request, w http.ResponseWriter) bool {
-	return (r.FormValue("username") == "tester2")
+func (t *testAuthTwo) checkLogin(username, password string, r *http.Request) bool {
+	return (username == "tester2")
 }
 
 func TestLoginUser(t *testing.T) {

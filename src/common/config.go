@@ -95,10 +95,12 @@ type Config struct {
 		SessionsEncryptKey  string
 	}
 	Auth struct {
-		AuthMethod    []string
-		AdminUsers    []string
-		HelpDeskUsers []string
-		ReadOnlyUsers []string
+		AuthMethod        []string
+		AdminUsers        []string
+		HelpDeskUsers     []string
+		ReadOnlyUsers     []string
+		APIReadOnlyUsers  []string
+		APIReadWriteUsers []string
 
 		LDAP struct {
 			UseAD         bool

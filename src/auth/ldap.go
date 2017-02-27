@@ -22,7 +22,7 @@ type ldapAuthenticator struct {
 	client *ldapc.LDAPClient
 }
 
-func (l *ldapAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bool {
+func (l *ldapAuthenticator) checkLogin(username, password string, r *http.Request) bool {
 	e := common.GetEnvironmentFromContext(r)
 	// TODO: Support full LDAP servers and not just AD
 	// TODO: Support multiple LDAP servers, not just one
@@ -36,11 +36,11 @@ func (l *ldapAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bo
 	}
 	defer l.client.Close()
 
-	ok, _, err := l.client.Authenticate(r.FormValue("username"), r.FormValue("password"))
+	ok, _, err := l.client.Authenticate(username, password)
 	if err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultInvalidCredentials) {
 		e.Log.WithFields(verbose.Fields{
 			"error":    err,
-			"username": r.FormValue("username"),
+			"username": username,
 			"package":  "auth:ldap",
 		}).Error("Error authenticating with LDAP server")
 	}
@@ -49,7 +49,7 @@ func (l *ldapAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bo
 		return false
 	}
 
-	user, err := models.GetUserByUsername(e, r.FormValue("username"))
+	user, err := models.GetUserByUsername(e, username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

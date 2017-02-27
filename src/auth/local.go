@@ -19,9 +19,9 @@ func init() {
 
 type localAuthenticator struct{}
 
-func (l *localAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bool {
+func (l *localAuthenticator) checkLogin(username, password string, r *http.Request) bool {
 	e := common.GetEnvironmentFromContext(r)
-	user, err := models.GetUserByUsername(e, r.FormValue("username"))
+	user, err := models.GetUserByUsername(e, username)
 	defer user.Release()
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
@@ -35,7 +35,7 @@ func (l *localAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 	if testPass == "" { // User doesn't have a local password
 		return false
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(testPass), []byte(r.FormValue("password")))
+	err = bcrypt.CompareHashAndPassword([]byte(testPass), []byte(password))
 	if err != nil {
 		if err != bcrypt.ErrMismatchedHashAndPassword {
 			e.Log.WithFields(verbose.Fields{

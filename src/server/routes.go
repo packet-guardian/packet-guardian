@@ -163,7 +163,7 @@ func apiRouter(e *common.Environment) http.Handler {
 	r.POST("/api/user", userApiController.UserHandler)
 	r.DELETE("/api/user", userApiController.UserHandler)
 
-	return mid.CheckAuth(r)
+	return mid.CheckAuthAPI(r)
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {

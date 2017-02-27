@@ -22,7 +22,7 @@ type radAuthenticator struct {
 	auther *radius.Authenticator
 }
 
-func (rad *radAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bool {
+func (rad *radAuthenticator) checkLogin(username, password string, r *http.Request) bool {
 	e := common.GetEnvironmentFromContext(r)
 	if rad.auther == nil {
 		rad.auther = radius.New(
@@ -31,7 +31,7 @@ func (rad *radAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 			e.Config.Auth.Radius.Secret,
 		)
 	}
-	ok, err := rad.auther.Authenticate(r.FormValue("username"), r.FormValue("password"))
+	ok, err := rad.auther.Authenticate(username, password)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -44,7 +44,7 @@ func (rad *radAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 		return false
 	}
 
-	user, err := models.GetUserByUsername(e, r.FormValue("username"))
+	user, err := models.GetUserByUsername(e, username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

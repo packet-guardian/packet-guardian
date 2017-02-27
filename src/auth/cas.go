@@ -24,7 +24,7 @@ type casAuthenticator struct {
 	client *cas.Client
 }
 
-func (c *casAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bool {
+func (c *casAuthenticator) checkLogin(username, password string, r *http.Request) bool {
 	e := common.GetEnvironmentFromContext(r)
 	if c.client == nil {
 		casUrlStr := strings.TrimRight(e.Config.Auth.CAS.Server, "/") + "/" // Ensure server ends in /
@@ -42,7 +42,7 @@ func (c *casAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) boo
 		}
 	}
 
-	_, err := c.client.AuthenticateUser(r.FormValue("username"), r.FormValue("password"), r)
+	_, err := c.client.AuthenticateUser(username, password, r)
 	if err == cas.InvalidCredentials {
 		return false
 	}
@@ -54,7 +54,7 @@ func (c *casAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) boo
 		return false
 	}
 
-	user, err := models.GetUserByUsername(e, r.FormValue("username"))
+	user, err := models.GetUserByUsername(e, username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

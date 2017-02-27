@@ -173,15 +173,21 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 func (u *User) LoadRights() {
 	if common.StringInSlice(u.Username, u.e.Config.Auth.AdminUsers) {
 		u.Rights = u.Rights.With(AdminRights)
-		return
+		u.Rights = u.Rights.Without(APIRead)
+		u.Rights = u.Rights.Without(APIWrite)
 	}
 	if common.StringInSlice(u.Username, u.e.Config.Auth.HelpDeskUsers) {
 		u.Rights = u.Rights.With(HelpDeskRights)
-		return
 	}
 	if common.StringInSlice(u.Username, u.e.Config.Auth.ReadOnlyUsers) {
 		u.Rights = u.Rights.With(ReadOnlyRights)
-		return
+	}
+	if common.StringInSlice(u.Username, u.e.Config.Auth.APIReadOnlyUsers) {
+		u.Rights = u.Rights.With(APIRead)
+	}
+	if common.StringInSlice(u.Username, u.e.Config.Auth.APIReadWriteUsers) {
+		u.Rights = u.Rights.With(APIRead)
+		u.Rights = u.Rights.With(APIWrite)
 	}
 }
 
