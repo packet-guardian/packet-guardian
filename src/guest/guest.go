@@ -174,7 +174,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 		"mac":      mac.String(),
 		"name":     name,
 		"username": credential,
-		"action":   "register-guest-device",
+		"action":   "register_guest_device",
 	}).Info("Device registered")
 	return nil
 }

@@ -200,7 +200,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 		"mac":        mac.String(),
 		"changed-by": sessionUser.Username,
 		"username":   formUser.Username,
-		"action":     "register-device",
+		"action":     "register_device",
 		"manual":     manual,
 	}).Info("Device registered")
 
@@ -289,7 +289,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 			"mac":        device.MAC.String(),
 			"changed-by": sessionUser.Username,
 			"username":   formUser.Username,
-			"action":     "delete-device",
+			"action":     "delete_device",
 		}).Notice("Device deleted")
 	}
 
@@ -386,7 +386,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			"new-username": username,
 			"old-username": originalUser,
 			"mac":          mac.String(),
-			"action":       "reassign-device",
+			"action":       "reassign_device",
 		}).Info("Reassigned device to another user")
 	}
 
@@ -451,7 +451,7 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 		"username":   device.Username,
 		"changed-by": sessionUser.Username,
 		"package":    "controllers:api:device",
-		"action":     "edit-desc-device",
+		"action":     "edit_desc_device",
 	}).Info("Device description changed")
 	common.NewAPIResponse("Device saved successfully", nil).WriteResponse(w, http.StatusOK)
 }
@@ -531,7 +531,7 @@ func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p
 		"changed-by": sessionUser.Username,
 		"expiration": newExpireResp,
 		"package":    "controllers:api:device",
-		"action":     "edit-exp-device",
+		"action":     "edit_exp_device",
 	}).Info("Device expiration changed")
 	resp := map[string]string{"newExpiration": newExpireResp}
 	common.NewAPIResponse("Device saved successfully", resp).WriteResponse(w, http.StatusOK)

@@ -197,14 +197,14 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 	if isNewUser {
 		u.e.Log.WithFields(verbose.Fields{
 			"package":    "controllers:api:user",
-			"action":     "create-user",
+			"action":     "create_user",
 			"username":   user.Username,
 			"changed-by": sessionUser.Username,
 		}).Info("User created")
 	} else {
 		u.e.Log.WithFields(verbose.Fields{
 			"package":    "controllers:api:user",
-			"action":     "edit-user",
+			"action":     "edit_user",
 			"username":   user.Username,
 			"changed-by": sessionUser.Username,
 		}).Info("User edited")
@@ -281,7 +281,7 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 
 	u.e.Log.WithFields(verbose.Fields{
 		"package":    "controllers:api:user",
-		"action":     "delete-user",
+		"action":     "delete_user",
 		"username":   user.Username,
 		"changed-by": sessionUser.Username,
 	}).Info("User deleted")
