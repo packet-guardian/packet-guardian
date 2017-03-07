@@ -10,9 +10,9 @@ BUILDDATE := $(shell date -u +"%B %d, %Y")
 BUILDER := $(shell echo "`git config user.name` <`git config user.email`>")
 
 ifeq ($(shell uname -o), Cygwin)
-GOBIN ?= $(shell cygpath -w -a $(PWD)/bin)
+GOBIN := $(shell cygpath -w -a $(PWD)/bin)
 else
-GOBIN ?= $(PWD)/bin
+GOBIN := $(PWD)/bin
 endif
 
 PKG_RELEASE ?= 1
