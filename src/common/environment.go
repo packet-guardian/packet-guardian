@@ -5,6 +5,7 @@
 package common
 
 import (
+	"database/sql"
 	"os"
 	"os/signal"
 	"syscall"
@@ -97,4 +98,9 @@ func (e *Environment) shutdownWatcher() {
 			sub.c <- true
 		}
 	}(e)
+}
+
+type DatabaseAccessor struct {
+	*sql.DB
+	Driver string
 }

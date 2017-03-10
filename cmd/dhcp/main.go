@@ -19,6 +19,7 @@ import (
 
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/db"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	"github.com/usi-lfkeitel/pg-dhcp"
 )
@@ -91,7 +92,7 @@ func main() {
 		time.Sleep(2)
 	}(e)
 
-	e.DB, err = common.NewDatabaseAccessor(e)
+	e.DB, err = db.NewDatabaseAccessor(e)
 	if err != nil {
 		e.Log.WithField("error", err).Fatal("Error loading database")
 	}

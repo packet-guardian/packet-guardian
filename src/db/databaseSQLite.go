@@ -4,7 +4,7 @@
 //
 // +build dbsqlite dball
 
-package common
+package db
 
 import (
 	"database/sql"
@@ -15,17 +15,27 @@ import (
 
 	"github.com/lfkeitel/verbose"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
-var sqliteMigrations = []func(*DatabaseAccessor) error{
+var sqliteMigrations = []func(*common.DatabaseAccessor) error{
 	1: migrate1to2SQLite,
 }
 
-func init() {
-	dbInits["sqlite"] = initSQLite
+var sqliteTableCreate = map[string]func(*common.DatabaseAccessor) error{
+	"blacklist":     createSQLiteBlacklistTable,
+	"device":        createSQLiteDeviceTable,
+	"lease":         createSQLiteLeaseTable,
+	"lease_history": createSQLiteLeaseHistoryTable,
+	"settings":      createSQLiteSettingTable,
+	"user":          createSQLiteUserTable,
 }
 
-func initSQLite(d *DatabaseAccessor, c *Config) error {
+func init() {
+	RegisterDatabaseAccessor("sqlite", initSQLite)
+}
+
+func initSQLite(d *common.DatabaseAccessor, c *common.Config) error {
 	var err error
 	if err = os.MkdirAll(path.Dir(c.Database.Address), os.ModePerm); err != nil {
 		return fmt.Errorf("Failed to create directories: %v", err)
@@ -51,7 +61,7 @@ func initSQLite(d *DatabaseAccessor, c *Config) error {
 	}
 	defer rows.Close()
 	tables := make(map[string]bool)
-	for _, table := range DatabaseTableNames {
+	for _, table := range common.DatabaseTableNames {
 		tables[table] = false
 	}
 
@@ -63,34 +73,11 @@ func initSQLite(d *DatabaseAccessor, c *Config) error {
 		tables[tableName] = true
 	}
 
-	if !tables["blacklist"] {
-		if err := createSQLiteBlacklistTable(d); err != nil {
-			return err
-		}
-	}
-	if !tables["device"] {
-		if err := createSQLiteDeviceTable(d); err != nil {
-			return err
-		}
-	}
-	if !tables["lease"] {
-		if err := createSQLiteLeaseTable(d); err != nil {
-			return err
-		}
-	}
-	if !tables["settings"] {
-		if err := createSQLiteSettingTable(d); err != nil {
-			return err
-		}
-	}
-	if !tables["user"] {
-		if err := createSQLiteUserTable(d); err != nil {
-			return err
-		}
-	}
-	if !tables["lease_history"] {
-		if err := createSQLiteLeaseHistoryTable(d); err != nil {
-			return err
+	for table, create := range sqliteTableCreate {
+		if !tables[table] {
+			if err := create(d); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -101,7 +88,7 @@ func initSQLite(d *DatabaseAccessor, c *Config) error {
 	}
 	verRow.Scan(&currDBVer)
 
-	SystemLogger.WithFields(verbose.Fields{
+	common.SystemLogger.WithFields(verbose.Fields{
 		"current-version": currDBVer,
 		"active-version":  dbVersion,
 	}).Debug("Database Versions")
@@ -125,7 +112,7 @@ func initSQLite(d *DatabaseAccessor, c *Config) error {
 	return err
 }
 
-func createSQLiteBlacklistTable(d *DatabaseAccessor) error {
+func createSQLiteBlacklistTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "blacklist" (
 	    "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	    "value" TEXT NOT NULL UNIQUE ON CONFLICT IGNORE,
@@ -136,7 +123,7 @@ func createSQLiteBlacklistTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func createSQLiteDeviceTable(d *DatabaseAccessor) error {
+func createSQLiteDeviceTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "device" (
 	    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
 	    "mac" TEXT NOT NULL UNIQUE ON CONFLICT ROLLBACK,
@@ -154,7 +141,7 @@ func createSQLiteDeviceTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func createSQLiteLeaseTable(d *DatabaseAccessor) error {
+func createSQLiteLeaseTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "lease" (
 	    "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	    "ip" TEXT NOT NULL UNIQUE ON CONFLICT ROLLBACK,
@@ -171,7 +158,7 @@ func createSQLiteLeaseTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func createSQLiteLeaseHistoryTable(d *DatabaseAccessor) error {
+func createSQLiteLeaseHistoryTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "lease_history" (
 	    "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	    "ip" TEXT NOT NULL,
@@ -185,7 +172,7 @@ func createSQLiteLeaseHistoryTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func createSQLiteSettingTable(d *DatabaseAccessor) error {
+func createSQLiteSettingTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "settings" (
 	    "id" TEXT PRIMARY KEY NOT NULL,
 	    "value" TEXT DEFAULT ''
@@ -199,7 +186,7 @@ func createSQLiteSettingTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func createSQLiteUserTable(d *DatabaseAccessor) error {
+func createSQLiteUserTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "user" (
 	    "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	    "username" TEXT NOT NULL UNIQUE ON CONFLICT ROLLBACK,
@@ -226,7 +213,7 @@ func createSQLiteUserTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func migrate1to2SQLite(d *DatabaseAccessor) error {
+func migrate1to2SQLite(d *common.DatabaseAccessor) error {
 	// Move device blacklist to blacklist table
 	bd, err := d.DB.Query(`SELECT "mac" FROM "device" WHERE "blacklisted" = 1`)
 	if err != nil {
