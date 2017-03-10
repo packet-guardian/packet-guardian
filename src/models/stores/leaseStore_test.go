@@ -1,4 +1,8 @@
-package models
+// This source file is part of the Packet Guardian project.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package stores
 
 import (
 	"net"
@@ -10,7 +14,7 @@ import (
 	dhcp "github.com/usi-lfkeitel/pg-dhcp"
 )
 
-func TestLeaseHistorySave(t *testing.T) {
+func TestLeaseSaveNoHistory(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -20,9 +24,8 @@ func TestLeaseHistorySave(t *testing.T) {
 
 	e := common.NewTestEnvironment()
 	e.DB = &common.DatabaseAccessor{DB: db}
-	e.Config.Leases.HistoryEnabled = true
 
-	lease := dhcp.NewLease(nil)
+	lease := dhcp.NewLease(NewLeaseStore(e))
 	lease.IP = net.ParseIP("192.168.1.1")
 	lease.MAC = net.HardwareAddr([]byte{0xab, 0xcd, 0xef, 0x12, 0x34, 0x56})
 	lease.Network = "main"
@@ -30,26 +33,23 @@ func TestLeaseHistorySave(t *testing.T) {
 	lease.End = now.Add(time.Duration(1) * time.Hour)
 	lease.Hostname = "something"
 
-	mock.ExpectQuery(`SELECT "id"`).
-		WithArgs("ab:cd:ef:12:34:56", "192.168.1.1", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows(common.LeaseHistoryTableCols))
-	mock.ExpectExec(`INSERT INTO "lease_history"`).
-		WithArgs("192.168.1.1", "ab:cd:ef:12:34:56", "main", lease.Start.Unix(), lease.End.Unix()).
+	mock.ExpectExec(`INSERT INTO "lease"`).
+		WithArgs("192.168.1.1", "ab:cd:ef:12:34:56", "main", lease.Start.Unix(), lease.End.Unix(), "something", false, false).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	processLease(e, lease)
+	if err := lease.Save(); err != nil {
+		t.Fatalf("Failed to save lease: %s", err)
+	}
 
 	lease.Start = now.Add(time.Duration(30) * time.Minute)
 	lease.End = now.Add(time.Duration(90) * time.Minute)
-	lease.ID = 1
-	mock.ExpectQuery(`SELECT "id"`).
-		WithArgs("ab:cd:ef:12:34:56", "192.168.1.1", sqlmock.AnyArg(), sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	mock.ExpectExec(`UPDATE "lease_history"`).
-		WithArgs(lease.End.Unix(), 1).
-		WillReturnResult(sqlmock.NewResult(2, 1))
+	mock.ExpectExec(`UPDATE "lease"`).
+		WithArgs("ab:cd:ef:12:34:56", lease.Start.Unix(), lease.End.Unix(), "something", false, 1).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	processLease(e, lease)
+	if err := lease.Save(); err != nil {
+		t.Fatalf("Failed to save lease: %s", err)
+	}
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {

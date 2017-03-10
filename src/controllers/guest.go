@@ -15,6 +15,7 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/guest"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
@@ -39,7 +40,7 @@ func (g *Guest) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ip := common.GetIPFromContext(r)
-	reg, _ := dhcp.IsRegisteredByIP(models.GetLeaseStore(g.e), ip)
+	reg, _ := dhcp.IsRegisteredByIP(stores.GetLeaseStore(g.e), ip)
 	if reg {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -145,7 +146,7 @@ func (g *Guest) VerificationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ip := common.GetIPFromContext(r)
-	reg, _ := dhcp.IsRegisteredByIP(models.GetLeaseStore(g.e), ip)
+	reg, _ := dhcp.IsRegisteredByIP(stores.GetLeaseStore(g.e), ip)
 	if reg {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return

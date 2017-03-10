@@ -14,6 +14,7 @@ import (
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 var invalidMAC = errors.New("Incorrect MAC address format")
@@ -132,7 +133,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		devices, err = models.GetDevicesForUser(b.e, user)
+		devices, err = stores.GetDeviceStore(b.e).GetDevicesForUser(user)
 		if err != nil {
 			b.e.Log.WithFields(verbose.Fields{
 				"error":   err,
@@ -197,7 +198,7 @@ func (b *Blacklist) getDevicesFromList(l []string, add bool) ([]*models.Device, 
 			return nil, invalidMAC
 		}
 
-		device, err := models.GetDeviceByMAC(b.e, mac)
+		device, err := stores.GetDeviceStore(b.e).GetDeviceByMAC(mac)
 		if err != nil {
 			return nil, err
 		}

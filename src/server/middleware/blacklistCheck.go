@@ -11,6 +11,7 @@ import (
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 func BlacklistCheck(e *common.Environment, next http.Handler) http.Handler {
@@ -31,9 +32,9 @@ func BlacklistCheck(e *common.Environment, next http.Handler) http.Handler {
 		}
 
 		ip := common.GetIPFromContext(r)
-		lease, err := models.GetLeaseStore(e).GetLeaseByIP(ip)
+		lease, err := stores.GetLeaseStore(e).GetLeaseByIP(ip)
 		if err == nil && lease.ID != 0 {
-			device, err := models.GetDeviceByMAC(e, lease.MAC)
+			device, err := stores.GetDeviceStore(e).GetDeviceByMAC(lease.MAC)
 			if err != nil {
 				e.Log.WithFields(verbose.Fields{
 					"error":   err,

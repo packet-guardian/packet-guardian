@@ -14,6 +14,7 @@ import (
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 type UserController struct {
@@ -211,7 +212,7 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if updateDeviceExpirations {
-		devices, err := models.GetDevicesForUser(u.e, user)
+		devices, err := stores.GetDeviceStore(u.e).GetDevicesForUser(user)
 		if err != nil {
 			u.e.Log.WithFields(verbose.Fields{
 				"error":   err,

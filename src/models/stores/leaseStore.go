@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package models
+package stores
 
 import (
 	"net"
@@ -10,12 +10,14 @@ import (
 
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
 type LeaseStore struct {
-	e        *common.Environment
-	histChan chan *dhcp.Lease
+	e            *common.Environment
+	histChan     chan *dhcp.Lease
+	historyStore *leaseHistoryStore
 }
 
 var leaseStore *LeaseStore
@@ -24,12 +26,15 @@ var leaseStore *LeaseStore
 // Client code should use GetLeaseStore unless it's absolutly necessary to have
 // a new LeaseStore object.
 func NewLeaseStore(e *common.Environment) *LeaseStore {
-	l := &LeaseStore{e: e}
+	l := &LeaseStore{
+		e:            e,
+		historyStore: newLeaseHistoryStore(e),
+	}
 
 	if e.Config.Leases.HistoryEnabled {
 		histChan := make(chan *dhcp.Lease, 20)
 		l.histChan = histChan
-		go addToLeaseHistory(e, histChan)
+		go l.historyStore.addToLeaseHistory(histChan)
 	}
 
 	return l
@@ -103,9 +108,9 @@ func (l *LeaseStore) CreateLease(lease *dhcp.Lease) error {
 	return nil
 }
 
-func (l *LeaseStore) GetLeaseHistory(mac net.HardwareAddr) ([]*LeaseHistory, error) {
+func (l *LeaseStore) GetLeaseHistory(mac net.HardwareAddr) ([]models.LeaseHistory, error) {
 	if l.e.Config.Leases.HistoryEnabled {
-		return GetLeaseHistory(l.e, mac)
+		return l.getFullLeaseHistory(mac)
 	}
 	leases, err := l.SearchLeases(
 		`"mac" = ? ORDER BY "start" DESC`,
@@ -114,9 +119,9 @@ func (l *LeaseStore) GetLeaseHistory(mac net.HardwareAddr) ([]*LeaseHistory, err
 	if err != nil {
 		return nil, err
 	}
-	leaseHistory := make([]*LeaseHistory, len(leases))
+	history := make([]models.LeaseHistory, len(leases))
 	for i, lease := range leases {
-		leaseHistory[i] = &LeaseHistory{
+		history[i] = &LeaseHistory{
 			IP:      lease.IP,
 			MAC:     lease.MAC,
 			Network: lease.Network,
@@ -124,7 +129,54 @@ func (l *LeaseStore) GetLeaseHistory(mac net.HardwareAddr) ([]*LeaseHistory, err
 			End:     lease.End,
 		}
 	}
-	return leaseHistory, nil
+	return history, nil
+}
+
+func (l *LeaseStore) getFullLeaseHistory(mac net.HardwareAddr) ([]models.LeaseHistory, error) {
+	if !l.e.Config.Leases.HistoryEnabled {
+		return make([]models.LeaseHistory, 0), nil
+	}
+	stmt := `SELECT "id", "ip", "network", "start", "end" FROM "lease_history" WHERE "mac" = ? ORDER BY "start" DESC`
+
+	rows, err := l.e.DB.Query(stmt, mac.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []models.LeaseHistory
+	for rows.Next() {
+		var id int
+		var ip string
+		var network string
+		var start int64
+		var end int64
+
+		err := rows.Scan(
+			&id,
+			&ip,
+			&network,
+			&start,
+			&end,
+		)
+		if err != nil {
+			l.e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "models:leasehistory",
+			}).Error("Failed to scan lease into struct")
+			continue
+		}
+
+		lease := &LeaseHistory{}
+		lease.ID = id
+		lease.IP = net.ParseIP(ip)
+		lease.MAC = mac
+		lease.Network = network
+		lease.Start = time.Unix(start, 0)
+		lease.End = time.Unix(end, 0)
+		results = append(results, lease)
+	}
+	return results, nil
 }
 
 func (l *LeaseStore) UpdateLease(lease *dhcp.Lease) error {
@@ -158,6 +210,23 @@ func (l *LeaseStore) DeleteLease(lease *dhcp.Lease) error {
 
 func (l *LeaseStore) SearchLeases(where string, vals ...interface{}) ([]*dhcp.Lease, error) {
 	return l.doDatabaseQuery("WHERE "+where, vals...)
+}
+
+func (l *LeaseStore) GetLatestLease(mac net.HardwareAddr) models.LeaseHistory {
+	// Instead of using the lease history table, this always uses the active
+	// lease table. Lease history may be disabled so it can't be relied on.
+	// Since this is the current Active lease, it makes sense to use the active table.
+	lease, err := l.SearchLeases(`"mac" = ? ORDER BY "start" DESC LIMIT 1`, mac.String())
+	if err != nil || lease == nil || len(lease) == 0 || lease[0].End.Before(time.Now()) {
+		return nil
+	}
+	return &LeaseHistory{
+		IP:      lease[0].IP,
+		MAC:     lease[0].MAC,
+		Network: lease[0].Network,
+		Start:   lease[0].Start,
+		End:     lease[0].End,
+	}
 }
 
 func (l *LeaseStore) doDatabaseQuery(where string, values ...interface{}) ([]*dhcp.Lease, error) {
@@ -221,4 +290,10 @@ func (l *LeaseStore) sendHistory(le *dhcp.Lease) {
 	if l.histChan != nil {
 		l.histChan <- le
 	}
+}
+
+func (l *LeaseStore) ClearLeaseHistory(mac net.HardwareAddr) error {
+	stmt := `DELETE FROM "lease_history" WHERE "mac" = ?`
+	_, err := l.e.DB.Exec(stmt, mac.String())
+	return err
 }

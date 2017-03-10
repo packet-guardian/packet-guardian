@@ -21,6 +21,7 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/controllers"
 	"github.com/usi-lfkeitel/packet-guardian/src/controllers/api"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 	mid "github.com/usi-lfkeitel/packet-guardian/src/server/middleware"
 	"github.com/usi-lfkeitel/pg-dhcp"
 )
@@ -180,7 +181,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	e := common.GetEnvironmentFromContext(r)
 	ip := common.GetIPFromContext(r)
-	reg, err := dhcp.IsRegisteredByIP(models.GetLeaseStore(e), ip)
+	reg, err := dhcp.IsRegisteredByIP(stores.GetLeaseStore(e), ip)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

@@ -15,6 +15,7 @@ import (
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -94,7 +95,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	}
 
 	// Get and enforce the device limit
-	deviceCount, err := models.GetDeviceCountForUser(e, guest)
+	deviceCount, err := stores.GetDeviceStore(e).GetDeviceCountForUser(guest)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"package": "guest",
@@ -110,7 +111,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	ip := common.GetIPFromContext(r)
 
 	// Automatic registration
-	lease, err := models.GetLeaseStore(e).GetLeaseByIP(ip)
+	lease, err := stores.GetLeaseStore(e).GetLeaseByIP(ip)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -128,7 +129,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	mac = lease.MAC
 
 	// Get device from database
-	device, err := models.GetDeviceByMAC(e, mac)
+	device, err := stores.GetDeviceStore(e).GetDeviceByMAC(mac)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

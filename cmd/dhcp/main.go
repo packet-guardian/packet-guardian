@@ -14,13 +14,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"time"
 
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/db"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
@@ -107,8 +108,8 @@ func main() {
 	}
 
 	dhcpPkgConfig := &dhcp.ServerConfig{
-		LeaseStore:  models.NewLeaseStore(e),
-		DeviceStore: models.NewDHCPDeviceStore(e),
+		LeaseStore:  stores.NewLeaseStore(e),
+		DeviceStore: &dhcpDeviceStore{e: e},
 		Env:         dhcp.EnvDev,
 		Log:         common.NewLogger(e.Config, "dhcp").Logger,
 	}
@@ -118,6 +119,14 @@ func main() {
 		e.Log.WithField("error", err).Fatal("Couldn't load leases")
 	}
 	e.Log.Fatal(handler.ListenAndServe())
+}
+
+type dhcpDeviceStore struct {
+	e *common.Environment
+}
+
+func (d *dhcpDeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (dhcp.Device, error) {
+	return stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
 }
 
 func testDHCPConfig() {

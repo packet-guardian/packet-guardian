@@ -9,6 +9,7 @@ import (
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -93,7 +94,7 @@ func blacklistedDevicesReport(e *common.Environment, w http.ResponseWriter, r *h
 		if err != nil { // Not a mac address, probably a username
 			continue
 		}
-		device, err := models.GetDeviceByMAC(e, mac)
+		device, err := stores.GetDeviceStore(e).GetDeviceByMAC(mac)
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"error":   err,
