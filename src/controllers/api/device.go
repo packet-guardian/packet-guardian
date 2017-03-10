@@ -108,7 +108,8 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 	ip := common.GetIPFromContext(r)
 	if manual {
 		// Manual registration
-		if !d.e.Config.Registration.AllowManualRegistrations {
+		// if manual registeration are not allowed and not admin
+		if !d.e.Config.Registration.AllowManualRegistrations && !sessionUser.Can(models.CreateDevice) {
 			common.NewAPIResponse("Manual registrations not allowed", nil).WriteResponse(w, http.StatusForbidden)
 			return
 		}
