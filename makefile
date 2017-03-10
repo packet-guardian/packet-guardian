@@ -1,6 +1,3 @@
-export GO15VENDOREXPERIMENT=1
-
-# variable definitions
 NAME := packet-guardian
 DESC := A captive portal for today's networks
 VERSION := $(shell git describe --tags --always --dirty)
@@ -8,14 +5,13 @@ GOVERSION := $(shell go version)
 BUILDTIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILDDATE := $(shell date -u +"%B %d, %Y")
 BUILDER := $(shell echo "`git config user.name` <`git config user.email`>")
+CGO_ENABLED ?= 1
+GOBIN := $(PWD)/bin
 
 ifeq ($(shell uname -o), Cygwin)
 GOBIN := $(shell cygpath -w -a $(PWD)/bin)
-else
-GOBIN := $(PWD)/bin
 endif
 
-PKG_RELEASE ?= 1
 PROJECT_URL := "https://github.com/usi-lfkeitel/$(NAME)"
 BUILDTAGS ?= dball
 LDFLAGS := -X 'main.version=$(VERSION)' \
@@ -27,6 +23,12 @@ LDFLAGS := -X 'main.version=$(VERSION)' \
 
 all: test management dhcp
 
+dhcp:
+	GOBIN="$(GOBIN)" go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
+
+management:
+	GOBIN="$(GOBIN)" go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
+
 # development tasks
 doc:
 	@godoc -http=:6060 -index
@@ -37,7 +39,11 @@ fmt:
 alltests: test lint vet
 
 test:
+ifeq (CGO_ENABLED, 1)
 	@go test -race $$(go list ./src/...)
+else
+	@go test $$(go list ./src/...)
+endif
 
 coverage:
 	@go test -cover $$(go list ./src/...)
@@ -53,12 +59,6 @@ lint:
 
 vet:
 	@go vet $$(go list ./src/...)
-
-dhcp:
-	GOBIN="$(GOBIN)" go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
-
-management:
-	GOBIN="$(GOBIN)" go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
 
 dist: vet all
 	@rm -rf ./dist
