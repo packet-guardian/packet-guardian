@@ -14,11 +14,13 @@ import (
 
 const dbVersion = 2
 
-type DBInit func(*common.DatabaseAccessor, *common.Config) error
+type dbInit interface {
+	init(*common.DatabaseAccessor, *common.Config) error
+}
 
-var dbInits = make(map[string]DBInit)
+var dbInits = make(map[string]dbInit)
 
-func RegisterDatabaseAccessor(name string, db DBInit) {
+func RegisterDatabaseAccessor(name string, db dbInit) {
 	dbInits[name] = db
 }
 
@@ -38,7 +40,7 @@ func NewDatabaseAccessor(e *common.Environment) (*common.DatabaseAccessor, error
 		shutdownChan := e.SubscribeShutdown()
 
 		for {
-			err = f(da, e.Config)
+			err = f.init(da, e.Config)
 
 			// If no error occured, break
 			// If an error occured but retries is not set to inifinite and we've tried

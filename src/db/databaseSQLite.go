@@ -18,24 +18,35 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
-var sqliteMigrations = []func(*common.DatabaseAccessor) error{
-	1: migrate1to2SQLite,
-}
-
-var sqliteTableCreate = map[string]func(*common.DatabaseAccessor) error{
-	"blacklist":     createSQLiteBlacklistTable,
-	"device":        createSQLiteDeviceTable,
-	"lease":         createSQLiteLeaseTable,
-	"lease_history": createSQLiteLeaseHistoryTable,
-	"settings":      createSQLiteSettingTable,
-	"user":          createSQLiteUserTable,
-}
-
 func init() {
-	RegisterDatabaseAccessor("sqlite", initSQLite)
+	RegisterDatabaseAccessor("sqlite", newSQLiteDBInit())
 }
 
-func initSQLite(d *common.DatabaseAccessor, c *common.Config) error {
+type sqliteDB struct {
+	createFuncs  map[string]func(*common.DatabaseAccessor) error
+	migrateFuncs []func(*common.DatabaseAccessor) error
+}
+
+func newSQLiteDBInit() *sqliteDB {
+	s := &sqliteDB{}
+
+	s.createFuncs = map[string]func(*common.DatabaseAccessor) error{
+		"blacklist":     s.createBlacklistTable,
+		"device":        s.createDeviceTable,
+		"lease":         s.createLeaseTable,
+		"lease_history": s.createLeaseHistoryTable,
+		"settings":      s.createSettingTable,
+		"user":          s.createUserTable,
+	}
+
+	s.migrateFuncs = []func(*common.DatabaseAccessor) error{
+		1: s.migrate1,
+	}
+
+	return s
+}
+
+func (s *sqliteDB) connect(d *common.DatabaseAccessor, c *common.Config) error {
 	var err error
 	if err = os.MkdirAll(path.Dir(c.Database.Address), os.ModePerm); err != nil {
 		return fmt.Errorf("Failed to create directories: %v", err)
@@ -50,11 +61,11 @@ func initSQLite(d *common.DatabaseAccessor, c *common.Config) error {
 		return err
 	}
 
-	d.Driver = "sqlite"
-	if _, err = d.Exec("PRAGMA foreign_keys = ON"); err != nil {
-		return err
-	}
+	_, err = d.Exec("PRAGMA foreign_keys = ON")
+	return err
+}
 
+func (s *sqliteDB) createTables(d *common.DatabaseAccessor) error {
 	rows, err := d.DB.Query(`SELECT name FROM sqlite_master WHERE type='table'`)
 	if err != nil {
 		return err
@@ -73,14 +84,17 @@ func initSQLite(d *common.DatabaseAccessor, c *common.Config) error {
 		tables[tableName] = true
 	}
 
-	for table, create := range sqliteTableCreate {
+	for table, create := range s.createFuncs {
 		if !tables[table] {
 			if err := create(d); err != nil {
 				return err
 			}
 		}
 	}
+	return nil
+}
 
+func (s *sqliteDB) migrateTables(d *common.DatabaseAccessor) error {
 	var currDBVer int
 	verRow := d.DB.QueryRow(`SELECT "value" FROM "settings" WHERE "id" = 'db_version'`)
 	if verRow == nil {
@@ -98,7 +112,7 @@ func initSQLite(d *common.DatabaseAccessor, c *common.Config) error {
 		return nil
 	}
 
-	neededMigrations := sqliteMigrations[currDBVer:dbVersion]
+	neededMigrations := s.migrateFuncs[currDBVer:dbVersion]
 	for _, migrate := range neededMigrations {
 		if migrate == nil {
 			continue
@@ -108,11 +122,25 @@ func initSQLite(d *common.DatabaseAccessor, c *common.Config) error {
 		}
 	}
 
-	_, err = d.DB.Exec(`UPDATE "settings" SET "value" = ? WHERE "id" = 'db_version'`, dbVersion)
+	_, err := d.DB.Exec(`UPDATE "settings" SET "value" = ? WHERE "id" = 'db_version'`, dbVersion)
 	return err
 }
 
-func createSQLiteBlacklistTable(d *common.DatabaseAccessor) error {
+func (s *sqliteDB) init(d *common.DatabaseAccessor, c *common.Config) error {
+	if err := s.connect(d, c); err != nil {
+		return err
+	}
+
+	d.Driver = "sqlite"
+
+	if err := s.createTables(d); err != nil {
+		return err
+	}
+
+	return s.migrateTables(d)
+}
+
+func (s *sqliteDB) createBlacklistTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "blacklist" (
 	    "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	    "value" TEXT NOT NULL UNIQUE ON CONFLICT IGNORE,
@@ -123,7 +151,7 @@ func createSQLiteBlacklistTable(d *common.DatabaseAccessor) error {
 	return err
 }
 
-func createSQLiteDeviceTable(d *common.DatabaseAccessor) error {
+func (s *sqliteDB) createDeviceTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "device" (
 	    "id" INTEGER PRIMARY KEY AUTOINCREMENT,
 	    "mac" TEXT NOT NULL UNIQUE ON CONFLICT ROLLBACK,
@@ -141,7 +169,7 @@ func createSQLiteDeviceTable(d *common.DatabaseAccessor) error {
 	return err
 }
 
-func createSQLiteLeaseTable(d *common.DatabaseAccessor) error {
+func (s *sqliteDB) createLeaseTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "lease" (
 	    "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	    "ip" TEXT NOT NULL UNIQUE ON CONFLICT ROLLBACK,
@@ -158,7 +186,7 @@ func createSQLiteLeaseTable(d *common.DatabaseAccessor) error {
 	return err
 }
 
-func createSQLiteLeaseHistoryTable(d *common.DatabaseAccessor) error {
+func (s *sqliteDB) createLeaseHistoryTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "lease_history" (
 	    "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	    "ip" TEXT NOT NULL,
@@ -172,7 +200,7 @@ func createSQLiteLeaseHistoryTable(d *common.DatabaseAccessor) error {
 	return err
 }
 
-func createSQLiteSettingTable(d *common.DatabaseAccessor) error {
+func (s *sqliteDB) createSettingTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "settings" (
 	    "id" TEXT PRIMARY KEY NOT NULL,
 	    "value" TEXT DEFAULT ''
@@ -186,7 +214,7 @@ func createSQLiteSettingTable(d *common.DatabaseAccessor) error {
 	return err
 }
 
-func createSQLiteUserTable(d *common.DatabaseAccessor) error {
+func (s *sqliteDB) createUserTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "user" (
 	    "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	    "username" TEXT NOT NULL UNIQUE ON CONFLICT ROLLBACK,
@@ -213,7 +241,7 @@ func createSQLiteUserTable(d *common.DatabaseAccessor) error {
 	return err
 }
 
-func migrate1to2SQLite(d *common.DatabaseAccessor) error {
+func (s *sqliteDB) migrate1(d *common.DatabaseAccessor) error {
 	// Move device blacklist to blacklist table
 	bd, err := d.DB.Query(`SELECT "mac" FROM "device" WHERE "blacklisted" = 1`)
 	if err != nil {
