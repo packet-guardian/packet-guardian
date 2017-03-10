@@ -11,12 +11,4 @@
     <label for="password">Password:</label>
     <input type="password" name="password">
 </p>
-<p>
-    <label for="platform">Type of Device:</label>
-    <select name="platform">
-        {{range .config.Registration.ManualRegPlatforms}}
-        <option value="{{.}}">{{.}}</option>
-        {{end}}
-    </select>
-</p>
 {{end}}
