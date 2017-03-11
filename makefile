@@ -5,12 +5,17 @@ GOVERSION := $(shell go version)
 BUILDTIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILDDATE := $(shell date -u +"%B %d, %Y")
 BUILDER := $(shell echo "`git config user.name` <`git config user.email`>")
+DIST_FILENAME ?= pg-dist-$(VERSION).tar.gz
 CGO_ENABLED ?= 1
+PWD := $(shell pwd)
 GOBIN := $(PWD)/bin
 
 ifeq ($(shell uname -o), Cygwin)
-GOBIN := $(shell cygpath -w -a $(PWD)/bin)
+PWD := $(shell cygpath -w -a `pwd`)
+GOBIN := $(PWD)\bin
 endif
+
+DOCKER_DIR := /go/src/github.com/usi-lfkeitel/packet-guardian
 
 PROJECT_URL := "https://github.com/usi-lfkeitel/$(NAME)"
 BUILDTAGS ?= dball
@@ -19,7 +24,7 @@ LDFLAGS := -X 'main.version=$(VERSION)' \
 			-X 'main.builder=$(BUILDER)' \
 			-X 'main.goversion=$(GOVERSION)'
 
-.PHONY: all doc fmt alltests test coverage benchmark lint vet dhcp management dist clean docker
+.PHONY: all doc fmt alltests test coverage benchmark lint vet dhcp management dist clean docker docker-compile docker-build
 
 all: test management dhcp
 
@@ -77,7 +82,7 @@ dist: vet all
 
 	@mkdir dist/packet-guardian/sessions
 
-	(cd "dist"; tar -cz packet-guardian) > "dist/pg-dist-$(VERSION).tar.gz"
+	(cd "dist"; tar -cz packet-guardian) > "dist/$(DIST_FILENAME)"
 
 	@rm -rf dist/packet-guardian
 
@@ -86,21 +91,10 @@ clean:
 	rm -rf ./logs/*
 	rm -rf ./sessions/*
 
-docker: dist
-	@rm -rf docker/tmp
-	@mkdir docker/tmp
-	cp dist/pg-dist* docker/tmp/dist.tar.gz
+docker: docker-compile docker-build
 
-	cp docker/pg-base/Dockerfile docker/tmp/Dockerfile
-	cd docker/tmp; \
-	sudo docker build -t pg-base --rm .
+docker-compile:
+	docker run --rm -v $(PWD):$(DOCKER_DIR) -w $(DOCKER_DIR) -e CGO_ENABLED=0 -e BUILDTAGS=dbmysql -e DIST_FILENAME=dist.tar.gz golang:1.8 make dist
 
-	cp docker/pg-web/Dockerfile docker/tmp/Dockerfile
-	cd docker/tmp; \
-	sudo docker build -t pg-web --rm .
-
-	cp docker/pg-dhcp/Dockerfile docker/tmp/Dockerfile
-	cd docker/tmp; \
-	sudo docker build -t pg-dhcp --rm .
-
-	@rm -rf docker/tmp
+docker-build:
+	docker build -t packet-guardian .

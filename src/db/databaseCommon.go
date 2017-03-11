@@ -33,7 +33,6 @@ func NewDatabaseAccessor(e *common.Environment) (*common.DatabaseAccessor, error
 		if err != nil {
 			return nil, errors.New("Invalid RetryTimeout")
 		}
-		e.Log.Debug(dur.String())
 
 		// This loop will break when no error occurs when connecting to a database
 		// Or when the number of attempted retries is greater than configured

@@ -53,13 +53,17 @@ func NewLogger(c *Config, name string) *Logger {
 	sh := verbose.NewStdoutHandler(true)
 	fh, _ := verbose.NewFileHandler(c.Logging.Path)
 	logger.AddHandler("stdout", sh)
-	logger.AddHandler("file", fh)
+	if fh != nil {
+		logger.AddHandler("file", fh)
+		fh.SetFormatter(&verbose.JSONFormatter{})
+	}
 
 	if level, ok := logLevels[strings.ToLower(c.Logging.Level)]; ok {
 		sh.SetMinLevel(level)
-		fh.SetMinLevel(level)
+		if fh != nil {
+			fh.SetMinLevel(level)
+		}
 	}
-	fh.SetFormatter(&verbose.JSONFormatter{})
 	return &Logger{
 		Logger: logger,
 		c:      c,

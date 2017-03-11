@@ -53,6 +53,7 @@ func (m *mySQLDB) connect(d *common.DatabaseAccessor, c *common.Config) error {
 	mc := &mysql.Config{
 		User:              c.Database.Username,
 		Passwd:            c.Database.Password,
+		Net:               "tcp",
 		Addr:              fmt.Sprintf("%s:%d", c.Database.Address, c.Database.Port),
 		DBName:            c.Database.Name,
 		Strict:            true,

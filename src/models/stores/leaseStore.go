@@ -45,7 +45,7 @@ func NewLeaseStore(e *common.Environment) *LeaseStore {
 // it's required to get a new LeaseStore object. If the environment is testing,
 // it will always return a new store.
 func GetLeaseStore(e *common.Environment) *LeaseStore {
-	if leaseStore != nil || e.IsTesting() {
+	if leaseStore == nil || e.IsTesting() {
 		leaseStore = NewLeaseStore(e)
 	}
 	return leaseStore
