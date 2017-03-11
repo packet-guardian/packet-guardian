@@ -82,7 +82,7 @@ dist: vet all
 	@rm -rf dist/packet-guardian
 
 clean:
-	rm $(TARGETS)
+	rm -rf ./bin/*
 	rm -rf ./logs/*
 	rm -rf ./sessions/*
 
