@@ -22,7 +22,6 @@ type localAuthenticator struct{}
 func (l *localAuthenticator) checkLogin(username, password string, r *http.Request) bool {
 	e := common.GetEnvironmentFromContext(r)
 	user, err := models.GetUserByUsername(e, username)
-	defer user.Release()
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

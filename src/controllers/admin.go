@@ -87,7 +87,6 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 	}
 
 	a.e.Views.NewView("admin-manage", r).Render(w, data)
-	user.Release()
 }
 
 func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -138,7 +137,6 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 	}
 
 	a.e.Views.NewView("admin-manage-device", r).Render(w, data)
-	user.Release()
 }
 
 type searchResults struct {
@@ -289,7 +287,6 @@ func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request, _ h
 	}
 
 	a.e.Views.NewView("admin-user-list", r).Render(w, data)
-	models.ReleaseUsers(users)
 }
 
 func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -314,7 +311,6 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request, p httpr
 	}
 
 	a.e.Views.NewView("admin-user", r).Render(w, data)
-	user.Release()
 }
 
 func (a *Admin) ReportHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

@@ -5,25 +5,14 @@
 package models
 
 import (
-	"container/list"
 	"errors"
 	"strings"
-	"sync"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
-
-var appUserPool *userPool
-
-func init() {
-	appUserPool = newUserPool()
-}
-
-// When changing the User struct, make sure to update the
-// clean() method to reflect any new/edited fields.
 
 // User it's a user
 type User struct {
@@ -43,7 +32,6 @@ type User struct {
 	CanAutoreg       bool
 	blacklist        *blacklistItem
 	Rights           Permission
-	pool             *userPool
 }
 
 // NewUser creates a new base user
@@ -53,7 +41,7 @@ func NewUser(e *common.Environment) *User {
 	// Device Expiration is global
 	// User never expires
 	// User can manage their devices
-	u := appUserPool.getUser()
+	u := &User{}
 	u.e = e
 	u.blacklist = newBlacklistItem(getBlacklistStore(e))
 	u.DeviceLimit = UserDeviceLimitGlobal
@@ -141,7 +129,7 @@ func getUsersFromDatabase(e *common.Environment, where string, values ...interfa
 			continue
 		}
 
-		user := appUserPool.getUser()
+		user := NewUser(e)
 		user.e = e
 		user.blacklist = newBlacklistItem(getBlacklistStore(e))
 		user.ID = id
@@ -342,66 +330,4 @@ func (u *User) Delete() error {
 	sql := `DELETE FROM "user" WHERE "id" = ?`
 	_, err := u.e.DB.Exec(sql, u.ID)
 	return err
-}
-
-// clean sets the User object to all field defaults
-func (u *User) clean() {
-	u.blacklist = newBlacklistItem(getBlacklistStore(u.e))
-	u.ID = 0
-	u.Username = ""
-	u.Password = ""
-	u.HasPassword = false
-	u.savePassword = false
-	u.ClearPassword = false
-	u.DeviceLimit = UserDeviceLimitUnlimited
-	u.DeviceExpiration = nil
-	u.ValidStart = time.Unix(0, 0)
-	u.ValidEnd = time.Unix(0, 0)
-	u.ValidForever = false
-	u.CanManage = false
-	u.CanAutoreg = false
-	u.Rights = Permission(0)
-}
-
-func (u *User) Release() {
-	u.pool.release(u)
-}
-
-func ReleaseUsers(u []*User) {
-	for _, user := range u {
-		user.Release()
-	}
-}
-
-// A userPool is a collection of user objects than can be used instead of
-// creating new objects.
-type userPool struct {
-	*sync.RWMutex
-	l *list.List
-}
-
-func newUserPool() *userPool {
-	return &userPool{
-		RWMutex: &sync.RWMutex{},
-		l:       list.New(),
-	}
-}
-
-func (p *userPool) getUser() *User {
-	p.Lock()
-	defer p.Unlock()
-
-	e := p.l.Front()
-	if e == nil { // Nothing in the list
-		return &User{pool: p}
-	}
-	p.l.Remove(e)
-	return e.Value.(*User)
-}
-
-func (p *userPool) release(u *User) {
-	u.clean()
-	p.Lock()
-	p.l.PushBack(u)
-	p.Unlock()
 }

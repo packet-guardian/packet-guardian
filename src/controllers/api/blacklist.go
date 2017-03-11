@@ -49,7 +49,6 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	if r.Method == "POST" {
 		user.Blacklist()

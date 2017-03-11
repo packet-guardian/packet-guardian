@@ -62,10 +62,8 @@ func (l *ldapAuthenticator) checkLogin(username, password string, r *http.Reques
 			"username": user.Username,
 			"package":  "auth:ldap",
 		}).Info("User expired")
-		user.Release()
 		return false
 	}
 
-	user.Release()
 	return true
 }

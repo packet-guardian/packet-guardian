@@ -57,10 +57,8 @@ func (rad *radAuthenticator) checkLogin(username, password string, r *http.Reque
 			"username": user.Username,
 			"package":  "auth:radius",
 		}).Info("User expired")
-		user.Release()
 		return false
 	}
 
-	user.Release()
 	return true
 }

@@ -51,7 +51,6 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 		common.NewAPIResponse("Error saving user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	canCreate := sessionUser.Can(models.CreateUser)
 	canEdit := sessionUser.Can(models.EditUser)
@@ -269,7 +268,6 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 		common.NewAPIResponse("Error deleting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	if err := user.Delete(); err != nil {
 		u.e.Log.WithFields(verbose.Fields{

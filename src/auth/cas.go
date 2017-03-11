@@ -67,10 +67,8 @@ func (c *casAuthenticator) checkLogin(username, password string, r *http.Request
 			"username": user.Username,
 			"package":  "auth:cas",
 		}).Info("User expired")
-		user.Release()
 		return false
 	}
 
-	user.Release()
 	return true
 }

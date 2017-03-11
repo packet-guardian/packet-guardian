@@ -63,7 +63,6 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 		resp.WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	// If the session user can is allowed to login with guest mode, allow them
 	if user.Can(models.BypassGuestLogin) {

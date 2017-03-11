@@ -34,7 +34,5 @@ func SetSessionInfo(e *common.Environment, next http.Handler) http.Handler {
 		r = common.SetIPToContext(r)
 
 		next.ServeHTTP(w, r)
-
-		sessionUser.Release()
 	})
 }
