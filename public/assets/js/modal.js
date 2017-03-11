@@ -1,7 +1,9 @@
 // This source file is part of the Packet Guardian project.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+/* eslint-disable max-statements */
 function jsOverlay() {
+    "use strict";
     var o = $(document.createElement("div"));
     o.addClass("js-modal-overlay");
     this.show = function() {
@@ -16,6 +18,7 @@ function jsOverlay() {
 }
 
 function jsAlert() {
+    "use strict";
     this._okCallback = function() { };
     this._overlay = new jsOverlay();
     this._container = null;
@@ -68,6 +71,7 @@ function jsAlert() {
 }
 
 function jsConfirm() {
+    "use strict";
     this._okCallback = function() { };
     this._cancelCallback = function() { };
     this._overlay = null;
@@ -133,6 +137,7 @@ function jsConfirm() {
 }
 
 function jsPrompt() {
+    "use strict";
     this._okCallback = function() { };
     this._cancelCallback = function() { };
     this._overlay = new jsOverlay();
@@ -231,6 +236,7 @@ function jsPrompt() {
 }
 
 function bindMouseMove(binderID, movediv) {
+    "use strict";
     var binder = $(binderID);
     binder.on("mousedown", function(e) {
         if (e.which !== 1) { return; }

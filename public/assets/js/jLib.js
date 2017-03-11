@@ -101,7 +101,7 @@
                 });
             };
 
-        }()),
+        })(),
 
         off: (function () {
             if (document.removeEventListener) {
@@ -123,7 +123,7 @@
                     el['on' + evt] = null;
                 });
             };
-        }()),
+        })(),
 
         // Event handling - Convenience functions
         click:    function (dgt, fn) { this.on('click', dgt, fn); },
@@ -309,11 +309,11 @@
                         setTimeout(tick, 16);
                     }
                 } else {
-                    callback();
+                    return callback();
                 }
             };
             tick();
-        },
+        }
     };
 
     var init = jLib.fn.init = function(s) {
@@ -429,7 +429,7 @@
             url: url,
             params: jLib.params(data),
             success: success,
-            error: error,
+            error: error
         });
     };
 
@@ -439,7 +439,7 @@
             url: url,
             data: jLib.params(data),
             success: success,
-            error: error,
+            error: error
         });
     };
 

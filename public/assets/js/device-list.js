@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 $.onReady(function() {
+    "use strict";
     var stayOpen = false;
     var reallyOpen = false;
     $(".device-header").click(function(e) {

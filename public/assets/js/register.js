@@ -4,7 +4,7 @@
 /*jslint browser:true */
 /*globals $*/
 $.onReady(function() {
-    'use strict';
+    "use strict";
     var register = function() {
         disableRegBtn();
         var data = {
