@@ -26,7 +26,7 @@ func newDeviceStore(e *common.Environment) *DeviceStore {
 }
 
 func GetDeviceStore(e *common.Environment) *DeviceStore {
-	if deviceStore == nil {
+	if deviceStore == nil || e.IsTesting() {
 		deviceStore = newDeviceStore(e)
 	}
 	return deviceStore
@@ -36,7 +36,7 @@ func (s *DeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (*models.Device, erro
 	sql := `WHERE "mac" = ?`
 	devices, err := s.getDevicesFromDatabase(sql, mac.String())
 	if devices == nil || len(devices) == 0 {
-		dev := models.NewDevice(s.e, s, GetLeaseStore(s.e))
+		dev := models.NewDevice(s.e, s, GetLeaseStore(s.e), NewBlacklistItem(GetBlacklistStore(s.e)))
 		dev.MAC = mac
 		return dev, err
 	}
@@ -47,7 +47,7 @@ func (s *DeviceStore) GetDeviceByID(id int) (*models.Device, error) {
 	sql := `WHERE "id" = ?`
 	devices, err := s.getDevicesFromDatabase(sql, id)
 	if devices == nil || len(devices) == 0 {
-		return models.NewDevice(s.e, s, GetLeaseStore(s.e)), err
+		return models.NewDevice(s.e, s, GetLeaseStore(s.e), NewBlacklistItem(GetBlacklistStore(s.e))), err
 	}
 	return devices[0], nil
 }
@@ -121,7 +121,7 @@ func (s *DeviceStore) getDevicesFromDatabase(where string, values ...interface{}
 
 		mac, _ := net.ParseMAC(macStr)
 
-		device := models.NewDevice(s.e, s, GetLeaseStore(s.e))
+		device := models.NewDevice(s.e, s, GetLeaseStore(s.e), NewBlacklistItem(GetBlacklistStore(s.e)))
 		device.ID = id
 		device.MAC = mac
 		device.Username = username

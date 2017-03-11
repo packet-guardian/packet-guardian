@@ -13,7 +13,7 @@ import (
 	"github.com/lfkeitel/verbose"
 
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -54,7 +54,7 @@ func (c *casAuthenticator) checkLogin(username, password string, r *http.Request
 		return false
 	}
 
-	user, err := models.GetUserByUsername(e, username)
+	user, err := stores.GetUserStore(e).GetUserByUsername(username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

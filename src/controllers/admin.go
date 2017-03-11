@@ -62,7 +62,7 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 		return
 	}
 
-	user, err := models.GetUserByUsername(a.e, p.ByName("username"))
+	user, err := stores.GetUserStore(a.e).GetUserByUsername(p.ByName("username"))
 
 	results, err := stores.GetDeviceStore(a.e).GetDevicesForUser(user)
 	if err != nil {
@@ -115,7 +115,7 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 		return
 	}
 	device.LoadLeaseHistory()
-	user, err := models.GetUserByUsername(a.e, device.Username)
+	user, err := stores.GetUserStore(a.e).GetUserByUsername(device.Username)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -195,7 +195,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 			searchType = "user"
 			// Search for a local user account
 			var users []*models.User
-			users, err = models.SearchUsersByField(a.e, "username", "%"+query+"%")
+			users, err = stores.GetUserStore(a.e).SearchUsersByField("username", "%"+query+"%")
 			if len(users) == 1 {
 				http.Redirect(w, r,
 					"/admin/manage/user/"+url.QueryEscape(users[0].Username),
@@ -272,7 +272,7 @@ func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request, _ h
 		return
 	}
 
-	users, err := models.GetAllUsers(a.e)
+	users, err := stores.GetUserStore(a.e).GetAllUsers()
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -297,7 +297,7 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request, p httpr
 	}
 
 	username := p.ByName("username")
-	user, err := models.GetUserByUsername(a.e, username)
+	user, err := stores.GetUserStore(a.e).GetUserByUsername(username)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":    err,

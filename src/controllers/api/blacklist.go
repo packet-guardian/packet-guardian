@@ -39,7 +39,7 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	user, err := models.GetUserByUsername(b.e, username)
+	user, err := stores.GetUserStore(b.e).GetUserByUsername(username)
 	if err != nil {
 		b.e.Log.WithFields(verbose.Fields{
 			"username": username,
@@ -122,7 +122,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 		}
 
 		var user *models.User
-		user, err = models.GetUserByUsername(b.e, username)
+		user, err = stores.GetUserStore(b.e).GetUserByUsername(username)
 		if err != nil {
 			b.e.Log.WithFields(verbose.Fields{
 				"error":   err,

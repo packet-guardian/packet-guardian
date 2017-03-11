@@ -41,7 +41,7 @@ func GenerateGuestCode() string {
 // full registration function found in controllers.api.Device.RegistrationHandler().
 func RegisterDevice(e *common.Environment, name, credential string, r *http.Request) error {
 	// Build guest user model
-	guest, err := models.GetUserByUsername(e, credential)
+	guest, err := stores.GetUserStore(e).GetUserByUsername(credential)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":    err,

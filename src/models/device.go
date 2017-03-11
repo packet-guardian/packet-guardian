@@ -32,6 +32,13 @@ type LeaseHistory interface {
 	GetEndTime() time.Time
 }
 
+type BlacklistItem interface {
+	Blacklist()
+	Unblacklist()
+	IsBlacklisted(string) bool
+	Save(string) error
+}
+
 // Device represents a device in the system
 type Device struct {
 	e              *common.Environment
@@ -46,17 +53,17 @@ type Device struct {
 	Expires        time.Time
 	DateRegistered time.Time
 	UserAgent      string
-	blacklist      *blacklistItem
+	blacklist      BlacklistItem
 	LastSeen       time.Time
 	Leases         []LeaseHistory
 }
 
-func NewDevice(e *common.Environment, s DeviceStore, l LeaseStore) *Device {
+func NewDevice(e *common.Environment, s DeviceStore, l LeaseStore, b BlacklistItem) *Device {
 	return &Device{
 		e:           e,
 		deviceStore: s,
 		leaseStore:  l,
-		blacklist:   newBlacklistItem(getBlacklistStore(e)),
+		blacklist:   b,
 	}
 }
 
@@ -73,15 +80,15 @@ func (d *Device) GetUsername() string {
 }
 
 func (d *Device) IsBlacklisted() bool {
-	return d.blacklist.isBlacklisted(d.MAC.String())
+	return d.blacklist.IsBlacklisted(d.MAC.String())
 }
 
 func (d *Device) SetBlacklist(b bool) {
 	if b {
-		d.blacklist.blacklist()
+		d.blacklist.Blacklist()
 		return
 	}
-	d.blacklist.unblacklist()
+	d.blacklist.Unblacklist()
 }
 
 func (d *Device) IsRegistered() bool {
@@ -116,11 +123,14 @@ func (d *Device) IsExpired() bool {
 }
 
 func (d *Device) SaveToBlacklist() error {
-	return d.blacklist.save(d.MAC.String())
+	return d.blacklist.Save(d.MAC.String())
 }
 
 func (d *Device) Save() error {
-	return d.deviceStore.Save(d)
+	if err := d.deviceStore.Save(d); err != nil {
+		return err
+	}
+	return d.SaveToBlacklist()
 }
 
 func (d *Device) Delete() error {

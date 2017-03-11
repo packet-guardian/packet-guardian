@@ -41,7 +41,7 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	user, err := models.GetUserByUsername(u.e, username)
+	user, err := stores.GetUserStore(u.e).GetUserByUsername(username)
 	if err != nil {
 		u.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -258,7 +258,7 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	user, err := models.GetUserByUsername(u.e, username)
+	user, err := stores.GetUserStore(u.e).GetUserByUsername(username)
 	if err != nil {
 		u.e.Log.WithFields(verbose.Fields{
 			"error":    err,

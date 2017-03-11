@@ -44,7 +44,7 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 		if err == nil { // Probably a MAC address
 			continue
 		}
-		user, err := models.GetUserByUsername(e, username)
+		user, err := stores.GetUserStore(e).GetUserByUsername(username)
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"error":    err,

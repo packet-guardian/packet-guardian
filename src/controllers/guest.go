@@ -14,7 +14,6 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/guest"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
 	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 	"github.com/usi-lfkeitel/pg-dhcp"
 )
@@ -99,7 +98,7 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	guestUser, err := models.GetUserByUsername(g.e, guestCred)
+	guestUser, err := stores.GetUserStore(g.e).GetUserByUsername(guestCred)
 	if err != nil {
 		g.e.Log.WithFields(verbose.Fields{
 			"error":    err,

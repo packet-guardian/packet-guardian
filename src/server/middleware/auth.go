@@ -14,6 +14,7 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 // CheckAuth is middleware to check if a user is logged in, if not it will redirect to the login page
@@ -78,7 +79,7 @@ func CheckAuthAPI(next http.Handler) http.Handler {
 
 		// Get user model
 		e := common.GetEnvironmentFromContext(r)
-		sessionUser, err := models.GetUserByUsername(e, username)
+		sessionUser, err := stores.GetUserStore(e).GetUserByUsername(username)
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"error":    err,

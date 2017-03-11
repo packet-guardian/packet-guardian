@@ -60,7 +60,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 		formUser = sessionUser
 	} else {
 		var err error
-		formUser, err = models.GetUserByUsername(d.e, formUsername)
+		formUser, err = stores.GetUserStore(d.e).GetUserByUsername(formUsername)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":    err,
@@ -227,7 +227,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 			return
 		}
 		var err error
-		formUser, err = models.GetUserByUsername(d.e, username)
+		formUser, err = stores.GetUserStore(d.e).GetUserByUsername(username)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":    err,
@@ -319,7 +319,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 
-	user, err := models.GetUserByUsername(d.e, username)
+	user, err := stores.GetUserStore(d.e).GetUserByUsername(username)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -417,7 +417,7 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 		}
 	} else {
 		// Check user privilages
-		deviceUser, err := models.GetUserByUsername(d.e, device.Username)
+		deviceUser, err := stores.GetUserStore(d.e).GetUserByUsername(device.Username)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":    err,

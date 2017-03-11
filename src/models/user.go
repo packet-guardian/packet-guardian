@@ -5,8 +5,6 @@
 package models
 
 import (
-	"errors"
-	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -14,9 +12,16 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
+type UserStore interface {
+	Save(*User) error
+	Delete(*User) error
+	GetPassword(string) (string, error)
+}
+
 // User it's a user
 type User struct {
 	e                *common.Environment
+	store            UserStore
 	ID               int
 	Username         string
 	Password         string
@@ -30,132 +35,33 @@ type User struct {
 	ValidForever     bool
 	CanManage        bool
 	CanAutoreg       bool
-	blacklist        *blacklistItem
+	blacklist        BlacklistItem
 	Rights           Permission
 }
 
 // NewUser creates a new base user
-func NewUser(e *common.Environment) *User {
+func NewUser(e *common.Environment, us UserStore, b BlacklistItem) *User {
 	// User with the following attributes:
 	// Device limit is global
 	// Device Expiration is global
 	// User never expires
 	// User can manage their devices
-	u := &User{}
-	u.e = e
-	u.blacklist = newBlacklistItem(getBlacklistStore(e))
-	u.DeviceLimit = UserDeviceLimitGlobal
-	u.DeviceExpiration = &UserDeviceExpiration{Mode: UserDeviceExpirationGlobal}
-	u.ValidStart = time.Unix(0, 0)
-	u.ValidEnd = time.Unix(0, 0)
-	u.ValidForever = true
-	u.CanManage = true
-	u.CanAutoreg = true
-	u.Rights = ViewOwn | ManageOwnRights
+	u := &User{
+		e:                e,
+		blacklist:        b,
+		store:            us,
+		DeviceLimit:      UserDeviceLimitGlobal,
+		DeviceExpiration: &UserDeviceExpiration{Mode: UserDeviceExpirationGlobal},
+		ValidStart:       time.Unix(0, 0),
+		ValidEnd:         time.Unix(0, 0),
+		ValidForever:     true,
+		CanManage:        true,
+		CanAutoreg:       true,
+		Rights:           ViewOwn | ManageOwnRights,
+	}
 	// Load extra rights as set in the configuration
 	u.LoadRights()
 	return u
-}
-
-func GetUserByUsername(e *common.Environment, username string) (*User, error) {
-	if username == "" {
-		return NewUser(e), nil
-	}
-
-	username = strings.ToLower(username)
-
-	sql := `WHERE "username" = ?`
-	users, err := getUsersFromDatabase(e, sql, username)
-	if users == nil || len(users) == 0 {
-		u := NewUser(e)
-		u.Username = username
-		u.LoadRights()
-		return u, err
-	}
-	users[0].LoadRights()
-	return users[0], nil
-}
-
-func GetAllUsers(e *common.Environment) ([]*User, error) {
-	sql := `ORDER BY "username"`
-	if e.DB.Driver == "sqlite" {
-		sql += " COLLATE NOCASE"
-	}
-	sql += " ASC"
-	return getUsersFromDatabase(e, sql)
-}
-
-func SearchUsersByField(e *common.Environment, field, pattern string) ([]*User, error) {
-	sql := `WHERE "` + field + `" LIKE ?`
-	return getUsersFromDatabase(e, sql, pattern)
-}
-
-func getUsersFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*User, error) {
-	sql := `SELECT "id", "username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end" FROM "user" ` + where
-	rows, err := e.DB.Query(sql, values...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var results []*User
-	for rows.Next() {
-		var id int
-		var username string
-		var password string
-		var deviceLimit int
-		var defaultExpiration int64
-		var expirationType int
-		var canManage bool
-		var canAutoreg bool
-		var validForever bool
-		var validStart int64
-		var validEnd int64
-
-		err := rows.Scan(
-			&id,
-			&username,
-			&password,
-			&deviceLimit,
-			&defaultExpiration,
-			&expirationType,
-			&canManage,
-			&canAutoreg,
-			&validForever,
-			&validStart,
-			&validEnd,
-		)
-		if err != nil {
-			continue
-		}
-
-		user := NewUser(e)
-		user.e = e
-		user.blacklist = newBlacklistItem(getBlacklistStore(e))
-		user.ID = id
-		user.Username = username
-		user.HasPassword = (password != "")
-		user.DeviceLimit = UserDeviceLimit(deviceLimit)
-		user.ValidStart = time.Unix(validStart, 0)
-		user.ValidEnd = time.Unix(validEnd, 0)
-		user.ValidForever = validForever
-		user.CanManage = canManage
-		user.CanAutoreg = canAutoreg
-		user.Rights = ViewOwn
-
-		if canManage {
-			user.Rights = user.Rights.With(ManageOwnRights)
-		}
-		if canAutoreg {
-			user.Rights = user.Rights.With(AutoRegOwn)
-		}
-		user.DeviceExpiration = &UserDeviceExpiration{
-			Mode:  UserExpiration(expirationType),
-			Value: defaultExpiration,
-		}
-		results = append(results, user)
-	}
-	return results, nil
 }
 
 func (u *User) LoadRights() {
@@ -191,11 +97,13 @@ func (u *User) CanEither(p Permission) bool {
 	return u.Rights.CanEither(p)
 }
 
+func (u *User) NeedToSavePassword() bool {
+	return u.savePassword
+}
+
 func (u *User) GetPassword() string {
-	result := u.e.DB.QueryRow(`SELECT "password" FROM "user" WHERE "username" = ?`, u.Username)
-	err := result.Scan(&u.Password)
-	if err != nil {
-		return ""
+	if u.Password == "" {
+		u.Password, _ = u.store.GetPassword(u.Username)
 	}
 	return u.Password
 }
@@ -219,7 +127,7 @@ func (u *User) RemovePassword() {
 }
 
 func (u *User) IsBlacklisted() bool {
-	return u.blacklist.isBlacklisted(u.Username)
+	return u.blacklist.IsBlacklisted(u.Username)
 }
 
 func (u *User) IsExpired() bool {
@@ -232,102 +140,24 @@ func (u *User) IsExpired() bool {
 }
 
 func (u *User) Blacklist() {
-	u.blacklist.blacklist()
+	u.blacklist.Blacklist()
 }
 
 func (u *User) Unblacklist() {
-	u.blacklist.unblacklist()
+	u.blacklist.Unblacklist()
 }
 
 func (u *User) SaveToBlacklist() error {
-	return u.blacklist.save(u.Username)
+	return u.blacklist.Save(u.Username)
 }
 
 func (u *User) Save() error {
-	if u.ID == 0 {
-		return u.saveNew()
-	}
-	return u.updateExisting()
-}
-
-func (u *User) updateExisting() error {
-	sql := `UPDATE "user" SET "device_limit" = ?, "default_expiration" = ?, "expiration_type" = ?, "can_manage" = ?, "can_autoreg" = ?, "valid_forever" = ?, "valid_start" = ?, "valid_end" = ?`
-
-	if u.savePassword {
-		sql += ", \"password\" = ?"
-	}
-
-	sql += " WHERE \"id\" = ?"
-
-	var err error
-	if u.savePassword {
-		_, err = u.e.DB.Exec(
-			sql,
-			u.DeviceLimit,
-			u.DeviceExpiration.Value,
-			u.DeviceExpiration.Mode,
-			u.CanManage,
-			u.CanAutoreg,
-			u.ValidForever,
-			u.ValidStart.Unix(),
-			u.ValidEnd.Unix(),
-			u.Password,
-			u.ID,
-		)
-	} else {
-		_, err = u.e.DB.Exec(
-			sql,
-			u.DeviceLimit,
-			u.DeviceExpiration.Value,
-			u.DeviceExpiration.Mode,
-			u.CanManage,
-			u.CanAutoreg,
-			u.ValidForever,
-			u.ValidStart.Unix(),
-			u.ValidEnd.Unix(),
-			u.ID,
-		)
-	}
-	if err != nil {
+	if err := u.store.Save(u); err != nil {
 		return err
 	}
-	return u.blacklist.save(u.Username)
-}
-
-func (u *User) saveNew() error {
-	if u.Username == "" {
-		return errors.New("Username cannot be empty")
-	}
-
-	sql := `INSERT INTO "user" ("username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end") VALUES (?,?,?,?,?,?,?,?,?,?)`
-
-	result, err := u.e.DB.Exec(
-		sql,
-		u.Username,
-		u.Password,
-		u.DeviceLimit,
-		u.DeviceExpiration.Value,
-		u.DeviceExpiration.Mode,
-		u.CanManage,
-		u.CanAutoreg,
-		u.ValidForever,
-		u.ValidStart.Unix(),
-		u.ValidEnd.Unix(),
-	)
-	if err != nil {
-		return err
-	}
-	id, _ := result.LastInsertId()
-	u.ID = int(id)
-	return u.blacklist.save(u.Username)
+	return u.SaveToBlacklist()
 }
 
 func (u *User) Delete() error {
-	if u.ID == 0 {
-		return nil
-	}
-
-	sql := `DELETE FROM "user" WHERE "id" = ?`
-	_, err := u.e.DB.Exec(sql, u.ID)
-	return err
+	return u.store.Delete(u)
 }
