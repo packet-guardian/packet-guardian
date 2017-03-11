@@ -15,6 +15,7 @@ import (
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 	"github.com/usi-lfkeitel/packet-guardian/src/reports"
 	"github.com/usi-lfkeitel/packet-guardian/src/stats"
 	"github.com/usi-lfkeitel/pg-dhcp"
@@ -61,9 +62,9 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 		return
 	}
 
-	user, err := models.GetUserByUsername(a.e, p.ByName("username"))
+	user, err := stores.GetUserStore(a.e).GetUserByUsername(p.ByName("username"))
 
-	results, err := models.GetDevicesForUser(a.e, user)
+	results, err := stores.GetDeviceStore(a.e).GetDevicesForUser(user)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -86,7 +87,6 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 	}
 
 	a.e.Views.NewView("admin-manage", r).Render(w, data)
-	user.Release()
 }
 
 func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -104,7 +104,7 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 		})
 		return
 	}
-	device, err := models.GetDeviceByMAC(a.e, mac)
+	device, err := stores.GetDeviceStore(a.e).GetDeviceByMAC(mac)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -115,7 +115,7 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 		return
 	}
 	device.LoadLeaseHistory()
-	user, err := models.GetUserByUsername(a.e, device.Username)
+	user, err := stores.GetUserStore(a.e).GetUserByUsername(device.Username)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -137,7 +137,6 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 	}
 
 	a.e.Views.NewView("admin-manage-device", r).Render(w, data)
-	user.Release()
 }
 
 type searchResults struct {
@@ -153,7 +152,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	}
 
 	query := r.FormValue("q")
-	leaseStore := models.GetLeaseStore(a.e)
+	leaseStore := stores.GetLeaseStore(a.e)
 	var results []*searchResults
 	var devices []*models.Device
 	var searchType string
@@ -162,7 +161,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	if query != "" {
 		if macStartRegex.MatchString(query) {
 			searchType = "mac"
-			devices, err = models.SearchDevicesByField(a.e, "mac", "%"+query+"%")
+			devices, err = stores.GetDeviceStore(a.e).SearchDevicesByField("mac", "%"+query+"%")
 			if len(devices) == 1 {
 				http.Redirect(w, r,
 					"/admin/manage/device/"+url.QueryEscape(devices[0].GetMAC().String()),
@@ -183,7 +182,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 			// Get devices corresponding to each lease
 			var d *models.Device
 			for _, l := range leases {
-				d, err = models.GetDeviceByMAC(a.e, l.MAC)
+				d, err = stores.GetDeviceStore(a.e).GetDeviceByMAC(l.MAC)
 				if err != nil {
 					continue
 				}
@@ -196,7 +195,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 			searchType = "user"
 			// Search for a local user account
 			var users []*models.User
-			users, err = models.SearchUsersByField(a.e, "username", "%"+query+"%")
+			users, err = stores.GetUserStore(a.e).SearchUsersByField("username", "%"+query+"%")
 			if len(users) == 1 {
 				http.Redirect(w, r,
 					"/admin/manage/user/"+url.QueryEscape(users[0].Username),
@@ -207,7 +206,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 
 			// Search for devices with the username
 			exact := true
-			devices, err = models.SearchDevicesByField(a.e, "username", "%"+query+"%")
+			devices, err = stores.GetDeviceStore(a.e).SearchDevicesByField("username", "%"+query+"%")
 			if len(devices) == 0 {
 				exact = false
 			}
@@ -228,7 +227,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 
 			// All else fails, search the user agent for the query
 			if len(devices) == 0 {
-				devices, err = models.SearchDevicesByField(a.e, "user_agent", "%"+query+"%")
+				devices, err = stores.GetDeviceStore(a.e).SearchDevicesByField("user_agent", "%"+query+"%")
 			}
 
 			for _, d := range devices {
@@ -273,7 +272,7 @@ func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request, _ h
 		return
 	}
 
-	users, err := models.GetAllUsers(a.e)
+	users, err := stores.GetUserStore(a.e).GetAllUsers()
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -288,7 +287,6 @@ func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request, _ h
 	}
 
 	a.e.Views.NewView("admin-user-list", r).Render(w, data)
-	models.ReleaseUsers(users)
 }
 
 func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -299,7 +297,7 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request, p httpr
 	}
 
 	username := p.ByName("username")
-	user, err := models.GetUserByUsername(a.e, username)
+	user, err := stores.GetUserStore(a.e).GetUserByUsername(username)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -313,7 +311,6 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request, p httpr
 	}
 
 	a.e.Views.NewView("admin-user", r).Render(w, data)
-	user.Release()
 }
 
 func (a *Admin) ReportHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

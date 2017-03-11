@@ -12,6 +12,7 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
@@ -40,7 +41,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	man := (r.FormValue("manual") == "1")
 	loggedIn := auth.IsLoggedIn(r)
 	ip := common.GetIPFromContext(r)
-	reg, _ := dhcp.IsRegisteredByIP(models.GetLeaseStore(m.e), ip)
+	reg, _ := dhcp.IsRegisteredByIP(stores.GetLeaseStore(m.e), ip)
 	if !man && reg {
 		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return
@@ -82,7 +83,7 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results, err := models.GetDevicesForUser(m.e, sessionUser)
+	results, err := stores.GetDeviceStore(m.e).GetDevicesForUser(sessionUser)
 	if err != nil {
 		m.e.Log.WithFields(verbose.Fields{
 			"error":    err,

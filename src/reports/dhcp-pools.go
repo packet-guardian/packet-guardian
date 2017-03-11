@@ -6,7 +6,7 @@ import (
 
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 	"github.com/usi-lfkeitel/pg-dhcp"
 )
 
@@ -25,7 +25,7 @@ func poolReport(e *common.Environment, w http.ResponseWriter, r *http.Request) e
 	}
 
 	dhcpPkgConfig := &dhcp.ServerConfig{
-		LeaseStore: models.GetLeaseStore(e),
+		LeaseStore: stores.GetLeaseStore(e),
 	}
 
 	handler := dhcp.NewDHCPServer(dhcpConfig, dhcpPkgConfig)

@@ -9,7 +9,7 @@ import (
 
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,8 +21,7 @@ type localAuthenticator struct{}
 
 func (l *localAuthenticator) checkLogin(username, password string, r *http.Request) bool {
 	e := common.GetEnvironmentFromContext(r)
-	user, err := models.GetUserByUsername(e, username)
-	defer user.Release()
+	user, err := stores.GetUserStore(e).GetUserByUsername(username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

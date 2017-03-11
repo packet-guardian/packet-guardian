@@ -12,6 +12,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 func TestRootHandlerLoggedInNormal(t *testing.T) {
@@ -38,7 +39,7 @@ func TestRootHandlerLoggedInNormal(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 
-	sessionUser, err := models.GetUserByUsername(e, "testUser")
+	sessionUser, err := stores.NewUserStore(e).GetUserByUsername("testUser")
 	if err != nil {
 		t.Logf("Failed to get session user: %v", err.Error())
 	}
@@ -84,9 +85,9 @@ func TestRootHandlerLoggedInAdmin(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 
-	sessionUser, err := models.GetUserByUsername(e, "testUser")
+	sessionUser, err := stores.NewUserStore(e).GetUserByUsername("testUser")
 	if err != nil {
-		t.Logf("Failed to get session user: %v", err.Error())
+		t.Fatalf("Failed to get session user: %v", err.Error())
 	}
 	req = models.SetUserToContext(req, sessionUser)
 

@@ -4,7 +4,7 @@
 //
 // +build dbmysql dball
 
-package common
+package db
 
 import (
 	"database/sql"
@@ -14,21 +14,42 @@ import (
 
 	"github.com/go-sql-driver/mysql" // MySQL driver
 	"github.com/lfkeitel/verbose"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
-var mysqlMigrations = []func(*DatabaseAccessor) error{
-	1: migrate1to2MySQL,
-}
-
 func init() {
-	dbInits["mysql"] = initMySQL
+	RegisterDatabaseAccessor("mysql", newmySQLDBInit())
 }
 
-func initMySQL(d *DatabaseAccessor, c *Config) error {
-	var err error
+type mySQLDB struct {
+	createFuncs  map[string]func(*common.DatabaseAccessor) error
+	migrateFuncs []func(*common.DatabaseAccessor) error
+}
+
+func newmySQLDBInit() *mySQLDB {
+	m := &mySQLDB{}
+
+	m.createFuncs = map[string]func(*common.DatabaseAccessor) error{
+		"blacklist":     m.createBlacklistTable,
+		"device":        m.createDeviceTable,
+		"lease":         m.createLeaseTable,
+		"lease_history": m.createLeaseHistoryTable,
+		"settings":      m.createSettingTable,
+		"user":          m.createUserTable,
+	}
+
+	m.migrateFuncs = []func(*common.DatabaseAccessor) error{
+		1: m.migrate1,
+	}
+
+	return m
+}
+
+func (m *mySQLDB) connect(d *common.DatabaseAccessor, c *common.Config) error {
 	if c.Database.Port == 0 {
 		c.Database.Port = 3306
 	}
+
 	mc := &mysql.Config{
 		User:              c.Database.Username,
 		Passwd:            c.Database.Password,
@@ -37,17 +58,15 @@ func initMySQL(d *DatabaseAccessor, c *Config) error {
 		Strict:            true,
 		InterpolateParams: true,
 	}
+	var err error
 	d.DB, err = sql.Open("mysql", mc.FormatDSN())
 	if err != nil {
 		return err
 	}
 
-	err = d.DB.Ping()
-	if err != nil {
+	if err := d.DB.Ping(); err != nil {
 		return err
 	}
-
-	d.Driver = "mysql"
 
 	// Check the SQL mode, the user is responsible for setting it
 	row := d.DB.QueryRow(`SELECT @@GLOBAL.sql_mode`)
@@ -62,14 +81,18 @@ func initMySQL(d *DatabaseAccessor, c *Config) error {
 	if !ansiOK {
 		return errors.New("MySQL must be in ANSI mode. Please set the global mode or edit the my.cnf file to enable ANSI sql_mode.")
 	}
+	return nil
+}
 
+func (m *mySQLDB) createTables(d *common.DatabaseAccessor) error {
 	rows, err := d.DB.Query(`SHOW TABLES`)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
+
 	tables := make(map[string]bool)
-	for _, table := range DatabaseTableNames {
+	for _, table := range common.DatabaseTableNames {
 		tables[table] = false
 	}
 
@@ -81,37 +104,17 @@ func initMySQL(d *DatabaseAccessor, c *Config) error {
 		tables[tableName] = true
 	}
 
-	if !tables["blacklist"] {
-		if err := createMySQLBlacklistTable(d); err != nil {
-			return err
+	for table, create := range m.createFuncs {
+		if !tables[table] {
+			if err := create(d); err != nil {
+				return err
+			}
 		}
 	}
-	if !tables["device"] {
-		if err := createMySQLDeviceTable(d); err != nil {
-			return err
-		}
-	}
-	if !tables["lease"] {
-		if err := createMySQLLeaseTable(d); err != nil {
-			return err
-		}
-	}
-	if !tables["settings"] {
-		if err := createMySQLSettingTable(d); err != nil {
-			return err
-		}
-	}
-	if !tables["user"] {
-		if err := createMySQLUserTable(d); err != nil {
-			return err
-		}
-	}
-	if !tables["lease_history"] {
-		if err := createMySQLLeaseHistoryTable(d); err != nil {
-			return err
-		}
-	}
+	return nil
+}
 
+func (m *mySQLDB) migrateTables(d *common.DatabaseAccessor) error {
 	var currDBVer int
 	verRow := d.DB.QueryRow(`SELECT "value" FROM "settings" WHERE "id" = 'db_version'`)
 	if verRow == nil {
@@ -119,7 +122,7 @@ func initMySQL(d *DatabaseAccessor, c *Config) error {
 	}
 	verRow.Scan(&currDBVer)
 
-	SystemLogger.WithFields(verbose.Fields{
+	common.SystemLogger.WithFields(verbose.Fields{
 		"current-version": currDBVer,
 		"active-version":  dbVersion,
 	}).Debug("Database Versions")
@@ -129,7 +132,7 @@ func initMySQL(d *DatabaseAccessor, c *Config) error {
 		return nil
 	}
 
-	neededMigrations := mysqlMigrations[currDBVer:dbVersion]
+	neededMigrations := m.migrateFuncs[currDBVer:dbVersion]
 	for _, migrate := range neededMigrations {
 		if migrate == nil {
 			continue
@@ -139,11 +142,24 @@ func initMySQL(d *DatabaseAccessor, c *Config) error {
 		}
 	}
 
-	_, err = d.DB.Exec(`UPDATE "settings" SET "value" = ? WHERE "id" = 'db_version'`, dbVersion)
+	_, err := d.DB.Exec(`UPDATE "settings" SET "value" = ? WHERE "id" = 'db_version'`, dbVersion)
 	return err
 }
 
-func createMySQLBlacklistTable(d *DatabaseAccessor) error {
+func (m *mySQLDB) init(d *common.DatabaseAccessor, c *common.Config) error {
+	if err := m.connect(d, c); err != nil {
+		return err
+	}
+	d.Driver = "mysql"
+
+	if err := m.createTables(d); err != nil {
+		return err
+	}
+
+	return m.migrateTables(d)
+}
+
+func (m *mySQLDB) createBlacklistTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "blacklist" (
 	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
 	    "value" VARCHAR(255) NOT NULL UNIQUE KEY,
@@ -154,7 +170,7 @@ func createMySQLBlacklistTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func createMySQLDeviceTable(d *DatabaseAccessor) error {
+func (m *mySQLDB) createDeviceTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "device" (
 	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT,
 	    "mac" VARCHAR(17) NOT NULL UNIQUE KEY,
@@ -173,7 +189,7 @@ func createMySQLDeviceTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func createMySQLLeaseTable(d *DatabaseAccessor) error {
+func (m *mySQLDB) createLeaseTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "lease" (
 	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
 	    "ip" VARCHAR(15) NOT NULL UNIQUE KEY,
@@ -190,7 +206,7 @@ func createMySQLLeaseTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func createMySQLLeaseHistoryTable(d *DatabaseAccessor) error {
+func (m *mySQLDB) createLeaseHistoryTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "lease_history" (
 	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
 	    "ip" VARCHAR(15) NOT NULL,
@@ -204,7 +220,7 @@ func createMySQLLeaseHistoryTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func createMySQLSettingTable(d *DatabaseAccessor) error {
+func (m *mySQLDB) createSettingTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "settings" (
 	    "id" VARCHAR(255) PRIMARY KEY NOT NULL,
 	    "value" TEXT
@@ -218,7 +234,7 @@ func createMySQLSettingTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func createMySQLUserTable(d *DatabaseAccessor) error {
+func (m *mySQLDB) createUserTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "user" (
 	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
 	    "username" VARCHAR(255) NOT NULL UNIQUE KEY,
@@ -245,7 +261,7 @@ func createMySQLUserTable(d *DatabaseAccessor) error {
 	return err
 }
 
-func migrate1to2MySQL(d *DatabaseAccessor) error {
+func (m *mySQLDB) migrate1(d *common.DatabaseAccessor) error {
 	// Move device blacklist to blacklist table
 	bd, err := d.DB.Query(`SELECT "mac" FROM "device" WHERE "blacklisted" = 1`)
 	if err != nil {

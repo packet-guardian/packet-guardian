@@ -2,29 +2,30 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package common
+package db
 
 import (
-	"database/sql"
 	"errors"
 	"time"
 
 	"github.com/lfkeitel/verbose"
+	"github.com/usi-lfkeitel/packet-guardian/src/common"
 )
 
 const dbVersion = 2
 
-type databaseInit func(*DatabaseAccessor, *Config) error
-
-var dbInits = make(map[string]databaseInit)
-
-type DatabaseAccessor struct {
-	*sql.DB
-	Driver string
+type dbInit interface {
+	init(*common.DatabaseAccessor, *common.Config) error
 }
 
-func NewDatabaseAccessor(e *Environment) (*DatabaseAccessor, error) {
-	da := &DatabaseAccessor{}
+var dbInits = make(map[string]dbInit)
+
+func RegisterDatabaseAccessor(name string, db dbInit) {
+	dbInits[name] = db
+}
+
+func NewDatabaseAccessor(e *common.Environment) (*common.DatabaseAccessor, error) {
+	da := &common.DatabaseAccessor{}
 	if f, ok := dbInits[e.Config.Database.Type]; ok {
 		var err error
 		retries := 0
@@ -39,7 +40,7 @@ func NewDatabaseAccessor(e *Environment) (*DatabaseAccessor, error) {
 		shutdownChan := e.SubscribeShutdown()
 
 		for {
-			err = f(da, e.Config)
+			err = f.init(da, e.Config)
 
 			// If no error occured, break
 			// If an error occured but retries is not set to inifinite and we've tried

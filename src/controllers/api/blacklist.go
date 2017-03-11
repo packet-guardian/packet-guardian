@@ -14,6 +14,7 @@ import (
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 var invalidMAC = errors.New("Incorrect MAC address format")
@@ -38,7 +39,7 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	user, err := models.GetUserByUsername(b.e, username)
+	user, err := stores.GetUserStore(b.e).GetUserByUsername(username)
 	if err != nil {
 		b.e.Log.WithFields(verbose.Fields{
 			"username": username,
@@ -48,7 +49,6 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	if r.Method == "POST" {
 		user.Blacklist()
@@ -122,7 +122,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 		}
 
 		var user *models.User
-		user, err = models.GetUserByUsername(b.e, username)
+		user, err = stores.GetUserStore(b.e).GetUserByUsername(username)
 		if err != nil {
 			b.e.Log.WithFields(verbose.Fields{
 				"error":   err,
@@ -132,7 +132,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		devices, err = models.GetDevicesForUser(b.e, user)
+		devices, err = stores.GetDeviceStore(b.e).GetDevicesForUser(user)
 		if err != nil {
 			b.e.Log.WithFields(verbose.Fields{
 				"error":   err,
@@ -197,7 +197,7 @@ func (b *Blacklist) getDevicesFromList(l []string, add bool) ([]*models.Device, 
 			return nil, invalidMAC
 		}
 
-		device, err := models.GetDeviceByMAC(b.e, mac)
+		device, err := stores.GetDeviceStore(b.e).GetDeviceByMAC(mac)
 		if err != nil {
 			return nil, err
 		}

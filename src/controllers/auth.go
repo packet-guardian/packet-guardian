@@ -10,6 +10,7 @@ import (
 	"github.com/usi-lfkeitel/packet-guardian/src/auth"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 type Auth struct {
@@ -57,13 +58,12 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session := common.GetSessionFromContext(r)
-	user, err := models.GetUserByUsername(a.e, session.GetString("username"))
+	user, err := stores.GetUserStore(a.e).GetUserByUsername(session.GetString("username"))
 	if err != nil {
 		resp.Message = "Error getting user"
 		resp.WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	// If the session user can is allowed to login with guest mode, allow them
 	if user.Can(models.BypassGuestLogin) {

@@ -25,6 +25,18 @@
             {{else if eq .type "admin"}}
                 {{template "reg-admin-man" .}}
             {{end}}
+
+            {{if and (ne .type "na-auto") (gt (len .config.Registration.ManualRegPlatforms) 0)}}
+            <p>
+                <label for="platform">Type of Device:</label>
+                <select name="platform">
+                    {{range .config.Registration.ManualRegPlatforms}}
+                    <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
+            </p>
+            {{end}}
+
             <p>
                 <label for="dev-desc">Device Description (optional):</label>
                 <input type="text" name="dev-desc">

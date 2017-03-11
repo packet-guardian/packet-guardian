@@ -11,7 +11,7 @@ import (
 	"github.com/lfkeitel/verbose"
 	"github.com/oec/goradius"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -44,7 +44,7 @@ func (rad *radAuthenticator) checkLogin(username, password string, r *http.Reque
 		return false
 	}
 
-	user, err := models.GetUserByUsername(e, username)
+	user, err := stores.GetUserStore(e).GetUserByUsername(username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -57,10 +57,8 @@ func (rad *radAuthenticator) checkLogin(username, password string, r *http.Reque
 			"username": user.Username,
 			"package":  "auth:radius",
 		}).Info("User expired")
-		user.Release()
 		return false
 	}
 
-	user.Release()
 	return true
 }

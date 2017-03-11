@@ -14,6 +14,7 @@ import (
 	"github.com/lfkeitel/verbose"
 	"github.com/usi-lfkeitel/packet-guardian/src/common"
 	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
 )
 
 type UserController struct {
@@ -40,7 +41,7 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	user, err := models.GetUserByUsername(u.e, username)
+	user, err := stores.GetUserStore(u.e).GetUserByUsername(username)
 	if err != nil {
 		u.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -50,7 +51,6 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 		common.NewAPIResponse("Error saving user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	canCreate := sessionUser.Can(models.CreateUser)
 	canEdit := sessionUser.Can(models.EditUser)
@@ -211,7 +211,7 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if updateDeviceExpirations {
-		devices, err := models.GetDevicesForUser(u.e, user)
+		devices, err := stores.GetDeviceStore(u.e).GetDevicesForUser(user)
 		if err != nil {
 			u.e.Log.WithFields(verbose.Fields{
 				"error":   err,
@@ -258,7 +258,7 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	user, err := models.GetUserByUsername(u.e, username)
+	user, err := stores.GetUserStore(u.e).GetUserByUsername(username)
 	if err != nil {
 		u.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -268,7 +268,6 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 		common.NewAPIResponse("Error deleting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	if err := user.Delete(); err != nil {
 		u.e.Log.WithFields(verbose.Fields{
