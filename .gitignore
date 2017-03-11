@@ -6,3 +6,5 @@ logs/
 bin/
 dist/
 .vscode/
+codeclimate.html
+node_modules/

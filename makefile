@@ -9,8 +9,10 @@ DIST_FILENAME ?= pg-dist-$(VERSION).tar.gz
 CGO_ENABLED ?= 1
 PWD := $(shell pwd)
 GOBIN := $(PWD)/bin
+CODECLIMATE_CODE := $(PWD)
 
 ifeq ($(shell uname -o), Cygwin)
+CODECLIMATE_CODE := //c/cygwin64$(PWD)
 PWD := $(shell cygpath -w -a `pwd`)
 GOBIN := $(PWD)\bin
 endif
@@ -24,7 +26,7 @@ LDFLAGS := -X 'main.version=$(VERSION)' \
 			-X 'main.builder=$(BUILDER)' \
 			-X 'main.goversion=$(GOVERSION)'
 
-.PHONY: all doc fmt alltests test coverage benchmark lint vet dhcp management dist clean docker docker-compile docker-build
+.PHONY: all doc fmt alltests test coverage benchmark lint vet dhcp management dist clean docker docker-compile docker-build codeclimate
 
 all: test management dhcp
 
@@ -64,6 +66,14 @@ lint:
 
 vet:
 	@go vet $$(go list ./src/...)
+
+codeclimate:
+	@docker run -i --rm \
+		--env CODECLIMATE_CODE="$(CODECLIMATE_CODE)" \
+		-v $(CODECLIMATE_CODE):/code \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v /tmp/cc:/tmp/cc \
+		codeclimate/codeclimate analyze $(CODECLIMATE_ARGS)
 
 dist: vet all
 	@rm -rf ./dist

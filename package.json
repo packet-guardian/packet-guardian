@@ -1,0 +1,26 @@
+{
+  "name": "packet-guardian",
+  "version": "1.1.0",
+  "description": "",
+  "directories": {
+    "doc": "docs"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^3.17.1"
+  },
+  "scripts": {
+    "lint": "./node_modules/.bin/eslint --no-ignore public/assets/js/**.js || true"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/usi-lfkeitel/packet-guardian.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "BSD 3-Clause",
+  "bugs": {
+    "url": "https://github.com/usi-lfkeitel/packet-guardian/issues"
+  },
+  "homepage": "https://github.com/usi-lfkeitel/packet-guardian#readme"
+}
