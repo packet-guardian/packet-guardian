@@ -26,10 +26,11 @@ import (
 )
 
 var (
-	configFile string
-	dev        bool
-	testConfig bool
-	verFlag    bool
+	configFile         string
+	dev                bool
+	testMainConfigFlag bool
+	testDHCPConfigFlag bool
+	verFlag            bool
 
 	version   = ""
 	buildTime = ""
@@ -38,9 +39,10 @@ var (
 )
 
 func init() {
-	flag.StringVar(&configFile, "c", "", "Configuration file")
+	flag.StringVar(&configFile, "c", "", "Configuration file path")
 	flag.BoolVar(&dev, "d", false, "Run in development mode")
-	flag.BoolVar(&testConfig, "t", false, "Test DHCP config")
+	flag.BoolVar(&testMainConfigFlag, "t", false, "Test main configuration file")
+	flag.BoolVar(&testDHCPConfigFlag, "td", false, "Test DHCP server configuration file")
 	flag.BoolVar(&verFlag, "version", false, "Display version information")
 	flag.BoolVar(&verFlag, "v", verFlag, "Display version information")
 }
@@ -53,7 +55,12 @@ func main() {
 		return
 	}
 
-	if testConfig {
+	if testMainConfigFlag {
+		testMainConfig()
+		return
+	}
+
+	if testDHCPConfigFlag {
 		testDHCPConfig()
 		return
 	}
@@ -129,16 +136,6 @@ func (d *dhcpDeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (dhcp.Device, err
 	return stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
 }
 
-func testDHCPConfig() {
-	_, err := dhcp.ParseFile(configFile)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Println("Configuration looks good")
-}
-
 func displayVersionInfo() {
 	fmt.Printf(`Packet Guardian - (C) 2016 The Packet Guardian Authors
 
@@ -148,4 +145,23 @@ Built:       %s
 Compiled by: %s
 Go version:  %s
 `, version, buildTime, builder, goversion)
+}
+
+func testMainConfig() {
+	_, err := common.NewConfig(configFile)
+	if err != nil {
+		fmt.Printf("Error loading configuration: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Configuration looks good")
+}
+
+func testDHCPConfig() {
+	_, err := dhcp.ParseFile(configFile)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Configuration looks good")
 }
