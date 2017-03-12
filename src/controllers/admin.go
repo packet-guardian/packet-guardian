@@ -151,6 +151,7 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 type searchResults struct {
 	D *models.Device
 	L *dhcp.Lease
+	U string
 }
 
 func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -161,99 +162,15 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	}
 
 	query := r.FormValue("q")
-	leaseStore := stores.GetLeaseStore(a.e)
 	var results []*searchResults
-	var devices []*models.Device
 	var searchType string
 	var err error
 
 	if query != "" {
-		if macStartRegex.MatchString(query) {
-			searchType = "mac"
-			devices, err = stores.GetDeviceStore(a.e).SearchDevicesByField("mac", "%"+query+"%")
-			if len(devices) == 1 {
-				http.Redirect(w, r,
-					"/admin/manage/device/"+url.QueryEscape(devices[0].GetMAC().String()),
-					http.StatusTemporaryRedirect,
-				)
-				return
-			}
-			for _, d := range devices {
-				results = append(results, &searchResults{
-					D: d,
-				})
-			}
-		} else if ipStartRegex.MatchString(query) {
-			searchType = "ip"
-			// Get leases matching IP
-			var leases []*dhcp.Lease
-			leases, err = leaseStore.SearchLeases(`"ip" LIKE ?`, "%"+query+"%")
-			// Get devices corresponding to each lease
-			var d *models.Device
-			for _, l := range leases {
-				d, err = stores.GetDeviceStore(a.e).GetDeviceByMAC(l.MAC)
-				if err != nil {
-					continue
-				}
-				results = append(results, &searchResults{
-					D: d,
-					L: l,
-				})
-			}
-		} else {
-			searchType = "user"
-			// Search for a local user account
-			var users []*models.User
-			users, err = stores.GetUserStore(a.e).SearchUsersByField("username", "%"+query+"%")
-			if err != nil {
-				a.e.Log.WithFields(verbose.Fields{
-					"error":   err,
-					"package": "controllers:admin",
-					"query":   query,
-				}).Error("Error getting users while searching")
-				a.e.Views.RenderError(w, r, nil)
-				return
-			}
-
-			if len(users) == 1 {
-				http.Redirect(w, r,
-					"/admin/manage/user/"+url.QueryEscape(users[0].Username),
-					http.StatusTemporaryRedirect,
-				)
-				return
-			}
-
-			// Search for devices with the username
-			exact := true
-			devices, err = stores.GetDeviceStore(a.e).SearchDevicesByField("username", "%"+query+"%")
-			if len(devices) == 0 {
-				exact = false
-			}
-			for _, d := range devices { // Check if all the devices have the same username
-				if d.GetUsername() != query {
-					exact = false
-					break
-				}
-			}
-
-			if exact { // If they're all the same user, go directly to the user's page
-				http.Redirect(w, r,
-					"/admin/manage/user/"+url.QueryEscape(query),
-					http.StatusTemporaryRedirect,
-				)
-				return
-			}
-
-			// All else fails, search the user agent for the query
-			if len(devices) == 0 {
-				devices, err = stores.GetDeviceStore(a.e).SearchDevicesByField("user_agent", "%"+query+"%")
-			}
-
-			for _, d := range devices {
-				results = append(results, &searchResults{
-					D: d,
-				})
-			}
+		results, searchType, err = a.search(query)
+		if searchType == "user" && len(results) == 1 {
+			http.Redirect(w, r, "/admin/manage/user/"+url.QueryEscape(results[0].U), http.StatusTemporaryRedirect)
+			return
 		}
 	}
 
@@ -261,7 +178,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 		if r.L != nil {
 			continue
 		}
-		lease, err := leaseStore.GetRecentLeaseByMAC(r.D.MAC)
+		lease, err := stores.GetLeaseStore(a.e).GetRecentLeaseByMAC(r.D.MAC)
 		if err != nil || lease.ID == 0 {
 			continue
 		}
@@ -282,6 +199,89 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	}
 
 	a.e.Views.NewView("admin-search", r).Render(w, data)
+}
+
+func (a *Admin) search(query string) ([]*searchResults, string, error) {
+	if macStartRegex.MatchString(query) {
+		return a.macSearch(query)
+	} else if ipStartRegex.MatchString(query) {
+		return a.ipSearch(query)
+	}
+	return a.userSearch(query)
+}
+
+func (a *Admin) macSearch(query string) ([]*searchResults, string, error) {
+	var results []*searchResults
+	devices, err := stores.GetDeviceStore(a.e).SearchDevicesByField("mac", "%"+query+"%")
+	for _, d := range devices {
+		results = append(results, &searchResults{
+			D: d,
+		})
+	}
+	return results, "mac", err
+}
+
+func (a *Admin) ipSearch(query string) ([]*searchResults, string, error) {
+	var results []*searchResults
+	// Get leases matching IP
+	var leases []*dhcp.Lease
+	leases, err := stores.GetLeaseStore(a.e).SearchLeases(`"ip" LIKE ?`, "%"+query+"%")
+	// Get devices corresponding to each lease
+	var d *models.Device
+	for _, l := range leases {
+		d, err = stores.GetDeviceStore(a.e).GetDeviceByMAC(l.MAC)
+		if err != nil {
+			continue
+		}
+		results = append(results, &searchResults{
+			D: d,
+			L: l,
+		})
+	}
+	return results, "ip", err
+}
+
+func (a *Admin) userSearch(query string) ([]*searchResults, string, error) {
+	var results []*searchResults
+	// Search for a local user account
+	var users []*models.User
+	users, err := stores.GetUserStore(a.e).SearchUsersByField("username", "%"+query+"%")
+	if err != nil {
+		return nil, "", err
+	}
+
+	if len(users) == 1 {
+		return append(results, &searchResults{U: users[0].Username}), "user", nil
+	}
+
+	// Search for devices with the username
+	exact := true
+	devices, err := stores.GetDeviceStore(a.e).SearchDevicesByField("username", "%"+query+"%")
+	if len(devices) == 0 {
+		exact = false
+	}
+	for _, d := range devices { // Check if all the devices have the same username
+		if d.GetUsername() != query {
+			exact = false
+			break
+		}
+	}
+
+	if exact { // If they're all the same user, go directly to the user's page
+		return append(results, &searchResults{U: query}), "user", nil
+	}
+
+	// All else fails, search the user agent for the query
+	if len(devices) == 0 {
+		devices, err = stores.GetDeviceStore(a.e).SearchDevicesByField("user_agent", "%"+query+"%")
+	}
+
+	for _, d := range devices {
+		results = append(results, &searchResults{
+			D: d,
+		})
+	}
+	return results, "user", err
 }
 
 func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

@@ -5,6 +5,7 @@
 package api
 
 import (
+	"errors"
 	"net"
 	"net/http"
 	"strings"
@@ -74,69 +75,19 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 
 	// CreateDevice is the administrative permision
 	if !sessionUser.Can(models.CreateDevice) {
-		if formUser.IsBlacklisted() {
-			d.e.Log.WithFields(verbose.Fields{
-				"package":  "controllers:api:device",
-				"username": formUser.Username,
-			}).Error("Attempted registration by blacklisted user")
-			common.NewAPIResponse("Username blacklisted", nil).WriteResponse(w, http.StatusForbidden)
-			return
-		}
-
-		// Get and enforce the device limit
-		limit := models.UserDeviceLimit(d.e.Config.Registration.DefaultDeviceLimit)
-		if formUser.DeviceLimit != models.UserDeviceLimitGlobal {
-			limit = formUser.DeviceLimit
-		}
-
-		deviceCount, err := stores.GetDeviceStore(d.e).GetDeviceCountForUser(formUser)
+		err, httpCode := d.checkCanRegister(formUser)
 		if err != nil {
-			d.e.Log.WithFields(verbose.Fields{
-				"package": "controllers:api:device",
-				"error":   err,
-			}).Error("Error getting device count")
-		}
-		if limit != models.UserDeviceLimitUnlimited && deviceCount >= int(limit) {
-			common.NewAPIResponse("Device limit reached", nil).WriteResponse(w, http.StatusConflict)
+			common.NewAPIResponse(err.Error(), nil).WriteResponse(w, httpCode)
 			return
 		}
 	}
 
 	// Get MAC address
-	var mac net.HardwareAddr
 	ip := common.GetIPFromContext(r)
-	if manual {
-		// Manual registration
-		// if manual registeration are not allowed and not admin
-		if !d.e.Config.Registration.AllowManualRegistrations && !sessionUser.Can(models.CreateDevice) {
-			common.NewAPIResponse("Manual registrations not allowed", nil).WriteResponse(w, http.StatusForbidden)
-			return
-		}
-		mac, err = common.FormatMacAddress(macPost)
-		if err != nil {
-			common.NewAPIResponse("Incorrect MAC address format", nil).WriteResponse(w, http.StatusBadRequest)
-			return
-		}
-	} else {
-		// Automatic registration
-		lease, err := stores.GetLeaseStore(d.e).GetLeaseByIP(ip)
-		if err != nil {
-			d.e.Log.WithFields(verbose.Fields{
-				"error":   err,
-				"package": "controllers:api:device",
-				"ip":      ip.String(),
-			}).Error("Error getting MAC for IP")
-			common.NewAPIResponse("Failed detecting MAC address", nil).WriteResponse(w, http.StatusInternalServerError)
-			return
-		} else if lease.ID == 0 {
-			d.e.Log.WithFields(verbose.Fields{
-				"package": "controllers:api:device",
-				"ip":      ip.String(),
-			}).Notice("Attempted auto reg from non-leased device")
-			common.NewAPIResponse("Error detecting MAC address", nil).WriteResponse(w, http.StatusBadRequest)
-			return
-		}
-		mac = lease.MAC
+	mac, err, httpCode := d.getRegMACAddress(manual, ip, macPost, sessionUser)
+	if err != nil {
+		common.NewAPIResponse(err.Error(), nil).WriteResponse(w, httpCode)
+		return
 	}
 
 	// Get device from database
@@ -211,6 +162,72 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 	}
 
 	common.NewAPIResponse("Registration successful", resp).WriteResponse(w, http.StatusOK)
+}
+
+func (d *Device) checkCanRegister(formUser *models.User) (error, int) {
+	if formUser.IsBlacklisted() {
+		d.e.Log.WithFields(verbose.Fields{
+			"package":  "controllers:api:device",
+			"username": formUser.Username,
+		}).Error("Attempted registration by blacklisted user")
+		return errors.New("Username blacklisted"), http.StatusForbidden
+	}
+
+	// Get and enforce the device limit
+	limit := models.UserDeviceLimit(d.e.Config.Registration.DefaultDeviceLimit)
+	if formUser.DeviceLimit != models.UserDeviceLimitGlobal {
+		limit = formUser.DeviceLimit
+	}
+
+	// If user's limit is unlimited, bypass device count
+	if limit != models.UserDeviceLimitUnlimited {
+		deviceCount, err := stores.GetDeviceStore(d.e).GetDeviceCountForUser(formUser)
+		if err != nil {
+			d.e.Log.WithFields(verbose.Fields{
+				"package": "controllers:api:device",
+				"error":   err,
+			}).Error("Error getting device count")
+		}
+		if deviceCount >= int(limit) {
+			return errors.New("Device limit reached"), http.StatusConflict
+		}
+	}
+	return nil, 0
+}
+
+func (d *Device) getRegMACAddress(manual bool, ip net.IP, macPost string, sessionUser *models.User) (net.HardwareAddr, error, int) {
+	if manual {
+		// Manual registration
+		// if manual registeration are not allowed and not admin
+		if !d.e.Config.Registration.AllowManualRegistrations && !sessionUser.Can(models.CreateDevice) {
+			return nil, errors.New("Manual registrations not allowed"), http.StatusForbidden
+		}
+		mac, err := common.FormatMacAddress(macPost)
+		if err != nil {
+			return nil, errors.New("Incorrect MAC address format"), http.StatusBadRequest
+		}
+		return mac, nil, 0
+	}
+
+	// Automatic registration
+	lease, err := stores.GetLeaseStore(d.e).GetLeaseByIP(ip)
+	if err != nil {
+		d.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:api:device",
+			"ip":      ip.String(),
+		}).Error("Error getting MAC for IP")
+		return nil, errors.New("Failed detecting MAC address"), http.StatusInternalServerError
+	}
+
+	if lease.ID == 0 {
+		d.e.Log.WithFields(verbose.Fields{
+			"package": "controllers:api:device",
+			"ip":      ip.String(),
+		}).Notice("Attempted auto reg from non-leased device")
+		return nil, errors.New("Error detecting MAC address"), http.StatusInternalServerError
+	}
+	return lease.MAC, nil, 0
 }
 
 func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
