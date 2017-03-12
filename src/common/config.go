@@ -263,12 +263,3 @@ func setIntOrDefault(s, v int) int {
 	}
 	return s
 }
-
-func (c *Config) Reload() error {
-	con, err := NewConfig(c.sourceFile)
-	if err != nil {
-		return err
-	}
-	c = con
-	return nil
-}

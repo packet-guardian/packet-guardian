@@ -83,7 +83,6 @@ func devRouter(e *common.Environment) http.Handler {
 
 	devController := controllers.NewDevController(e)
 	r.HandlerFunc("GET", "/dev/reloadtemp", devController.ReloadTemplates)
-	r.HandlerFunc("GET", "/dev/reloadconf", devController.ReloadConfiguration)
 
 	h := mid.CheckAdmin(r)
 	h = mid.CheckAuth(h)

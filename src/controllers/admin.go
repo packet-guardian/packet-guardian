@@ -63,6 +63,15 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 	}
 
 	user, err := stores.GetUserStore(a.e).GetUserByUsername(p.ByName("username"))
+	if err != nil {
+		a.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:admin",
+			"username": p.ByName("username"),
+		}).Error("Error getting user from database")
+		a.e.Views.RenderError(w, r, nil)
+		return
+	}
 
 	results, err := stores.GetDeviceStore(a.e).GetDevicesForUser(user)
 	if err != nil {
@@ -196,6 +205,16 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 			// Search for a local user account
 			var users []*models.User
 			users, err = stores.GetUserStore(a.e).SearchUsersByField("username", "%"+query+"%")
+			if err != nil {
+				a.e.Log.WithFields(verbose.Fields{
+					"error":   err,
+					"package": "controllers:admin",
+					"query":   query,
+				}).Error("Error getting users while searching")
+				a.e.Views.RenderError(w, r, nil)
+				return
+			}
+
 			if len(users) == 1 {
 				http.Redirect(w, r,
 					"/admin/manage/user/"+url.QueryEscape(users[0].Username),

@@ -26,11 +26,3 @@ func (d *Dev) ReloadTemplates(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte("Templates reloaded"))
 }
-
-func (d *Dev) ReloadConfiguration(w http.ResponseWriter, r *http.Request) {
-	if err := d.e.Config.Reload(); err != nil {
-		w.Write([]byte("Error loading config: " + err.Error()))
-		return
-	}
-	w.Write([]byte("Configuration reloaded"))
-}
