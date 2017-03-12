@@ -145,12 +145,12 @@ func adminRouter(e *common.Environment) http.Handler {
 func apiRouter(e *common.Environment) http.Handler {
 	r := httprouter.New()
 
-	deviceApiController := api.NewDeviceController(e)
-	r.POST("/api/device", deviceApiController.RegistrationHandler)
-	r.DELETE("/api/device/user/:username", deviceApiController.DeleteHandler)
-	r.POST("/api/device/reassign", deviceApiController.ReassignHandler)
-	r.POST("/api/device/mac/:mac/description", deviceApiController.EditDescriptionHandler)
-	r.POST("/api/device/mac/:mac/expiration", deviceApiController.EditExpirationHandler)
+	deviceAPIController := api.NewDeviceController(e)
+	r.POST("/api/device", deviceAPIController.RegistrationHandler)
+	r.DELETE("/api/device/user/:username", deviceAPIController.DeleteHandler)
+	r.POST("/api/device/reassign", deviceAPIController.ReassignHandler)
+	r.POST("/api/device/mac/:mac/description", deviceAPIController.EditDescriptionHandler)
+	r.POST("/api/device/mac/:mac/expiration", deviceAPIController.EditExpirationHandler)
 
 	blacklistController := api.NewBlacklistController(e)
 	r.POST("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)
@@ -159,9 +159,9 @@ func apiRouter(e *common.Environment) http.Handler {
 	r.POST("/api/blacklist/device", blacklistController.BlacklistDeviceHandler)
 	r.DELETE("/api/blacklist/device", blacklistController.BlacklistDeviceHandler)
 
-	userApiController := api.NewUserController(e)
-	r.POST("/api/user", userApiController.UserHandler)
-	r.DELETE("/api/user", userApiController.UserHandler)
+	userAPIController := api.NewUserController(e)
+	r.POST("/api/user", userAPIController.UserHandler)
+	r.DELETE("/api/user", userAPIController.UserHandler)
 
 	return mid.CheckAuthAPI(r)
 }

@@ -27,18 +27,18 @@ type casAuthenticator struct {
 func (c *casAuthenticator) checkLogin(username, password string, r *http.Request) bool {
 	e := common.GetEnvironmentFromContext(r)
 	if c.client == nil {
-		casUrlStr := strings.TrimRight(e.Config.Auth.CAS.Server, "/") + "/" // Ensure server ends in /
-		casUrl, err := url.Parse(casUrlStr)
+		casURLStr := strings.TrimRight(e.Config.Auth.CAS.Server, "/") + "/" // Ensure server ends in /
+		casURL, err := url.Parse(casURLStr)
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"error":   err,
-				"url":     casUrlStr,
+				"url":     casURLStr,
 				"package": "auth:cas",
 			}).Error("Failed to parse CAS url")
 			return false
 		}
 		c.client = &cas.Client{
-			URL: casUrl,
+			URL: casURL,
 		}
 	}
 

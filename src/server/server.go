@@ -39,14 +39,14 @@ func NewServer(e *common.Environment, routes http.Handler) *Server {
 func (s *Server) Run() {
 	s.e.Log.Info("Starting web server...")
 	if s.e.Config.Webserver.TLSCertFile == "" || s.e.Config.Webserver.TLSKeyFile == "" {
-		s.startHttp()
+		s.startHTTP()
 		return
 	}
 
 	if s.e.Config.Webserver.RedirectHttpToHttps {
 		go s.startRedirector()
 	}
-	s.startHttps()
+	s.startHTTPS()
 }
 
 func (s *Server) startRedirector() {
@@ -60,14 +60,14 @@ func (s *Server) startRedirector() {
 	}
 	srv := &graceful.Server{
 		Timeout: timeout,
-		Server:  &http.Server{Addr: s.address + ":" + s.httpPort, Handler: http.HandlerFunc(s.redirectToHttps)},
+		Server:  &http.Server{Addr: s.address + ":" + s.httpPort, Handler: http.HandlerFunc(s.redirectToHTTPS)},
 	}
 	if err := srv.ListenAndServe(); err != nil {
 		s.e.Log.Fatal(err)
 	}
 }
 
-func (s *Server) startHttp() {
+func (s *Server) startHTTP() {
 	s.e.Log.WithFields(verbose.Fields{
 		"address": s.address,
 		"port":    s.httpPort,
@@ -85,7 +85,7 @@ func (s *Server) startHttp() {
 	}
 }
 
-func (s *Server) startHttps() {
+func (s *Server) startHTTPS() {
 	s.e.Log.WithFields(verbose.Fields{
 		"address": s.address,
 		"port":    s.httpsPort,
@@ -106,7 +106,7 @@ func (s *Server) startHttps() {
 	}
 }
 
-func (s *Server) redirectToHttps(w http.ResponseWriter, r *http.Request) {
+func (s *Server) redirectToHTTPS(w http.ResponseWriter, r *http.Request) {
 	// Lets not do a split if we don't need to
 	if s.httpPort == "80" && s.httpsPort == "443" {
 		http.Redirect(w, r, "https://"+r.Host+r.RequestURI, http.StatusMovedPermanently)

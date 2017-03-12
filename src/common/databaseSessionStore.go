@@ -4,6 +4,7 @@ licensed under the MIT license. Copyright (c) 2013 Contributors.
 
 All modifications are Copyright (c) 2016 The Packet Guardian Authors.
 */
+
 package common
 
 import (
@@ -34,7 +35,7 @@ type Options struct {
 	Domain    string
 	MaxAge    int
 	Secure    bool
-	HttpOnly  bool
+	HTTPOnly  bool
 	TableName string
 }
 
