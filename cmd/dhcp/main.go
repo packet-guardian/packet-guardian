@@ -5,7 +5,7 @@
 /**
  * This application runs the Packet Guardian DHCP server as a separate process.
  * By default, the main PG binary will not run a DHCP server and it may be better
- * in some circumstances to not allow the main binary to run with root privilages
+ * in some circumstances to not allow the main binary to run with root privileges
  * as they are needed to bind to DHCP port 69.
  */
 

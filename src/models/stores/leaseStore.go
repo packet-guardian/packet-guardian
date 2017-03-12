@@ -23,7 +23,7 @@ type LeaseStore struct {
 var leaseStore *LeaseStore
 
 // NewLeaseStore will create a new LeaseStore object using the given Environment.
-// Client code should use GetLeaseStore unless it's absolutly necessary to have
+// Client code should use GetLeaseStore unless it's absolutely necessary to have
 // a new LeaseStore object.
 func NewLeaseStore(e *common.Environment) *LeaseStore {
 	l := &LeaseStore{

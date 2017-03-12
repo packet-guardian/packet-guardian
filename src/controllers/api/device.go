@@ -163,7 +163,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 		return
 	}
 
-	// Validate platform, we don't want someone to submit an inappropiate value
+	// Validate platform, we don't want someone to submit an inappropriate value
 	platform := ""
 	if manual {
 		if common.StringInSlice(r.FormValue("platform"), d.e.Config.Registration.ManualRegPlatforms) {
@@ -410,13 +410,13 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 	}
 
 	if device.Username != sessionUser.Username {
-		// Check admin privilages
+		// Check admin privileges
 		if !sessionUser.Can(models.EditDevice) {
 			common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
 			return
 		}
 	} else {
-		// Check user privilages
+		// Check user privileges
 		deviceUser, err := stores.GetUserStore(d.e).GetUserByUsername(device.Username)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{

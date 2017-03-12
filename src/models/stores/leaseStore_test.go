@@ -53,6 +53,6 @@ func TestLeaseSaveNoHistory(t *testing.T) {
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expections: %s", err)
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }

@@ -41,8 +41,8 @@ func NewDatabaseAccessor(e *common.Environment) (*common.DatabaseAccessor, error
 		for {
 			err = f.init(da, e.Config)
 
-			// If no error occured, break
-			// If an error occured but retries is not set to inifinite and we've tried
+			// If no error occurred, break
+			// If an error occurred but retries is not set to inifinite and we've tried
 			// too many times already, break
 			if err == nil || (e.Config.Database.Retry != 0 && retries >= e.Config.Database.Retry) {
 				break

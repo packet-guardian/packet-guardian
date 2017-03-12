@@ -77,7 +77,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 
-	// Redirect privilaged users to the full-featured management page
+	// Redirect privileged users to the full-featured management page
 	if sessionUser.Can(models.ViewDevices) {
 		http.Redirect(w, r, "/admin/manage/"+sessionUser.Username, http.StatusTemporaryRedirect)
 		return

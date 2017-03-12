@@ -81,7 +81,7 @@ func (s smseagle) sendCode(e *common.Environment, phone, code string) error {
 	}
 
 	// For some reason the SMSEagle API doesn't use proper HTTP codes, so this
-	// is probably unnecassary but it's a good catch just in case.
+	// is probably unnecessary but it's a good catch just in case.
 	if resp.StatusCode != 200 {
 		e.Log.WithField("error", body).Error("Error sending verification code")
 		return errors.New("Error sending verification code")

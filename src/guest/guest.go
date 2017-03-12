@@ -148,7 +148,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 		return errors.New("This device is already registered")
 	}
 
-	// Validate platform, we don't want someone to submit an inappropiate value
+	// Validate platform, we don't want someone to submit an inappropriate value
 	platform := common.ParseUserAgent(r.UserAgent())
 
 	// Fill in device information
