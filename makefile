@@ -41,7 +41,7 @@ doc:
 	@godoc -http=:6060 -index
 
 fmt:
-	@go fmt $$(go list ./src/...)
+	@gofmt -s -l -d ./src/*
 
 alltests: test lint vet
 
