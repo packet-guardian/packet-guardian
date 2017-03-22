@@ -18,9 +18,12 @@ type lexToken struct {
 }
 
 const (
+	ANY token = -1
+
 	ILLEGAL token = iota
 	EOF
 	COMMENT
+	EOL
 
 	literal_beg
 	NUMBER
@@ -39,6 +42,7 @@ const (
 	UNREGISTERED
 	SERVER_IDENTIFIER
 	RANGE
+	INCLUDE
 
 	setting_beg
 	OPTION
@@ -68,6 +72,7 @@ var tokens = [...]string{
 	UNREGISTERED:      "unregistered",
 	SERVER_IDENTIFIER: "server-identifier",
 	RANGE:             "range",
+	INCLUDE:           "include",
 
 	OPTION:             "option",
 	FREE_LEASE_AFTER:   "free-lease-after",

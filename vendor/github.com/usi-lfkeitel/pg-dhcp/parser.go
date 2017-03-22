@@ -7,11 +7,14 @@ package dhcp
 import (
 	"bufio"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"strings"
 	"time"
+
+	"strconv"
 
 	"github.com/onesimus-systems/dhcp4"
 )
@@ -44,12 +47,23 @@ mainLoop:
 		tok := p.l.next()
 		var err error
 		switch tok.token {
-		case COMMENT:
+		case COMMENT, EOL:
 			continue
 		case GLOBAL:
 			err = p.parseGlobal()
 		case NETWORK:
 			err = p.parseNetwork()
+		case INCLUDE:
+			n := p.l.next()
+			if n.token != STRING {
+				return nil, fmt.Errorf("Include must be a file path on line %d", n.line)
+			}
+			file, err := os.Open(n.value.(string))
+			if err != nil {
+				return nil, fmt.Errorf("Error including file %v: %v", n.value, err)
+			}
+			p.l.pushReader(bufio.NewReader(file))
+			continue
 		case EOF:
 			break mainLoop
 		default:
@@ -71,10 +85,10 @@ mainLoop:
 	for {
 		tok := p.l.next()
 		switch tok.token {
-		case EOF:
-			break mainLoop
-		case COMMENT:
+		case COMMENT, EOL:
 			continue
+		case EOF, END:
+			break mainLoop
 		case SERVER_IDENTIFIER:
 			addr := p.l.next()
 			if addr.token != IP_ADDRESS {
@@ -95,8 +109,6 @@ mainLoop:
 			}
 			p.c.global.unregisteredSettings = s
 			p.l.next() // Consume END from block
-		case END:
-			break mainLoop
 		default:
 			if tok.token.isSetting() {
 				p.l.unread()
@@ -130,7 +142,7 @@ mainLoop:
 		switch tok.token {
 		case EOF:
 			break mainLoop
-		case COMMENT:
+		case COMMENT, EOL:
 			continue
 		case SUBNET:
 			shortSyntax := false
@@ -210,9 +222,9 @@ mainLoop:
 	for {
 		tok := p.l.next()
 		switch tok.token {
-		case COMMENT:
+		case COMMENT, EOL:
 			continue
-		case EOF:
+		case EOF, END:
 			break mainLoop
 		case POOL:
 			subPool, err := p.parsePool()
@@ -230,8 +242,6 @@ mainLoop:
 			subPool.subnet = sub
 			sub.pools = append(sub.pools, subPool)
 			p.l.unread() // Reread END token
-		case END:
-			break mainLoop
 		default:
 			if tok.token.isSetting() {
 				p.l.unread()
@@ -257,9 +267,9 @@ mainLoop:
 	for {
 		tok := p.l.next()
 		switch tok.token {
-		case COMMENT:
+		case COMMENT, EOL:
 			continue
-		case EOF:
+		case EOF, END:
 			break mainLoop
 		case RANGE:
 			if nPool.rangeStart != nil {
@@ -278,8 +288,6 @@ mainLoop:
 				return nil, fmt.Errorf("Expected IP address on line %d, got %s", endIP.line, endIP.string())
 			}
 			nPool.rangeEnd = endIP.value.(net.IP)
-		case END:
-			break mainLoop
 		default:
 			if tok.token.isSetting() {
 				p.l.unread()
@@ -300,7 +308,7 @@ func (p *parser) parseSettingsBlock() (*settings, error) {
 
 	for {
 		tok := p.l.next()
-		if tok.token == COMMENT {
+		if tok.token == COMMENT || tok.token == EOL {
 			continue
 		}
 		p.l.unread()
@@ -319,9 +327,7 @@ func (p *parser) parseSetting(setBlock *settings) error {
 	tok := p.l.next()
 
 	switch tok.token {
-	case COMMENT:
-		return nil
-	case EOF:
+	case COMMENT, EOF:
 		return nil
 	case OPTION:
 		code, data, err := p.parseOption()
@@ -351,96 +357,75 @@ func (p *parser) parseSetting(setBlock *settings) error {
 		}
 		setBlock.freeLeaseAfter = time.Duration(tokn.value.(uint64)) * time.Second
 		return nil
-	default:
-		return fmt.Errorf("Unexpected token %s on line %d in settings", tok.string(), tok.line)
 	}
 
-	return nil
+	return fmt.Errorf("Unexpected token %s on line %d in settings", tok.string(), tok.line)
 }
 
 func (p *parser) parseOption() (dhcp4.OptionCode, []byte, error) {
-	n := p.l.next()
+	// Consume all tokens to the next line end
+	tokens := p.l.untilNext(EOL)
+	if len(tokens) < 2 { // An option must be at least a name and one parameter
+		return 0, nil, errors.New("Options require a name and value")
+	}
+
+	n := tokens[0] // The first token is the name of the option
 	if n.token != STRING {
 		return 0, nil, fmt.Errorf("Invalid option name on line %d", n.line)
 	}
+
 	option := n.value.(string)
 	block, exists := options[option]
 	if !exists {
-		return 0, nil, fmt.Errorf("Option %s is not supported", option)
+		// Manual options take the form "option-xxx" where xxx is an integer < 255
+		p := strings.Split(option, "-")
+		if len(p) != 2 {
+			return 0, nil, fmt.Errorf("Option %s is not supported on line %d", option, n.line)
+		}
+		code, err := strconv.Atoi(p[1])
+		if err != nil || code > 255 {
+			return 0, nil, fmt.Errorf("Custom option code %s is not valid on line %d", p[1], n.line)
+		}
+		// Use a custom option block that allows any parameters and any number of them
+		block = &dhcpOptionBlock{code: dhcp4.OptionCode(code), schema: anySchema}
 	}
 
-	optionData := make([]byte, 0)
+	if block.schema.multi != oneOrMore && len(tokens)-1 > int(block.schema.multi) {
+		return 0, nil, fmt.Errorf("Option %s requires %d parameters", option, block.schema.multi)
+	}
 
-	if block.schema.multi == oneOrMore {
-		for {
-			tok := p.l.next()
-			if tok.token != block.schema.token {
-				p.l.unread()
-				break
-			}
-			switch t := tok.value.(type) {
-			case uint64:
-				buf := make([]byte, 8)
-				written := binary.PutUvarint(buf, t)
-				if written > int(block.schema.maxlen) {
-					return 0, nil, fmt.Errorf("Number is too big on line %s", tok.line)
-				}
-				optionData = append(optionData, buf...)
-			case int64:
-				buf := make([]byte, 8)
-				written := binary.PutVarint(buf, t)
-				if written > int(block.schema.maxlen) {
-					return 0, nil, fmt.Errorf("Number is too big on line %s", tok.line)
-				}
-				optionData = append(optionData, buf...)
-			case string:
-				optionData = append(optionData, []byte(t)...)
-			case bool:
-				if t {
-					optionData = append(optionData, byte(1))
-				} else {
-					optionData = append(optionData, byte(0))
-				}
-			case []byte:
-				optionData = append(optionData, t...)
-			case net.IP:
-				optionData = append(optionData, []byte(t.To4())...)
-			}
+	var optionData []byte
+	for _, tok := range tokens[1:] {
+		if block.schema.token != ANY && tok.token != block.schema.token {
+			return 0, nil, fmt.Errorf("Expected %s, got %s on line %d", block.schema.token.string(), tok.token.string(), tok.line)
 		}
-	} else {
-		for i := 0; i < int(block.schema.multi); i++ {
-			tok := p.l.next()
-			if tok.token != block.schema.token {
-				return 0, nil, fmt.Errorf("Expected %s, got %s on line %d", block.schema.token, tok.token, tok.line)
+		switch t := tok.value.(type) {
+		case uint64:
+			buf := make([]byte, 8)
+			written := binary.PutUvarint(buf, t)
+			if written > int(block.schema.maxlen) {
+				return 0, nil, fmt.Errorf("Number is too big on line %s", tok.line)
 			}
-			switch t := tok.value.(type) {
-			case uint64:
-				buf := make([]byte, 8)
-				written := binary.PutUvarint(buf, t)
-				if written > int(block.schema.maxlen) {
-					return 0, nil, fmt.Errorf("Number is too big on line %s", tok.line)
-				}
-				optionData = append(optionData, buf...)
-			case int64:
-				buf := make([]byte, 8)
-				written := binary.PutVarint(buf, t)
-				if written > int(block.schema.maxlen) {
-					return 0, nil, fmt.Errorf("Number is too big on line %s", tok.line)
-				}
-				optionData = append(optionData, buf...)
-			case string:
-				optionData = append(optionData, []byte(t)...)
-			case bool:
-				if t {
-					optionData = append(optionData, byte(1))
-				} else {
-					optionData = append(optionData, byte(0))
-				}
-			case []byte:
-				optionData = append(optionData, t...)
-			case net.IP:
-				optionData = append(optionData, []byte(t.To4())...)
+			optionData = append(optionData, buf...)
+		case int64:
+			buf := make([]byte, 8)
+			written := binary.PutVarint(buf, t)
+			if written > int(block.schema.maxlen) {
+				return 0, nil, fmt.Errorf("Number is too big on line %s", tok.line)
 			}
+			optionData = append(optionData, buf...)
+		case string:
+			optionData = append(optionData, []byte(t)...)
+		case bool:
+			if t {
+				optionData = append(optionData, byte(1))
+			} else {
+				optionData = append(optionData, byte(0))
+			}
+		case []byte:
+			optionData = append(optionData, t...)
+		case net.IP:
+			optionData = append(optionData, []byte(t.To4())...)
 		}
 	}
 

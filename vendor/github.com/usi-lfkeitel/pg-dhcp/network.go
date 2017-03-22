@@ -129,6 +129,17 @@ func (n *network) includes(ip net.IP) bool {
 	return false
 }
 
+func (n *network) getPoolOfIP(ip net.IP) *pool {
+	for _, s := range n.subnets {
+		for _, p := range s.pools {
+			if p.includes(ip) {
+				return p
+			}
+		}
+	}
+	return nil
+}
+
 func (n *network) getFreeLease(e *ServerConfig, registered bool) (*Lease, *pool) {
 	for _, s := range n.subnets {
 		if s.allowUnknown == registered {

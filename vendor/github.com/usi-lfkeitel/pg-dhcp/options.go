@@ -24,6 +24,7 @@ var (
 	int8Schema     = &optionSchema{token: NUMBER, multi: 1, maxlen: 1, multipleOf: 1}
 	int16Schema    = &optionSchema{token: NUMBER, multi: 1, maxlen: 2, multipleOf: 2}
 	int32Schema    = &optionSchema{token: NUMBER, multi: 1, maxlen: 4, multipleOf: 4}
+	anySchema      = &optionSchema{token: ANY, multi: oneOrMore, maxlen: unlimited, multipleOf: 1}
 )
 
 type optionSchema struct {
