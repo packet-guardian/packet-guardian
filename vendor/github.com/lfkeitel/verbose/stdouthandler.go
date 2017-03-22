@@ -48,9 +48,9 @@ type StdoutHandler struct {
 func NewStdoutHandler(color bool) *StdoutHandler {
 	var formatter Formatter
 	if color {
-		formatter = &ColoredLineFormatter{}
+		formatter = NewColoredLineFormatter()
 	} else {
-		formatter = &LineFormatter{}
+		formatter = NewLineFormatter()
 	}
 	return &StdoutHandler{
 		min:       LogLevelDebug,
