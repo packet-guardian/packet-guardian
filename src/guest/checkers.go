@@ -102,7 +102,7 @@ func formatPhoneNumber(number string) (string, error) {
 
 func stripChars(str, chr string) string {
 	return strings.Map(func(r rune) rune {
-		if strings.IndexRune(chr, r) < 0 {
+		if !strings.ContainsRune(chr, r) {
 			return -1
 		}
 		return r

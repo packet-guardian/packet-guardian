@@ -43,9 +43,8 @@ func newFilesystemStore(e *Environment) (*SessionStore, error) {
 	if e.Config.Webserver.SessionsAuthKey == "" {
 		return nil, errors.New("No session authentication key given in configuration")
 	}
-	var err error
 
-	err = os.MkdirAll(e.Config.Webserver.SessionsDir, 0700)
+	err := os.MkdirAll(e.Config.Webserver.SessionsDir, 0700)
 	if err != nil {
 		return nil, err
 	}

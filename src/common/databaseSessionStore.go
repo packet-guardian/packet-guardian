@@ -218,10 +218,7 @@ func (m *dbStore) Delete(r *http.Request, w http.ResponseWriter, session *sessio
 	}
 
 	_, delErr := m.stmtDelete.Exec(session.ID)
-	if delErr != nil {
-		return delErr
-	}
-	return nil
+	return delErr
 }
 
 func (m *dbStore) save(session *sessions.Session) error {
@@ -244,10 +241,7 @@ func (m *dbStore) save(session *sessions.Session) error {
 		return encErr
 	}
 	_, updErr := m.stmtUpdate.Exec(encoded, createdOn.Unix(), modifiedOn.Unix(), session.ID)
-	if updErr != nil {
-		return updErr
-	}
-	return nil
+	return updErr
 }
 
 func (m *dbStore) load(session *sessions.Session) error {

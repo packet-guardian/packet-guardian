@@ -58,7 +58,7 @@ func (l *LeaseStore) GetAllLeases() ([]*dhcp.Lease, error) {
 func (l *LeaseStore) GetLeaseByIP(ip net.IP) (*dhcp.Lease, error) {
 	sql := `WHERE "ip" = ?`
 	leases, err := l.doDatabaseQuery(sql, ip.String())
-	if leases == nil || len(leases) == 0 {
+	if len(leases) == 0 {
 		lease := dhcp.NewLease(l)
 		lease.IP = ip
 		return lease, err
@@ -69,7 +69,7 @@ func (l *LeaseStore) GetLeaseByIP(ip net.IP) (*dhcp.Lease, error) {
 func (l *LeaseStore) GetRecentLeaseByMAC(mac net.HardwareAddr) (*dhcp.Lease, error) {
 	sql := `WHERE "mac" = ? ORDER BY "start" DESC`
 	leases, err := l.doDatabaseQuery(sql, mac.String())
-	if leases == nil || len(leases) == 0 {
+	if len(leases) == 0 {
 		lease := dhcp.NewLease(l)
 		lease.MAC = mac
 		return lease, err

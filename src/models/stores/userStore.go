@@ -41,7 +41,7 @@ func (s *UserStore) GetUserByUsername(username string) (*models.User, error) {
 
 	sql := `WHERE "username" = ?`
 	users, err := s.getUsersFromDatabase(sql, username)
-	if users == nil || len(users) == 0 {
+	if len(users) == 0 {
 		u := models.NewUser(s.e, s, NewBlacklistItem(GetBlacklistStore(s.e)))
 		u.Username = username
 		u.LoadRights()

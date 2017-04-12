@@ -59,7 +59,7 @@ func (s smseagle) sendCode(e *common.Environment, phone, code string) error {
 		return errors.New("Error sending verification code")
 	}
 
-	p := make(url.Values, 0)
+	p := make(url.Values)
 	p.Add("login", username)
 	p.Add("pass", password)
 	p.Add("to", phone)
