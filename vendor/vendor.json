@@ -106,7 +106,7 @@
 		},
 		{
 			"checksumSHA1": "hEdR/UAf/94C9p3hICWlP3/mAC0=",
-			"path": "github.com/usi-lfkeitel/pg-dhcp",
+			"path": "github.com/packet-guardian/pg-dhcp",
 			"revision": "01dd66eb4fe79267a837d69272b46a176ebccd6d",
 			"revisionTime": "2017-03-22T20:19:26Z"
 		},
@@ -177,5 +177,5 @@
 			"revisionTime": "2016-07-15T03:37:55Z"
 		}
 	],
-	"rootPath": "github.com/usi-lfkeitel/packet-guardian"
+	"rootPath": "github.com/packet-guardian/packet-guardian"
 }

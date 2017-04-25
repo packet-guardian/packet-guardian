@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
 )
 
 var userStore *UserStore
@@ -41,7 +41,7 @@ func (s *UserStore) GetUserByUsername(username string) (*models.User, error) {
 
 	sql := `WHERE "username" = ?`
 	users, err := s.getUsersFromDatabase(sql, username)
-	if users == nil || len(users) == 0 {
+	if len(users) == 0 {
 		u := models.NewUser(s.e, s, NewBlacklistItem(GetBlacklistStore(s.e)))
 		u.Username = username
 		u.LoadRights()

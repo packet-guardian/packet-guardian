@@ -12,12 +12,12 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
-	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
-var invalidMAC = errors.New("Incorrect MAC address format")
+var errInvalidMAC = errors.New("Incorrect MAC address format")
 
 type Blacklist struct {
 	e *common.Environment
@@ -103,7 +103,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 	if macStr != "" {
 		devices, err = b.getDevicesFromList(strings.Split(macStr, ","), addToBlacklist)
 		if err != nil {
-			if err == invalidMAC {
+			if err == errInvalidMAC {
 				common.NewAPIResponse(err.Error(), nil).WriteResponse(w, http.StatusBadRequest)
 				return
 			}
@@ -194,7 +194,7 @@ func (b *Blacklist) getDevicesFromList(l []string, add bool) ([]*models.Device, 
 	for _, deviceMAC := range l {
 		mac, err := net.ParseMAC(deviceMAC)
 		if err != nil {
-			return nil, invalidMAC
+			return nil, errInvalidMAC
 		}
 
 		device, err := stores.GetDeviceStore(b.e).GetDeviceByMAC(mac)

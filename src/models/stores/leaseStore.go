@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
-	"github.com/usi-lfkeitel/pg-dhcp"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/pg-dhcp"
 )
 
 type LeaseStore struct {
@@ -23,7 +23,7 @@ type LeaseStore struct {
 var leaseStore *LeaseStore
 
 // NewLeaseStore will create a new LeaseStore object using the given Environment.
-// Client code should use GetLeaseStore unless it's absolutly necessary to have
+// Client code should use GetLeaseStore unless it's absolutely necessary to have
 // a new LeaseStore object.
 func NewLeaseStore(e *common.Environment) *LeaseStore {
 	l := &LeaseStore{
@@ -58,7 +58,7 @@ func (l *LeaseStore) GetAllLeases() ([]*dhcp.Lease, error) {
 func (l *LeaseStore) GetLeaseByIP(ip net.IP) (*dhcp.Lease, error) {
 	sql := `WHERE "ip" = ?`
 	leases, err := l.doDatabaseQuery(sql, ip.String())
-	if leases == nil || len(leases) == 0 {
+	if len(leases) == 0 {
 		lease := dhcp.NewLease(l)
 		lease.IP = ip
 		return lease, err
@@ -69,7 +69,7 @@ func (l *LeaseStore) GetLeaseByIP(ip net.IP) (*dhcp.Lease, error) {
 func (l *LeaseStore) GetRecentLeaseByMAC(mac net.HardwareAddr) (*dhcp.Lease, error) {
 	sql := `WHERE "mac" = ? ORDER BY "start" DESC`
 	leases, err := l.doDatabaseQuery(sql, mac.String())
-	if leases == nil || len(leases) == 0 {
+	if len(leases) == 0 {
 		lease := dhcp.NewLease(l)
 		lease.MAC = mac
 		return lease, err

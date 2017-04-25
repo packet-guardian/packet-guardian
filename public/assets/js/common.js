@@ -6,6 +6,7 @@ var c = {
     flashTimeout: 0,
 
     FlashMessage: function(text, type) {
+        "use strict";
         var flash = $('#flashDiv'),
             flashClass = (type === 'success') ? 'flashSuccess' : 'flashFailure';
 
@@ -35,9 +36,22 @@ var c = {
         }
         show();
     },
+
+    setTextboxToToday: function(el) {
+        "use strict";
+        var date = new Date();
+        var dateStr = date.getFullYear() + '-' +
+            ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
+            ('0' + date.getDate()).slice(-2);
+
+        var timeStr = ('0' + date.getHours()).slice(-2) + ':' +
+            ('0' + (date.getMinutes())).slice(-2);
+        $(el).value(dateStr + " " + timeStr);
+    }
 };
 
 $.onReady(function() {
+    "use strict";
     var flashMsg = $('#flashText').html();
     if (flashMsg !== '') {
         c.FlashMessage(flashMsg);
@@ -45,6 +59,7 @@ $.onReady(function() {
 });
 
 function setSrcQuery(e, q) {
+    "use strict";
     var src = e.src;
     var p = src.indexOf('?');
     if (p >= 0) {
@@ -54,6 +69,7 @@ function setSrcQuery(e, q) {
 }
 
 function playAudio() {
+    "use strict";
     var e = document.getElementById('captchaAudio')
     setSrcQuery(e, "lang=en")
     e.style.display = 'block';
@@ -62,6 +78,7 @@ function playAudio() {
 }
 
 function reload() {
+    "use strict";
     setSrcQuery(document.getElementById('captchaImage'), "reload=" + (new Date()).getTime());
     setSrcQuery(document.getElementById('captchaAudio'), (new Date()).getTime());
     return false;

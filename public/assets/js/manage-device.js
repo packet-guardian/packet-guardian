@@ -3,6 +3,7 @@
 // license that can be found in the LICENSE file.
 
 $.onReady(function() {
+    "use strict";
     var oldExpiration = "";
 
     $('#delete-btn').click(function() {
@@ -96,7 +97,7 @@ $.onReady(function() {
         if ($(e.target).value() !== "specific") {
             $("#dev-exp-val").style("display", "none");
         } else {
-            setTextboxToToday($("#dev-exp-val"));
+            c.setTextboxToToday("#dev-exp-val");
             $("#dev-exp-val").style("display", "inline");
         }
     });
@@ -153,16 +154,5 @@ $.onReady(function() {
                     break;
             }
         });
-    }
-
-    function setTextboxToToday(el) {
-        var date = new Date();
-        var dateStr = date.getFullYear() + '-' +
-            ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
-            ('0' + date.getDate()).slice(-2);
-
-        var timeStr = ('0' + date.getHours()).slice(-2) + ':' +
-            ('0' + (date.getMinutes())).slice(-2);
-        el.value(dateStr + " " + timeStr);
     }
 });

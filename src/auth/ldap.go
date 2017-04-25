@@ -9,8 +9,8 @@ import (
 
 	ldapc "github.com/lfkeitel/go-ldap-client"
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 	"gopkg.in/ldap.v2"
 )
 

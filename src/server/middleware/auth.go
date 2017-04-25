@@ -11,10 +11,10 @@ import (
 	"strings"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/auth"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
-	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
+	"github.com/packet-guardian/packet-guardian/src/auth"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 // CheckAuth is middleware to check if a user is logged in, if not it will redirect to the login page

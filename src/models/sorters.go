@@ -3,7 +3,7 @@ package models
 import (
 	"bytes"
 
-	"github.com/usi-lfkeitel/pg-dhcp"
+	"github.com/packet-guardian/pg-dhcp"
 )
 
 // LeaseSorter sorts a slice of leases by their IP addresses

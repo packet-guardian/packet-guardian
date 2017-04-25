@@ -10,8 +10,8 @@ import (
 	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	dhcp "github.com/usi-lfkeitel/pg-dhcp"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	dhcp "github.com/packet-guardian/pg-dhcp"
 )
 
 func TestLeaseSaveNoHistory(t *testing.T) {
@@ -53,6 +53,6 @@ func TestLeaseSaveNoHistory(t *testing.T) {
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expections: %s", err)
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }

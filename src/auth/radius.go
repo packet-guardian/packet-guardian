@@ -10,8 +10,8 @@ import (
 
 	"github.com/lfkeitel/verbose"
 	"github.com/oec/goradius"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -19,19 +19,19 @@ func init() {
 }
 
 type radAuthenticator struct {
-	auther *radius.Authenticator
+	a *radius.Authenticator
 }
 
 func (rad *radAuthenticator) checkLogin(username, password string, r *http.Request) bool {
 	e := common.GetEnvironmentFromContext(r)
-	if rad.auther == nil {
-		rad.auther = radius.New(
+	if rad.a == nil {
+		rad.a = radius.New(
 			e.Config.Auth.Radius.Servers[0],
 			strconv.Itoa(e.Config.Auth.Radius.Port),
 			e.Config.Auth.Radius.Secret,
 		)
 	}
-	ok, err := rad.auther.Authenticate(username, password)
+	ok, err := rad.a.Authenticate(username, password)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

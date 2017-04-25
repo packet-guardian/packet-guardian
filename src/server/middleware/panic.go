@@ -9,7 +9,7 @@ import (
 	"runtime"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 func Panic(e *common.Environment, next http.Handler) http.Handler {

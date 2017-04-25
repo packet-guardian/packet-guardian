@@ -10,8 +10,13 @@ All official documentation can be found here.
 
 ## Configuration
 - [Configuration](configuration.md)
-- [DHCP Configuration](https://github.com/usi-lfkeitel/pg-dhcp/tree/develop/docs) (goes to DHCP repo)
+- [DHCP Configuration](https://github.com/packet-guardian/pg-dhcp/tree/develop/docs) (goes to DHCP repo)
 - [Additional Installation](additional-installation.md) (service, AppArmor)
+
+## Man Pages
+
+- [pg](pg-man-page.md) Web management frontend
+- [dhcp](dhcp-man-page.md) DHCP server
 
 ## Troubleshooting
 - [Troubleshooting](troubleshooting.md)

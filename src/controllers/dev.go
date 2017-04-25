@@ -7,7 +7,7 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 type Dev struct {
@@ -25,12 +25,4 @@ func (d *Dev) ReloadTemplates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write([]byte("Templates reloaded"))
-}
-
-func (d *Dev) ReloadConfiguration(w http.ResponseWriter, r *http.Request) {
-	if err := d.e.Config.Reload(); err != nil {
-		w.Write([]byte("Error loading config: " + err.Error()))
-		return
-	}
-	w.Write([]byte("Configuration reloaded"))
 }

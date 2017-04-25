@@ -15,7 +15,7 @@ import (
 
 	"github.com/lfkeitel/verbose"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 func init() {

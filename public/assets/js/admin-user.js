@@ -38,26 +38,32 @@ $.onReady(function() {
         var limit = $("[name=device-expiration]");
         var devExpSel = $("[name=dev-exp-sel]");
         var expires = devExpSel.data("expires");
-        if (expires === "1") {
-            devExpSel.value("global");
-            limit.value("");
-            limit.prop("disabled", true);
-        } else if (expires === "0") {
-            devExpSel.value("never");
-            limit.value("");
-            limit.prop("disabled", true);
-        } else if (expires === "5") {
-            devExpSel.value("rolling");
-            limit.value("");
-            limit.prop("disabled", true);
-        } else if (expires === "3") {
-            devExpSel.value("duration");
-        } else if (expires === "4") {
-            devExpSel.value("daily");
-            // Remove "Daily at " text
-            limit.value(limit.value().slice(9));
-        } else {
-            devExpSel.value("specific");
+        switch (expires) {
+            case "0":
+                devExpSel.value("never");
+                limit.value("");
+                limit.prop("disabled", true);
+                break;
+            case "1":
+                devExpSel.value("global");
+                limit.value("");
+                limit.prop("disabled", true);
+                break;
+            case "3":
+                devExpSel.value("duration");
+                break;
+            case "4":
+                devExpSel.value("daily");
+                // Remove "Daily at " text
+                limit.value(limit.value().slice(9));
+                break;
+            case "5":
+                devExpSel.value("rolling");
+                limit.value("");
+                limit.prop("disabled", true);
+                break;
+            default:
+                devExpSel.value("specific");
         }
 
         var valAfter = $("[name=valid-after]");
@@ -100,7 +106,7 @@ $.onReady(function() {
         // Fill in textbox and tooltip as needed
         switch (self.value()) {
             case "specific":
-                setTextboxToToday('[name=device-expiration]');
+                c.setTextboxToToday('[name=device-expiration]');
                 setExpirationToolTop("(YYYY-MM-DD HH:mm)");
                 break;
             case "duration":
@@ -120,8 +126,8 @@ $.onReady(function() {
         $("[name=valid-after]").prop("disabled", (self.value() === "forever"));
 
         if (self.value() === "specific") {
-            setTextboxToToday('[name=valid-before]');
-            setTextboxToToday('[name=valid-after]');
+            c.setTextboxToToday('[name=valid-before]');
+            c.setTextboxToToday('[name=valid-after]');
             setUserExpirationToolTip("(YYYY-MM-DD HH:mm)");
         } else {
             $("[name=valid-before]").value("");
@@ -201,17 +207,6 @@ $.onReady(function() {
     });
 
     // Utility functions
-    function setTextboxToToday(el) {
-        var date = new Date();
-        var dateStr = date.getFullYear() + '-' +
-            ('0' + (date.getMonth() + 1)).slice(-2) + '-' +
-            ('0' + date.getDate()).slice(-2);
-
-        var timeStr = ('0' + date.getHours()).slice(-2) + ':' +
-            ('0' + (date.getMinutes())).slice(-2);
-        $(el).value(dateStr + " " + timeStr);
-    }
-
     function setExpirationToolTop(tip) {
         $("#dev-exp-tooltip").text(tip);
     }

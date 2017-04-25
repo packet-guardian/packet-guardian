@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 type guestChecker interface {
@@ -102,7 +102,7 @@ func formatPhoneNumber(number string) (string, error) {
 
 func stripChars(str, chr string) string {
 	return strings.Map(func(r rune) rune {
-		if strings.IndexRune(chr, r) < 0 {
+		if !strings.ContainsRune(chr, r) {
 			return -1
 		}
 		return r

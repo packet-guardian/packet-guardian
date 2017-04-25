@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/db"
-	"github.com/usi-lfkeitel/packet-guardian/src/server"
-	"github.com/usi-lfkeitel/packet-guardian/src/tasks"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/db"
+	"github.com/packet-guardian/packet-guardian/src/server"
+	"github.com/packet-guardian/packet-guardian/src/tasks"
 )
 
 var (
@@ -33,9 +33,9 @@ var (
 func init() {
 	flag.StringVar(&configFile, "c", "", "Configuration file path")
 	flag.BoolVar(&dev, "d", false, "Run in development mode")
+	flag.BoolVar(&testConfig, "t", false, "Test main configuration file")
 	flag.BoolVar(&verFlag, "version", false, "Display version information")
 	flag.BoolVar(&verFlag, "v", verFlag, "Display version information")
-	flag.BoolVar(&testConfig, "t", false, "Test main configuration")
 }
 
 func main() {

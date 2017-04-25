@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 func init() {

@@ -9,8 +9,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
 )
 
 var deviceStore *DeviceStore
@@ -35,7 +35,7 @@ func GetDeviceStore(e *common.Environment) *DeviceStore {
 func (s *DeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (*models.Device, error) {
 	sql := `WHERE "mac" = ?`
 	devices, err := s.getDevicesFromDatabase(sql, mac.String())
-	if devices == nil || len(devices) == 0 {
+	if len(devices) == 0 {
 		dev := models.NewDevice(s.e, s, GetLeaseStore(s.e), NewBlacklistItem(GetBlacklistStore(s.e)))
 		dev.MAC = mac
 		return dev, err
@@ -46,7 +46,7 @@ func (s *DeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (*models.Device, erro
 func (s *DeviceStore) GetDeviceByID(id int) (*models.Device, error) {
 	sql := `WHERE "id" = ?`
 	devices, err := s.getDevicesFromDatabase(sql, id)
-	if devices == nil || len(devices) == 0 {
+	if len(devices) == 0 {
 		return models.NewDevice(s.e, s, GetLeaseStore(s.e), NewBlacklistItem(GetBlacklistStore(s.e))), err
 	}
 	return devices[0], nil
