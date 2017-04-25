@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
 )
 
 var userStore *UserStore

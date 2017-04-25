@@ -16,14 +16,14 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/auth"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/controllers"
-	"github.com/usi-lfkeitel/packet-guardian/src/controllers/api"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
-	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
-	mid "github.com/usi-lfkeitel/packet-guardian/src/server/middleware"
-	"github.com/usi-lfkeitel/pg-dhcp"
+	"github.com/packet-guardian/packet-guardian/src/auth"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/controllers"
+	"github.com/packet-guardian/packet-guardian/src/controllers/api"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
+	mid "github.com/packet-guardian/packet-guardian/src/server/middleware"
+	"github.com/packet-guardian/pg-dhcp"
 )
 
 func LoadRoutes(e *common.Environment) http.Handler {

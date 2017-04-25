@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 type ReportFunc func(*common.Environment, http.ResponseWriter, *http.Request) error

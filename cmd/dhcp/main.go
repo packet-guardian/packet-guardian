@@ -19,10 +19,10 @@ import (
 	"time"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/db"
-	"github.com/usi-lfkeitel/packet-guardian/src/models/stores"
-	"github.com/usi-lfkeitel/pg-dhcp"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/db"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
+	"github.com/packet-guardian/pg-dhcp"
 )
 
 var (

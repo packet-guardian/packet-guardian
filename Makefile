@@ -17,9 +17,9 @@ PWD := $(shell cygpath -w -a `pwd`)
 GOBIN := $(PWD)\bin
 endif
 
-DOCKER_DIR := /go/src/github.com/usi-lfkeitel/packet-guardian
+DOCKER_DIR := /go/src/github.com/packet-guardian/packet-guardian
 
-PROJECT_URL := "https://github.com/usi-lfkeitel/$(NAME)"
+PROJECT_URL := "https://github.com/packet-guardian/$(NAME)"
 BUILDTAGS ?= dball
 LDFLAGS := -X 'main.version=$(VERSION)' \
 			-X 'main.buildTime=$(BUILDTIME)' \

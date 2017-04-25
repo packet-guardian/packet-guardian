@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 
 	"gopkg.in/tylerb/graceful.v1"
 )
