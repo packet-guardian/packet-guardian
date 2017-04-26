@@ -17,7 +17,7 @@ func init() {
 
 // Deletes users that expired 7 days ago
 func cleanUpExpiredUsers(e *common.Environment) (string, error) {
-	now := time.Now()
+	now := time.Now().Add(time.Duration(-7) * 24 * time.Hour)
 	sqlSel := `SELECT "username" FROM "user" WHERE "valid_forever" = 0 AND "valid_end" < ?`
 	rows, err := e.DB.Query(sqlSel, now.Unix())
 	if err != nil {
