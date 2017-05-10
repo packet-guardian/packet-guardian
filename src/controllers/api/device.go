@@ -5,6 +5,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net"
 	"net/http"
@@ -550,4 +551,34 @@ func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p
 	}).Info("Device expiration changed")
 	resp := map[string]string{"newExpiration": newExpireResp}
 	common.NewAPIResponse("Device saved successfully", resp).WriteResponse(w, http.StatusOK)
+}
+
+func (d *Device) GetDeviceHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	macParam := p.ByName("mac")
+
+	mac, err := net.ParseMAC(macParam)
+	if err != nil {
+		http.Error(w, "Invalid mac address", http.StatusBadRequest)
+		return
+	}
+
+	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
+	if err != nil {
+		http.Error(w, "Error getting device from database", http.StatusInternalServerError)
+		return
+	}
+
+	if device.ID == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	deviceJson, err := json.Marshal(device)
+	if err != nil {
+		http.Error(w, "Error creating response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(deviceJson)
 }

@@ -53,6 +53,7 @@ func LoadRoutes(e *common.Environment) http.Handler {
 		http.HandlerFunc(guestController.VerificationHandler))))
 
 	r.Handler("GET", "/admin/*a", midStack(e, adminRouter(e)))
+	r.Handler("GET", "/api/*a", midStack(e, apiRouter(e)))
 	r.Handler("POST", "/api/*a", midStack(e, apiRouter(e)))
 	r.Handler("DELETE", "/api/*a", midStack(e, apiRouter(e)))
 
@@ -151,6 +152,7 @@ func apiRouter(e *common.Environment) http.Handler {
 	r.POST("/api/device/reassign", deviceAPIController.ReassignHandler)
 	r.POST("/api/device/mac/:mac/description", deviceAPIController.EditDescriptionHandler)
 	r.POST("/api/device/mac/:mac/expiration", deviceAPIController.EditExpirationHandler)
+	r.GET("/api/device/:mac", deviceAPIController.GetDeviceHandler)
 
 	blacklistController := api.NewBlacklistController(e)
 	r.POST("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)

@@ -211,3 +211,13 @@ func (b *Blacklist) getDevicesFromList(l []string, add bool) ([]*models.Device, 
 	}
 	return devices, nil
 }
+
+func (b *Blacklist) GetBlacklistHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	device := p.ByName("mac")
+
+	if device == "" {
+		// Return all blacklisted entities
+	}
+
+	// Return specific device
+}

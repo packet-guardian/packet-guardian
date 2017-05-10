@@ -5,6 +5,7 @@
 package models
 
 import (
+	"encoding/json"
 	"net"
 	"time"
 
@@ -44,18 +45,18 @@ type Device struct {
 	e              *common.Environment
 	deviceStore    DeviceStore
 	leaseStore     LeaseStore
-	ID             int
-	MAC            net.HardwareAddr
-	Username       string
-	Description    string
+	ID             int              `json:"id"`
+	MAC            net.HardwareAddr `json:"mac"`
+	Username       string           `json:"username"`
+	Description    string           `json:"description"`
 	RegisteredFrom net.IP
-	Platform       string
+	Platform       string `json:"platform"`
 	Expires        time.Time
-	DateRegistered time.Time
-	UserAgent      string
+	DateRegistered time.Time `json:"registered"`
+	UserAgent      string    `json:"-"`
 	blacklist      BlacklistItem
 	LastSeen       time.Time
-	Leases         []LeaseHistory
+	Leases         []LeaseHistory `json:"-"`
 }
 
 func NewDevice(e *common.Environment, s DeviceStore, l LeaseStore, b BlacklistItem) *Device {
@@ -65,6 +66,21 @@ func NewDevice(e *common.Environment, s DeviceStore, l LeaseStore, b BlacklistIt
 		leaseStore:  l,
 		blacklist:   b,
 	}
+}
+
+func (d *Device) MarshalJSON() ([]byte, error) {
+	type Alias Device
+	return json.Marshal(&struct {
+		*Alias
+		Expires        time.Time `json:"expires"`
+		DateRegistered time.Time `json:"registered"`
+		LastSeen       time.Time `json:"last_seen"`
+	}{
+		Alias:          (*Alias)(d),
+		Expires:        d.Expires.UTC(),
+		DateRegistered: d.DateRegistered.UTC(),
+		LastSeen:       d.LastSeen.UTC(),
+	})
 }
 
 func (d *Device) GetID() int {
