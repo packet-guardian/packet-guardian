@@ -120,7 +120,8 @@ type Config struct {
 			Secret  string
 		}
 		CAS struct {
-			Server string
+			Server     string
+			ServiceURL string
 		}
 	}
 	DHCP struct {
