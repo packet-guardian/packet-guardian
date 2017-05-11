@@ -49,13 +49,13 @@ type Device struct {
 	MAC            net.HardwareAddr `json:"mac"`
 	Username       string           `json:"username"`
 	Description    string           `json:"description"`
-	RegisteredFrom net.IP
-	Platform       string `json:"platform"`
-	Expires        time.Time
-	DateRegistered time.Time `json:"registered"`
-	UserAgent      string    `json:"-"`
+	RegisteredFrom net.IP           `json:"registered_from"`
+	Platform       string           `json:"platform"`
+	Expires        time.Time        `json:"-"`
+	DateRegistered time.Time        `json:"-"`
+	UserAgent      string           `json:"-"`
 	blacklist      BlacklistItem
-	LastSeen       time.Time
+	LastSeen       time.Time      `json:"-"`
 	Leases         []LeaseHistory `json:"-"`
 }
 
@@ -75,11 +75,13 @@ func (d *Device) MarshalJSON() ([]byte, error) {
 		Expires        time.Time `json:"expires"`
 		DateRegistered time.Time `json:"registered"`
 		LastSeen       time.Time `json:"last_seen"`
+		Blacklisted    bool      `json:"blacklisted"`
 	}{
 		Alias:          (*Alias)(d),
 		Expires:        d.Expires.UTC(),
 		DateRegistered: d.DateRegistered.UTC(),
 		LastSeen:       d.LastSeen.UTC(),
+		Blacklisted:    d.IsBlacklisted(),
 	})
 }
 
