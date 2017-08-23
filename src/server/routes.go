@@ -12,11 +12,13 @@ import (
 	"strings"
 
 	"github.com/dchest/captcha"
+	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/context"
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
 
 	"github.com/packet-guardian/packet-guardian/src/auth"
+	"github.com/packet-guardian/packet-guardian/src/bindata"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/controllers"
 	"github.com/packet-guardian/packet-guardian/src/controllers/api"
@@ -31,7 +33,13 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	r.NotFound = http.HandlerFunc(notFoundHandler)
 
 	r.Handler("GET", "/", midStack(e, http.HandlerFunc(rootHandler)))
-	r.ServeFiles("/public/*filepath", http.Dir("./public"))
+	r.ServeFiles(
+		"/public/*filepath",
+		&assetfs.AssetFS{
+			Asset:     bindata.GetAsset,
+			AssetDir:  bindata.GetAssetDir,
+			AssetInfo: bindata.GetAssetInfo,
+			Prefix:    "public"})
 
 	authController := controllers.NewAuthController(e)
 	r.Handler("GET", "/login", midStack(e, http.HandlerFunc(authController.LoginHandler)))
