@@ -17,7 +17,17 @@ RUN cd $PROJ_ROOT \
 # Build final application image
 FROM alpine:3.6
 
-MAINTAINER Lee Keitel <lee@keitel.xyz>
+ARG version
+ARG builddate
+ARG vcsref
+
+LABEL name="lfkeitel/packet-guardian" \
+      version="$version" \
+      build-date="$builddate" \
+      vcs-type="git" \
+      vcs-url="https://github.com/packet-guardian/packet-guardian" \
+      vcs-ref="$vcsref" \
+      maintainer="Lee Keitel <lfkeitel@usi.edu>"
 
 ENV CONFIG_FILE config/config.toml
 

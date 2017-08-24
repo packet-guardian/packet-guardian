@@ -1,6 +1,7 @@
 NAME := packet-guardian
 DESC := A captive portal for today's networks
 VERSION := $(shell git describe --tags --always --dirty)
+GITCOMMIT := $(shell git rev-parse HEAD)
 GOVERSION := $(shell go version)
 BUILDTIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILDDATE := $(shell date -u +"%B %d, %Y")
@@ -103,4 +104,8 @@ clean:
 	rm -rf ./sessions/*
 
 docker:
-	docker build -t packet-guardian .
+	docker build \
+		--build-arg version='$(VERSION)' \
+		--build-arg builddate='$(BUILDTIME)' \
+		--build-arg vcsref='$(GITCOMMIT)' \
+		-t packet-guardian .
