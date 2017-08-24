@@ -102,10 +102,5 @@ clean:
 	rm -rf ./logs/*
 	rm -rf ./sessions/*
 
-docker: docker-compile docker-build
-
-docker-compile:
-	docker run --rm -v $(PWD):$(DOCKER_DIR) -w $(DOCKER_DIR) -e CGO_ENABLED=0 -e BUILDTAGS=dbmysql -e DIST_FILENAME=dist.tar.gz golang:1.8 go get -u github.com/jteeuwen/go-bindata/... && make dist
-
-docker-build:
+docker:
 	docker build -t packet-guardian .
