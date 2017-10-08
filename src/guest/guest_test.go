@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 // TestGuestRegister tests the RegisterDevice function for guests.
@@ -61,6 +61,6 @@ func TestGuestRegister(t *testing.T) {
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expections: %s", err)
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }

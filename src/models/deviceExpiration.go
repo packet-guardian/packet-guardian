@@ -7,7 +7,7 @@ package models
 import (
 	"time"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 type UserExpiration int
@@ -77,12 +77,12 @@ func (e *UserDeviceExpiration) String() string {
 		return time.Unix(e.Value, 0).Format(common.TimeFormat)
 	} else if e.Mode == UserDeviceExpirationDuration {
 		return (time.Duration(e.Value) * time.Second).String()
-	} else {
-		year, month, day := time.Now().Date()
-		bod := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
-		bod = bod.Add(time.Duration(e.Value) * time.Second)
-		return "Daily at " + bod.Format("15:04")
 	}
+
+	year, month, day := time.Now().Date()
+	bod := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+	bod = bod.Add(time.Duration(e.Value) * time.Second)
+	return "Daily at " + bod.Format("15:04")
 }
 
 func (e *UserDeviceExpiration) NextExpiration(env *common.Environment, base time.Time) time.Time {
@@ -107,7 +107,8 @@ func (e *UserDeviceExpiration) NextExpiration(env *common.Environment, base time
 		return bod
 	} else if e.Mode == UserDeviceExpirationRolling {
 		return time.Unix(1, 0)
-	} else { // Default to never
-		return time.Unix(0, 0)
 	}
+
+	// Default to never
+	return time.Unix(0, 0)
 }

@@ -5,6 +5,7 @@
 /*globals $*/
 
 (function(w) {
+    "use strict";
     // API is a collection of methods used to interact with the API
     // in Packet Guardian. They're centralized here for easy maintenance.
     function API() { }

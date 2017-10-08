@@ -11,16 +11,24 @@ engines:
     enabled: true
   fixme:
     enabled: true
+  gofmt:
+    enabled: true
+  golint:
+    enabled: true
+  govet:
+    enabled: true
+  markdownlint:
+    enabled: true
 ratings:
   paths:
   - "**.css"
-  - "**.inc"
   - "**.js"
-  - "**.jsx"
-  - "**.module"
-  - "**.php"
-  - "**.py"
-  - "**.rb"
+  - "**.go"
+  - "**.md"
 exclude_paths:
-- config/
-- vendor/
+  - config/
+  - vendor/
+  - node_modules/
+  - public/assets/styles/font-awesome.css
+  - public/assets/styles/normalize.css
+  - src/bindata/bindata.go

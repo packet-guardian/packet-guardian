@@ -5,6 +5,8 @@
 package api
 
 import (
+	"encoding/json"
+	"errors"
 	"net"
 	"net/http"
 	"strings"
@@ -12,8 +14,9 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 type Device struct {
@@ -59,7 +62,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 		formUser = sessionUser
 	} else {
 		var err error
-		formUser, err = models.GetUserByUsername(d.e, formUsername)
+		formUser, err = stores.GetUserStore(d.e).GetUserByUsername(formUsername)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":    err,
@@ -69,78 +72,27 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 			common.NewAPIResponse("Error registering device", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
-		// Be careful with this, if this goes outside this if, it may release the sessionUser prematurely.
-		defer formUser.Release()
 	}
 
 	// CreateDevice is the administrative permision
 	if !sessionUser.Can(models.CreateDevice) {
-		if formUser.IsBlacklisted() {
-			d.e.Log.WithFields(verbose.Fields{
-				"package":  "controllers:api:device",
-				"username": formUser.Username,
-			}).Error("Attempted registration by blacklisted user")
-			common.NewAPIResponse("Username blacklisted", nil).WriteResponse(w, http.StatusForbidden)
-			return
-		}
-
-		// Get and enforce the device limit
-		limit := models.UserDeviceLimit(d.e.Config.Registration.DefaultDeviceLimit)
-		if formUser.DeviceLimit != models.UserDeviceLimitGlobal {
-			limit = formUser.DeviceLimit
-		}
-
-		deviceCount, err := models.GetDeviceCountForUser(d.e, formUser)
+		httpCode, err := d.checkCanRegister(formUser)
 		if err != nil {
-			d.e.Log.WithFields(verbose.Fields{
-				"package": "controllers:api:device",
-				"error":   err,
-			}).Error("Error getting device count")
-		}
-		if limit != models.UserDeviceLimitUnlimited && deviceCount >= int(limit) {
-			common.NewAPIResponse("Device limit reached", nil).WriteResponse(w, http.StatusConflict)
+			common.NewAPIResponse(err.Error(), nil).WriteResponse(w, httpCode)
 			return
 		}
 	}
 
 	// Get MAC address
-	var mac net.HardwareAddr
 	ip := common.GetIPFromContext(r)
-	if manual {
-		// Manual registration
-		if !d.e.Config.Registration.AllowManualRegistrations {
-			common.NewAPIResponse("Manual registrations not allowed", nil).WriteResponse(w, http.StatusForbidden)
-			return
-		}
-		mac, err = common.FormatMacAddress(macPost)
-		if err != nil {
-			common.NewAPIResponse("Incorrect MAC address format", nil).WriteResponse(w, http.StatusBadRequest)
-			return
-		}
-	} else {
-		// Automatic registration
-		lease, err := models.GetLeaseStore(d.e).GetLeaseByIP(ip)
-		if err != nil {
-			d.e.Log.WithFields(verbose.Fields{
-				"error":   err,
-				"package": "controllers:api:device",
-				"ip":      ip.String(),
-			}).Error("Error getting MAC for IP")
-			common.NewAPIResponse("Failed detecting MAC address", nil).WriteResponse(w, http.StatusInternalServerError)
-			return
-		} else if lease.ID == 0 {
-			d.e.Log.WithFields(verbose.Fields{
-				"package": "controllers:api:device",
-				"ip":      ip.String(),
-			}).Notice("Attempted auto reg from non-leased device")
-			common.NewAPIResponse("Error detecting MAC address", nil).WriteResponse(w, http.StatusBadRequest)
-			return
-		}
-		mac = lease.MAC
+	mac, httpCode, err := d.getRegMACAddress(manual, ip, macPost, sessionUser)
+	if err != nil {
+		common.NewAPIResponse(err.Error(), nil).WriteResponse(w, httpCode)
+		return
 	}
 
 	// Get device from database
-	device, err := models.GetDeviceByMAC(d.e, mac)
+	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -163,7 +115,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 		return
 	}
 
-	// Validate platform, we don't want someone to submit an inappropiate value
+	// Validate platform, we don't want someone to submit an inappropriate value
 	platform := ""
 	if manual {
 		if common.StringInSlice(r.FormValue("platform"), d.e.Config.Registration.ManualRegPlatforms) {
@@ -200,7 +152,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 		"mac":        mac.String(),
 		"changed-by": sessionUser.Username,
 		"username":   formUser.Username,
-		"action":     "register-device",
+		"action":     "register_device",
 		"manual":     manual,
 	}).Info("Device registered")
 
@@ -211,6 +163,72 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 	}
 
 	common.NewAPIResponse("Registration successful", resp).WriteResponse(w, http.StatusOK)
+}
+
+func (d *Device) checkCanRegister(formUser *models.User) (int, error) {
+	if formUser.IsBlacklisted() {
+		d.e.Log.WithFields(verbose.Fields{
+			"package":  "controllers:api:device",
+			"username": formUser.Username,
+		}).Error("Attempted registration by blacklisted user")
+		return http.StatusForbidden, errors.New("Username blacklisted")
+	}
+
+	// Get and enforce the device limit
+	limit := models.UserDeviceLimit(d.e.Config.Registration.DefaultDeviceLimit)
+	if formUser.DeviceLimit != models.UserDeviceLimitGlobal {
+		limit = formUser.DeviceLimit
+	}
+
+	// If user's limit is unlimited, bypass device count
+	if limit != models.UserDeviceLimitUnlimited {
+		deviceCount, err := stores.GetDeviceStore(d.e).GetDeviceCountForUser(formUser)
+		if err != nil {
+			d.e.Log.WithFields(verbose.Fields{
+				"package": "controllers:api:device",
+				"error":   err,
+			}).Error("Error getting device count")
+		}
+		if deviceCount >= int(limit) {
+			return http.StatusConflict, errors.New("Device limit reached")
+		}
+	}
+	return 0, nil
+}
+
+func (d *Device) getRegMACAddress(manual bool, ip net.IP, macPost string, sessionUser *models.User) (net.HardwareAddr, int, error) {
+	if manual {
+		// Manual registration
+		// if manual registeration are not allowed and not admin
+		if !d.e.Config.Registration.AllowManualRegistrations && !sessionUser.Can(models.CreateDevice) {
+			return nil, http.StatusForbidden, errors.New("Manual registrations not allowed")
+		}
+		mac, err := common.FormatMacAddress(macPost)
+		if err != nil {
+			return nil, http.StatusBadRequest, errors.New("Incorrect MAC address format")
+		}
+		return mac, 0, nil
+	}
+
+	// Automatic registration
+	lease, err := stores.GetLeaseStore(d.e).GetLeaseByIP(ip)
+	if err != nil {
+		d.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:api:device",
+			"ip":      ip.String(),
+		}).Error("Error getting MAC for IP")
+		return nil, http.StatusInternalServerError, errors.New("Failed detecting MAC address")
+	}
+
+	if lease.ID == 0 {
+		d.e.Log.WithFields(verbose.Fields{
+			"package": "controllers:api:device",
+			"ip":      ip.String(),
+		}).Notice("Attempted auto reg from non-leased device")
+		return nil, http.StatusInternalServerError, errors.New("Error detecting MAC address")
+	}
+	return lease.MAC, 0, nil
 }
 
 func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -227,7 +245,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 			return
 		}
 		var err error
-		formUser, err = models.GetUserByUsername(d.e, username)
+		formUser, err = stores.GetUserStore(d.e).GetUserByUsername(username)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":    err,
@@ -237,7 +255,6 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 			common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
 			return
 		}
-		defer formUser.Release()
 	}
 
 	if !sessionUser.Can(models.DeleteOwn) {
@@ -247,7 +264,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 
 	deleteAll := (r.FormValue("mac") == "")
 	macsToDelete := strings.Split(r.FormValue("mac"), ",")
-	usersDevices, err := models.GetDevicesForUser(d.e, formUser)
+	usersDevices, err := stores.GetDeviceStore(d.e).GetDevicesForUser(formUser)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -289,7 +306,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 			"mac":        device.MAC.String(),
 			"changed-by": sessionUser.Username,
 			"username":   formUser.Username,
-			"action":     "delete-device",
+			"action":     "delete_device",
 		}).Notice("Device deleted")
 	}
 
@@ -320,7 +337,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 
-	user, err := models.GetUserByUsername(d.e, username)
+	user, err := stores.GetUserStore(d.e).GetUserByUsername(username)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -330,7 +347,6 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	devicesToReassign := strings.Split(devices, ",")
 	for _, devMacStr := range devicesToReassign {
@@ -340,7 +356,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			common.NewAPIResponse("Malformed MAC address "+devMacStr, nil).WriteResponse(w, http.StatusBadRequest)
 			return
 		}
-		dev, err := models.GetDeviceByMAC(d.e, mac)
+		dev, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":   err,
@@ -386,7 +402,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			"new-username": username,
 			"old-username": originalUser,
 			"mac":          mac.String(),
-			"action":       "reassign-device",
+			"action":       "reassign_device",
 		}).Info("Reassigned device to another user")
 	}
 
@@ -400,7 +416,7 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 		common.NewAPIResponse("Invalid MAC address", nil).WriteResponse(w, http.StatusBadRequest)
 	}
 
-	device, err := models.GetDeviceByMAC(d.e, mac)
+	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -412,14 +428,14 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 	}
 
 	if device.Username != sessionUser.Username {
-		// Check admin privilages
+		// Check admin privileges
 		if !sessionUser.Can(models.EditDevice) {
 			common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
 			return
 		}
 	} else {
-		// Check user privilages
-		deviceUser, err := models.GetUserByUsername(d.e, device.Username)
+		// Check user privileges
+		deviceUser, err := stores.GetUserStore(d.e).GetUserByUsername(device.Username)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":    err,
@@ -451,7 +467,7 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 		"username":   device.Username,
 		"changed-by": sessionUser.Username,
 		"package":    "controllers:api:device",
-		"action":     "edit-desc-device",
+		"action":     "edit_desc_device",
 	}).Info("Device description changed")
 	common.NewAPIResponse("Device saved successfully", nil).WriteResponse(w, http.StatusOK)
 }
@@ -464,7 +480,7 @@ func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p
 		common.NewAPIResponse("Invalid MAC address", nil).WriteResponse(w, http.StatusBadRequest)
 	}
 
-	device, err := models.GetDeviceByMAC(d.e, mac)
+	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -531,8 +547,38 @@ func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p
 		"changed-by": sessionUser.Username,
 		"expiration": newExpireResp,
 		"package":    "controllers:api:device",
-		"action":     "edit-exp-device",
+		"action":     "edit_exp_device",
 	}).Info("Device expiration changed")
 	resp := map[string]string{"newExpiration": newExpireResp}
 	common.NewAPIResponse("Device saved successfully", resp).WriteResponse(w, http.StatusOK)
+}
+
+func (d *Device) GetDeviceHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	macParam := p.ByName("mac")
+
+	mac, err := net.ParseMAC(macParam)
+	if err != nil {
+		http.Error(w, "Invalid mac address", http.StatusBadRequest)
+		return
+	}
+
+	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
+	if err != nil {
+		http.Error(w, "Error getting device from database", http.StatusInternalServerError)
+		return
+	}
+
+	if device.ID == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	deviceJson, err := json.Marshal(device)
+	if err != nil {
+		http.Error(w, "Error creating response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(deviceJson)
 }

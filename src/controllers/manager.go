@@ -9,10 +9,11 @@ import (
 	"strings"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/auth"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
-	"github.com/usi-lfkeitel/pg-dhcp"
+	"github.com/packet-guardian/packet-guardian/src/auth"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
+	"github.com/packet-guardian/pg-dhcp"
 )
 
 const (
@@ -40,7 +41,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	man := (r.FormValue("manual") == "1")
 	loggedIn := auth.IsLoggedIn(r)
 	ip := common.GetIPFromContext(r)
-	reg, _ := dhcp.IsRegisteredByIP(models.GetLeaseStore(m.e), ip)
+	reg, _ := dhcp.IsRegisteredByIP(stores.GetLeaseStore(m.e), ip)
 	if !man && reg {
 		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return
@@ -76,13 +77,13 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 	sessionUser := models.GetUserFromContext(r)
 
-	// Redirect privilaged users to the full-featured management page
+	// Redirect privileged users to the full-featured management page
 	if sessionUser.Can(models.ViewDevices) {
 		http.Redirect(w, r, "/admin/manage/"+sessionUser.Username, http.StatusTemporaryRedirect)
 		return
 	}
 
-	results, err := models.GetDevicesForUser(m.e, sessionUser)
+	results, err := stores.GetDeviceStore(m.e).GetDevicesForUser(sessionUser)
 	if err != nil {
 		m.e.Log.WithFields(verbose.Fields{
 			"error":    err,

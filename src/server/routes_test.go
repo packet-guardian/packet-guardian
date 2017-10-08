@@ -10,8 +10,9 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 func TestRootHandlerLoggedInNormal(t *testing.T) {
@@ -38,7 +39,7 @@ func TestRootHandlerLoggedInNormal(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 
-	sessionUser, err := models.GetUserByUsername(e, "testUser")
+	sessionUser, err := stores.NewUserStore(e).GetUserByUsername("testUser")
 	if err != nil {
 		t.Logf("Failed to get session user: %v", err.Error())
 	}
@@ -55,7 +56,7 @@ func TestRootHandlerLoggedInNormal(t *testing.T) {
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expections: %s", err)
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
 
@@ -84,9 +85,9 @@ func TestRootHandlerLoggedInAdmin(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 
-	sessionUser, err := models.GetUserByUsername(e, "testUser")
+	sessionUser, err := stores.NewUserStore(e).GetUserByUsername("testUser")
 	if err != nil {
-		t.Logf("Failed to get session user: %v", err.Error())
+		t.Fatalf("Failed to get session user: %v", err.Error())
 	}
 	req = models.SetUserToContext(req, sessionUser)
 
@@ -101,7 +102,7 @@ func TestRootHandlerLoggedInAdmin(t *testing.T) {
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expections: %s", err)
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
 
@@ -141,7 +142,7 @@ func TestRootHandlerNotLoggedInNotRegistered(t *testing.T) {
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expections: %s", err)
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
 
@@ -181,6 +182,6 @@ func TestRootHandlerNotLoggedInRegistered(t *testing.T) {
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expections: %s", err)
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }

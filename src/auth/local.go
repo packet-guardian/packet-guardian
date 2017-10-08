@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -19,10 +19,9 @@ func init() {
 
 type localAuthenticator struct{}
 
-func (l *localAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bool {
+func (l *localAuthenticator) checkLogin(username, password string, r *http.Request) bool {
 	e := common.GetEnvironmentFromContext(r)
-	user, err := models.GetUserByUsername(e, r.FormValue("username"))
-	defer user.Release()
+	user, err := stores.GetUserStore(e).GetUserByUsername(username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -35,7 +34,7 @@ func (l *localAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 	if testPass == "" { // User doesn't have a local password
 		return false
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(testPass), []byte(r.FormValue("password")))
+	err = bcrypt.CompareHashAndPassword([]byte(testPass), []byte(password))
 	if err != nil {
 		if err != bcrypt.ErrMismatchedHashAndPassword {
 			e.Log.WithFields(verbose.Fields{

@@ -12,8 +12,8 @@ import (
 	"github.com/dragonlibs/cas"
 	"github.com/lfkeitel/verbose"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -24,25 +24,39 @@ type casAuthenticator struct {
 	client *cas.Client
 }
 
-func (c *casAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bool {
+func (c *casAuthenticator) checkLogin(username, password string, r *http.Request) bool {
 	e := common.GetEnvironmentFromContext(r)
 	if c.client == nil {
-		casUrlStr := strings.TrimRight(e.Config.Auth.CAS.Server, "/") + "/" // Ensure server ends in /
-		casUrl, err := url.Parse(casUrlStr)
+		casURLStr := strings.TrimRight(e.Config.Auth.CAS.Server, "/") + "/" // Ensure server ends in /
+		casURL, err := url.Parse(casURLStr)
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"error":   err,
-				"url":     casUrlStr,
+				"url":     casURLStr,
 				"package": "auth:cas",
 			}).Error("Failed to parse CAS url")
 			return false
 		}
+
 		c.client = &cas.Client{
-			URL: casUrl,
+			URL: casURL,
+		}
+
+		if e.Config.Auth.CAS.ServiceURL != "" {
+			serviceURL, err := url.Parse(e.Config.Auth.CAS.ServiceURL)
+			if err != nil {
+				e.Log.WithFields(verbose.Fields{
+					"error":   err,
+					"url":     e.Config.Auth.CAS.ServiceURL,
+					"package": "auth:cas",
+				}).Notice("Failed to parse CAS request url, using default")
+			} else {
+				c.client.ServiceURL = serviceURL
+			}
 		}
 	}
 
-	_, err := c.client.AuthenticateUser(r.FormValue("username"), r.FormValue("password"), r)
+	_, err := c.client.AuthenticateUser(username, password, r)
 	if err == cas.InvalidCredentials {
 		return false
 	}
@@ -54,7 +68,7 @@ func (c *casAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) boo
 		return false
 	}
 
-	user, err := models.GetUserByUsername(e, r.FormValue("username"))
+	user, err := stores.GetUserStore(e).GetUserByUsername(username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -67,10 +81,8 @@ func (c *casAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) boo
 			"username": user.Username,
 			"package":  "auth:cas",
 		}).Info("User expired")
-		user.Release()
 		return false
 	}
 
-	user.Release()
 	return true
 }

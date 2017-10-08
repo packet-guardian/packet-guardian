@@ -42,6 +42,9 @@ const (
 	ViewReports
 
 	ViewDebugInfo
+
+	APIRead
+	APIWrite
 )
 
 const (

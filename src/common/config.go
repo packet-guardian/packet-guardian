@@ -95,10 +95,12 @@ type Config struct {
 		SessionsEncryptKey  string
 	}
 	Auth struct {
-		AuthMethod    []string
-		AdminUsers    []string
-		HelpDeskUsers []string
-		ReadOnlyUsers []string
+		AuthMethod        []string
+		AdminUsers        []string
+		HelpDeskUsers     []string
+		ReadOnlyUsers     []string
+		APIReadOnlyUsers  []string
+		APIReadWriteUsers []string
 
 		LDAP struct {
 			UseAD         bool
@@ -118,7 +120,8 @@ type Config struct {
 			Secret  string
 		}
 		CAS struct {
-			Server string
+			Server     string
+			ServiceURL string
 		}
 	}
 	DHCP struct {
@@ -260,13 +263,4 @@ func setIntOrDefault(s, v int) int {
 		return v
 	}
 	return s
-}
-
-func (c *Config) Reload() error {
-	con, err := NewConfig(c.sourceFile)
-	if err != nil {
-		return err
-	}
-	c = con
-	return nil
 }

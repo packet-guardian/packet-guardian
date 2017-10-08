@@ -8,11 +8,10 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/lfkeitel/verbose"
+	"github.com/packet-guardian/packet-guardian/src/bindata"
 )
 
 type Views struct {
@@ -58,20 +57,41 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 		},
 	})
 
-	filepath.Walk(basepath, func(path string, info os.FileInfo, err1 error) error {
-		if strings.HasSuffix(path, ".tmpl") {
-			if _, err := tmpl.ParseFiles(path); err != nil {
-				panic(err)
-			}
-		}
-		return nil
-	})
+	if err := loadTemplates(tmpl, "templates"); err != nil {
+		return nil, err
+	}
+
 	v = &Views{
 		source: basepath,
 		t:      tmpl,
 		e:      e,
 	}
 	return v, nil
+}
+
+func loadTemplates(tmpl *template.Template, dir string) error {
+	files, err := bindata.AssetDir(dir)
+	if err != nil {
+		return errors.New("templates not found")
+	}
+
+	for _, file := range files {
+		if strings.HasSuffix(file, ".tmpl") {
+			fileBytes, _ := bindata.GetAsset(dir + "/" + file)
+			if _, err := tmpl.Parse(string(fileBytes)); err != nil {
+				return nil
+			}
+			continue
+		}
+
+		_, err := bindata.AssetDir(dir + "/" + file)
+		if err == nil {
+			if err := loadTemplates(tmpl, dir+"/"+file); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (v *Views) NewView(view string, r *http.Request) *View {

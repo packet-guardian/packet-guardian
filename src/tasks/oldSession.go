@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 const sessionsDir string = "sessions"
@@ -32,7 +32,7 @@ func cleanUpExpiredSessions(e *common.Environment) (string, error) {
 }
 
 func cleanFileSystemSessions(e *common.Environment) (string, error) {
-	w := sessionWalker{n: time.Now().Add(sessionExpiration)}
+	w := &sessionWalker{n: time.Now().Add(sessionExpiration)}
 	err := filepath.Walk(sessionsDir, w.sessionDirWalker)
 	if err != nil {
 		return "", err
@@ -45,7 +45,7 @@ type sessionWalker struct {
 	c int
 }
 
-func (s sessionWalker) sessionDirWalker(path string, info os.FileInfo, err error) error {
+func (s *sessionWalker) sessionDirWalker(path string, info os.FileInfo, err error) error {
 	if info.IsDir() && path != sessionsDir {
 		return filepath.SkipDir
 	}

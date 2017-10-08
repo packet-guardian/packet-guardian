@@ -12,8 +12,9 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 type UserController struct {
@@ -40,7 +41,7 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	user, err := models.GetUserByUsername(u.e, username)
+	user, err := stores.GetUserStore(u.e).GetUserByUsername(username)
 	if err != nil {
 		u.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -50,7 +51,6 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 		common.NewAPIResponse("Error saving user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	canCreate := sessionUser.Can(models.CreateUser)
 	canEdit := sessionUser.Can(models.EditUser)
@@ -197,21 +197,21 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 	if isNewUser {
 		u.e.Log.WithFields(verbose.Fields{
 			"package":    "controllers:api:user",
-			"action":     "create-user",
+			"action":     "create_user",
 			"username":   user.Username,
 			"changed-by": sessionUser.Username,
 		}).Info("User created")
 	} else {
 		u.e.Log.WithFields(verbose.Fields{
 			"package":    "controllers:api:user",
-			"action":     "edit-user",
+			"action":     "edit_user",
 			"username":   user.Username,
 			"changed-by": sessionUser.Username,
 		}).Info("User edited")
 	}
 
 	if updateDeviceExpirations {
-		devices, err := models.GetDevicesForUser(u.e, user)
+		devices, err := stores.GetDeviceStore(u.e).GetDevicesForUser(user)
 		if err != nil {
 			u.e.Log.WithFields(verbose.Fields{
 				"error":   err,
@@ -258,7 +258,7 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	user, err := models.GetUserByUsername(u.e, username)
+	user, err := stores.GetUserStore(u.e).GetUserByUsername(username)
 	if err != nil {
 		u.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -268,7 +268,6 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 		common.NewAPIResponse("Error deleting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	if err := user.Delete(); err != nil {
 		u.e.Log.WithFields(verbose.Fields{
@@ -281,7 +280,7 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 
 	u.e.Log.WithFields(verbose.Fields{
 		"package":    "controllers:api:user",
-		"action":     "delete-user",
+		"action":     "delete_user",
 		"username":   user.Username,
 		"changed-by": sessionUser.Username,
 	}).Info("User deleted")

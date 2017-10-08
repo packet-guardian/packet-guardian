@@ -19,7 +19,7 @@ If you're going to use MySQL, you will need create a table for Packet Guardian b
 ```bash
 # Run as root
 $ cd /opt
-$ wget https://github.com/usi-lfkeitel/packet-guardian/releases/latest/pg-dist-$VERSION.tar.gz
+$ wget https://github.com/packet-guardian/packet-guardian/releases/latest/pg-dist-$VERSION.tar.gz
 $ tar -xzf pg-dist-$VERSION.tar.gz
 $ cd packet-guardian
 $ ./scripts/install.sh

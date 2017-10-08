@@ -13,8 +13,9 @@ import (
 	"time"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -40,7 +41,7 @@ func GenerateGuestCode() string {
 // full registration function found in controllers.api.Device.RegistrationHandler().
 func RegisterDevice(e *common.Environment, name, credential string, r *http.Request) error {
 	// Build guest user model
-	guest, err := models.GetUserByUsername(e, credential)
+	guest, err := stores.GetUserStore(e).GetUserByUsername(credential)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -49,59 +50,25 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 		}).Error("Error getting guest")
 		return err
 	}
-	defer guest.Release()
 	guest.DeviceLimit = models.UserDeviceLimit(e.Config.Guest.DeviceLimit)
 	guest.DeviceExpiration = &models.UserDeviceExpiration{}
 
-	switch e.Config.Guest.DeviceExpirationType {
-	case "never":
-		guest.DeviceExpiration.Mode = models.UserDeviceExpirationNever
-	case "date":
-		guest.DeviceExpiration.Mode = models.UserDeviceExpirationSpecific
-		expTime, err := time.ParseInLocation(common.TimeFormat, e.Config.Guest.DeviceExpiration, time.Local)
-		if err != nil {
-			e.Log.WithFields(verbose.Fields{
-				"error":   err,
-				"package": "guest",
-			}).Error("Error parsing time")
-			return errors.New("Internal Server Error")
-		}
-		guest.DeviceExpiration.Value = expTime.Unix()
-	case "duration":
-		guest.DeviceExpiration.Mode = models.UserDeviceExpirationDuration
-		dur, err := time.ParseDuration(e.Config.Guest.DeviceExpiration)
-		if err != nil {
-			e.Log.WithFields(verbose.Fields{
-				"error":   err,
-				"package": "guest",
-			}).Error("Error parsing time")
-			return errors.New("Internal Server Error")
-		}
-		guest.DeviceExpiration.Value = int64(dur / time.Second)
-	case "daily":
-		var err error
-		guest.DeviceExpiration.Mode = models.UserDeviceExpirationDaily
-		guest.DeviceExpiration.Value, err = common.ParseTime(e.Config.Guest.DeviceExpiration)
-		if err != nil {
-			e.Log.WithFields(verbose.Fields{
-				"error":   err,
-				"package": "guest",
-			}).Error("Error parsing time")
-			return errors.New("Internal Server Error")
-		}
-	default:
-		return errors.New(e.Config.Guest.DeviceExpirationType + " is not a valid device expiration type")
-	}
+	guest.DeviceExpiration.Mode, guest.DeviceExpiration.Value, err = calcDeviceExpirationModeValue(e.Config.Guest.DeviceExpirationType, e.Config.Guest.DeviceExpiration)
+	e.Log.WithFields(verbose.Fields{
+		"error":   err,
+		"package": "guest",
+	}).Error("Error parsing device expiration")
 
 	// Get and enforce the device limit
-	deviceCount, err := models.GetDeviceCountForUser(e, guest)
+	deviceCount, err := stores.GetDeviceStore(e).GetDeviceCountForUser(guest)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"package": "guest",
 			"error":   err,
 		}).Error("Error getting device count")
 	}
-	if guest.DeviceLimit != models.UserDeviceLimitUnlimited && deviceCount >= int(guest.DeviceLimit) {
+	if guest.DeviceLimit != models.UserDeviceLimitUnlimited &&
+		deviceCount >= int(guest.DeviceLimit) {
 		return errors.New("Device limit reached")
 	}
 
@@ -110,7 +77,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	ip := common.GetIPFromContext(r)
 
 	// Automatic registration
-	lease, err := models.GetLeaseStore(e).GetLeaseByIP(ip)
+	lease, err := stores.GetLeaseStore(e).GetLeaseByIP(ip)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -128,7 +95,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	mac = lease.MAC
 
 	// Get device from database
-	device, err := models.GetDeviceByMAC(e, mac)
+	device, err := stores.GetDeviceStore(e).GetDeviceByMAC(mac)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -148,7 +115,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 		return errors.New("This device is already registered")
 	}
 
-	// Validate platform, we don't want someone to submit an inappropiate value
+	// Validate platform, we don't want someone to submit an inappropriate value
 	platform := common.ParseUserAgent(r.UserAgent())
 
 	// Fill in device information
@@ -174,7 +141,26 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 		"mac":      mac.String(),
 		"name":     name,
 		"username": credential,
-		"action":   "register-guest-device",
+		"action":   "register_guest_device",
 	}).Info("Device registered")
 	return nil
+}
+
+// TODO: Create tests for this
+func calcDeviceExpirationModeValue(expType, expTimeStr string) (models.UserExpiration, int64, error) {
+	switch expType {
+	case "never":
+		return models.UserDeviceExpirationNever, 0, nil
+	case "date":
+		expTime, err := time.ParseInLocation(common.TimeFormat, expTimeStr, time.Local)
+		return models.UserDeviceExpirationSpecific, expTime.Unix(), err
+	case "duration":
+		dur, err := time.ParseDuration(expTimeStr)
+		return models.UserDeviceExpirationDuration, int64(dur / time.Second), err
+	case "daily":
+		expTime, err := common.ParseTime(expTimeStr)
+		return models.UserDeviceExpirationDaily, expTime, err
+	default:
+		return 0, 0, errors.New(expType + " is not a valid device expiration type")
+	}
 }

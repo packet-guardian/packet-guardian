@@ -10,8 +10,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -21,14 +22,14 @@ func init() {
 
 type testAuthOne struct{}
 
-func (t *testAuthOne) loginUser(r *http.Request, w http.ResponseWriter) bool {
-	return (r.FormValue("username") == "tester1")
+func (t *testAuthOne) checkLogin(username, password string, r *http.Request) bool {
+	return (username == "tester1")
 }
 
 type testAuthTwo struct{}
 
-func (t *testAuthTwo) loginUser(r *http.Request, w http.ResponseWriter) bool {
-	return (r.FormValue("username") == "tester2")
+func (t *testAuthTwo) checkLogin(username, password string, r *http.Request) bool {
+	return (username == "tester2")
 }
 
 func TestLoginUser(t *testing.T) {
@@ -99,7 +100,7 @@ func TestLogoutUser(t *testing.T) {
 	session.Set("loggedin", true)
 	session.Set("username", "Tester")
 
-	user := models.NewUser(e)
+	user := models.NewUser(e, stores.NewUserStore(e), stores.NewBlacklistItem(stores.NewBlacklistStore(e)))
 	user.Username = "Tester"
 
 	req, _ := http.NewRequest("", "", nil)

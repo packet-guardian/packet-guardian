@@ -1,31 +1,75 @@
-#Building
+# Building
 
-The distribution package is compiled against 64-bit Linux. However, the application is written in Go with no OS specific system calls however it does use cgo. This means you can download the source and should be able to compile against any OS Go supports so long has you have a recent gcc compiler installed. Packet Guardian has not been tested on other platforms. However I'm always willing to help if a problem comes up.
+The distribution package is compiled against 64-bit Linux. However, the application should build for any Go runtime target. GCC is required with CGO if building with SQLite support which is currently the default.
 
-##Requirements
+## Requirements
 
 - Go 1.7+
 - GCC (if compiling with SQLite)
 - SQLite dev libraries (if compiling with SQLite)
 
-##Make Commands
+## Customizing the build
 
-There are three different ways to build Packet Guardian:
+The build can be customized by which database backends are compiled. This is controlled using the following build tags:
 
-- `make`
-- `make dist`
-- `make local-install`
+- `dball` (default): Compile all database backends.
+- `dbmysql`: Compile the MySQL database backend.
+- `dbsqlite`: Compile the SQLite database backend. Requires GCC and SQLite dev libraries.
+
+Example building only MySQL: `BUILDTAGS=dbmysql make`. Or without CGO: `CGO_ENABLED=0 BUILDTAGS=dbmysql make`.
+
+## Make Commands
 
 All the instructions below assume you've cloned the repo and have `cd`ed into it.
 
-###make
+### make
 
-This command will run `go build` and output the executable to `$REPO_DIR/bin`. Although similar to `make local-install`, like `go install` it does not save compiled packages. Typically using `make local-install` is the preferred method since it will save compiled packages and use those if they haven't been edited saving valuable dev time.
+Run the test suite and build both components.
 
-###make local-install
+### make management
 
-This command will run `go install` but with $GOBIN set to `$REPO_DIR/bin`. Meaning you can then run Packet Guardian using `bin/pg` from the repo directory.
+Build only the web management interface.
 
-###make dist
+### make dhcp
+
+Build only the DHCP server.
+
+### make doc
+
+Start a local godoc server.
+
+### make fmt
+
+Run `go fmt`.
+
+### make test
+
+Run test suite.
+
+### make coverage
+
+Run coverage tests.
+
+### make benchmark
+
+Run benchmarks.
+
+### make lint
+
+Run `golint`. Requires `github.com/golang/lint` to be installed: `go get github.com/golang/lint/golint`
+
+### make vet
+
+Run `go vet`.
+
+### make dist
 
 This command will create a distributable tar file. The version number is determined by the latest git tag and commit. The new tar file will be in the dist folder. It can be extracted using `tar -xzf $path_to_file`. This will extract the archive into the folder `packet-guardian` in the current directory. For example, if you're in the folder `/opt` and run the tar command, Packet Guardian will be located at `/etc/packet-guardian`.
+
+### make clean
+
+Clean up built binaries, logs, session data, etc.
+
+### make docker
+
+Build the Packet Guardian Docker image.

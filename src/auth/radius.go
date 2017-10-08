@@ -10,8 +10,8 @@ import (
 
 	"github.com/lfkeitel/verbose"
 	"github.com/oec/goradius"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -19,19 +19,19 @@ func init() {
 }
 
 type radAuthenticator struct {
-	auther *radius.Authenticator
+	a *radius.Authenticator
 }
 
-func (rad *radAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) bool {
+func (rad *radAuthenticator) checkLogin(username, password string, r *http.Request) bool {
 	e := common.GetEnvironmentFromContext(r)
-	if rad.auther == nil {
-		rad.auther = radius.New(
+	if rad.a == nil {
+		rad.a = radius.New(
 			e.Config.Auth.Radius.Servers[0],
 			strconv.Itoa(e.Config.Auth.Radius.Port),
 			e.Config.Auth.Radius.Secret,
 		)
 	}
-	ok, err := rad.auther.Authenticate(r.FormValue("username"), r.FormValue("password"))
+	ok, err := rad.a.Authenticate(username, password)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -44,7 +44,7 @@ func (rad *radAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 		return false
 	}
 
-	user, err := models.GetUserByUsername(e, r.FormValue("username"))
+	user, err := stores.GetUserStore(e).GetUserByUsername(username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -57,10 +57,8 @@ func (rad *radAuthenticator) loginUser(r *http.Request, w http.ResponseWriter) b
 			"username": user.Username,
 			"package":  "auth:radius",
 		}).Info("User expired")
-		user.Release()
 		return false
 	}
 
-	user.Release()
 	return true
 }

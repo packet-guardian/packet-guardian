@@ -5,7 +5,7 @@
 /**
  * This application runs the Packet Guardian DHCP server as a separate process.
  * By default, the main PG binary will not run a DHCP server and it may be better
- * in some circumstances to not allow the main binary to run with root privilages
+ * in some circumstances to not allow the main binary to run with root privileges
  * as they are needed to bind to DHCP port 69.
  */
 
@@ -14,20 +14,23 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"time"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
-	"github.com/usi-lfkeitel/pg-dhcp"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/db"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
+	"github.com/packet-guardian/pg-dhcp"
 )
 
 var (
-	configFile string
-	dev        bool
-	testConfig bool
-	verFlag    bool
+	configFile         string
+	dev                bool
+	testMainConfigFlag bool
+	testDHCPConfigFlag bool
+	verFlag            bool
 
 	version   = ""
 	buildTime = ""
@@ -36,9 +39,10 @@ var (
 )
 
 func init() {
-	flag.StringVar(&configFile, "c", "", "Configuration file")
+	flag.StringVar(&configFile, "c", "", "Configuration file path")
 	flag.BoolVar(&dev, "d", false, "Run in development mode")
-	flag.BoolVar(&testConfig, "t", false, "Test DHCP config")
+	flag.BoolVar(&testMainConfigFlag, "t", false, "Test main configuration file")
+	flag.BoolVar(&testDHCPConfigFlag, "td", false, "Test DHCP server configuration file")
 	flag.BoolVar(&verFlag, "version", false, "Display version information")
 	flag.BoolVar(&verFlag, "v", verFlag, "Display version information")
 }
@@ -51,7 +55,12 @@ func main() {
 		return
 	}
 
-	if testConfig {
+	if testMainConfigFlag {
+		testMainConfig()
+		return
+	}
+
+	if testDHCPConfigFlag {
 		testDHCPConfig()
 		return
 	}
@@ -91,7 +100,7 @@ func main() {
 		time.Sleep(2)
 	}(e)
 
-	e.DB, err = common.NewDatabaseAccessor(e)
+	e.DB, err = db.NewDatabaseAccessor(e)
 	if err != nil {
 		e.Log.WithField("error", err).Fatal("Error loading database")
 	}
@@ -106,8 +115,8 @@ func main() {
 	}
 
 	dhcpPkgConfig := &dhcp.ServerConfig{
-		LeaseStore:  models.NewLeaseStore(e),
-		DeviceStore: models.NewDHCPDeviceStore(e),
+		LeaseStore:  stores.NewLeaseStore(e),
+		DeviceStore: &dhcpDeviceStore{e: e},
 		Env:         dhcp.EnvDev,
 		Log:         common.NewLogger(e.Config, "dhcp").Logger,
 	}
@@ -119,14 +128,12 @@ func main() {
 	e.Log.Fatal(handler.ListenAndServe())
 }
 
-func testDHCPConfig() {
-	_, err := dhcp.ParseFile(configFile)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		os.Exit(1)
-	}
+type dhcpDeviceStore struct {
+	e *common.Environment
+}
 
-	fmt.Println("Configuration looks good")
+func (d *dhcpDeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (dhcp.Device, error) {
+	return stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
 }
 
 func displayVersionInfo() {
@@ -138,4 +145,23 @@ Built:       %s
 Compiled by: %s
 Go version:  %s
 `, version, buildTime, builder, goversion)
+}
+
+func testMainConfig() {
+	_, err := common.NewConfig(configFile)
+	if err != nil {
+		fmt.Printf("Error loading configuration: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Configuration looks good")
+}
+
+func testDHCPConfig() {
+	_, err := dhcp.ParseFile(configFile)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Configuration looks good")
 }

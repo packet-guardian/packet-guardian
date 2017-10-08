@@ -5,147 +5,84 @@
 package models
 
 import (
-	"errors"
+	"encoding/json"
 	"net"
 	"time"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
+
+type DeviceStore interface {
+	Save(*Device) error
+	Delete(*Device) error
+	DeleteAllDeviceForUser(u *User) error
+}
+
+type LeaseStore interface {
+	GetLeaseHistory(net.HardwareAddr) ([]LeaseHistory, error)
+	GetLatestLease(net.HardwareAddr) LeaseHistory
+	ClearLeaseHistory(net.HardwareAddr) error
+}
+
+type LeaseHistory interface {
+	GetID() int
+	GetIP() net.IP
+	GetMAC() net.HardwareAddr
+	GetNetworkName() string
+	GetStartTime() time.Time
+	GetEndTime() time.Time
+}
+
+type BlacklistItem interface {
+	Blacklist()
+	Unblacklist()
+	IsBlacklisted(string) bool
+	Save(string) error
+}
 
 // Device represents a device in the system
 type Device struct {
 	e              *common.Environment
-	ID             int
-	MAC            net.HardwareAddr
-	Username       string
-	Description    string
-	RegisteredFrom net.IP
-	Platform       string
-	Expires        time.Time
-	DateRegistered time.Time
-	UserAgent      string
-	blacklist      *blacklistItem
-	LastSeen       time.Time
-	Leases         []*LeaseHistory
+	deviceStore    DeviceStore
+	leaseStore     LeaseStore
+	ID             int              `json:"id"`
+	MAC            net.HardwareAddr `json:"mac"`
+	Username       string           `json:"username"`
+	Description    string           `json:"description"`
+	RegisteredFrom net.IP           `json:"registered_from"`
+	Platform       string           `json:"platform"`
+	Expires        time.Time        `json:"-"`
+	DateRegistered time.Time        `json:"-"`
+	UserAgent      string           `json:"-"`
+	blacklist      BlacklistItem
+	LastSeen       time.Time      `json:"-"`
+	Leases         []LeaseHistory `json:"-"`
 }
 
-func newDevice(e *common.Environment) *Device {
+func NewDevice(e *common.Environment, s DeviceStore, l LeaseStore, b BlacklistItem) *Device {
 	return &Device{
-		e:         e,
-		blacklist: newBlacklistItem(getBlacklistStore(e)),
+		e:           e,
+		deviceStore: s,
+		leaseStore:  l,
+		blacklist:   b,
 	}
 }
 
-func GetDeviceByMAC(e *common.Environment, mac net.HardwareAddr) (*Device, error) {
-	sql := `WHERE "mac" = ?`
-	devices, err := getDevicesFromDatabase(e, sql, mac.String())
-	if devices == nil || len(devices) == 0 {
-		dev := newDevice(e)
-		dev.MAC = mac
-		return dev, err
-	}
-	return devices[0], nil
-}
-
-func GetDeviceByID(e *common.Environment, id int) (*Device, error) {
-	sql := `WHERE "id" = ?`
-	devices, err := getDevicesFromDatabase(e, sql, id)
-	if devices == nil || len(devices) == 0 {
-		return newDevice(e), err
-	}
-	return devices[0], nil
-}
-
-func GetDevicesForUser(e *common.Environment, u *User) ([]*Device, error) {
-	sql := `WHERE "username" = ? ORDER BY "mac"`
-	if e.DB.Driver == "sqlite" {
-		sql += " COLLATE NOCASE"
-	}
-	sql += " ASC"
-	return getDevicesFromDatabase(e, sql, u.Username)
-}
-
-func GetDeviceCountForUser(e *common.Environment, u *User) (int, error) {
-	sql := `SELECT count(*) as "device_count" FROM "device" WHERE "username" = ?`
-	row := e.DB.QueryRow(sql, u.Username)
-	var deviceCount int
-	err := row.Scan(&deviceCount)
-	if err != nil {
-		return 0, err
-	}
-	return deviceCount, nil
-}
-
-func GetAllDevices(e *common.Environment) ([]*Device, error) {
-	return getDevicesFromDatabase(e, "")
-}
-
-func SearchDevicesByField(e *common.Environment, field, pattern string) ([]*Device, error) {
-	sql := `WHERE "` + field + `" LIKE ?`
-	return getDevicesFromDatabase(e, sql, pattern)
-}
-
-func getDevicesFromDatabase(e *common.Environment, where string, values ...interface{}) ([]*Device, error) {
-	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen" FROM "device" ` + where
-
-	rows, err := e.DB.Query(sql, values...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var results []*Device
-	for rows.Next() {
-		var id int
-		var macStr string
-		var username string
-		var registeredFrom string
-		var platform string
-		var expires int64
-		var dateRegistered int64
-		var ua string
-		var description string
-		var lastSeen int64
-
-		err := rows.Scan(
-			&id,
-			&macStr,
-			&username,
-			&registeredFrom,
-			&platform,
-			&expires,
-			&dateRegistered,
-			&ua,
-			&description,
-			&lastSeen,
-		)
-		if err != nil {
-			continue
-		}
-
-		mac, _ := net.ParseMAC(macStr)
-
-		device := newDevice(e)
-		device.ID = id
-		device.MAC = mac
-		device.Username = username
-		device.Description = description
-		device.RegisteredFrom = net.ParseIP(registeredFrom)
-		device.Platform = platform
-		device.Expires = time.Unix(expires, 0)
-		device.DateRegistered = time.Unix(dateRegistered, 0)
-		device.UserAgent = ua
-		device.LastSeen = time.Unix(lastSeen, 0)
-
-		results = append(results, device)
-	}
-	return results, nil
-}
-
-func DeleteAllDeviceForUser(e *common.Environment, u *User) error {
-	sql := `DELETE FROM "device" WHERE "username" = ?`
-	_, err := e.DB.Exec(sql, u.Username)
-	return err
+func (d *Device) MarshalJSON() ([]byte, error) {
+	type Alias Device
+	return json.Marshal(&struct {
+		*Alias
+		Expires        time.Time `json:"expires"`
+		DateRegistered time.Time `json:"registered"`
+		LastSeen       time.Time `json:"last_seen"`
+		Blacklisted    bool      `json:"blacklisted"`
+	}{
+		Alias:          (*Alias)(d),
+		Expires:        d.Expires.UTC(),
+		DateRegistered: d.DateRegistered.UTC(),
+		LastSeen:       d.LastSeen.UTC(),
+		Blacklisted:    d.IsBlacklisted(),
+	})
 }
 
 func (d *Device) GetID() int {
@@ -161,15 +98,15 @@ func (d *Device) GetUsername() string {
 }
 
 func (d *Device) IsBlacklisted() bool {
-	return d.blacklist.isBlacklisted(d.MAC.String())
+	return d.blacklist.IsBlacklisted(d.MAC.String())
 }
 
 func (d *Device) SetBlacklist(b bool) {
 	if b {
-		d.blacklist.blacklist()
+		d.blacklist.Blacklist()
 		return
 	}
-	d.blacklist.unblacklist()
+	d.blacklist.Unblacklist()
 }
 
 func (d *Device) IsRegistered() bool {
@@ -184,7 +121,7 @@ func (d *Device) SetLastSeen(t time.Time) {
 // table. If lease history is disabled, this function will use the active lease
 // table which won't be as accurate, and won't show continuity.
 func (d *Device) LoadLeaseHistory() error {
-	leases, err := GetLeaseStore(d.e).GetLeaseHistory(d.MAC)
+	leases, err := d.leaseStore.GetLeaseHistory(d.MAC)
 	if err != nil {
 		return err
 	}
@@ -195,24 +132,8 @@ func (d *Device) LoadLeaseHistory() error {
 // GetCurrentLease will return the last known lease for the device that has
 // not expired. If two leases are currently active, it will return the lease
 // with the newest start date. If no current lease is found, returns nil.
-func (d *Device) GetCurrentLease() *LeaseHistory {
-	// Instead of using the lease history table, this always uses the active
-	// lease table. Lease history may be disabled so it can't be relied on.
-	// Since this is the current Active lease, it makes sense to use the active table.
-	lease, err := GetLeaseStore(d.e).SearchLeases(
-		`"mac" = ? ORDER BY "start" DESC LIMIT 1`,
-		d.MAC.String(),
-	)
-	if err != nil || lease == nil || len(lease) == 0 || lease[0].End.Before(time.Now()) {
-		return nil
-	}
-	return &LeaseHistory{
-		IP:      lease[0].IP,
-		MAC:     lease[0].MAC,
-		Network: lease[0].Network,
-		Start:   lease[0].Start,
-		End:     lease[0].End,
-	}
+func (d *Device) GetCurrentLease() LeaseHistory {
+	return d.leaseStore.GetLatestLease(d.MAC)
 }
 
 func (d *Device) IsExpired() bool {
@@ -220,73 +141,23 @@ func (d *Device) IsExpired() bool {
 }
 
 func (d *Device) SaveToBlacklist() error {
-	return d.blacklist.save(d.MAC.String())
+	return d.blacklist.Save(d.MAC.String())
 }
 
 func (d *Device) Save() error {
-	if d.ID == 0 {
-		return d.saveNew()
-	}
-	return d.updateExisting()
-}
-
-func (d *Device) updateExisting() error {
-	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "description" = ?, "last_seen" = ? WHERE "id" = ?`
-
-	_, err := d.e.DB.Exec(
-		sql,
-		d.MAC.String(),
-		d.Username,
-		d.RegisteredFrom.String(),
-		d.Platform,
-		d.Expires.Unix(),
-		d.DateRegistered.Unix(),
-		d.UserAgent,
-		d.Description,
-		d.LastSeen.Unix(),
-		d.ID,
-	)
-	if err != nil {
+	if err := d.deviceStore.Save(d); err != nil {
 		return err
 	}
-	return d.SaveToBlacklist()
-}
-
-func (d *Device) saveNew() error {
-	if d.Username == "" {
-		return errors.New("Username cannot be empty")
-	}
-
-	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen") VALUES (?,?,?,?,?,?,?,?,?)`
-
-	result, err := d.e.DB.Exec(
-		sql,
-		d.MAC.String(),
-		d.Username,
-		d.RegisteredFrom.String(),
-		d.Platform,
-		d.Expires.Unix(),
-		d.DateRegistered.Unix(),
-		d.UserAgent,
-		d.Description,
-		d.LastSeen.Unix(),
-	)
-	if err != nil {
-		return err
-	}
-	id, _ := result.LastInsertId()
-	d.ID = int(id)
 	return d.SaveToBlacklist()
 }
 
 func (d *Device) Delete() error {
-	sql := `DELETE FROM "device" WHERE "id" = ?`
-	_, err := d.e.DB.Exec(sql, d.ID)
-	if err != nil {
+	if err := d.deviceStore.Delete(d); err != nil {
 		return err
 	}
+
 	if d.e.Config.Leases.DeleteWithDevice {
-		ClearLeaseHistory(d.e, d.MAC)
+		d.leaseStore.ClearLeaseHistory(d.MAC)
 	}
 	return nil
 }

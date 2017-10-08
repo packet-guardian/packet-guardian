@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 // responseWriter is an http.ResponseWriter that keeps track of the length

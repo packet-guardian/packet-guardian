@@ -25,11 +25,13 @@ type FileHandler struct {
 // In file mode, all log messages are written to a single file.
 // In directory mode, each level is written to it's own file.
 func NewFileHandler(path string) (*FileHandler, error) {
+	path, _ = filepath.Abs(path)
+
 	f := &FileHandler{
 		min:       LogLevelDebug,
 		max:       LogLevelFatal,
 		path:      path,
-		formatter: &LineFormatter{},
+		formatter: NewLineFormatter(),
 		m:         sync.Mutex{},
 	}
 
@@ -38,24 +40,35 @@ func NewFileHandler(path string) (*FileHandler, error) {
 	stat, err := os.Stat(path)
 	if err == nil { // Easiest, path exists
 		f.separate = stat.IsDir()
-	} else if os.IsNotExist(err) {
-		// Typically an extension means it's a file
-		ext := filepath.Ext(path)
-		if ext == "" {
-			// Attempt to create the directory
-			if err := os.MkdirAll(path, 0755); err != nil {
-				return nil, err
-			}
-			f.separate = true
-		} else {
-			// Attempt to create the file
-			file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0644)
-			if err != nil {
-				return nil, err
-			}
-			file.Close()
-			f.separate = false
+		return f, nil
+	}
+
+	if !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	// Typically an extension means it's a file
+	ext := filepath.Ext(path)
+	if ext == "" {
+		// Attempt to create the directory
+		if err := os.MkdirAll(path, 0755); err != nil {
+			return nil, err
 		}
+		f.separate = true
+	} else {
+		// Attempt to create directory path
+		dir := filepath.Dir(path)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, err
+		}
+
+		// Attempt to create the file
+		file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0644)
+		if err != nil {
+			return nil, err
+		}
+		file.Close()
+		f.separate = false
 	}
 	return f, nil
 }

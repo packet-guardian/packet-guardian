@@ -12,17 +12,20 @@ import (
 	"strings"
 
 	"github.com/dchest/captcha"
+	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/context"
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
 
-	"github.com/usi-lfkeitel/packet-guardian/src/auth"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/controllers"
-	"github.com/usi-lfkeitel/packet-guardian/src/controllers/api"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
-	mid "github.com/usi-lfkeitel/packet-guardian/src/server/middleware"
-	"github.com/usi-lfkeitel/pg-dhcp"
+	"github.com/packet-guardian/packet-guardian/src/auth"
+	"github.com/packet-guardian/packet-guardian/src/bindata"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/controllers"
+	"github.com/packet-guardian/packet-guardian/src/controllers/api"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
+	mid "github.com/packet-guardian/packet-guardian/src/server/middleware"
+	"github.com/packet-guardian/pg-dhcp"
 )
 
 func LoadRoutes(e *common.Environment) http.Handler {
@@ -30,7 +33,13 @@ func LoadRoutes(e *common.Environment) http.Handler {
 	r.NotFound = http.HandlerFunc(notFoundHandler)
 
 	r.Handler("GET", "/", midStack(e, http.HandlerFunc(rootHandler)))
-	r.ServeFiles("/public/*filepath", http.Dir("./public"))
+	r.ServeFiles(
+		"/public/*filepath",
+		&assetfs.AssetFS{
+			Asset:     bindata.GetAsset,
+			AssetDir:  bindata.GetAssetDir,
+			AssetInfo: bindata.GetAssetInfo,
+			Prefix:    "public"})
 
 	authController := controllers.NewAuthController(e)
 	r.Handler("GET", "/login", midStack(e, http.HandlerFunc(authController.LoginHandler)))
@@ -52,6 +61,7 @@ func LoadRoutes(e *common.Environment) http.Handler {
 		http.HandlerFunc(guestController.VerificationHandler))))
 
 	r.Handler("GET", "/admin/*a", midStack(e, adminRouter(e)))
+	r.Handler("GET", "/api/*a", midStack(e, apiRouter(e)))
 	r.Handler("POST", "/api/*a", midStack(e, apiRouter(e)))
 	r.Handler("DELETE", "/api/*a", midStack(e, apiRouter(e)))
 
@@ -82,7 +92,6 @@ func devRouter(e *common.Environment) http.Handler {
 
 	devController := controllers.NewDevController(e)
 	r.HandlerFunc("GET", "/dev/reloadtemp", devController.ReloadTemplates)
-	r.HandlerFunc("GET", "/dev/reloadconf", devController.ReloadConfiguration)
 
 	h := mid.CheckAdmin(r)
 	h = mid.CheckAuth(h)
@@ -145,12 +154,13 @@ func adminRouter(e *common.Environment) http.Handler {
 func apiRouter(e *common.Environment) http.Handler {
 	r := httprouter.New()
 
-	deviceApiController := api.NewDeviceController(e)
-	r.POST("/api/device", deviceApiController.RegistrationHandler)
-	r.DELETE("/api/device/user/:username", deviceApiController.DeleteHandler)
-	r.POST("/api/device/reassign", deviceApiController.ReassignHandler)
-	r.POST("/api/device/mac/:mac/description", deviceApiController.EditDescriptionHandler)
-	r.POST("/api/device/mac/:mac/expiration", deviceApiController.EditExpirationHandler)
+	deviceAPIController := api.NewDeviceController(e)
+	r.POST("/api/device", deviceAPIController.RegistrationHandler)
+	r.DELETE("/api/device/user/:username", deviceAPIController.DeleteHandler)
+	r.POST("/api/device/reassign", deviceAPIController.ReassignHandler)
+	r.POST("/api/device/mac/:mac/description", deviceAPIController.EditDescriptionHandler)
+	r.POST("/api/device/mac/:mac/expiration", deviceAPIController.EditExpirationHandler)
+	r.GET("/api/device/:mac", deviceAPIController.GetDeviceHandler)
 
 	blacklistController := api.NewBlacklistController(e)
 	r.POST("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)
@@ -159,11 +169,11 @@ func apiRouter(e *common.Environment) http.Handler {
 	r.POST("/api/blacklist/device", blacklistController.BlacklistDeviceHandler)
 	r.DELETE("/api/blacklist/device", blacklistController.BlacklistDeviceHandler)
 
-	userApiController := api.NewUserController(e)
-	r.POST("/api/user", userApiController.UserHandler)
-	r.DELETE("/api/user", userApiController.UserHandler)
+	userAPIController := api.NewUserController(e)
+	r.POST("/api/user", userAPIController.UserHandler)
+	r.DELETE("/api/user", userAPIController.UserHandler)
 
-	return mid.CheckAuth(r)
+	return mid.CheckAuthAPI(r)
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -180,7 +190,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	e := common.GetEnvironmentFromContext(r)
 	ip := common.GetIPFromContext(r)
-	reg, err := dhcp.IsRegisteredByIP(models.GetLeaseStore(e), ip)
+	reg, err := dhcp.IsRegisteredByIP(stores.GetLeaseStore(e), ip)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

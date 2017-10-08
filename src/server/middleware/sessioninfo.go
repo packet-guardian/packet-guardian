@@ -8,14 +8,15 @@ import (
 	"net/http"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 func SetSessionInfo(e *common.Environment, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session := e.Sessions.GetSession(r)
-		sessionUser, err := models.GetUserByUsername(e, session.GetString("username"))
+		sessionUser, err := stores.GetUserStore(e).GetUserByUsername(session.GetString("username"))
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"error":    err,
@@ -34,7 +35,5 @@ func SetSessionInfo(e *common.Environment, next http.Handler) http.Handler {
 		r = common.SetIPToContext(r)
 
 		next.ServeHTTP(w, r)
-
-		sessionUser.Release()
 	})
 }

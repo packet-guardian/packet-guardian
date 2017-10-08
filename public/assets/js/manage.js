@@ -2,10 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 $.onReady(function() {
+    "use strict";
     // Event handlers
     $('[name=add-device-btn]').click(function(e) {
-        isAdmin = $(e.target).data("admin");
-        user = $('[name=username]').value();
+        var isAdmin = $(e.target).data("admin");
+        var user = $('[name=username]').value();
         if (isAdmin !== null) {
             location.href = "/register?manual=1&username=" + user;
         } else {
@@ -35,7 +36,7 @@ $.onReady(function() {
 
     $('.edit-dev-desc').click(function(e) {
         e.stopPropagation();
-        id = $(e.target).data("device");
+        var id = $(e.target).data("device");
         var pmodal = new jsPrompt();
         pmodal.show("Device Description:", $('#device-' + id + '-desc').text(), function(desc) {
             editDeviceDescription(id, desc);
@@ -44,7 +45,7 @@ $.onReady(function() {
 
     // Event callbacks
     function editDeviceDescription(id, desc) {
-        mac = $('#device-' + id + '-mac').text();
+        var mac = $('#device-' + id + '-mac').text();
         API.saveDeviceDescription(mac, desc, function(resp, req) {
             $('#device-' + id + '-desc').text(desc);
             c.FlashMessage("Device description saved", 'success');

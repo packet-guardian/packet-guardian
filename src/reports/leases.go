@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -23,7 +24,7 @@ func leaseReport(e *common.Environment, w http.ResponseWriter, r *http.Request) 
 	networkName := network[0]
 	_, registered := r.URL.Query()["registered"]
 
-	leases, err := models.GetLeaseStore(e).SearchLeases(
+	leases, err := stores.GetLeaseStore(e).SearchLeases(
 		"network = ? AND registered = ? AND end > ?",
 		networkName, registered, time.Now().Unix(),
 	)

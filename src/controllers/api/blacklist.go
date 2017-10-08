@@ -12,11 +12,12 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
-	"github.com/usi-lfkeitel/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
-var invalidMAC = errors.New("Incorrect MAC address format")
+var errInvalidMAC = errors.New("Incorrect MAC address format")
 
 type Blacklist struct {
 	e *common.Environment
@@ -38,7 +39,7 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	user, err := models.GetUserByUsername(b.e, username)
+	user, err := stores.GetUserStore(b.e).GetUserByUsername(username)
 	if err != nil {
 		b.e.Log.WithFields(verbose.Fields{
 			"username": username,
@@ -48,7 +49,6 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
-	defer user.Release()
 
 	if r.Method == "POST" {
 		user.Blacklist()
@@ -103,7 +103,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 	if macStr != "" {
 		devices, err = b.getDevicesFromList(strings.Split(macStr, ","), addToBlacklist)
 		if err != nil {
-			if err == invalidMAC {
+			if err == errInvalidMAC {
 				common.NewAPIResponse(err.Error(), nil).WriteResponse(w, http.StatusBadRequest)
 				return
 			}
@@ -122,7 +122,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 		}
 
 		var user *models.User
-		user, err = models.GetUserByUsername(b.e, username)
+		user, err = stores.GetUserStore(b.e).GetUserByUsername(username)
 		if err != nil {
 			b.e.Log.WithFields(verbose.Fields{
 				"error":   err,
@@ -132,7 +132,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		devices, err = models.GetDevicesForUser(b.e, user)
+		devices, err = stores.GetDeviceStore(b.e).GetDevicesForUser(user)
 		if err != nil {
 			b.e.Log.WithFields(verbose.Fields{
 				"error":   err,
@@ -194,10 +194,10 @@ func (b *Blacklist) getDevicesFromList(l []string, add bool) ([]*models.Device, 
 	for _, deviceMAC := range l {
 		mac, err := net.ParseMAC(deviceMAC)
 		if err != nil {
-			return nil, invalidMAC
+			return nil, errInvalidMAC
 		}
 
-		device, err := models.GetDeviceByMAC(b.e, mac)
+		device, err := stores.GetDeviceStore(b.e).GetDeviceByMAC(mac)
 		if err != nil {
 			return nil, err
 		}
@@ -210,4 +210,14 @@ func (b *Blacklist) getDevicesFromList(l []string, add bool) ([]*models.Device, 
 		devices = append(devices, device)
 	}
 	return devices, nil
+}
+
+func (b *Blacklist) GetBlacklistHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	device := p.ByName("mac")
+
+	if device == "" {
+		// Return all blacklisted entities
+	}
+
+	// Return specific device
 }

@@ -6,12 +6,10 @@ package auth
 
 import (
 	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/usi-lfkeitel/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 const testSomethingHash = "$2a$04$zxGo0fl3SeyWAix1MrxqI.qEgO42Jqx94eAaXtUfqr.SK/pSZBEq2"
@@ -60,19 +58,15 @@ func TestLocalAuth(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 
-	req.Form = make(url.Values)
-	req.Form.Add("username", "tester1")
-	req.Form.Add("password", "testSomething")
-
 	local := &localAuthenticator{}
 
-	if !local.loginUser(req, httptest.NewRecorder()) {
+	if !local.checkLogin("tester1", "testSomething", req) {
 		t.Error("Failed to login user. Expected true, got false")
 	}
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expections: %s", err)
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
 
@@ -120,18 +114,14 @@ func TestFailedLocalAuth(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 
-	req.Form = make(url.Values)
-	req.Form.Add("username", "tester1")
-	req.Form.Add("password", "testSomething1") // Incorrect password
-
 	local := &localAuthenticator{}
 
-	if local.loginUser(req, httptest.NewRecorder()) {
+	if local.checkLogin("tester1", "testSomething1", req) {
 		t.Error("Failed to login user. Expected false, got true")
 	}
 
 	// we make sure that all expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expections: %s", err)
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
