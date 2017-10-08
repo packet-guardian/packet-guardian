@@ -12,8 +12,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Line web to pg for aesthetics
+# Link web to pg for aesthetics
 ln -s $(pwd)/bin/pg $(pwd)/bin/web
 
 # Launch the application
-bin/$1 -c $CONFIG_FILE
+exec bin/$1 -c $CONFIG_FILE

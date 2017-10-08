@@ -1,6 +1,7 @@
 NAME := packet-guardian
 DESC := A captive portal for today's networks
 VERSION := $(shell git describe --tags --always --dirty)
+GITCOMMIT := $(shell git rev-parse HEAD)
 GOVERSION := $(shell go version)
 BUILDTIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILDDATE := $(shell date -u +"%B %d, %Y")
@@ -26,9 +27,12 @@ LDFLAGS := -X 'main.version=$(VERSION)' \
 			-X 'main.builder=$(BUILDER)' \
 			-X 'main.goversion=$(GOVERSION)'
 
-.PHONY: all doc fmt alltests test coverage benchmark lint vet dhcp management dist clean docker docker-compile docker-build codeclimate
+.PHONY: all doc fmt alltests test coverage benchmark lint vet dhcp management dist clean docker docker-compile docker-build codeclimate bindata
 
-all: test management dhcp
+all: bindata test management dhcp
+
+bindata:
+	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/...
 
 dhcp:
 	GOBIN="$(GOBIN)" go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
@@ -79,8 +83,6 @@ dist: vet all
 	@rm -rf ./dist
 	@mkdir -p dist/packet-guardian
 	@cp -R config dist/packet-guardian/
-	@cp -R public dist/packet-guardian/
-	@cp -R templates dist/packet-guardian/
 
 	@cp LICENSE dist/packet-guardian/
 	@cp README.md dist/packet-guardian/
@@ -101,10 +103,9 @@ clean:
 	rm -rf ./logs/*
 	rm -rf ./sessions/*
 
-docker: docker-compile docker-build
-
-docker-compile:
-	docker run --rm -v $(PWD):$(DOCKER_DIR) -w $(DOCKER_DIR) -e CGO_ENABLED=0 -e BUILDTAGS=dbmysql -e DIST_FILENAME=dist.tar.gz golang:1.8 make dist
-
-docker-build:
-	docker build -t packet-guardian .
+docker:
+	docker build \
+		--build-arg version='$(VERSION)' \
+		--build-arg builddate='$(BUILDTIME)' \
+		--build-arg vcsref='$(GITCOMMIT)' \
+		-t packet-guardian .

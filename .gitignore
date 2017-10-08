@@ -8,3 +8,5 @@ dist/
 .vscode/
 codeclimate.html
 node_modules/
+custom/
+src/bindata/bindata.go

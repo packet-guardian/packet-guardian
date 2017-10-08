@@ -31,3 +31,4 @@ exclude_paths:
   - node_modules/
   - public/assets/styles/font-awesome.css
   - public/assets/styles/normalize.css
+  - src/bindata/bindata.go

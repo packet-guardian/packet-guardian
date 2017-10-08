@@ -37,8 +37,22 @@ func (c *casAuthenticator) checkLogin(username, password string, r *http.Request
 			}).Error("Failed to parse CAS url")
 			return false
 		}
+
 		c.client = &cas.Client{
 			URL: casURL,
+		}
+
+		if e.Config.Auth.CAS.ServiceURL != "" {
+			serviceURL, err := url.Parse(e.Config.Auth.CAS.ServiceURL)
+			if err != nil {
+				e.Log.WithFields(verbose.Fields{
+					"error":   err,
+					"url":     e.Config.Auth.CAS.ServiceURL,
+					"package": "auth:cas",
+				}).Notice("Failed to parse CAS request url, using default")
+			} else {
+				c.client.ServiceURL = serviceURL
+			}
 		}
 	}
 

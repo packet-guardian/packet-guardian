@@ -35,8 +35,12 @@ func sanitisedURLString(unclean *url.URL) string {
 	return sanitisedURL(unclean).String()
 }
 
-// requestURL determines an absolute URL from the http.Request.
-func requestURL(r *http.Request) (*url.URL, error) {
+// serviceURL determines an absolute URL from the http.Request.
+func (c *Client) serviceURL(r *http.Request) (*url.URL, error) {
+	if c.ServiceURL != nil {
+		return c.ServiceURL, nil
+	}
+
 	u, err := url.Parse(r.URL.String())
 	if err != nil {
 		return nil, err
@@ -55,7 +59,8 @@ func requestURL(r *http.Request) (*url.URL, error) {
 }
 
 type Client struct {
-	URL *url.URL
+	URL        *url.URL
+	ServiceURL *url.URL
 }
 
 func (c *Client) AuthenticateUser(username, password string, r *http.Request) (*AuthenticationResponse, error) {
@@ -198,7 +203,7 @@ func (c *Client) loginUrlForRequestor(r *http.Request) (string, error) {
 		return "", err
 	}
 
-	service, err := requestURL(r)
+	service, err := c.serviceURL(r)
 	if err != nil {
 		return "", err
 	}
@@ -216,7 +221,7 @@ func (c *Client) validateUrlForRequest(ticket string, r *http.Request) (string, 
 		return "", err
 	}
 
-	service, err := requestURL(r)
+	service, err := c.serviceURL(r)
 	if err != nil {
 		return "", err
 	}
@@ -235,7 +240,7 @@ func (c *Client) serviceValidateUrlForRequest(ticket string, r *http.Request) (s
 		return "", err
 	}
 
-	service, err := requestURL(r)
+	service, err := c.serviceURL(r)
 	if err != nil {
 		return "", err
 	}
