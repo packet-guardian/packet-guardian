@@ -2,6 +2,7 @@ language: go
 go:
     - 1.7
     - 1.8
+    - 1.9
     - tip
 
 matrix:
@@ -13,5 +14,7 @@ branches:
         - master
         - develop
 
-install: true
-script: make test
+install: go get -u github.com/jteeuwen/go-bindata/...
+script: 
+    - make bindata
+    - make test
