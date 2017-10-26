@@ -11,7 +11,7 @@ PWD := $(shell pwd)
 GOBIN := $(PWD)/bin
 CODECLIMATE_CODE := $(PWD)
 
-ifeq ($(shell uname -o), Cygwin)
+ifeq ($(shell uname -s), Cygwin)
 CODECLIMATE_CODE := //c/cygwin64$(PWD)
 PWD := $(shell cygpath -w -a `pwd`)
 GOBIN := $(PWD)\bin
