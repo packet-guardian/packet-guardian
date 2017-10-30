@@ -100,8 +100,7 @@ func TestLogoutUser(t *testing.T) {
 	session.Set("loggedin", true)
 	session.Set("username", "Tester")
 
-	user := models.NewUser(e, stores.NewUserStore(e), stores.NewBlacklistItem(stores.NewBlacklistStore(e)))
-	user.Username = "Tester"
+	user := models.NewUser(e, stores.NewUserStore(e), stores.NewBlacklistItem(stores.NewBlacklistStore(e)), "Tester")
 
 	req, _ := http.NewRequest("", "", nil)
 	req = common.SetEnvironmentToContext(req, e)

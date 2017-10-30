@@ -34,7 +34,7 @@ func GetUserStore(e *common.Environment) *UserStore {
 
 func (s *UserStore) GetUserByUsername(username string) (*models.User, error) {
 	if username == "" {
-		return models.NewUser(s.e, s, NewBlacklistItem(GetBlacklistStore(s.e))), nil
+		return models.NewUser(s.e, s, NewBlacklistItem(GetBlacklistStore(s.e)), ""), nil
 	}
 
 	username = strings.ToLower(username)
@@ -42,12 +42,9 @@ func (s *UserStore) GetUserByUsername(username string) (*models.User, error) {
 	sql := `WHERE "username" = ?`
 	users, err := s.getUsersFromDatabase(sql, username)
 	if len(users) == 0 {
-		u := models.NewUser(s.e, s, NewBlacklistItem(GetBlacklistStore(s.e)))
-		u.Username = username
-		u.LoadRights()
+		u := models.NewUser(s.e, s, NewBlacklistItem(GetBlacklistStore(s.e)), username)
 		return u, err
 	}
-	users[0].LoadRights()
 	return users[0], nil
 }
 
@@ -104,9 +101,8 @@ func (s *UserStore) getUsersFromDatabase(where string, values ...interface{}) ([
 			continue
 		}
 
-		user := models.NewUser(s.e, s, NewBlacklistItem(GetBlacklistStore(s.e)))
+		user := models.NewUser(s.e, s, NewBlacklistItem(GetBlacklistStore(s.e)), username)
 		user.ID = id
-		user.Username = username
 		user.HasPassword = (password != "")
 		user.DeviceLimit = models.UserDeviceLimit(deviceLimit)
 		user.ValidStart = time.Unix(validStart, 0)
@@ -126,6 +122,7 @@ func (s *UserStore) getUsersFromDatabase(where string, values ...interface{}) ([
 			Mode:  models.UserExpiration(expirationType),
 			Value: defaultExpiration,
 		}
+		user.LoadRights() // Above all rights are overriden, we need to reapply admin and configured rights
 		results = append(results, user)
 	}
 	return results, nil

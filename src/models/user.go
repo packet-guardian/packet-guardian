@@ -40,7 +40,7 @@ type User struct {
 }
 
 // NewUser creates a new base user
-func NewUser(e *common.Environment, us UserStore, b BlacklistItem) *User {
+func NewUser(e *common.Environment, us UserStore, b BlacklistItem, username string) *User {
 	// User with the following attributes:
 	// Device limit is global
 	// Device Expiration is global
@@ -50,6 +50,7 @@ func NewUser(e *common.Environment, us UserStore, b BlacklistItem) *User {
 		e:                e,
 		blacklist:        b,
 		store:            us,
+		Username:         username,
 		DeviceLimit:      UserDeviceLimitGlobal,
 		DeviceExpiration: &UserDeviceExpiration{Mode: UserDeviceExpirationGlobal},
 		ValidStart:       time.Unix(0, 0),
@@ -82,6 +83,10 @@ func (u *User) LoadRights() {
 	if common.StringInSlice(u.Username, u.e.Config.Auth.APIReadWriteUsers) {
 		u.Rights = u.Rights.With(APIRead)
 		u.Rights = u.Rights.With(APIWrite)
+	}
+
+	if u.IsBlacklisted() {
+		u.Rights = u.Rights.Without(ManageOwnRights)
 	}
 }
 
