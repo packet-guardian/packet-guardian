@@ -115,9 +115,6 @@ func (h *Handler) ServeDHCP(p dhcp4.Packet, msgType dhcp4.MessageType, options d
 			}).Critical("Recovering from DHCP panic")
 		}
 	}()
-	if msgType == dhcp4.Inform {
-		return nil
-	}
 
 	// Log every message
 	if server, ok := options[dhcp4.OptionServerIdentifier]; !ok || net.IP(server).Equal(c.global.serverIdentifier) {
@@ -209,6 +206,7 @@ func (h *Handler) handleDiscover(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pa
 		"mac":        p.CHAddr().String(),
 		"registered": device.IsRegistered(),
 		"network":    network.name,
+		"relay_ip":   p.GIAddr().String(),
 		"action":     "offer",
 	}).Info("Offering lease to client")
 
@@ -336,6 +334,7 @@ func (h *Handler) handleRequest(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 		"mac":         lease.MAC.String(),
 		"duration":    leaseDur.String(),
 		"network":     network.name,
+		"relay_ip":    p.GIAddr().String(),
 		"registered":  device.IsRegistered(),
 		"hostname":    lease.Hostname,
 		"action":      "request_ack",
@@ -401,6 +400,7 @@ func (h *Handler) handleRelease(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 		"ip":         lease.IP.String(),
 		"mac":        lease.MAC.String(),
 		"network":    network.name,
+		"relay_ip":   p.GIAddr().String(),
 		"registered": device.IsRegistered(),
 		"action":     "release",
 	}).Info("Releasing lease")
@@ -453,11 +453,12 @@ func (h *Handler) handleDecline(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pac
 		return nil
 	}
 	h.c.Log.WithFields(verbose.Fields{
-		"ip":        lease.IP.String(),
-		"mac":       lease.MAC.String(),
-		"network":   network.name,
-		"registerd": device.IsRegistered(),
-		"action":    "decline",
+		"ip":         lease.IP.String(),
+		"mac":        lease.MAC.String(),
+		"network":    network.name,
+		"relay_ip":   p.GIAddr().String(),
+		"registered": device.IsRegistered(),
+		"action":     "decline",
 	}).Notice("Abandoned lease")
 	lease.IsAbandoned = true
 	lease.Start = time.Unix(1, 0)
@@ -500,9 +501,11 @@ func (h *Handler) handleInform(p dhcp4.Packet, options dhcp4.Options) dhcp4.Pack
 	leaseOptions := pool.getOptions(device.IsRegistered())
 
 	h.c.Log.WithFields(verbose.Fields{
-		"ip":     ip.String(),
-		"mac":    p.CHAddr().String(),
-		"action": "inform",
+		"ip":       ip.String(),
+		"mac":      p.CHAddr().String(),
+		"network":  network.name,
+		"relay_ip": p.GIAddr().String(),
+		"action":   "inform",
 	}).Info("Informing client")
 
 	return dhcp4.ReplyPacket(
