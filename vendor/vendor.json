@@ -69,12 +69,6 @@
 			"revisionTime": "2017-03-22T19:33:53Z"
 		},
 		{
-			"checksumSHA1": "KvUWnb+svMKP6VEKobmj9Y/sI4w=",
-			"path": "github.com/mattn/go-sqlite3",
-			"revision": "b5c99a720374818b629fd1fbf6d2cbb4fb9a5644",
-			"revisionTime": "2016-08-21T07:55:01Z"
-		},
-		{
 			"checksumSHA1": "A6nZdZ1/lTOVINhIndyw2ZWN9JU=",
 			"path": "github.com/naoina/go-stringutil",
 			"revision": "6b638e95a32d0c1131db0e7fe83775cbea4a0d0b",
