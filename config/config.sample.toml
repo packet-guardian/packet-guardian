@@ -96,19 +96,6 @@ defaultDeviceExpirationType = "rolling"
 ## Automatic registrations will determine the platform based on the user agent.
 manualRegPlatforms = []
 
-[leases]
-## The history feature is experimental, enable at your own risk. If history is
-## disabled, the old history mechanism will be used.
-
-## Enables lease history
-historyEnabled = true
-
-## Delete lease history when device is deleted
-deleteWithDevice = true
-
-## Delete lease history for a device after this duration. Default is 4 weeks
-# deleteAfter = "672h"
-
 [guest]
 ## Enabled guest registrations
 enabled = true

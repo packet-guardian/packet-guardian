@@ -21,11 +21,9 @@ type DeviceStore interface {
 type LeaseStore interface {
 	GetLeaseHistory(net.HardwareAddr) ([]LeaseHistory, error)
 	GetLatestLease(net.HardwareAddr) LeaseHistory
-	ClearLeaseHistory(net.HardwareAddr) error
 }
 
 type LeaseHistory interface {
-	GetID() int
 	GetIP() net.IP
 	GetMAC() net.HardwareAddr
 	GetNetworkName() string
@@ -156,10 +154,6 @@ func (d *Device) Save() error {
 func (d *Device) Delete() error {
 	if err := d.deviceStore.Delete(d); err != nil {
 		return err
-	}
-
-	if d.e.Config.Leases.DeleteWithDevice {
-		d.leaseStore.ClearLeaseHistory(d.MAC)
 	}
 	return nil
 }

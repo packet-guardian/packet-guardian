@@ -12,7 +12,7 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
-const DBVersion = 3
+const DBVersion = 4
 
 type dbInit interface {
 	init(*common.DatabaseAccessor, *common.Config) error

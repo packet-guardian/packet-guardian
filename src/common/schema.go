@@ -47,15 +47,6 @@ var (
 		"registered",
 	}
 
-	LeaseHistoryTableCols = []string{
-		"id",
-		"ip",
-		"mac",
-		"network",
-		"start",
-		"end",
-	}
-
 	UserTableCols = []string{
 		"id",
 		"username",

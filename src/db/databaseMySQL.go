@@ -32,17 +32,17 @@ func newmySQLDBInit() *mySQLDB {
 	m := &mySQLDB{}
 
 	m.createFuncs = map[string]func(*common.DatabaseAccessor) error{
-		"blacklist":     m.createBlacklistTable,
-		"device":        m.createDeviceTable,
-		"lease":         m.createLeaseTable,
-		"lease_history": m.createLeaseHistoryTable,
-		"settings":      m.createSettingTable,
-		"user":          m.createUserTable,
+		"blacklist": m.createBlacklistTable,
+		"device":    m.createDeviceTable,
+		"lease":     m.createLeaseTable,
+		"settings":  m.createSettingTable,
+		"user":      m.createUserTable,
 	}
 
 	m.migrateFuncs = []migrateFunc{
-		1: m.migrate1,
-		2: m.migrate2,
+		1: m.migrateFrom1,
+		2: m.migrateFrom2,
+		3: m.migrateFrom3,
 	}
 
 	return m
@@ -214,20 +214,6 @@ func (m *mySQLDB) createLeaseTable(d *common.DatabaseAccessor) error {
 	return err
 }
 
-func (m *mySQLDB) createLeaseHistoryTable(d *common.DatabaseAccessor) error {
-	sql := `CREATE TABLE "lease_history" (
-	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
-	    "ip" VARCHAR(15) NOT NULL,
-	    "mac" VARCHAR(17) NOT NULL,
-	    "network" TEXT NOT NULL,
-	    "start" INTEGER NOT NULL,
-	    "end" INTEGER NOT NULL
-	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1`
-
-	_, err := d.DB.Exec(sql)
-	return err
-}
-
 func (m *mySQLDB) createSettingTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "settings" (
 	    "id" VARCHAR(255) PRIMARY KEY NOT NULL,
@@ -272,7 +258,7 @@ func (m *mySQLDB) createUserTable(d *common.DatabaseAccessor) error {
 	return err
 }
 
-func (m *mySQLDB) migrate1(d *common.DatabaseAccessor, c *common.Config) error {
+func (m *mySQLDB) migrateFrom1(d *common.DatabaseAccessor, c *common.Config) error {
 	// Move device blacklist to blacklist table
 	bd, err := d.DB.Query(`SELECT "mac" FROM "device" WHERE "blacklisted" = 1`)
 	if err != nil {
@@ -303,7 +289,7 @@ func (m *mySQLDB) migrate1(d *common.DatabaseAccessor, c *common.Config) error {
 	return nil
 }
 
-func (m *mySQLDB) migrate2(d *common.DatabaseAccessor, c *common.Config) error {
+func (m *mySQLDB) migrateFrom2(d *common.DatabaseAccessor, c *common.Config) error {
 	sql := `ALTER TABLE "user" ADD COLUMN (
 		"ui_group" VARCHAR(20) NOT NULL DEFAULT 'default',
 		"api_group" VARCHAR(20) NOT NULL DEFAULT 'disable',
@@ -361,4 +347,10 @@ func migrateUserGroup(e *common.Environment, members []string, group, groupName 
 		}
 	}
 	return nil
+}
+
+func (m *mySQLDB) migrateFrom3(d *common.DatabaseAccessor, c *common.Config) error {
+	sql := `DROP TABLE IF EXISTS "lease_history"`
+	_, err := d.DB.Exec(sql)
+	return err
 }
