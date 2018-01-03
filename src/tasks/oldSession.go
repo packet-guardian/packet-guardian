@@ -13,8 +13,6 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
-const sessionsDir string = "sessions"
-
 var sessionExpiration = time.Duration(-24) * time.Hour
 
 func init() {
@@ -32,21 +30,32 @@ func cleanUpExpiredSessions(e *common.Environment) (string, error) {
 }
 
 func cleanFileSystemSessions(e *common.Environment) (string, error) {
-	w := &sessionWalker{n: time.Now().Add(sessionExpiration)}
-	err := filepath.Walk(sessionsDir, w.sessionDirWalker)
-	if err != nil {
+	w := &sessionWalker{
+		n:           time.Now().Add(sessionExpiration),
+		sessionsDir: e.Config.Webserver.SessionsDir,
+	}
+	if err := w.walk(); err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("Deleted %d sessions", w.c), nil
 }
 
 type sessionWalker struct {
-	n time.Time
-	c int
+	n           time.Time
+	c           int
+	sessionsDir string
+}
+
+func (s *sessionWalker) walk() error {
+	return filepath.Walk(s.sessionsDir, s.sessionDirWalker)
 }
 
 func (s *sessionWalker) sessionDirWalker(path string, info os.FileInfo, err error) error {
-	if info.IsDir() && path != sessionsDir {
+	if err != nil {
+		return err
+	}
+
+	if info.IsDir() && path != s.sessionsDir {
 		return filepath.SkipDir
 	}
 	if info.ModTime().Before(s.n) {
