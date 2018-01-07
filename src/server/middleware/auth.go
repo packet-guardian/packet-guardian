@@ -90,15 +90,22 @@ func CheckAdmin(next http.Handler) http.Handler {
 			return
 		}
 
-		if strings.HasPrefix(r.URL.Path, "/admin/users") && !u.Can(models.ViewUsers) {
-			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-			return
+		for prefix, permission := range adminPagePermissions {
+			if strings.HasPrefix(r.URL.Path, prefix) {
+				if !u.Can(permission) {
+					http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+					return
+				}
+				break
+			}
 		}
 
-		if (strings.HasPrefix(r.URL.Path, "/debug") || strings.HasPrefix(r.URL.Path, "/dev")) && !u.Can(models.ViewDebugInfo) {
-			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-			return
-		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+var adminPagePermissions = map[string]models.Permission{
+	"/admin/users": models.ViewUsers,
+	"/debug":       models.ViewDebugInfo,
+	"/dev":         models.ViewDebugInfo,
 }
