@@ -10,3 +10,4 @@ codeclimate.html
 node_modules/
 custom/
 src/bindata/bindata.go
+public/dist/js

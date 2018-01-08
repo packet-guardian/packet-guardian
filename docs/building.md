@@ -1,12 +1,22 @@
 # Building
 
-The distribution package is compiled against 64-bit Linux. However, the application should build for any Go runtime target. GCC is required with CGO if building with SQLite support which is currently the default.
+The distribution package is compiled against 64-bit Linux. However, the application should build for any Go runtime target.
 
 ## Requirements
 
 - Go 1.7+
-- GCC (if compiling with SQLite)
-- SQLite dev libraries (if compiling with SQLite)
+- NPM
+
+## TLDR;
+
+```shell
+# Build the static assets
+npm install
+npm run build:prod
+
+# Build the application binary
+make
+```
 
 ## Customizing the build
 
@@ -14,7 +24,6 @@ The build can be customized by which database backends are compiled. This is con
 
 - `dball` (default): Compile all database backends.
 - `dbmysql`: Compile the MySQL database backend.
-- `dbsqlite`: Compile the SQLite database backend. Requires GCC and SQLite dev libraries.
 
 Example building only MySQL: `BUILDTAGS=dbmysql make`. Or without CGO: `CGO_ENABLED=0 BUILDTAGS=dbmysql make`.
 

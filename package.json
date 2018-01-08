@@ -1,24 +1,30 @@
 {
     "name": "packet-guardian",
-    "version": "1.1.0",
-    "description": "",
     "directories": {
         "doc": "docs"
     },
     "dependencies": {},
     "devDependencies": {
-        "eslint": "^3.17.1"
+        "babel-cli": "^6.26.0",
+        "babel-loader": "^7.1.2",
+        "babel-preset-env": "^1.6.1",
+        "clean-webpack-plugin": "^0.1.17",
+        "eslint": "^4.15.0",
+        "uglifyjs-webpack-plugin": "^1.1.6",
+        "webpack": "^3.10.0",
+        "webpack-merge": "^4.1.1"
     },
     "scripts": {
-        "lint": "./node_modules/.bin/eslint --no-ignore public/assets/js/**.js || true"
+        "lint": "./node_modules/.bin/eslint --no-ignore public/dist/js/**.js || true",
+        "build:dev": "webpack --config webpack.dev.js",
+        "build:prod": "webpack --config webpack.prod.js",
+        "watch": "webpack --config webpack.dev.js --watch"
     },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/packet-guardian/packet-guardian.git"
     },
-    "keywords": [],
-    "author": "",
-    "license": "BSD 3-Clause",
+    "license": "BSD-3-Clause",
     "bugs": {
         "url": "https://github.com/packet-guardian/packet-guardian/issues"
     },

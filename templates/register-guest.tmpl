@@ -18,7 +18,7 @@
             {{if not .config.Guest.DisableCaptcha}}
             <p><img id="captchaImage" src="/captcha/{{.captchaID}}.png" alt="Captcha image"></p>
 
-            <a href="#" onclick="reload()">Reload</a> | <a href="#" onclick="playAudio()">Play Audio</a>
+            <a href="#" id="reload-captcha-btn">Reload</a> | <a href="#" id="play-captcha-btn">Play Audio</a>
 
             <audio id="captchaAudio" controls style="display:none" src="/captcha/{{.captchaID}}.wav?lang=en" preload="none">
                 You browser doesn't support audio.
@@ -52,5 +52,5 @@
         {{end}}
     </form>
 </div>
-{{template "footer" dict "main" $}}
+{{template "footer" dict "main" $ "js" (list "captcha")}}
 {{end}}

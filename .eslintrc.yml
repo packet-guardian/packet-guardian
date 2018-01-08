@@ -1,6 +1,6 @@
 ---
 parserOptions:
-  sourceType: script
+  sourceType: module
 
 env:
   browser: true
@@ -125,9 +125,9 @@ rules:
   yoda: off
 
   # Strict
-  strict:
-    - warn
-    - function
+  # strict:
+  #   - warn
+  #   - function
 
   # Variables
   init-declarations: off

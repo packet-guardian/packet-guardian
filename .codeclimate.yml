@@ -29,6 +29,6 @@ exclude_paths:
   - config/
   - vendor/
   - node_modules/
-  - public/assets/styles/font-awesome.css
-  - public/assets/styles/normalize.css
+  - public/dist/styles/font-awesome.css
+  - public/dist/styles/normalize.css
   - src/bindata/bindata.go

@@ -31,7 +31,7 @@ LDFLAGS := -X 'main.version=$(VERSION)' \
 all: bindata test management
 
 bindata:
-	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/...
+	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/dist/...
 
 management:
 	go build -o bin/pg -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
