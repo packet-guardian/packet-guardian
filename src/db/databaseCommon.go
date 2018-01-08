@@ -63,6 +63,7 @@ func NewDatabaseAccessor(e *common.Environment) (*common.DatabaseAccessor, error
 			}
 		}
 
+		da.SetConnMaxLifetime(time.Minute)
 		return da, err
 	}
 	return nil, errors.New("Database " + e.Config.Database.Type + " not supported")
