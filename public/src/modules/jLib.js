@@ -489,4 +489,4 @@ function hasClass(el, className) {
     }
 }
 
-export { jLib as $, jLib };
+export default jLib;

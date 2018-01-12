@@ -1,9 +1,7 @@
-import { api } from '../modules/api';
-import { $ } from '../modules/jLib';
-import { setTextboxToToday } from '../modules/utils';
-import { flashMessage, checkAndFlashDefault } from '../modules/flash';
-
-checkAndFlashDefault();
+import $ from 'jLib';
+import api from 'pg-api';
+import flashMessage from 'flash';
+import { setTextboxToToday } from 'utils';
 
 const devExpirationTypes = {
     never: 0,

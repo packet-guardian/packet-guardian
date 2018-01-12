@@ -1,8 +1,6 @@
-import { api } from '../modules/api';
-import { $ } from '../modules/jLib';
-import { flashMessage, checkAndFlashDefault } from '../modules/flash';
-
-checkAndFlashDefault();
+import $ from 'jLib';
+import api from 'pg-api';
+import flashMessage from 'flash';
 
 function register() {
     disableRegBtn();

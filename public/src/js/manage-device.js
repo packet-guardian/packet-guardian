@@ -1,9 +1,7 @@
-import { api } from '../modules/api';
-import { $ } from '../modules/jLib';
-import { jsPrompt, jsConfirm } from '../modules/modals';
-import { flashMessage, checkAndFlashDefault } from '../modules/flash';
-
-checkAndFlashDefault();
+import $ from 'jLib';
+import api from 'pg-api';
+import flashMessage from 'flash';
+import { jsPrompt, jsConfirm } from 'modals';
 
 var oldExpiration = '';
 

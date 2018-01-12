@@ -1,13 +1,9 @@
-import { api } from '../modules/api';
-import { $ } from '../modules/jLib';
-import { deviceListInit } from '../modules/device-list';
-import { jsPrompt, jsConfirm } from '../modules/modals';
-import { initManage } from '../modules/manage';
-import { flashMessage, checkAndFlashDefault } from '../modules/flash';
-
-checkAndFlashDefault();
-deviceListInit();
-initManage();
+import $ from 'jLib';
+import api from 'pg-api';
+import flashMessage from 'flash';
+import 'manage';
+import 'device-list';
+import { jsPrompt, jsConfirm } from 'modals';
 
 // Event handlers
 $('[name=blacklist-sel]').change(function(e) {

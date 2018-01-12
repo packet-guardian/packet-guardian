@@ -13,13 +13,23 @@ module.exports = {
     manage: './public/src/js/manage.js',
     captcha: './public/src/js/captcha.js'
   },
+
   plugins: [
     new CleanWebpackPlugin(['public/dist/js'])
   ],
+
   output: {
     filename: '[name].min.js',
     path: path.resolve(__dirname, 'public/dist/js')
   },
+
+  resolve: {
+    modules: [
+      path.resolve(__dirname, "public/src/modules"),
+      "node_modules"
+    ]
+  },
+
   module: {
     rules: [
       {

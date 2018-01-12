@@ -1,4 +1,4 @@
-import { $ } from './jLib';
+import $ from 'jLib';
 
 let flashTimeout = 0;
 
@@ -42,10 +42,9 @@ function checkAndFlash(element) {
     }
 }
 
-function checkAndFlashDefault() {
-    checkAndFlash(defaultFlashElem)
-}
-
 const defaultFlashElem = '#flashText';
 
-export { flashMessage, checkAndFlash, checkAndFlashDefault };
+checkAndFlash(defaultFlashElem);
+
+export { flashMessage, checkAndFlash };
+export default flashMessage;

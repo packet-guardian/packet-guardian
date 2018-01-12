@@ -1,4 +1,4 @@
-import { $ } from './jLib';
+import $ from 'jLib';
 
 /* eslint-disable max-statements */
 function jsOverlay() {

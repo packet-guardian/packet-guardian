@@ -1,6 +1,4 @@
-import { deviceListInit, keepDevicesOpen } from '../modules/device-list';
-import { checkAndFlashDefault } from '../modules/flash';
+import 'flash';
+import { keepDevicesOpen } from 'device-list';
 
-checkAndFlashDefault();
 keepDevicesOpen(true);
-deviceListInit();

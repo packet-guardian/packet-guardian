@@ -1,8 +1,7 @@
-import { api } from '../modules/api';
-import { $ } from '../modules/jLib';
-import { flashMessage, checkAndFlashDefault } from '../modules/flash';
+import $ from 'jLib';
+import api from 'pg-api';
+import flashMessage from 'flash';
 
-checkAndFlashDefault();
 
 function login() {
     $('#login-btn').prop('disabled', true);

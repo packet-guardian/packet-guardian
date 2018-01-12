@@ -1,7 +1,7 @@
-import { api } from './api';
-import { $ } from './jLib';
-import { flashMessage } from './flash';
-import { jsPrompt, jsConfirm } from '../modules/modals';
+import $ from 'jLib';
+import api from 'pg-api';
+import flashMessage from 'flash';
+import { jsPrompt, jsConfirm } from 'modals';
 
 function initManage() {
     // Event handlers
@@ -91,4 +91,4 @@ function deleteSelectedDevices() {
     );
 }
 
-export { initManage };
+initManage();

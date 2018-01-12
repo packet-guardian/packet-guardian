@@ -1,7 +1,5 @@
-import { $ } from '../modules/jLib';
-import { checkAndFlashDefault } from '../modules/flash';
-
-checkAndFlashDefault();
+import $ from 'jLib';
+import 'flash';
 
 // Form submittion
 $('#new-user-form').submit(function(e) {

@@ -1,5 +1,6 @@
-import { $ } from './jLib';
-var stayOpen = false;
+import $ from 'jLib';
+
+let stayOpen = false;
 
 function deviceListInit() {
     let reallyOpen = false;
@@ -42,4 +43,6 @@ function keepDevicesOpen(stay) {
     stayOpen = stay;
 }
 
-export { deviceListInit, keepDevicesOpen };
+deviceListInit();
+
+export { keepDevicesOpen };
