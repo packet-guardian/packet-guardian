@@ -554,6 +554,7 @@ func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p
 }
 
 func (d *Device) GetDeviceHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	sessionUser := models.GetUserFromContext(r)
 	macParam := p.ByName("mac")
 
 	mac, err := net.ParseMAC(macParam)
@@ -565,6 +566,11 @@ func (d *Device) GetDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
 	if err != nil {
 		http.Error(w, "Error getting device from database", http.StatusInternalServerError)
+		return
+	}
+
+	if device.Username != sessionUser.Username && !sessionUser.Can(models.ViewDevices) {
+		common.NewAPIResponse("Unauthorized", nil).WriteResponse(w, http.StatusUnauthorized)
 		return
 	}
 
