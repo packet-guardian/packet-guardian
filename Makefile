@@ -35,10 +35,10 @@ bindata:
 	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/...
 
 dhcp:
-	GOBIN="$(GOBIN)" go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
+	go build -o bin/dhcp -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
 
 management:
-	GOBIN="$(GOBIN)" go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
+	go build -o bin/pg -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
 
 # development tasks
 doc:
