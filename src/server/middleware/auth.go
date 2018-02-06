@@ -5,8 +5,6 @@
 package middleware
 
 import (
-	"bytes"
-	"encoding/base64"
 	"net/http"
 	"strings"
 
@@ -37,41 +35,14 @@ func CheckAuthAPI(next http.Handler) http.Handler {
 			return
 		}
 
-		// Not logged in via cookies, check for HTTP header
-		// Check for presents of authorization header
-		if r.Header.Get("Authorization") == "" {
+		username, password, ok := r.BasicAuth()
+		if !ok {
 			w.Header().Add("Authorization", "Basic realm=\"Packet Guardian\"")
 			common.NewAPIResponse("Login required", nil).WriteResponse(w, http.StatusUnauthorized)
 			return
 		}
 
-		// Check formatting of header
-		authHeader := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
-		if len(authHeader) != 2 || authHeader[0] != "Basic" {
-			w.Header().Add("Authorization", "Basic realm=\"Packet Guardian\"")
-			common.NewAPIResponse("Invalid Authorization header", nil).WriteResponse(w, http.StatusUnauthorized)
-			return
-		}
-
-		// Decode username:password part
-		authHeaderDecoded, err := base64.StdEncoding.DecodeString(authHeader[1])
-		if err != nil {
-			w.Header().Add("Authorization", "Basic realm=\"Packet Guardian\"")
-			common.NewAPIResponse("Invalid Authorization header", nil).WriteResponse(w, http.StatusUnauthorized)
-			return
-		}
-
-		// Split username and password
-		userPass := bytes.SplitN(authHeaderDecoded, []byte{':'}, 2)
-		if len(userPass) != 2 {
-			w.Header().Add("Authorization", "Basic realm=\"Packet Guardian\"")
-			common.NewAPIResponse("Invalid Authorization header", nil).WriteResponse(w, http.StatusUnauthorized)
-			return
-		}
-
-		// Check credentials
-		username := string(userPass[0])
-		if !auth.CheckLogin(username, string(userPass[1]), r) {
+		if !auth.CheckLogin(username, password, r) {
 			w.Header().Add("Authorization", "Basic realm=\"Packet Guardian\"")
 			common.NewAPIResponse("Invalid username or password", nil).WriteResponse(w, http.StatusUnauthorized)
 			return
