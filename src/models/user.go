@@ -84,6 +84,9 @@ func (u *User) LoadRights() {
 		u.Rights = u.Rights.With(APIRead)
 		u.Rights = u.Rights.With(APIWrite)
 	}
+	if common.StringInSlice(u.Username, u.e.Config.Auth.APIStatusUsers) {
+		u.Rights = u.Rights.With(ViewDebugInfo)
+	}
 
 	if u.IsBlacklisted() {
 		u.Rights = u.Rights.Without(ManageOwnRights)

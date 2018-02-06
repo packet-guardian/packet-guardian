@@ -124,19 +124,19 @@ func (m *mySQLDB) migrateTables(d *common.DatabaseAccessor) error {
 
 	common.SystemLogger.WithFields(verbose.Fields{
 		"current-version": currDBVer,
-		"active-version":  dbVersion,
+		"active-version":  DBVersion,
 	}).Debug("Database Versions")
 
 	// No migration needed
-	if currDBVer == dbVersion {
+	if currDBVer == DBVersion {
 		return nil
 	}
 
-	if currDBVer > dbVersion {
+	if currDBVer > DBVersion {
 		return errors.New("Database is too new, can't rollback")
 	}
 
-	neededMigrations := m.migrateFuncs[currDBVer:dbVersion]
+	neededMigrations := m.migrateFuncs[currDBVer:DBVersion]
 	for _, migrate := range neededMigrations {
 		if migrate == nil {
 			continue
@@ -146,7 +146,7 @@ func (m *mySQLDB) migrateTables(d *common.DatabaseAccessor) error {
 		}
 	}
 
-	_, err := d.DB.Exec(`UPDATE "settings" SET "value" = ? WHERE "id" = 'db_version'`, dbVersion)
+	_, err := d.DB.Exec(`UPDATE "settings" SET "value" = ? WHERE "id" = 'db_version'`, DBVersion)
 	return err
 }
 
@@ -234,7 +234,7 @@ func (m *mySQLDB) createSettingTable(d *common.DatabaseAccessor) error {
 		return err
 	}
 
-	_, err := d.DB.Exec(`INSERT INTO "settings" ("id", "value") VALUES ('db_version', ?)`, dbVersion)
+	_, err := d.DB.Exec(`INSERT INTO "settings" ("id", "value") VALUES ('db_version', ?)`, DBVersion)
 	return err
 }
 

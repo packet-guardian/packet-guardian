@@ -104,3 +104,13 @@ type DatabaseAccessor struct {
 	*sql.DB
 	Driver string
 }
+
+func (d *DatabaseAccessor) SchemaVersion() int {
+	var currDBVer int
+	verRow := d.DB.QueryRow(`SELECT "value" FROM "settings" WHERE "id" = 'db_version'`)
+	if verRow == nil {
+		return 0
+	}
+	verRow.Scan(&currDBVer)
+	return currDBVer
+}

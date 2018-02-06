@@ -101,6 +101,7 @@ type Config struct {
 		ReadOnlyUsers     []string
 		APIReadOnlyUsers  []string
 		APIReadWriteUsers []string
+		APIStatusUsers    []string
 
 		LDAP struct {
 			UseAD         bool
@@ -240,8 +241,8 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	if len(c.Auth.HelpDeskUsers) == 0 {
 		c.Auth.HelpDeskUsers = []string{"helpdesk"}
 	}
-	if len(c.Auth.HelpDeskUsers) == 0 {
-		c.Auth.HelpDeskUsers = []string{"readonly"}
+	if len(c.Auth.ReadOnlyUsers) == 0 {
+		c.Auth.ReadOnlyUsers = []string{"readonly"}
 	}
 
 	// DHCP
