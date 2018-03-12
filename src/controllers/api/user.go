@@ -59,6 +59,28 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Permission groups
+	uiGroup := r.FormValue("ui_group")
+	apiGroup := r.FormValue("api_group")
+	allowStatusAPI := r.FormValue("allow_status_api") == "1"
+	if (user.UIGroup != uiGroup || user.APIGroup != apiGroup || user.AllowStatusAPI != allowStatusAPI) && !sessionUser.Can(models.EditUserPermissions) {
+		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+		return
+	}
+
+	if !common.StringInSlice(uiGroup, []string{"default", "admin", "helpdesk", "readonly"}) {
+		common.NewAPIResponse("Unknown ui group", nil).WriteResponse(w, http.StatusBadRequest)
+		return
+	}
+	user.UIGroup = uiGroup
+
+	if !common.StringInSlice(apiGroup, []string{"disable", "readonly-api", "readwrite-api"}) {
+		common.NewAPIResponse("Unknown api group", nil).WriteResponse(w, http.StatusBadRequest)
+		return
+	}
+	user.APIGroup = apiGroup
+	user.AllowStatusAPI = allowStatusAPI
+
 	// Password
 	password := r.FormValue("password")
 	if password != "" {

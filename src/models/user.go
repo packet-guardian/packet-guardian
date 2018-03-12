@@ -37,6 +37,10 @@ type User struct {
 	CanAutoreg       bool
 	blacklist        BlacklistItem
 	Rights           Permission
+
+	UIGroup        string
+	APIGroup       string
+	AllowStatusAPI bool
 }
 
 // NewUser creates a new base user
@@ -59,6 +63,8 @@ func NewUser(e *common.Environment, us UserStore, b BlacklistItem, username stri
 		CanManage:        true,
 		CanAutoreg:       true,
 		Rights:           ViewOwn | ManageOwnRights,
+		UIGroup:          "default",
+		APIGroup:         "disabled",
 	}
 	// Load extra rights as set in the configuration
 	u.LoadRights()
@@ -66,26 +72,10 @@ func NewUser(e *common.Environment, us UserStore, b BlacklistItem, username stri
 }
 
 func (u *User) LoadRights() {
-	if common.StringInSlice(u.Username, u.e.Config.Auth.AdminUsers) {
-		u.Rights = u.Rights.With(AdminRights)
-		u.Rights = u.Rights.Without(APIRead)
-		u.Rights = u.Rights.Without(APIWrite)
-	}
-	if common.StringInSlice(u.Username, u.e.Config.Auth.HelpDeskUsers) {
-		u.Rights = u.Rights.With(HelpDeskRights)
-	}
-	if common.StringInSlice(u.Username, u.e.Config.Auth.ReadOnlyUsers) {
-		u.Rights = u.Rights.With(ReadOnlyRights)
-	}
-	if common.StringInSlice(u.Username, u.e.Config.Auth.APIReadOnlyUsers) {
-		u.Rights = u.Rights.With(APIRead)
-	}
-	if common.StringInSlice(u.Username, u.e.Config.Auth.APIReadWriteUsers) {
-		u.Rights = u.Rights.With(APIRead)
-		u.Rights = u.Rights.With(APIWrite)
-	}
-	if common.StringInSlice(u.Username, u.e.Config.Auth.APIStatusUsers) {
-		u.Rights = u.Rights.With(ViewDebugInfo)
+	u.Rights = u.Rights.With(uiPermissions[u.UIGroup])
+	u.Rights = u.Rights.With(apiPermissions[u.APIGroup])
+	if u.AllowStatusAPI {
+		u.Rights = u.Rights.With(apiPermissions["status-api"])
 	}
 
 	if u.IsBlacklisted() {

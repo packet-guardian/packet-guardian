@@ -24,7 +24,7 @@ func init() {
 
 type sqliteDB struct {
 	createFuncs  map[string]func(*common.DatabaseAccessor) error
-	migrateFuncs []func(*common.DatabaseAccessor) error
+	migrateFuncs []migrateFunc
 }
 
 func newSQLiteDBInit() *sqliteDB {
@@ -39,8 +39,9 @@ func newSQLiteDBInit() *sqliteDB {
 		"user":          s.createUserTable,
 	}
 
-	s.migrateFuncs = []func(*common.DatabaseAccessor) error{
+	s.migrateFuncs = []migrateFunc{
 		1: s.migrate1,
+		2: s.migrate2,
 	}
 
 	return s
@@ -86,6 +87,7 @@ func (s *sqliteDB) createTables(d *common.DatabaseAccessor) error {
 
 	for table, create := range s.createFuncs {
 		if !tables[table] {
+			fmt.Printf("Creating table %s\n", table)
 			if err := create(d); err != nil {
 				return err
 			}
@@ -94,7 +96,7 @@ func (s *sqliteDB) createTables(d *common.DatabaseAccessor) error {
 	return nil
 }
 
-func (s *sqliteDB) migrateTables(d *common.DatabaseAccessor) error {
+func (s *sqliteDB) migrateTables(d *common.DatabaseAccessor, c *common.Config) error {
 	var currDBVer int
 	verRow := d.DB.QueryRow(`SELECT "value" FROM "settings" WHERE "id" = 'db_version'`)
 	if verRow == nil {
@@ -117,7 +119,7 @@ func (s *sqliteDB) migrateTables(d *common.DatabaseAccessor) error {
 		if migrate == nil {
 			continue
 		}
-		if err := migrate(d); err != nil {
+		if err := migrate(d, c); err != nil {
 			return err
 		}
 	}
@@ -137,7 +139,7 @@ func (s *sqliteDB) init(d *common.DatabaseAccessor, c *common.Config) error {
 		return err
 	}
 
-	return s.migrateTables(d)
+	return s.migrateTables(d, c)
 }
 
 func (s *sqliteDB) createBlacklistTable(d *common.DatabaseAccessor) error {
@@ -226,7 +228,10 @@ func (s *sqliteDB) createUserTable(d *common.DatabaseAccessor) error {
 	    "can_autoreg" INTEGER DEFAULT 1,
 	    "valid_start" INTEGER DEFAULT 0,
 	    "valid_end" INTEGER DEFAULT 0,
-	    "valid_forever" INTEGER DEFAULT 1
+	    "valid_forever" INTEGER DEFAULT 1,
+	    "ui_group" VARCHAR(20) NOT NULL DEFAULT 'default',
+	    "api_group" VARCHAR(20) NOT NULL DEFAULT 'disable',
+	    "allow_status_api" INTEGER DEFAULT 0
 	)`
 
 	if _, err := d.DB.Exec(sql); err != nil {
@@ -234,14 +239,14 @@ func (s *sqliteDB) createUserTable(d *common.DatabaseAccessor) error {
 	}
 
 	_, err := d.DB.Exec(`INSERT INTO "user"
-			("id", "username", "password") VALUES
-			(1, 'admin', '$2a$10$rZfN/gdXZdGYyLtUb6LF.eHOraDes3ibBECmWic2I3SocMC0L2Lxa'),
-			(2, 'helpdesk', '$2a$10$ICCdq/OyZBBoNPTRmfgntOnujD6INGv7ZAtA/Xq6JIdRMO65xCuNC'),
-			(3, 'readonly', '$2a$10$02NG6kQV.4UicpCnz8hyeefBD4JHKAlZToL2K0EN1HV.u6sXpP1Xy')`)
+			("id", "username", "password", "ui_group") VALUES
+			(1, 'admin', '$2a$10$rZfN/gdXZdGYyLtUb6LF.eHOraDes3ibBECmWic2I3SocMC0L2Lxa', 'admin'),
+			(2, 'helpdesk', '$2a$10$ICCdq/OyZBBoNPTRmfgntOnujD6INGv7ZAtA/Xq6JIdRMO65xCuNC', 'helpdesk'),
+			(3, 'readonly', '$2a$10$02NG6kQV.4UicpCnz8hyeefBD4JHKAlZToL2K0EN1HV.u6sXpP1Xy', 'readonly')`)
 	return err
 }
 
-func (s *sqliteDB) migrate1(d *common.DatabaseAccessor) error {
+func (s *sqliteDB) migrate1(d *common.DatabaseAccessor, c *common.Config) error {
 	// Move device blacklist to blacklist table
 	bd, err := d.DB.Query(`SELECT "mac" FROM "device" WHERE "blacklisted" = 1`)
 	if err != nil {
@@ -269,5 +274,21 @@ func (s *sqliteDB) migrate1(d *common.DatabaseAccessor) error {
 	if _, err := d.DB.Exec(sql); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *sqliteDB) migrate2(d *common.DatabaseAccessor, c *common.Config) error {
+	sql := `ALTER TABLE "user" ADD COLUMN (
+		"ui_group" VARCHAR(20) NOT NULL DEFAULT 'default',
+		"api_group" VARCHAR(20) NOT NULL DEFAULT 'disable',
+		"allow_status_api" INTEGER DEFAULT 0
+	);`
+
+	if _, err := d.DB.Exec(sql); err != nil {
+		return err
+	}
+
+	// migrateUserPermissions is defined in the MySQL file, there's nothing DB specific
+	common.RegisterSystemInitFunc(migrateUserPermissions)
 	return nil
 }

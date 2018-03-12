@@ -114,3 +114,23 @@ func (d *DatabaseAccessor) SchemaVersion() int {
 	verRow.Scan(&currDBVer)
 	return currDBVer
 }
+
+type SystemInitFunc func(*Environment) error
+
+var systemInitFuncs []SystemInitFunc
+
+func RegisterSystemInitFunc(f SystemInitFunc) {
+	if systemInitFuncs == nil {
+		systemInitFuncs = make([]SystemInitFunc, 0, 1)
+	}
+	systemInitFuncs = append(systemInitFuncs, f)
+}
+
+func RunSystemInits(e *Environment) error {
+	for _, f := range systemInitFuncs {
+		if err := f(e); err != nil {
+			return err
+		}
+	}
+	return nil
+}

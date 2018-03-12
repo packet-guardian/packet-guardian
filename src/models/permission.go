@@ -13,6 +13,7 @@ const (
 	CreateUser
 	EditUser
 	DeleteUser
+	EditUserPermissions
 
 	// These are administrative permissions for managing devices other than
 	// the current user.
@@ -49,22 +50,22 @@ const (
 
 const (
 	// AdminRights has all bits set to one meaning all permissions are given
-	AdminRights = 1<<64 - 1
+	AdminRights Permission = 1<<64 - 1
 	// HelpDeskRights represents a restricted admin user
-	HelpDeskRights = ReadOnlyRights |
+	HelpDeskRights Permission = ReadOnlyRights |
 		ViewUsers |
 		CreateDevice |
 		EditDevice |
 		DeleteDevice
 	// ReadOnlyRights represents a read-only admin user
-	ReadOnlyRights = ViewOwn |
+	ReadOnlyRights Permission = ViewOwn |
 		ManageOwnRights |
 		ViewDevices |
 		ViewAdminPage |
 		ViewReports |
 		BypassGuestLogin
 	// ManageOwnRights is a convenience Permission combining CreateOwn, EditOwn and DeleteOwn.
-	ManageOwnRights = CreateOwn |
+	ManageOwnRights Permission = CreateOwn |
 		AutoRegOwn |
 		EditOwn |
 		DeleteOwn
@@ -89,4 +90,16 @@ func (p Permission) CanEither(check Permission) bool {
 // Without will return a new Permission where rm is removed from p.
 func (p Permission) Without(rm Permission) Permission {
 	return p &^ rm
+}
+
+var uiPermissions = map[string]Permission{
+	"admin":    AdminRights.Without(APIRead).Without(APIWrite),
+	"helpdesk": HelpDeskRights,
+	"readonly": ReadOnlyRights,
+}
+
+var apiPermissions = map[string]Permission{
+	"readonly-api":  APIRead,
+	"readwrite-api": APIRead.With(APIWrite),
+	"status-api":    ViewDebugInfo,
 }
