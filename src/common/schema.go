@@ -68,6 +68,9 @@ var (
 		"valid_start",
 		"valid_end",
 		"valid_forever",
+		"ui_group",
+		"api_group",
+		"allow_status_api",
 	}
 
 	SessionTableCols = []string{
