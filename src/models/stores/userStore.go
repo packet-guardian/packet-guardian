@@ -63,7 +63,7 @@ func (s *UserStore) SearchUsersByField(field, pattern string) ([]*models.User, e
 }
 
 func (s *UserStore) getUsersFromDatabase(where string, values ...interface{}) ([]*models.User, error) {
-	sql := `SELECT "id", "username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end" FROM "user" ` + where
+	sql := `SELECT "id", "username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end", "ui_group", "api_group", "allow_status_api" FROM "user" ` + where
 	rows, err := s.e.DB.Query(sql, values...)
 	if err != nil {
 		return nil, err
@@ -83,6 +83,9 @@ func (s *UserStore) getUsersFromDatabase(where string, values ...interface{}) ([
 		var validForever bool
 		var validStart int64
 		var validEnd int64
+		var uiGroup string
+		var apiGroup string
+		var allowStatusAPI bool
 
 		err := rows.Scan(
 			&id,
@@ -96,6 +99,9 @@ func (s *UserStore) getUsersFromDatabase(where string, values ...interface{}) ([
 			&validForever,
 			&validStart,
 			&validEnd,
+			&uiGroup,
+			&apiGroup,
+			&allowStatusAPI,
 		)
 		if err != nil {
 			continue
@@ -111,6 +117,9 @@ func (s *UserStore) getUsersFromDatabase(where string, values ...interface{}) ([
 		user.CanManage = canManage
 		user.CanAutoreg = canAutoreg
 		user.Rights = models.ViewOwn
+		user.UIGroup = uiGroup
+		user.APIGroup = apiGroup
+		user.AllowStatusAPI = allowStatusAPI
 
 		if canManage {
 			user.Rights = user.Rights.With(models.ManageOwnRights)
@@ -122,7 +131,7 @@ func (s *UserStore) getUsersFromDatabase(where string, values ...interface{}) ([
 			Mode:  models.UserExpiration(expirationType),
 			Value: defaultExpiration,
 		}
-		user.LoadRights() // Above all rights are overriden, we need to reapply admin and configured rights
+		user.LoadRights() // Above, all rights are overriden so we need to reapply admin and configured rights
 		results = append(results, user)
 	}
 	return results, nil
@@ -143,7 +152,7 @@ func (s *UserStore) Save(u *models.User) error {
 }
 
 func (s *UserStore) updateExisting(u *models.User) error {
-	sql := `UPDATE "user" SET "device_limit" = ?, "default_expiration" = ?, "expiration_type" = ?, "can_manage" = ?, "can_autoreg" = ?, "valid_forever" = ?, "valid_start" = ?, "valid_end" = ?`
+	sql := `UPDATE "user" SET "device_limit"=?, "default_expiration"=?, "expiration_type"=?, "can_manage"=?, "can_autoreg"=?, "valid_forever"=?, "valid_start"=?, "valid_end"=?, "ui_group"=?, "api_group"=?, "allow_status_api"=?`
 
 	if u.NeedToSavePassword() {
 		sql += ", \"password\" = ?"
@@ -163,6 +172,9 @@ func (s *UserStore) updateExisting(u *models.User) error {
 			u.ValidForever,
 			u.ValidStart.Unix(),
 			u.ValidEnd.Unix(),
+			u.UIGroup,
+			u.APIGroup,
+			u.AllowStatusAPI,
 			u.Password,
 			u.ID,
 		)
@@ -177,6 +189,9 @@ func (s *UserStore) updateExisting(u *models.User) error {
 			u.ValidForever,
 			u.ValidStart.Unix(),
 			u.ValidEnd.Unix(),
+			u.UIGroup,
+			u.APIGroup,
+			u.AllowStatusAPI,
 			u.ID,
 		)
 	}
@@ -188,7 +203,7 @@ func (s *UserStore) saveNew(u *models.User) error {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := `INSERT INTO "user" ("username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end") VALUES (?,?,?,?,?,?,?,?,?,?)`
+	sql := `INSERT INTO "user" ("username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end", "ui_group", "api_group", "allow_status_api") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
 
 	result, err := s.e.DB.Exec(
 		sql,
@@ -202,6 +217,9 @@ func (s *UserStore) saveNew(u *models.User) error {
 		u.ValidForever,
 		u.ValidStart.Unix(),
 		u.ValidEnd.Unix(),
+		u.UIGroup,
+		u.APIGroup,
+		u.AllowStatusAPI,
 	)
 	if err != nil {
 		return err

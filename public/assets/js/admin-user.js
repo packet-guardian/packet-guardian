@@ -159,7 +159,10 @@ $.onReady(function() {
             "valid_start": 0,
             "valid_end": 0,
             "can_manage": $('[name=can-manage]').prop('checked') ? 1 : 0,
-            "can_autoreg": $('[name=can-autoreg]').prop('checked') ? 1 : 0
+            "can_autoreg": $('[name=can-autoreg]').prop('checked') ? 1 : 0,
+            "allow_status_api": $('[name=user-api-status]').prop('checked') ? 1 : 0,
+            "ui_group": $('[name=user-ui-group]').value(),
+            "api_group": $('[name=user-api-group]').value()
         };
 
         if ($('[name=clear-pass]').prop("checked")) {

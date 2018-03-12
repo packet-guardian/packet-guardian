@@ -107,6 +107,10 @@ func main() {
 		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
 	}
 
+	if err := common.RunSystemInits(e); err != nil {
+		e.Log.WithField("error", err).Fatal("System initialization failed")
+	}
+
 	go tasks.StartTaskScheduler(e)
 
 	// Start web server

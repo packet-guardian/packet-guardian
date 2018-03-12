@@ -12,13 +12,15 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
-const DBVersion = 2
+const DBVersion = 3
 
 type dbInit interface {
 	init(*common.DatabaseAccessor, *common.Config) error
 }
 
 var dbInits = make(map[string]dbInit)
+
+type migrateFunc func(*common.DatabaseAccessor, *common.Config) error
 
 func RegisterDatabaseAccessor(name string, db dbInit) {
 	dbInits[name] = db

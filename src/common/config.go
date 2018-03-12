@@ -235,15 +235,6 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	if len(c.Auth.AuthMethod) == 0 {
 		c.Auth.AuthMethod = []string{"local"}
 	}
-	if len(c.Auth.AdminUsers) == 0 {
-		c.Auth.AdminUsers = []string{"admin"}
-	}
-	if len(c.Auth.HelpDeskUsers) == 0 {
-		c.Auth.HelpDeskUsers = []string{"helpdesk"}
-	}
-	if len(c.Auth.ReadOnlyUsers) == 0 {
-		c.Auth.ReadOnlyUsers = []string{"readonly"}
-	}
 
 	// DHCP
 	c.DHCP.ConfigFile = setStringOrDefault(c.DHCP.ConfigFile, "config/dhcp.conf")
