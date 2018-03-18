@@ -5,6 +5,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/packet-guardian/packet-guardian/src/common"
@@ -25,11 +26,39 @@ const (
 	UserDeviceLimitUnlimited UserDeviceLimit = 0
 )
 
+func (ue UserExpiration) string() string {
+	switch ue {
+	case UserDeviceExpirationNever:
+		return "never"
+	case UserDeviceExpirationGlobal:
+		return "global"
+	case UserDeviceExpirationSpecific:
+		return "specific-datetime"
+	case UserDeviceExpirationDuration:
+		return "duration"
+	case UserDeviceExpirationDaily:
+		return "daily-time"
+	case UserDeviceExpirationRolling:
+		return "rolling-duration"
+	}
+	return ""
+}
+
 var globalDeviceExpiration *UserDeviceExpiration
 
 type UserDeviceExpiration struct {
 	Mode  UserExpiration
 	Value int64 // Daily and Duration, time in seconds. Specific, unix epoch
+}
+
+func (ude *UserDeviceExpiration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Mode  string `json:"mode"`
+		Value int64  `json:"value"`
+	}{
+		Mode:  ude.Mode.string(),
+		Value: ude.Value,
+	})
 }
 
 func GetGlobalDefaultExpiration(e *common.Environment) *UserDeviceExpiration {
