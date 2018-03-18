@@ -15,7 +15,11 @@ branches:
         - master
         - develop
 
+notifications:
+    email:
+        - lee@keitel.xyz
+
 install: go get -u github.com/jteeuwen/go-bindata/...
-script: 
+script:
     - make bindata
     - make test
