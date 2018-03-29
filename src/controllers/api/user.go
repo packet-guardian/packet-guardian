@@ -25,11 +25,14 @@ func NewUserController(e *common.Environment) *UserController {
 	return &UserController{e: e}
 }
 
-func (u *UserController) UserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	if r.Method == "POST" {
+func (u *UserController) UserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	switch r.Method {
+	case "POST":
 		u.saveUserHandler(w, r)
-	} else if r.Method == "DELETE" {
+	case "DELETE":
 		u.deleteUserHandler(w, r)
+	case "GET":
+		u.getUserHandler(w, r, p)
 	}
 }
 
@@ -307,4 +310,22 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 		"changed-by": sessionUser.Username,
 	}).Info("User deleted")
 	common.NewAPIResponse("User deleted", nil).WriteResponse(w, http.StatusNoContent)
+}
+
+func (u *UserController) getUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	sessionUser := models.GetUserFromContext(r)
+	usernameParam := p.ByName("username")
+
+	user, err := stores.GetUserStore(u.e).GetUserByUsername(usernameParam)
+	if err != nil {
+		http.Error(w, "Error getting user from database", http.StatusInternalServerError)
+		return
+	}
+
+	if user.Username != sessionUser.Username && !sessionUser.Can(models.ViewUsers) {
+		common.NewAPIResponse("Unauthorized", nil).WriteResponse(w, http.StatusUnauthorized)
+		return
+	}
+
+	common.NewAPIResponse("", user).WriteResponse(w, http.StatusOK)
 }

@@ -1,10 +1,10 @@
 # Packet Guardian
 
-[![Build Status](https://travis-ci.org/usi-lfkeitel/packet-guardian.svg?branch=master)](https://travis-ci.org/usi-lfkeitel/packet-guardian)
+[![Build Status](https://travis-ci.org/packet-guardian/packet-guardian.svg?branch=develop)](https://travis-ci.org/packet-guardian/packet-guardian)
 [![GoDoc](https://godoc.org/github.com/packet-guardian/packet-guardian/src?status.svg)](https://godoc.org/github.com/packet-guardian/packet-guardian/src)
-[![GitHub issues](https://img.shields.io/github/issues/usi-lfkeitel/packet-guardian.svg)](https://github.com/packet-guardian/packet-guardian/issues)
-[![GitHub stars](https://img.shields.io/github/stars/usi-lfkeitel/packet-guardian.svg)](https://github.com/packet-guardian/packet-guardian/stargazers)
-[![GitHub license](https://img.shields.io/badge/license-New%20BSD-blue.svg)](https://raw.githubusercontent.com/usi-lfkeitel/packet-guardian/master/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/packet-guardian/packet-guardian.svg)](https://github.com/packet-guardian/packet-guardian/issues)
+[![GitHub stars](https://img.shields.io/github/stars/packet-guardian/packet-guardian.svg)](https://github.com/packet-guardian/packet-guardian/stargazers)
+[![GitHub license](https://img.shields.io/badge/license-New%20BSD-blue.svg)](https://raw.githubusercontent.com/packet-guardian/packet-guardian/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/packet-guardian/packet-guardian)](https://goreportcard.com/report/github.com/packet-guardian/packet-guardian)
 
 ## About Packet Guardian

@@ -5,6 +5,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -22,25 +23,25 @@ type UserStore interface {
 type User struct {
 	e                *common.Environment
 	store            UserStore
-	ID               int
-	Username         string
-	Password         string
-	HasPassword      bool
+	ID               int    `json:"-"`
+	Username         string `json:"username"`
+	Password         string `json:"-"`
+	HasPassword      bool   `json:"has_password"`
 	savePassword     bool
-	ClearPassword    bool
-	DeviceLimit      UserDeviceLimit
-	DeviceExpiration *UserDeviceExpiration
-	ValidStart       time.Time
-	ValidEnd         time.Time
-	ValidForever     bool
-	CanManage        bool
-	CanAutoreg       bool
+	ClearPassword    bool                  `json:"-"`
+	DeviceLimit      UserDeviceLimit       `json:"device_limit"`
+	DeviceExpiration *UserDeviceExpiration `json:"device_expiration"`
+	ValidStart       time.Time             `json:"-"`
+	ValidEnd         time.Time             `json:"-"`
+	ValidForever     bool                  `json:"valid_forever"`
+	CanManage        bool                  `json:"can_manage"`
+	CanAutoreg       bool                  `json:"can_autoreg"`
 	blacklist        BlacklistItem
-	Rights           Permission
+	Rights           Permission `json:"-"`
 
-	UIGroup        string
-	APIGroup       string
-	AllowStatusAPI bool
+	UIGroup        string `json:"-"`
+	APIGroup       string `json:"-"`
+	AllowStatusAPI bool   `json:"-"`
 }
 
 // NewUser creates a new base user
@@ -81,6 +82,21 @@ func (u *User) LoadRights() {
 	if u.IsBlacklisted() {
 		u.Rights = u.Rights.Without(ManageOwnRights)
 	}
+}
+
+func (u *User) MarshalJSON() ([]byte, error) {
+	type Alias User
+	return json.Marshal(&struct {
+		*Alias
+		ValidStart  time.Time `json:"valid_start"`
+		ValidEnd    time.Time `json:"valid_end"`
+		Blacklisted bool      `json:"blacklisted"`
+	}{
+		Alias:       (*Alias)(u),
+		ValidStart:  u.ValidStart.UTC(),
+		ValidEnd:    u.ValidEnd.UTC(),
+		Blacklisted: u.IsBlacklisted(),
+	})
 }
 
 func (u *User) IsNew() bool {
