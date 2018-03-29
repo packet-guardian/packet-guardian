@@ -70,6 +70,7 @@ header img {
 }
 
 .btn {
+    display: inline-block;
     text-decoration: none;
     font-weight: bold;
     padding: 5px 10px;
@@ -78,6 +79,12 @@ header img {
     background-color: #0083A8;
     background: linear-gradient(to bottom, #0083A8, #007899);
     white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .btn {
+        margin-top: 5px;
+    }
 }
 
 .truncate {
