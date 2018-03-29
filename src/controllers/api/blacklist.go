@@ -50,7 +50,7 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	if r.Method == "POST" {
+	if r.Method == "POST" && !user.IsBlacklisted() {
 		user.Blacklist()
 	} else if r.Method == "DELETE" {
 		user.Unblacklist()
