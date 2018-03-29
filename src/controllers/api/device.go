@@ -5,7 +5,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"net"
 	"net/http"
@@ -575,16 +574,9 @@ func (d *Device) GetDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 	}
 
 	if device.ID == 0 {
-		w.WriteHeader(http.StatusNotFound)
+		common.NewAPIResponse("Device not found", nil).WriteResponse(w, http.StatusNotFound)
 		return
 	}
 
-	deviceJson, err := json.Marshal(device)
-	if err != nil {
-		http.Error(w, "Error creating response", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(deviceJson)
+	common.NewAPIResponse("Registration successful", device).WriteResponse(w, http.StatusOK)
 }
