@@ -28,7 +28,15 @@ func GetBlacklistStore(e *common.Environment) *BlacklistStore {
 }
 
 func (b *BlacklistStore) IsBlacklisted(s string) bool {
+	if s == "" {
+		return false
+	}
+
 	sql := `SELECT "id" FROM "blacklist" WHERE "value" = ?`
+	if b.e.DB == nil {
+		b.e.Log.Alert("Database is nil in blacklist store")
+		return false
+	}
 	var id int
 	row := b.e.DB.QueryRow(sql, s)
 	err := row.Scan(&id)
@@ -36,12 +44,20 @@ func (b *BlacklistStore) IsBlacklisted(s string) bool {
 }
 
 func (b *BlacklistStore) AddToBlacklist(s string) error {
+	if s == "" {
+		return nil
+	}
+
 	sql := `INSERT INTO "blacklist" ("value") VALUES (?)`
 	_, err := b.e.DB.Exec(sql, s)
 	return err
 }
 
 func (b *BlacklistStore) RemoveFromBlacklist(s string) error {
+	if s == "" {
+		return nil
+	}
+
 	sql := `DELETE FROM "blacklist" WHERE "value" = ?`
 	_, err := b.e.DB.Exec(sql, s)
 	return err

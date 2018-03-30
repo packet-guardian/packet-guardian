@@ -104,3 +104,33 @@ type DatabaseAccessor struct {
 	*sql.DB
 	Driver string
 }
+
+func (d *DatabaseAccessor) SchemaVersion() int {
+	var currDBVer int
+	verRow := d.DB.QueryRow(`SELECT "value" FROM "settings" WHERE "id" = 'db_version'`)
+	if verRow == nil {
+		return 0
+	}
+	verRow.Scan(&currDBVer)
+	return currDBVer
+}
+
+type SystemInitFunc func(*Environment) error
+
+var systemInitFuncs []SystemInitFunc
+
+func RegisterSystemInitFunc(f SystemInitFunc) {
+	if systemInitFuncs == nil {
+		systemInitFuncs = make([]SystemInitFunc, 0, 1)
+	}
+	systemInitFuncs = append(systemInitFuncs, f)
+}
+
+func RunSystemInits(e *Environment) error {
+	for _, f := range systemInitFuncs {
+		if err := f(e); err != nil {
+			return err
+		}
+	}
+	return nil
+}

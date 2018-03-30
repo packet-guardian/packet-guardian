@@ -4,10 +4,9 @@ VERSION := $(shell git describe --tags --always --dirty)
 GITCOMMIT := $(shell git rev-parse HEAD)
 GOVERSION := $(shell go version)
 BUILDTIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-BUILDDATE := $(shell date -u +"%B %d, %Y")
 BUILDER := $(shell echo "`git config user.name` <`git config user.email`>")
 DIST_FILENAME ?= pg-dist-$(VERSION).tar.gz
-CGO_ENABLED ?= 1
+CGO_ENABLED ?= 0
 PWD := $(shell pwd)
 GOBIN := $(PWD)/bin
 CODECLIMATE_CODE := $(PWD)
@@ -35,10 +34,10 @@ bindata:
 	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/...
 
 dhcp:
-	GOBIN="$(GOBIN)" go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
+	go build -o bin/dhcp -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
 
 management:
-	GOBIN="$(GOBIN)" go install -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
+	go build -o bin/pg -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
 
 # development tasks
 doc:

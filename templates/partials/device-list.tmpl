@@ -7,7 +7,7 @@
     <a name="{{.ID}}"></a>
     <div class="device-header {{if .IsBlacklisted}}blacklisted{{else}}good-standing{{end}}" data-device-id="{{.ID}}">
         {{if or $.main.canDeleteDevice $.main.canEditDevice $.main.canReassignDevice $.main.canManageBlacklist}}
-        <div class="device-check-select">
+        <div class="device-check-select device-info-check">
             <input type="checkbox" value="{{.MAC}}" class="device-checkbox">
         </div>
         {{end}}

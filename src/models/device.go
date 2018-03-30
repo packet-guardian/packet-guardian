@@ -76,12 +76,14 @@ func (d *Device) MarshalJSON() ([]byte, error) {
 		DateRegistered time.Time `json:"registered"`
 		LastSeen       time.Time `json:"last_seen"`
 		Blacklisted    bool      `json:"blacklisted"`
+		MAC            string    `json:"mac"`
 	}{
 		Alias:          (*Alias)(d),
 		Expires:        d.Expires.UTC(),
 		DateRegistered: d.DateRegistered.UTC(),
 		LastSeen:       d.LastSeen.UTC(),
 		Blacklisted:    d.IsBlacklisted(),
+		MAC:            d.MAC.String(),
 	})
 }
 

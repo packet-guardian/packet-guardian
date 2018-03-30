@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
+
 	"github.com/go-sql-driver/mysql" // MySQL driver
 	"github.com/lfkeitel/verbose"
 	"github.com/packet-guardian/packet-guardian/src/common"
@@ -23,7 +25,7 @@ func init() {
 
 type mySQLDB struct {
 	createFuncs  map[string]func(*common.DatabaseAccessor) error
-	migrateFuncs []func(*common.DatabaseAccessor) error
+	migrateFuncs []migrateFunc
 }
 
 func newmySQLDBInit() *mySQLDB {
@@ -38,8 +40,9 @@ func newmySQLDBInit() *mySQLDB {
 		"user":          m.createUserTable,
 	}
 
-	m.migrateFuncs = []func(*common.DatabaseAccessor) error{
+	m.migrateFuncs = []migrateFunc{
 		1: m.migrate1,
+		2: m.migrate2,
 	}
 
 	return m
@@ -51,13 +54,12 @@ func (m *mySQLDB) connect(d *common.DatabaseAccessor, c *common.Config) error {
 	}
 
 	mc := &mysql.Config{
-		User:              c.Database.Username,
-		Passwd:            c.Database.Password,
-		Net:               "tcp",
-		Addr:              fmt.Sprintf("%s:%d", c.Database.Address, c.Database.Port),
-		DBName:            c.Database.Name,
-		Strict:            true,
-		InterpolateParams: true,
+		User:   c.Database.Username,
+		Passwd: c.Database.Password,
+		Net:    "tcp",
+		Addr:   fmt.Sprintf("%s:%d", c.Database.Address, c.Database.Port),
+		DBName: c.Database.Name,
+		Strict: true,
 	}
 	var err error
 	d.DB, err = sql.Open("mysql", mc.FormatDSN())
@@ -107,6 +109,7 @@ func (m *mySQLDB) createTables(d *common.DatabaseAccessor) error {
 
 	for table, create := range m.createFuncs {
 		if !tables[table] {
+			fmt.Printf("Creating table %s\n", table)
 			if err := create(d); err != nil {
 				return err
 			}
@@ -115,7 +118,7 @@ func (m *mySQLDB) createTables(d *common.DatabaseAccessor) error {
 	return nil
 }
 
-func (m *mySQLDB) migrateTables(d *common.DatabaseAccessor) error {
+func (m *mySQLDB) migrateTables(d *common.DatabaseAccessor, c *common.Config) error {
 	var currDBVer int
 	verRow := d.DB.QueryRow(`SELECT "value" FROM "settings" WHERE "id" = 'db_version'`)
 	if verRow == nil {
@@ -125,25 +128,29 @@ func (m *mySQLDB) migrateTables(d *common.DatabaseAccessor) error {
 
 	common.SystemLogger.WithFields(verbose.Fields{
 		"current-version": currDBVer,
-		"active-version":  dbVersion,
+		"active-version":  DBVersion,
 	}).Debug("Database Versions")
 
 	// No migration needed
-	if currDBVer == dbVersion {
+	if currDBVer == DBVersion {
 		return nil
 	}
 
-	neededMigrations := m.migrateFuncs[currDBVer:dbVersion]
+	if currDBVer > DBVersion {
+		return errors.New("Database is too new, can't rollback")
+	}
+
+	neededMigrations := m.migrateFuncs[currDBVer:DBVersion]
 	for _, migrate := range neededMigrations {
 		if migrate == nil {
 			continue
 		}
-		if err := migrate(d); err != nil {
+		if err := migrate(d, c); err != nil {
 			return err
 		}
 	}
 
-	_, err := d.DB.Exec(`UPDATE "settings" SET "value" = ? WHERE "id" = 'db_version'`, dbVersion)
+	_, err := d.DB.Exec(`UPDATE "settings" SET "value" = ? WHERE "id" = 'db_version'`, DBVersion)
 	return err
 }
 
@@ -157,7 +164,7 @@ func (m *mySQLDB) init(d *common.DatabaseAccessor, c *common.Config) error {
 		return err
 	}
 
-	return m.migrateTables(d)
+	return m.migrateTables(d, c)
 }
 
 func (m *mySQLDB) createBlacklistTable(d *common.DatabaseAccessor) error {
@@ -231,7 +238,7 @@ func (m *mySQLDB) createSettingTable(d *common.DatabaseAccessor) error {
 		return err
 	}
 
-	_, err := d.DB.Exec(`INSERT INTO "settings" ("id", "value") VALUES ('db_version', ?)`, dbVersion)
+	_, err := d.DB.Exec(`INSERT INTO "settings" ("id", "value") VALUES ('db_version', ?)`, DBVersion)
 	return err
 }
 
@@ -247,7 +254,10 @@ func (m *mySQLDB) createUserTable(d *common.DatabaseAccessor) error {
 	    "can_autoreg" TINYINT DEFAULT 1,
 	    "valid_start" INTEGER DEFAULT 0,
 	    "valid_end" INTEGER DEFAULT 0,
-	    "valid_forever" TINYINT DEFAULT 1
+	    "valid_forever" TINYINT DEFAULT 1,
+	    "ui_group" VARCHAR(20) NOT NULL DEFAULT 'default',
+	    "api_group" VARCHAR(20) NOT NULL DEFAULT 'disable',
+	    "allow_status_api" TINYINT DEFAULT 0
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=4;`
 
 	if _, err := d.DB.Exec(sql); err != nil {
@@ -255,14 +265,14 @@ func (m *mySQLDB) createUserTable(d *common.DatabaseAccessor) error {
 	}
 
 	_, err := d.DB.Exec(`INSERT INTO "user"
-			("id", "username", "password") VALUES
-			(1, 'admin', '$2a$10$rZfN/gdXZdGYyLtUb6LF.eHOraDes3ibBECmWic2I3SocMC0L2Lxa'),
-			(2, 'helpdesk', '$2a$10$ICCdq/OyZBBoNPTRmfgntOnujD6INGv7ZAtA/Xq6JIdRMO65xCuNC'),
-			(3, 'readonly', '$2a$10$02NG6kQV.4UicpCnz8hyeefBD4JHKAlZToL2K0EN1HV.u6sXpP1Xy')`)
+			("id", "username", "password", "ui_group") VALUES
+			(1, 'admin', '$2a$10$rZfN/gdXZdGYyLtUb6LF.eHOraDes3ibBECmWic2I3SocMC0L2Lxa', 'admin'),
+			(2, 'helpdesk', '$2a$10$ICCdq/OyZBBoNPTRmfgntOnujD6INGv7ZAtA/Xq6JIdRMO65xCuNC', 'helpdesk'),
+			(3, 'readonly', '$2a$10$02NG6kQV.4UicpCnz8hyeefBD4JHKAlZToL2K0EN1HV.u6sXpP1Xy', 'readonly')`)
 	return err
 }
 
-func (m *mySQLDB) migrate1(d *common.DatabaseAccessor) error {
+func (m *mySQLDB) migrate1(d *common.DatabaseAccessor, c *common.Config) error {
 	// Move device blacklist to blacklist table
 	bd, err := d.DB.Query(`SELECT "mac" FROM "device" WHERE "blacklisted" = 1`)
 	if err != nil {
@@ -289,6 +299,66 @@ func (m *mySQLDB) migrate1(d *common.DatabaseAccessor) error {
 	sql = sql[:len(sql)-2]
 	if _, err := d.DB.Exec(sql); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (m *mySQLDB) migrate2(d *common.DatabaseAccessor, c *common.Config) error {
+	sql := `ALTER TABLE "user" ADD COLUMN (
+		"ui_group" VARCHAR(20) NOT NULL DEFAULT 'default',
+		"api_group" VARCHAR(20) NOT NULL DEFAULT 'disable',
+		"allow_status_api" TINYINT DEFAULT 0
+	);`
+
+	if _, err := d.DB.Exec(sql); err != nil {
+		return err
+	}
+
+	common.RegisterSystemInitFunc(migrateUserPermissions)
+	return nil
+}
+
+func migrateUserPermissions(e *common.Environment) error {
+	if err := migrateUserGroup(e, e.Config.Auth.AdminUsers, "ui", "admin"); err != nil {
+		return err
+	}
+	if err := migrateUserGroup(e, e.Config.Auth.HelpDeskUsers, "ui", "helpdesk"); err != nil {
+		return err
+	}
+	if err := migrateUserGroup(e, e.Config.Auth.ReadOnlyUsers, "ui", "readonly"); err != nil {
+		return err
+	}
+	if err := migrateUserGroup(e, e.Config.Auth.APIReadOnlyUsers, "api", "readonly-api"); err != nil {
+		return err
+	}
+	if err := migrateUserGroup(e, e.Config.Auth.APIReadWriteUsers, "api", "readwrite-api"); err != nil {
+		return err
+	}
+	if err := migrateUserGroup(e, e.Config.Auth.APIStatusUsers, "api-status", ""); err != nil {
+		return err
+	}
+	return nil
+}
+
+func migrateUserGroup(e *common.Environment, members []string, group, groupName string) error {
+	for _, username := range members {
+		user, err := stores.GetUserStore(e).GetUserByUsername(username)
+		if err != nil {
+			return err
+		}
+
+		switch group {
+		case "ui":
+			user.UIGroup = groupName
+		case "api":
+			user.APIGroup = groupName
+		case "api-status":
+			user.AllowStatusAPI = true
+		}
+
+		if err := user.Save(); err != nil {
+			return err
+		}
 	}
 	return nil
 }

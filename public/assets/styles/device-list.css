@@ -45,8 +45,12 @@
     text-align: center;
 }
 
+.device-info-check {
+    flex-basis: 30px;
+}
+
 .device-info {
-    padding: 1em 0;
+    padding: 1.1em;
     min-width: 25%;
     display: inline-block;
 }

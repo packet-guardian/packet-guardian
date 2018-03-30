@@ -100,6 +100,35 @@
         </fieldset>
         <hr class="user-edit-separator">
         <fieldset>
+            <h3>Permissions</h3>
+            <p>
+                <label for="user-ui-group"><span title="The group this user belongs to">UI Group:</span></label>
+                <select name="user-ui-group">
+                    <option value="default">Default</option>
+                    <option value="admin" {{if eq .user.UIGroup "admin"}}selected{{end}}>Administrator</option>
+                    <option value="helpdesk" {{if eq .user.UIGroup "helpdesk"}}selected{{end}}>Service Desk</option>
+                    <option value="readonly" {{if eq .user.UIGroup "readonly"}}selected{{end}}>Readonly Admin</option>
+                </select>
+            </p>
+            <p>
+                <label for="user-api-group"><span title="The group this user belongs to">API Group:</span></label>
+                <select name="user-api-group">
+                    <option value="disable">Disabled</option>
+                    <option value="readonly-api" {{if eq .user.APIGroup "readonly-api"}}selected{{end}}>Readonly</option>
+                    <option value="readwrite-api" {{if eq .user.APIGroup "readwrite-api"}}selected{{end}}>Readwrite</option>
+                </select>
+            </p>
+            <p>
+                <label for="user-api-status">View Status API:</label>
+                {{if .user.AllowStatusAPI}}
+                <input type="checkbox" name="user-api-status" checked="true">
+                {{else}}
+                <input type="checkbox" name="user-api-status">
+                {{end}}
+            </p>
+        </fieldset>
+        <hr class="user-edit-separator">
+        <fieldset>
             <p>
                 {{if eq .user.ID 0}}
                 <button type="submit" id="submit-btn">Create</button>

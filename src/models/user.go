@@ -5,6 +5,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -22,25 +23,29 @@ type UserStore interface {
 type User struct {
 	e                *common.Environment
 	store            UserStore
-	ID               int
-	Username         string
-	Password         string
-	HasPassword      bool
+	ID               int    `json:"-"`
+	Username         string `json:"username"`
+	Password         string `json:"-"`
+	HasPassword      bool   `json:"has_password"`
 	savePassword     bool
-	ClearPassword    bool
-	DeviceLimit      UserDeviceLimit
-	DeviceExpiration *UserDeviceExpiration
-	ValidStart       time.Time
-	ValidEnd         time.Time
-	ValidForever     bool
-	CanManage        bool
-	CanAutoreg       bool
+	ClearPassword    bool                  `json:"-"`
+	DeviceLimit      UserDeviceLimit       `json:"device_limit"`
+	DeviceExpiration *UserDeviceExpiration `json:"device_expiration"`
+	ValidStart       time.Time             `json:"-"`
+	ValidEnd         time.Time             `json:"-"`
+	ValidForever     bool                  `json:"valid_forever"`
+	CanManage        bool                  `json:"can_manage"`
+	CanAutoreg       bool                  `json:"can_autoreg"`
 	blacklist        BlacklistItem
-	Rights           Permission
+	Rights           Permission `json:"-"`
+
+	UIGroup        string `json:"-"`
+	APIGroup       string `json:"-"`
+	AllowStatusAPI bool   `json:"-"`
 }
 
 // NewUser creates a new base user
-func NewUser(e *common.Environment, us UserStore, b BlacklistItem) *User {
+func NewUser(e *common.Environment, us UserStore, b BlacklistItem, username string) *User {
 	// User with the following attributes:
 	// Device limit is global
 	// Device Expiration is global
@@ -50,6 +55,7 @@ func NewUser(e *common.Environment, us UserStore, b BlacklistItem) *User {
 		e:                e,
 		blacklist:        b,
 		store:            us,
+		Username:         username,
 		DeviceLimit:      UserDeviceLimitGlobal,
 		DeviceExpiration: &UserDeviceExpiration{Mode: UserDeviceExpirationGlobal},
 		ValidStart:       time.Unix(0, 0),
@@ -58,6 +64,8 @@ func NewUser(e *common.Environment, us UserStore, b BlacklistItem) *User {
 		CanManage:        true,
 		CanAutoreg:       true,
 		Rights:           ViewOwn | ManageOwnRights,
+		UIGroup:          "default",
+		APIGroup:         "disabled",
 	}
 	// Load extra rights as set in the configuration
 	u.LoadRights()
@@ -65,24 +73,30 @@ func NewUser(e *common.Environment, us UserStore, b BlacklistItem) *User {
 }
 
 func (u *User) LoadRights() {
-	if common.StringInSlice(u.Username, u.e.Config.Auth.AdminUsers) {
-		u.Rights = u.Rights.With(AdminRights)
-		u.Rights = u.Rights.Without(APIRead)
-		u.Rights = u.Rights.Without(APIWrite)
+	u.Rights = u.Rights.With(uiPermissions[u.UIGroup])
+	u.Rights = u.Rights.With(apiPermissions[u.APIGroup])
+	if u.AllowStatusAPI {
+		u.Rights = u.Rights.With(apiPermissions["status-api"])
 	}
-	if common.StringInSlice(u.Username, u.e.Config.Auth.HelpDeskUsers) {
-		u.Rights = u.Rights.With(HelpDeskRights)
+
+	if u.IsBlacklisted() {
+		u.Rights = u.Rights.Without(ManageOwnRights)
 	}
-	if common.StringInSlice(u.Username, u.e.Config.Auth.ReadOnlyUsers) {
-		u.Rights = u.Rights.With(ReadOnlyRights)
-	}
-	if common.StringInSlice(u.Username, u.e.Config.Auth.APIReadOnlyUsers) {
-		u.Rights = u.Rights.With(APIRead)
-	}
-	if common.StringInSlice(u.Username, u.e.Config.Auth.APIReadWriteUsers) {
-		u.Rights = u.Rights.With(APIRead)
-		u.Rights = u.Rights.With(APIWrite)
-	}
+}
+
+func (u *User) MarshalJSON() ([]byte, error) {
+	type Alias User
+	return json.Marshal(&struct {
+		*Alias
+		ValidStart  time.Time `json:"valid_start"`
+		ValidEnd    time.Time `json:"valid_end"`
+		Blacklisted bool      `json:"blacklisted"`
+	}{
+		Alias:       (*Alias)(u),
+		ValidStart:  u.ValidStart.UTC(),
+		ValidEnd:    u.ValidEnd.UTC(),
+		Blacklisted: u.IsBlacklisted(),
+	})
 }
 
 func (u *User) IsNew() bool {

@@ -172,6 +172,10 @@ func apiRouter(e *common.Environment) http.Handler {
 	userAPIController := api.NewUserController(e)
 	r.POST("/api/user", userAPIController.UserHandler)
 	r.DELETE("/api/user", userAPIController.UserHandler)
+	r.GET("/api/user/:username", userAPIController.UserHandler)
+
+	statusAPIController := api.NewStatusController(e)
+	r.GET("/api/status", statusAPIController.GetStatus)
 
 	return mid.CheckAuthAPI(r)
 }

@@ -25,11 +25,14 @@ func NewUserController(e *common.Environment) *UserController {
 	return &UserController{e: e}
 }
 
-func (u *UserController) UserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	if r.Method == "POST" {
+func (u *UserController) UserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	switch r.Method {
+	case "POST":
 		u.saveUserHandler(w, r)
-	} else if r.Method == "DELETE" {
+	case "DELETE":
 		u.deleteUserHandler(w, r)
+	case "GET":
+		u.getUserHandler(w, r, p)
 	}
 }
 
@@ -58,6 +61,28 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
 		return
 	}
+
+	// Permission groups
+	uiGroup := r.FormValue("ui_group")
+	apiGroup := r.FormValue("api_group")
+	allowStatusAPI := r.FormValue("allow_status_api") == "1"
+	if (user.UIGroup != uiGroup || user.APIGroup != apiGroup || user.AllowStatusAPI != allowStatusAPI) && !sessionUser.Can(models.EditUserPermissions) {
+		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+		return
+	}
+
+	if !common.StringInSlice(uiGroup, []string{"default", "admin", "helpdesk", "readonly"}) {
+		common.NewAPIResponse("Unknown ui group", nil).WriteResponse(w, http.StatusBadRequest)
+		return
+	}
+	user.UIGroup = uiGroup
+
+	if !common.StringInSlice(apiGroup, []string{"disable", "readonly-api", "readwrite-api"}) {
+		common.NewAPIResponse("Unknown api group", nil).WriteResponse(w, http.StatusBadRequest)
+		return
+	}
+	user.APIGroup = apiGroup
+	user.AllowStatusAPI = allowStatusAPI
 
 	// Password
 	password := r.FormValue("password")
@@ -285,4 +310,22 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 		"changed-by": sessionUser.Username,
 	}).Info("User deleted")
 	common.NewAPIResponse("User deleted", nil).WriteResponse(w, http.StatusNoContent)
+}
+
+func (u *UserController) getUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	sessionUser := models.GetUserFromContext(r)
+	usernameParam := p.ByName("username")
+
+	user, err := stores.GetUserStore(u.e).GetUserByUsername(usernameParam)
+	if err != nil {
+		http.Error(w, "Error getting user from database", http.StatusInternalServerError)
+		return
+	}
+
+	if user.Username != sessionUser.Username && !sessionUser.Can(models.ViewUsers) {
+		common.NewAPIResponse("Unauthorized", nil).WriteResponse(w, http.StatusUnauthorized)
+		return
+	}
+
+	common.NewAPIResponse("", user).WriteResponse(w, http.StatusOK)
 }

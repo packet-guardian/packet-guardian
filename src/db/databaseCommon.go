@@ -12,13 +12,15 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
-const dbVersion = 2
+const DBVersion = 3
 
 type dbInit interface {
 	init(*common.DatabaseAccessor, *common.Config) error
 }
 
 var dbInits = make(map[string]dbInit)
+
+type migrateFunc func(*common.DatabaseAccessor, *common.Config) error
 
 func RegisterDatabaseAccessor(name string, db dbInit) {
 	dbInits[name] = db
@@ -63,6 +65,7 @@ func NewDatabaseAccessor(e *common.Environment) (*common.DatabaseAccessor, error
 			}
 		}
 
+		da.SetConnMaxLifetime(time.Minute)
 		return da, err
 	}
 	return nil, errors.New("Database " + e.Config.Database.Type + " not supported")
