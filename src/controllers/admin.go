@@ -242,18 +242,6 @@ func (a *Admin) ipSearch(query string) ([]*searchResults, string, error) {
 }
 
 func (a *Admin) userSearch(query string) ([]*searchResults, string, error) {
-	var results []*searchResults
-	// Search for a local user account
-	var users []*models.User
-	users, err := stores.GetUserStore(a.e).SearchUsersByField("username", "%"+query+"%")
-	if err != nil {
-		return nil, "", err
-	}
-
-	if len(users) == 1 {
-		return append(results, &searchResults{U: users[0].Username}), "user", nil
-	}
-
 	// Search for devices with the username
 	exact := true
 	devices, err := stores.GetDeviceStore(a.e).SearchDevicesByField("username", "%"+query+"%")
@@ -268,7 +256,7 @@ func (a *Admin) userSearch(query string) ([]*searchResults, string, error) {
 	}
 
 	if exact { // If they're all the same user, go directly to the user's page
-		return append(results, &searchResults{U: query}), "user", nil
+		return []*searchResults{&searchResults{U: query}}, "user", nil
 	}
 
 	// All else fails, search the user agent for the query
@@ -276,10 +264,11 @@ func (a *Admin) userSearch(query string) ([]*searchResults, string, error) {
 		devices, err = stores.GetDeviceStore(a.e).SearchDevicesByField("user_agent", "%"+query+"%")
 	}
 
-	for _, d := range devices {
-		results = append(results, &searchResults{
+	results := make([]*searchResults, len(devices))
+	for i, d := range devices {
+		results[i] = &searchResults{
 			D: d,
-		})
+		}
 	}
 	return results, "user", err
 }
