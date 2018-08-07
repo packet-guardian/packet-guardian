@@ -60,7 +60,13 @@ func (s *Server) startRedirector() {
 	}
 	srv := &graceful.Server{
 		Timeout: timeout,
-		Server:  &http.Server{Addr: s.address + ":" + s.httpPort, Handler: http.HandlerFunc(s.redirectToHTTPS)},
+		Server: &http.Server{
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  120 * time.Second,
+			Addr:         s.address + ":" + s.httpPort,
+			Handler:      http.HandlerFunc(s.redirectToHTTPS),
+		},
 	}
 	if err := srv.ListenAndServe(); err != nil {
 		s.e.Log.Fatal(err)
@@ -78,7 +84,13 @@ func (s *Server) startHTTP() {
 	}
 	srv := &graceful.Server{
 		Timeout: timeout,
-		Server:  &http.Server{Addr: s.address + ":" + s.httpPort, Handler: s.routes},
+		Server: &http.Server{
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  120 * time.Second,
+			Addr:         s.address + ":" + s.httpPort,
+			Handler:      s.routes,
+		},
 	}
 	if err := srv.ListenAndServe(); err != nil {
 		s.e.Log.Fatal(err)
@@ -96,7 +108,13 @@ func (s *Server) startHTTPS() {
 	}
 	srv := &graceful.Server{
 		Timeout: timeout,
-		Server:  &http.Server{Addr: s.address + ":" + s.httpsPort, Handler: s.routes},
+		Server: &http.Server{
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  120 * time.Second,
+			Addr:         s.address + ":" + s.httpsPort,
+			Handler:      s.routes,
+		},
 	}
 	if err := srv.ListenAndServeTLS(
 		s.e.Config.Webserver.TLSCertFile,
