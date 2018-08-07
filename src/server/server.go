@@ -5,9 +5,9 @@
 package server
 
 import (
+	"net"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/lfkeitel/verbose"
@@ -113,6 +113,6 @@ func (s *Server) redirectToHTTPS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	host := strings.Split(r.Host, ":")[0]
+	host, _, _ := net.SplitHostPort(r.Host)
 	http.Redirect(w, r, "https://"+host+":"+s.httpsPort+r.RequestURI, http.StatusMovedPermanently)
 }
