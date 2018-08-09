@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/lfkeitel/verbose"
+	"github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
-	"github.com/packet-guardian/pg-dhcp"
 )
 
 type LeaseStore struct {

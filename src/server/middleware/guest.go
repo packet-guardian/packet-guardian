@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/lfkeitel/verbose"
+	"github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
-	"github.com/packet-guardian/pg-dhcp"
 )
 
 func CheckGuestReg(e *common.Environment, next http.Handler) http.Handler {

@@ -99,22 +99,16 @@
 			"revisionTime": "2015-10-01T12:23:08Z"
 		},
 		{
-			"checksumSHA1": "d9CG7ot7QoNnv6VkWu/8d2h9M+k=",
-			"path": "github.com/onesimus-systems/dhcp4",
-			"revision": "0c6d61b871fffc4288a9b2543373e8fb7208eb8b",
-			"revisionTime": "2016-06-08T14:48:14Z"
-		},
-		{
 			"checksumSHA1": "YIeIvLFQzOPgQBFK9HgsE+spyg4=",
 			"path": "github.com/packet-guardian/cas-auth",
 			"revision": "c8df2f159154369722b4b1143d874b2eacbd4474",
 			"revisionTime": "2018-08-09T01:59:47Z"
 		},
 		{
-			"checksumSHA1": "afyiWn/Yjxi9hst/Mi2VrHEQh3c=",
-			"path": "github.com/packet-guardian/pg-dhcp",
-			"revision": "fda43d4d4ebd3bf5c65417c5910f44814207507f",
-			"revisionTime": "2017-11-14T15:37:15Z"
+			"checksumSHA1": "WzAT1Cgf2WSU3VvVLCbuqXJJ+Kg=",
+			"path": "github.com/packet-guardian/dhcp-lib",
+			"revision": "70df4823731fa440be00c19d1440debac2771b82",
+			"revisionTime": "2018-08-09T02:43:09Z"
 		},
 		{
 			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",
@@ -129,34 +123,16 @@
 			"revisionTime": "2016-08-19T09:32:22Z"
 		},
 		{
-			"checksumSHA1": "tK8eFmQ0JeKpR3P0TjiGobzlIh0=",
-			"path": "golang.org/x/net/bpf",
-			"revision": "7394c112eae4dba7e96bfcfe738e6373d61772b4",
-			"revisionTime": "2016-08-19T20:57:39Z"
-		},
-		{
-			"checksumSHA1": "vqc3a+oTUGX8PmD0TS+qQ7gmN8I=",
+			"checksumSHA1": "1c4mJK7gaUXt0/442AqB4Trn+kM=",
 			"path": "golang.org/x/net/html",
-			"revision": "7394c112eae4dba7e96bfcfe738e6373d61772b4",
-			"revisionTime": "2016-08-19T20:57:39Z"
+			"revision": "f9ce57c11b242f0f1599cf25c89d8cb02c45295a",
+			"revisionTime": "2018-08-07T09:33:54Z"
 		},
 		{
-			"checksumSHA1": "00eQaGynDYrv3tL+C7l9xH0IDZg=",
+			"checksumSHA1": "XtSbs1gpyaEsIqf6VRhJsgOQe5U=",
 			"path": "golang.org/x/net/html/atom",
-			"revision": "7394c112eae4dba7e96bfcfe738e6373d61772b4",
-			"revisionTime": "2016-08-19T20:57:39Z"
-		},
-		{
-			"checksumSHA1": "yRuyntx9a59ugMi5NlN4ST0XRcI=",
-			"path": "golang.org/x/net/internal/iana",
-			"revision": "7394c112eae4dba7e96bfcfe738e6373d61772b4",
-			"revisionTime": "2016-08-19T20:57:39Z"
-		},
-		{
-			"checksumSHA1": "BJrlL/vetMJZLv8XPuzvw3ZITaU=",
-			"path": "golang.org/x/net/ipv4",
-			"revision": "7394c112eae4dba7e96bfcfe738e6373d61772b4",
-			"revisionTime": "2016-08-19T20:57:39Z"
+			"revision": "f9ce57c11b242f0f1599cf25c89d8cb02c45295a",
+			"revisionTime": "2018-08-07T09:33:54Z"
 		},
 		{
 			"checksumSHA1": "wSu8owMAP7GixsYoSZ4CmKUVhnU=",

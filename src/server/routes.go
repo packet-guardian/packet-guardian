@@ -17,6 +17,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose"
 
+	"github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/auth"
 	"github.com/packet-guardian/packet-guardian/src/bindata"
 	"github.com/packet-guardian/packet-guardian/src/common"
@@ -25,7 +26,6 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 	mid "github.com/packet-guardian/packet-guardian/src/server/middleware"
-	"github.com/packet-guardian/pg-dhcp"
 )
 
 func LoadRoutes(e *common.Environment) http.Handler {

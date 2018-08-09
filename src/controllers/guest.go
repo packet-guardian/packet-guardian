@@ -11,11 +11,11 @@ import (
 
 	"github.com/dchest/captcha"
 	"github.com/lfkeitel/verbose"
+	"github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/auth"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/guest"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
-	"github.com/packet-guardian/pg-dhcp"
 )
 
 type Guest struct {

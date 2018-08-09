@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/lfkeitel/verbose"
+	dhcp "github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/common"
-	dhcp "github.com/packet-guardian/pg-dhcp"
 )
 
 type LeaseHistory struct {
