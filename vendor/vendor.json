@@ -21,12 +21,6 @@
 			"revisionTime": "2015-07-28T12:50:59Z"
 		},
 		{
-			"checksumSHA1": "Yx2GtJxNcYhyr6SCYzWkaQe5b2s=",
-			"path": "github.com/dragonlibs/cas",
-			"revision": "2b838e66629b059fce5ef2378dd1b7117643c24a",
-			"revisionTime": "2017-01-25T14:32:43Z"
-		},
-		{
 			"checksumSHA1": "7DxViusFRJ7UPH0jZqYatwDrOkY=",
 			"path": "github.com/elazarl/go-bindata-assetfs",
 			"revision": "30f82fa23fd844bd5bb1e5f216db87fd77b5eb43",
@@ -109,6 +103,12 @@
 			"path": "github.com/onesimus-systems/dhcp4",
 			"revision": "0c6d61b871fffc4288a9b2543373e8fb7208eb8b",
 			"revisionTime": "2016-06-08T14:48:14Z"
+		},
+		{
+			"checksumSHA1": "irzCGJiwTWIbFrDohlJsfwfQBow=",
+			"path": "github.com/packet-guardian/cas",
+			"revision": "c8df2f159154369722b4b1143d874b2eacbd4474",
+			"revisionTime": "2018-08-09T01:59:47Z"
 		},
 		{
 			"checksumSHA1": "afyiWn/Yjxi9hst/Mi2VrHEQh3c=",

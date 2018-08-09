@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/dragonlibs/cas"
 	"github.com/lfkeitel/verbose"
+	"github.com/packet-guardian/cas"
 
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
