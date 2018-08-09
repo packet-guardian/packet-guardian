@@ -26,15 +26,12 @@ LDFLAGS := -X 'main.version=$(VERSION)' \
 			-X 'main.builder=$(BUILDER)' \
 			-X 'main.goversion=$(GOVERSION)'
 
-.PHONY: all doc fmt alltests test coverage benchmark lint vet dhcp management dist clean docker docker-compile docker-build codeclimate bindata
+.PHONY: all doc fmt alltests test coverage benchmark lint vet management dist clean docker docker-compile docker-build codeclimate bindata
 
-all: bindata test management dhcp
+all: bindata test management
 
 bindata:
 	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/...
-
-dhcp:
-	go build -o bin/dhcp -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
 
 management:
 	go build -o bin/pg -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
