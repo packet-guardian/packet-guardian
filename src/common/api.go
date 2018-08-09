@@ -52,3 +52,5 @@ func (a *APIResponse) WriteResponse(w http.ResponseWriter, code int) (int64, err
 	w.Write(r)
 	return int64(l), nil
 }
+
+var SystemVersion string

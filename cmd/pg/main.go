@@ -40,6 +40,7 @@ func init() {
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	common.SystemVersion = version
 
 	// Parse CLI flags
 	flag.Parse()

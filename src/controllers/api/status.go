@@ -16,15 +16,20 @@ type Status struct {
 }
 
 type StatusResp struct {
-	Database   *DatabaseStatusResp  `json:"database"`
-	GoRoutines *GoRoutineStatusResp `json:"go_routines"`
-	Memory     *MemoryStatusResp    `json:"memory"`
+	Application *ApplicationStatusResp `json:"application"`
+	Database    *DatabaseStatusResp    `json:"database"`
+	GoRoutines  *GoRoutineStatusResp   `json:"go_routines"`
+	Memory      *MemoryStatusResp      `json:"memory"`
+}
+
+type ApplicationStatusResp struct {
+	Version string `json:"version"`
 }
 
 type DatabaseStatusResp struct {
-	DatabaseVersion int    `json:"database_version"`
-	DatabaseStatus  string `json:"database_status"`
-	DatabaseType    string `json:"database_type"`
+	Version int    `json:"version"`
+	Status  string `json:"status"`
+	Type    string `json:"type"`
 }
 
 type GoRoutineStatusResp struct {
@@ -56,12 +61,19 @@ func (s *Status) GetStatus(w http.ResponseWriter, r *http.Request, _ httprouter.
 	}
 
 	data := &StatusResp{
-		Database:   s.databaseStatus(),
-		GoRoutines: s.goRoutineStatus(),
-		Memory:     s.memoryStatus(),
+		Application: s.applicationStatus(),
+		Database:    s.databaseStatus(),
+		GoRoutines:  s.goRoutineStatus(),
+		Memory:      s.memoryStatus(),
 	}
 
 	common.NewAPIResponse("", data).WriteResponse(w, http.StatusOK)
+}
+
+func (s *Status) applicationStatus() *ApplicationStatusResp {
+	return &ApplicationStatusResp{
+		Version: common.SystemVersion,
+	}
 }
 
 func (s *Status) databaseStatus() *DatabaseStatusResp {
@@ -72,9 +84,9 @@ func (s *Status) databaseStatus() *DatabaseStatusResp {
 	}
 
 	return &DatabaseStatusResp{
-		DatabaseVersion: dbVer,
-		DatabaseStatus:  dbStatus,
-		DatabaseType:    s.e.DB.Driver,
+		Version: dbVer,
+		Status:  dbStatus,
+		Type:    s.e.DB.Driver,
 	}
 }
 
