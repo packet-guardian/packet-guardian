@@ -105,8 +105,8 @@
 			"revisionTime": "2016-06-08T14:48:14Z"
 		},
 		{
-			"checksumSHA1": "irzCGJiwTWIbFrDohlJsfwfQBow=",
-			"path": "github.com/packet-guardian/cas",
+			"checksumSHA1": "YIeIvLFQzOPgQBFK9HgsE+spyg4=",
+			"path": "github.com/packet-guardian/cas-auth",
 			"revision": "c8df2f159154369722b4b1143d874b2eacbd4474",
 			"revisionTime": "2018-08-09T01:59:47Z"
 		},
