@@ -11,8 +11,16 @@ import (
 
 var nullHTTPHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
+type TestBlacklistItem struct{ val bool }
+
+func newTestBlacklistItem(v bool) *TestBlacklistItem   { return &TestBlacklistItem{v} }
+func (b *TestBlacklistItem) Blacklist()                { b.val = true }
+func (b *TestBlacklistItem) Unblacklist()              { b.val = false }
+func (b *TestBlacklistItem) IsBlacklisted(string) bool { return b.val }
+func (b *TestBlacklistItem) Save(string) error         { return nil }
+
 func TestCheckAdminMiddleware(t *testing.T) {
-	testuser := models.NewUser(common.NewTestEnvironment(), nil, nil)
+	testuser := models.NewUser(common.NewTestEnvironment(), nil, newTestBlacklistItem(false), "testuser")
 
 	req, _ := http.NewRequest(http.MethodGet, "/admin/dashboard", nil)
 	adminHandler := CheckAdmin(nullHTTPHandler)
