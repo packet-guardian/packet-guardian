@@ -23,6 +23,7 @@ var (
 		"10.11": "El Capitan",
 		"10.12": "Sierra",
 		"10.13": "High Sierra",
+		"10.14": "Mojave",
 	}
 
 	windowsVersionNames = map[string]string{
