@@ -4,15 +4,15 @@ The distribution package is compiled against 64-bit Linux. However, the applicat
 
 ## Requirements
 
-- Go 1.7+
-- NPM
+- Go 1.8+
+- Yarn
 
-## TLDR;
+## TL;DR
 
 ```shell
 # Build the static assets
-npm install
-npm run build:prod
+yarn install
+yarn run build:prod
 
 # Build the application binary
 make
@@ -38,10 +38,6 @@ Run the test suite and build both components.
 ### make management
 
 Build only the web management interface.
-
-### make dhcp
-
-Build only the DHCP server.
 
 ### make doc
 
