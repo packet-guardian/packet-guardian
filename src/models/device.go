@@ -117,15 +117,20 @@ func (d *Device) SetLastSeen(t time.Time) {
 	d.LastSeen = t
 }
 
-// LoadLeaseHistory gets the device's lease history from the lease_history
-// table. If lease history is disabled, this function will use the active lease
-// table which won't be as accurate, and won't show continuity.
 func (d *Device) LoadLeaseHistory() error {
+	if d.Leases != nil {
+		return nil
+	}
+
 	leases, err := d.leaseStore.GetLeaseHistory(d.MAC)
 	if err != nil {
 		return err
 	}
 	d.Leases = leases
+
+	if len(leases) > 0 {
+		d.LastSeen = leases[0].GetStartTime()
+	}
 	return nil
 }
 
