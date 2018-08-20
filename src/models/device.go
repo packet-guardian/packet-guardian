@@ -127,10 +127,6 @@ func (d *Device) LoadLeaseHistory() error {
 		return err
 	}
 	d.Leases = leases
-
-	if len(leases) > 0 {
-		d.LastSeen = leases[0].GetStartTime()
-	}
 	return nil
 }
 
