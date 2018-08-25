@@ -8,7 +8,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
 )
 

@@ -12,7 +12,7 @@ import (
 	"sort"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"

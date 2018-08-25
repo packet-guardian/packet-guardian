@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
 
 	"gopkg.in/tylerb/graceful.v1"

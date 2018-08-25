@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 )
 
 var logLevels = map[string]verbose.LogLevel{

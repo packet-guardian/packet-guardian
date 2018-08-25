@@ -15,7 +15,7 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 
 	"github.com/go-sql-driver/mysql" // MySQL driver
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
 )
 

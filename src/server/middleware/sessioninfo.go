@@ -7,7 +7,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"

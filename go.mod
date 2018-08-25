@@ -6,12 +6,13 @@ require (
 	github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/go-sql-driver/mysql v1.4.1-0.20180719071942-99ff426eb706
-	github.com/gorilla/context v0.0.0-20160525203319-aed02d124ae4
-	github.com/gorilla/securecookie v0.0.0-20160816222338-c13558c2b1c4
-	github.com/gorilla/sessions v0.0.0-20160922145804-ca9ada445741
-	github.com/julienschmidt/httprouter v0.0.0-20160810195338-d8ff598a019f
+	github.com/gorilla/context v1.1.1
+	github.com/gorilla/securecookie v1.1.1
+	github.com/gorilla/sessions v1.1.1
+	github.com/julienschmidt/httprouter v0.0.0-20180715161854-348b672cd90d
 	github.com/lfkeitel/go-ldap-client v0.0.0-20160423153015-b33c09cb02f2
-	github.com/lfkeitel/verbose v4.0.0+incompatible
+	github.com/lfkeitel/verbose v0.0.0-20180825035052-d762b75ffe01
+	github.com/lfkeitel/verbose/v4 v4.0.1
 	github.com/naoina/go-stringutil v0.1.0
 	github.com/naoina/toml v0.1.0
 	github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a
