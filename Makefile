@@ -47,9 +47,9 @@ alltests: test lint vet
 
 test:
 ifeq (CGO_ENABLED, 1)
-	@go test -race $$(go list ./src/...)
+	@go test -mod vendor -race $$(go list ./src/...)
 else
-	@go test $$(go list ./src/...)
+	@go test -mod vendor $$(go list ./src/...)
 endif
 
 coverage:
