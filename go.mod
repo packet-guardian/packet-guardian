@@ -18,8 +18,8 @@ require (
 	github.com/naoina/go-stringutil v0.1.0 // indirect
 	github.com/naoina/toml v0.1.2-0.20170918210437-9fafd6967416
 	github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a
-	github.com/packet-guardian/cas-auth v0.0.0-20180809015947-c8df2f159154
-	github.com/packet-guardian/dhcp-lib v0.0.0-20180809024309-70df4823731f
+	github.com/packet-guardian/cas-auth v1.0.0
+	github.com/packet-guardian/dhcp-lib v1.2.0
 	golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac
 	golang.org/x/net v0.0.0-20180808004115-f9ce57c11b24 // indirect
 	golang.org/x/text v0.3.0 // indirect

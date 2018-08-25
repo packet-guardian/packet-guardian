@@ -35,10 +35,10 @@ github.com/naoina/toml v0.1.2-0.20170918210437-9fafd6967416 h1:shk/vn9oCoOTmwcou
 github.com/naoina/toml v0.1.2-0.20170918210437-9fafd6967416/go.mod h1:NBIhNtsFMo3G2szEBne+bO4gS192HuIYRqfvOWb4i1E=
 github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a h1:bMgpqSCUAcZfjNucx+KNMqPo2gBwxpFY78/V2wETvBk=
 github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a/go.mod h1:YzcHXKcQBjEjtgbVXioLzxVHMAYkDgoRjfb6JuVA1pA=
-github.com/packet-guardian/cas-auth v0.0.0-20180809015947-c8df2f159154 h1:WS8Q4YrYmomN71mG2bp+r3+MAYJA7MsPo3uiji25AaQ=
-github.com/packet-guardian/cas-auth v0.0.0-20180809015947-c8df2f159154/go.mod h1:PVULJge55P+kf7//mq6Qyifi0ivU8I+MGPky0fxGV8I=
-github.com/packet-guardian/dhcp-lib v0.0.0-20180809024309-70df4823731f h1:08PhPEGScRm1xHo6XrxRndKbhJGPRxSNsKFp7eYysLg=
-github.com/packet-guardian/dhcp-lib v0.0.0-20180809024309-70df4823731f/go.mod h1:tBHEkKITuYBPvUXOdR64KDwSoROdteyGz42tRe6Gs6E=
+github.com/packet-guardian/cas-auth v1.0.0 h1:DyWY97kv6Dcov3n8mxl5eSZHsEusaN9G6Fns/FxAkQo=
+github.com/packet-guardian/cas-auth v1.0.0/go.mod h1:PVULJge55P+kf7//mq6Qyifi0ivU8I+MGPky0fxGV8I=
+github.com/packet-guardian/dhcp-lib v1.2.0 h1:tgU7DE4pk5xnmykLv/EJ9RGQKa7mJSAuhJMh4gzbUIA=
+github.com/packet-guardian/dhcp-lib v1.2.0/go.mod h1:tBHEkKITuYBPvUXOdR64KDwSoROdteyGz42tRe6Gs6E=
 golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac h1:7d7lG9fHOLdL6jZPtnV4LpI41SbohIJ1Atq7U991dMg=
 golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/net v0.0.0-20180808004115-f9ce57c11b24 h1:mEsFm194MmS9vCwxFy+zwu0EU7ZkxxMD1iH++vmGdUY=
