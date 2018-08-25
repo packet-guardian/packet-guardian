@@ -26,34 +26,24 @@ LDFLAGS := -X 'main.version=$(VERSION)' \
 			-X 'main.builder=$(BUILDER)' \
 			-X 'main.goversion=$(GOVERSION)'
 
-.PHONY: all doc fmt alltests test coverage benchmark lint vet management dist clean docker docker-compile docker-build codeclimate bindata
+.PHONY: all fmt alltests test benchmark lint build dist clean docker codeclimate bindata
 
-all: bindata test management
+all: bindata test build
 
 bindata:
 	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/dist/...
 
-management:
+build:
 	go build -mod vendor -o bin/pg -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
 
 # development tasks
-doc:
-	@godoc -http=:6060 -index
-
 fmt:
 	@gofmt -s -l -d ./src/*
 
-alltests: test lint vet
+alltests: test lint
 
 test:
-ifeq (CGO_ENABLED, 1)
-	@go test -mod vendor -race $$(go list ./src/...)
-else
-	@go test -mod vendor $$(go list ./src/...)
-endif
-
-coverage:
-	@go test -cover $$(go list ./src/...)
+	@go test -mod vendor ./src/...
 
 benchmark:
 	@echo "Running tests..."
@@ -63,9 +53,6 @@ benchmark:
 # go get github.com/golang/lint/golint
 lint:
 	@golint ./src/...
-
-vet:
-	@go vet $$(go list ./src/...)
 
 codeclimate:
 	@docker run -i --rm \
