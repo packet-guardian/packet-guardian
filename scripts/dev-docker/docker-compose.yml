@@ -9,7 +9,7 @@ services:
             - pg-database
         volumes:
             - ./config.toml:/app/packet-guardian/config/config.toml:ro
-            - ../bin/pg:/app/pg
+            - ../../bin/pg:/app/pg
         ports:
             - 8080:80
         command: /app/pg -c /app/packet-guardian/config/config.toml
@@ -20,4 +20,4 @@ services:
         environment:
             MYSQL_ROOT_PASSWORD: password
             MYSQL_DATABASE: pg
-        command: mysqld --ansi
+        command: mysqld --ansi --sql-mode=ANSI,TRADITIONAL

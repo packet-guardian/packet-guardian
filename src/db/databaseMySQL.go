@@ -53,14 +53,13 @@ func (m *mySQLDB) connect(d *common.DatabaseAccessor, c *common.Config) error {
 		c.Database.Port = 3306
 	}
 
-	mc := &mysql.Config{
-		User:   c.Database.Username,
-		Passwd: c.Database.Password,
-		Net:    "tcp",
-		Addr:   fmt.Sprintf("%s:%d", c.Database.Address, c.Database.Port),
-		DBName: c.Database.Name,
-		Strict: true,
-	}
+	mc := mysql.NewConfig()
+	mc.User = c.Database.Username
+	mc.Passwd = c.Database.Password
+	mc.Net = "tcp"
+	mc.Addr = fmt.Sprintf("%s:%d", c.Database.Address, c.Database.Port)
+	mc.DBName = c.Database.Name
+
 	var err error
 	d.DB, err = sql.Open("mysql", mc.FormatDSN())
 	if err != nil {
@@ -79,9 +78,7 @@ func (m *mySQLDB) connect(d *common.DatabaseAccessor, c *common.Config) error {
 		return err
 	}
 
-	ansiOK := strings.Contains(mode, "ANSI")
-
-	if !ansiOK {
+	if !strings.Contains(mode, "ANSI") {
 		return errors.New("MySQL must be in ANSI mode. Please set the global mode or edit the my.cnf file to enable ANSI sql_mode.")
 	}
 	return nil

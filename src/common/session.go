@@ -71,8 +71,6 @@ func newDatabaseStore(e *Environment) (*SessionStore, error) {
 		TableName: "sessions",
 	}
 	switch e.DB.Driver {
-	case "sqlite":
-		fallthrough
 	case "mysql":
 		store, err = newDBStore(
 			e.DB,
