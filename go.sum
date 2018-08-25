@@ -39,12 +39,16 @@ github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a h1:bMgpqSCUAcZfjNucx+
 github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a/go.mod h1:YzcHXKcQBjEjtgbVXioLzxVHMAYkDgoRjfb6JuVA1pA=
 github.com/packet-guardian/cas-auth v1.0.0 h1:DyWY97kv6Dcov3n8mxl5eSZHsEusaN9G6Fns/FxAkQo=
 github.com/packet-guardian/cas-auth v1.0.0/go.mod h1:PVULJge55P+kf7//mq6Qyifi0ivU8I+MGPky0fxGV8I=
+github.com/packet-guardian/cas-auth v1.0.1 h1:BtgXhEa8iSmCkjzziROWUy23kZiNQcUBKjVq/up1rTk=
+github.com/packet-guardian/cas-auth v1.0.1/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
 github.com/packet-guardian/dhcp-lib v1.2.0 h1:tgU7DE4pk5xnmykLv/EJ9RGQKa7mJSAuhJMh4gzbUIA=
 github.com/packet-guardian/dhcp-lib v1.2.0/go.mod h1:tBHEkKITuYBPvUXOdR64KDwSoROdteyGz42tRe6Gs6E=
 golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac h1:7d7lG9fHOLdL6jZPtnV4LpI41SbohIJ1Atq7U991dMg=
 golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/net v0.0.0-20180808004115-f9ce57c11b24 h1:mEsFm194MmS9vCwxFy+zwu0EU7ZkxxMD1iH++vmGdUY=
 golang.org/x/net v0.0.0-20180808004115-f9ce57c11b24/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
+golang.org/x/net v0.0.0-20180824152047-4bcd98cce591 h1:4S2XUgvg3hUNTvxI307qkFPb9zKHG3Nf9TXFzX/DZZI=
+golang.org/x/net v0.0.0-20180824152047-4bcd98cce591/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 google.golang.org/appengine v1.1.0 h1:igQkv0AAhEIvTEpD5LIpAfav2eeVO9HBTjvKHVJPRSs=
@@ -53,6 +57,7 @@ gopkg.in/asn1-ber.v1 v1.0.0-20150924051756-4e86f4367175 h1:nn6Zav2sOQHCFJHEspya8
 gopkg.in/asn1-ber.v1 v1.0.0-20150924051756-4e86f4367175/go.mod h1:cuepJuh7vyXfUyUwEgHQXw849cJrilpS5NeIjOWESAw=
 gopkg.in/asn1-ber.v1 v1.0.0-20170511165959-379148ca0225 h1:JBwmEvLfCqgPcIq8MjVMQxsF3LVL4XG/HH0qiG0+IFY=
 gopkg.in/asn1-ber.v1 v1.0.0-20170511165959-379148ca0225/go.mod h1:cuepJuh7vyXfUyUwEgHQXw849cJrilpS5NeIjOWESAw=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/ldap.v2 v2.5.1 h1:wiu0okdNfjlBzg6UWvd1Hn8Y+Ux17/u/4nlk4CQr6tU=
@@ -61,3 +66,5 @@ gopkg.in/tylerb/graceful.v1 v1.2.15 h1:1JmOyhKqAyX3BgTXMI84LwT6FOJ4tP2N9e2kwTCM0
 gopkg.in/tylerb/graceful.v1 v1.2.15/go.mod h1:yBhekWvR20ACXVObSSdD3u6S9DeSylanL2PAbAC/uJ8=
 gopkg.in/yaml.v2 v2.0.0-20160715033755-e4d366fc3c79 h1:mENkfeXGmLV7lIyBeNdwYWdONek7pH9yHaHMgZyvIWE=
 gopkg.in/yaml.v2 v2.0.0-20160715033755-e4d366fc3c79/go.mod h1:JAlM8MvJe8wmxCU4Bli9HhUf9+ttbYbLASfIpnQbh74=
+gopkg.in/yaml.v2 v2.2.1 h1:mUhvW9EsL+naU5Q3cakzfE91YhliOondGd6ZrsDBHQE=
+gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
