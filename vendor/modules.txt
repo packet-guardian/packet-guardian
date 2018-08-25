@@ -16,7 +16,7 @@ github.com/gorilla/securecookie
 github.com/gorilla/sessions
 # github.com/julienschmidt/httprouter v0.0.0-20180715161854-348b672cd90d
 github.com/julienschmidt/httprouter
-# github.com/lfkeitel/go-ldap-client v0.0.0-20160423153015-b33c09cb02f2
+# github.com/lfkeitel/go-ldap-client v1.0.0
 github.com/lfkeitel/go-ldap-client
 # github.com/lfkeitel/verbose/v4 v4.0.1
 github.com/lfkeitel/verbose/v4
@@ -39,7 +39,7 @@ golang.org/x/net/html
 golang.org/x/net/html/atom
 # google.golang.org/appengine v1.1.0
 google.golang.org/appengine/cloudsql
-# gopkg.in/asn1-ber.v1 v1.0.0-20150924051756-4e86f4367175
+# gopkg.in/asn1-ber.v1 v1.0.0-20170511165959-379148ca0225
 gopkg.in/asn1-ber.v1
 # gopkg.in/ldap.v2 v2.5.1
 gopkg.in/ldap.v2

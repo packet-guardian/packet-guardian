@@ -14,7 +14,6 @@ type LDAPClient struct {
 	Conn         *ldap.Conn
 	Host         string
 	Port         int
-	UseSSL       bool
 	BindDN       string
 	BindPassword string
 	GroupFilter  string // e.g. "(memberUid=%s)"
@@ -22,6 +21,12 @@ type LDAPClient struct {
 	Base         string
 	Attributes   []string
 	ADDomainName string // ActiveDirectory domain name "example.com"
+
+	UseSSL             bool
+	InsecureSkipVerify bool
+	ServerName         string
+	SkipTLS            bool
+	ClientCertificates []tls.Certificate
 }
 
 // Connect connects to the ldap backend
@@ -37,12 +42,23 @@ func (lc *LDAPClient) Connect() error {
 			}
 
 			// Reconnect with TLS
-			err = l.StartTLS(&tls.Config{InsecureSkipVerify: true})
-			if err != nil {
-				return err
+			if !lc.SkipTLS {
+				err = l.StartTLS(&tls.Config{InsecureSkipVerify: true})
+				if err != nil {
+					return err
+				}
 			}
 		} else {
-			l, err = ldap.DialTLS("tcp", address, &tls.Config{InsecureSkipVerify: false})
+			config := &tls.Config{
+				InsecureSkipVerify: lc.InsecureSkipVerify,
+				ServerName:         lc.ServerName,
+			}
+
+			if lc.ClientCertificates != nil && len(lc.ClientCertificates) > 0 {
+				config.Certificates = lc.ClientCertificates
+			}
+
+			l, err = ldap.DialTLS("tcp", address, config)
 			if err != nil {
 				return err
 			}
@@ -67,6 +83,10 @@ func (lc *LDAPClient) Authenticate(username, password string) (bool, map[string]
 	err = lc.Connect()
 	if err != nil {
 		return false, nil, err
+	}
+
+	if username == "" || password == "" {
+		return false, nil, errors.New("LDAP: no username/password provided")
 	}
 
 	// For simple authentication with Active Directory, the full userDN isn't needed
