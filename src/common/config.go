@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
+	"fmt"
 
 	"github.com/naoina/toml"
 )
@@ -223,6 +224,25 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	// Authentication
 	if len(c.Auth.AuthMethod) == 0 {
 		c.Auth.AuthMethod = []string{"local"}
+	}
+
+	if len(c.Auth.AdminUsers) > 0 {
+		fmt.Println("Setting Auth.AdminUsers is deprecated and no longer used")
+	}
+	if len(c.Auth.HelpDeskUsers) > 0 {
+		fmt.Println("Setting Auth.HelpDeskUsers is deprecated and no longer used")
+	}
+	if len(c.Auth.ReadOnlyUsers) > 0 {
+		fmt.Println("Setting Auth.ReadOnlyUsers is deprecated and no longer used")
+	}
+	if len(c.Auth.APIReadOnlyUsers) > 0 {
+		fmt.Println("Setting Auth.APIReadOnlyUsers is deprecated and no longer used")
+	}
+	if len(c.Auth.APIReadWriteUsers) > 0 {
+		fmt.Println("Setting Auth.APIReadWriteUsers is deprecated and no longer used")
+	}
+	if len(c.Auth.APIStatusUsers) > 0 {
+		fmt.Println("Setting Auth.APIStatusUsers is deprecated and no longer used")
 	}
 
 	// DHCP
