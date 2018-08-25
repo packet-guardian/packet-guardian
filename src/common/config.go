@@ -6,12 +6,11 @@ package common
 
 import (
 	"errors"
-	"io/ioutil"
+	"fmt"
 	"os"
 	"time"
-	"fmt"
 
-	"github.com/naoina/toml"
+	"github.com/BurntSushi/toml"
 )
 
 // Config defines the configuration struct for the application
@@ -163,17 +162,8 @@ func NewConfig(configFile string) (conf *Config, err error) {
 		configFile = "config.toml"
 	}
 
-	f, err := os.Open(configFile)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	buf, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
 	var con Config
-	if err := toml.Unmarshal(buf, &con); err != nil {
+	if _, err := toml.DecodeFile(configFile, &con); err != nil {
 		return nil, err
 	}
 	con.sourceFile = configFile

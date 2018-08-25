@@ -2,6 +2,7 @@ module github.com/packet-guardian/packet-guardian
 
 require (
 	bitbucket.org/ckvist/twilio v0.0.0-20170512072134-13c593a1721b
+	github.com/BurntSushi/toml v0.3.1-0.20180815104733-3012a1dbe2e4
 	github.com/DATA-DOG/go-sqlmock v1.1.3
 	github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364
 	github.com/elazarl/go-bindata-assetfs v1.0.0
@@ -11,11 +12,8 @@ require (
 	github.com/gorilla/sessions v1.1.1
 	github.com/julienschmidt/httprouter v0.0.0-20180715161854-348b672cd90d
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348 // indirect
 	github.com/lfkeitel/go-ldap-client v1.0.0
 	github.com/lfkeitel/verbose/v4 v4.0.1
-	github.com/naoina/go-stringutil v0.1.0 // indirect
-	github.com/naoina/toml v0.1.2-0.20170918210437-9fafd6967416
 	github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a
 	github.com/packet-guardian/cas-auth v1.0.1
 	github.com/packet-guardian/dhcp-lib v1.2.0

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+
+cd $DIR
+
+start() {
+    docker-compose -p packet-guardian up -d
+}
+
+stop() {
+    docker-compose -p packet-guardian stop
+}
+
+remove() {
+    docker-compose -p packet-guardian down
+}
+
+logs() {
+    docker logs -f pg-web
+}
+
+case $1 in
+    start) start;;
+    stop) stop;;
+    rm) remove;;
+    restart) stop && start;;
+    restart-log) stop && start && logs;;
+    start-log) start && logs;;
+    logs) logs;;
+esac
