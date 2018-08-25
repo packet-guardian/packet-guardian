@@ -34,7 +34,7 @@ bindata:
 	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/dist/...
 
 build:
-	go build -mod vendor -o bin/pg -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
+	go build -o bin/pg -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
 
 # development tasks
 fmt:
@@ -43,7 +43,7 @@ fmt:
 alltests: test lint
 
 test:
-	@go test -mod vendor ./src/...
+	@go test ./src/...
 
 benchmark:
 	@echo "Running tests..."
