@@ -18,5 +18,6 @@ notifications:
 
 install: go get -u github.com/go-bindata/go-bindata/...
 script:
+  - export GO111MODULE=on
   - make bindata
   - make test
