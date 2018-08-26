@@ -33,6 +33,8 @@ func StartTaskScheduler(e *common.Environment) {
 		}).Notice("Invalid JobSchedulerWakeUp setting, using default")
 		d = time.Hour
 	}
+
+	go flaggedDevicesTask(e)
 	for {
 		e.Log.WithFields(verbose.Fields{
 			"package":  "tasks",

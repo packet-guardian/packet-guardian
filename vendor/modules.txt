@@ -36,10 +36,14 @@ golang.org/x/net/html
 golang.org/x/net/html/atom
 # google.golang.org/appengine v1.1.0
 google.golang.org/appengine/cloudsql
+# gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc
+gopkg.in/alexcesaro/quotedprintable.v3
 # gopkg.in/asn1-ber.v1 v1.0.0-20170511165959-379148ca0225
 gopkg.in/asn1-ber.v1
 # gopkg.in/ldap.v2 v2.5.1
 gopkg.in/ldap.v2
+# gopkg.in/mail.v2 v2.0.0-20180731213649-a0242b2233b4
+gopkg.in/mail.v2
 # gopkg.in/tylerb/graceful.v1 v1.2.15
 gopkg.in/tylerb/graceful.v1
 # gopkg.in/yaml.v2 v2.2.1

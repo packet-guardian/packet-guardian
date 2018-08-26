@@ -11,6 +11,14 @@ stop() {
     docker-compose -p packet-guardian stop
 }
 
+restart() {
+    docker-compose -p packet-guardian restart pg-web
+}
+
+restart-full() {
+    docker-compose -p packet-guardian restart
+}
+
 remove() {
     docker-compose -p packet-guardian down
 }
@@ -19,12 +27,19 @@ logs() {
     docker logs -f pg-web
 }
 
+exec-db() {
+    docker exec -it pg-database mysql -u root -ppassword
+}
+
 case $1 in
     start) start;;
     stop) stop;;
     rm) remove;;
-    restart) stop && start;;
-    restart-log) stop && start && logs;;
+    restart) restart;;
+    restart-full) restart-full;;
+    restart-log) restart && logs;;
     start-log) start && logs;;
     logs) logs;;
+
+    exec-db) exec-db;;
 esac

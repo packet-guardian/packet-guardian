@@ -55,6 +55,7 @@ type Device struct {
 	blacklist      BlacklistItem
 	LastSeen       time.Time      `json:"-"`
 	Leases         []LeaseHistory `json:"-"`
+	Flagged        bool           `json:"flagged"`
 }
 
 func NewDevice(e *common.Environment, s DeviceStore, l LeaseStore, b BlacklistItem) *Device {

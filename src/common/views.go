@@ -55,6 +55,12 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 		"plus1": func(a int) int {
 			return a + 1
 		},
+		"titleBool": func(b bool) string {
+			if b {
+				return "True"
+			}
+			return "False"
+		},
 	})
 
 	if err := loadTemplates(tmpl, "templates"); err != nil {

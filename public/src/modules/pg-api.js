@@ -76,6 +76,12 @@ class API {
         $.post(`/api/device/mac/${mac}/expiration`, data, ok, error);
     }
 
+    // flagged is bool
+    flagDevice(mac, flagged, ok, error) {
+        mac = encodeURIComponent(mac);
+        $.post(`/api/device/mac/${mac}/flag`, { flagged }, ok, error);
+    }
+
     // macs is an array of MAC addresses
     deleteDevices(username, macs, ok, error) {
         username = encodeURIComponent(username);

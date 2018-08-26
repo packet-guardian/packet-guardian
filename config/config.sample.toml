@@ -234,3 +234,13 @@ readOnlyUsers = ["readonly"]
 [auth.cas]
 ## CAS server URI
 # server = ""
+
+## Email settings are used to send alerts for flagged devices
+## Leaving address unset or empty will disable all email
+[email]
+# address = "localhost"
+# port = 25
+# username = ""
+# password = ""
+# fromAddress = "alerts@packetguardian"
+# toAddresses = ["alerts@example.com"]

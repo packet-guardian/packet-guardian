@@ -18,6 +18,28 @@ $('#delete-btn').click(function() {
     });
 });
 
+$('#unflag-dev-btn').click(function() {
+    var cmodal = new jsConfirm();
+    cmodal.show('Are you sure you want to unflag this device?', function() {
+        api.flagDevice(getMacAddress(), false, function() {
+            location.reload();
+        }, function() {
+            flashMessage('Error unflagging device');
+        })
+    });
+});
+
+$('#flag-dev-btn').click(function() {
+    var cmodal = new jsConfirm();
+    cmodal.show('Are you sure you want to flag this device?', function() {
+        api.flagDevice(getMacAddress(), true, function() {
+            location.reload();
+        }, function() {
+            flashMessage('Error flagging device');
+        })
+    });
+});
+
 $('#unblacklist-btn').click(function() {
     var cmodal = new jsConfirm();
     cmodal.show('Are you sure you want to remove this device from the blacklist?', function() {

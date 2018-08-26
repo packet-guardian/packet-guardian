@@ -43,6 +43,7 @@ func newmySQLDBInit() *mySQLDB {
 		1: m.migrateFrom1,
 		2: m.migrateFrom2,
 		3: m.migrateFrom3,
+		4: m.migrateFrom4,
 	}
 
 	return m
@@ -185,9 +186,9 @@ func (m *mySQLDB) createDeviceTable(d *common.DatabaseAccessor) error {
 	    "expires" INTEGER DEFAULT 0,
 	    "date_registered" INTEGER NOT NULL,
 	    "user_agent" TEXT,
-	    "blacklisted" TINYINT DEFAULT 0,
 	    "description" TEXT,
-	    "last_seen" INTEGER NOT NULL
+	    "last_seen" INTEGER NOT NULL,
+	    "flagged" TINYINT DEFAULT 0
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1`
 
 	_, err := d.DB.Exec(sql)
@@ -348,6 +349,14 @@ func migrateUserGroup(e *common.Environment, members []string, group, groupName 
 
 func (m *mySQLDB) migrateFrom3(d *common.DatabaseAccessor, c *common.Config) error {
 	sql := `DROP TABLE IF EXISTS "lease_history"`
+	_, err := d.DB.Exec(sql)
+	return err
+}
+
+func (m *mySQLDB) migrateFrom4(d *common.DatabaseAccessor, c *common.Config) error {
+	sql := `ALTER TABLE "device" ADD COLUMN (
+		"flagged" TINYINT DEFAULT 0
+	);`
 	_, err := d.DB.Exec(sql)
 	return err
 }

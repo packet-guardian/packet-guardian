@@ -160,6 +160,7 @@ func apiRouter(e *common.Environment) http.Handler {
 	r.POST("/api/device/reassign", deviceAPIController.ReassignHandler)
 	r.POST("/api/device/mac/:mac/description", deviceAPIController.EditDescriptionHandler)
 	r.POST("/api/device/mac/:mac/expiration", deviceAPIController.EditExpirationHandler)
+	r.POST("/api/device/mac/:mac/flag", deviceAPIController.EditFlaggedHandler)
 	r.GET("/api/device/:mac", deviceAPIController.GetDeviceHandler)
 
 	blacklistController := api.NewBlacklistController(e)

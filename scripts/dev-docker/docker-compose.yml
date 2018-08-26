@@ -7,6 +7,7 @@ services:
             - pg-database
         links:
             - pg-database
+            - pg-email
         volumes:
             - ./config.toml:/app/packet-guardian/config/config.toml:ro
             - ../../bin/pg:/app/pg
@@ -21,3 +22,9 @@ services:
             MYSQL_ROOT_PASSWORD: password
             MYSQL_DATABASE: pg
         command: mysqld --ansi --sql-mode=ANSI,TRADITIONAL
+
+    pg-email:
+        image: mailhog/mailhog:latest
+        container_name: 'pg-email'
+        ports:
+            - 8025:8025

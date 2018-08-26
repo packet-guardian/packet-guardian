@@ -123,6 +123,14 @@ type Config struct {
 	DHCP struct {
 		ConfigFile string
 	}
+	Email struct {
+		Address     string
+		Port        int
+		Username    string
+		Password    string
+		FromAddress string
+		ToAddresses []string
+	}
 }
 
 func FindConfigFile() string {
@@ -237,6 +245,17 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	// DHCP
 	c.DHCP.ConfigFile = setStringOrDefault(c.DHCP.ConfigFile, "config/dhcp.conf")
+
+	// Email
+	if c.Email.Address != "" {
+		if c.Email.FromAddress == "" {
+			return nil, errors.New("Email.FromAddress cannot be empty")
+		}
+		if len(c.Email.ToAddresses) == 0 {
+			return nil, errors.New("Email.ToAddresses cannot be empty")
+		}
+		c.Email.Port = setIntOrDefault(c.Email.Port, 25)
+	}
 	return c, nil
 }
 

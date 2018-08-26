@@ -52,6 +52,10 @@ func (s *DeviceStore) GetDeviceByID(id int) (*models.Device, error) {
 	return devices[0], nil
 }
 
+func (s *DeviceStore) GetFlaggedDevices() ([]*models.Device, error) {
+	return s.getDevicesFromDatabase(`WHERE "flagged" = 1`)
+}
+
 func (s *DeviceStore) GetDevicesForUser(u *models.User) ([]*models.Device, error) {
 	sql := `WHERE "username" = ? ORDER BY "mac"`
 	if s.e.DB.Driver == "sqlite" {
@@ -82,7 +86,7 @@ func (s *DeviceStore) SearchDevicesByField(field, pattern string) ([]*models.Dev
 }
 
 func (s *DeviceStore) getDevicesFromDatabase(where string, values ...interface{}) ([]*models.Device, error) {
-	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen" FROM "device" ` + where
+	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen", "flagged" FROM "device" ` + where
 
 	rows, err := s.e.DB.Query(sql, values...)
 	if err != nil {
@@ -102,6 +106,7 @@ func (s *DeviceStore) getDevicesFromDatabase(where string, values ...interface{}
 		var ua string
 		var description string
 		var lastSeen int64
+		var flagged bool
 
 		err := rows.Scan(
 			&id,
@@ -114,6 +119,7 @@ func (s *DeviceStore) getDevicesFromDatabase(where string, values ...interface{}
 			&ua,
 			&description,
 			&lastSeen,
+			&flagged,
 		)
 		if err != nil {
 			continue
@@ -132,6 +138,7 @@ func (s *DeviceStore) getDevicesFromDatabase(where string, values ...interface{}
 		device.DateRegistered = time.Unix(dateRegistered, 0)
 		device.UserAgent = ua
 		device.LastSeen = time.Unix(lastSeen, 0)
+		device.Flagged = flagged
 
 		results = append(results, device)
 	}
@@ -146,7 +153,7 @@ func (s *DeviceStore) Save(d *models.Device) error {
 }
 
 func (s *DeviceStore) updateExisting(d *models.Device) error {
-	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "description" = ?, "last_seen" = ? WHERE "id" = ?`
+	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "description" = ?, "last_seen" = ?, "flagged" = ? WHERE "id" = ?`
 
 	_, err := s.e.DB.Exec(
 		sql,
@@ -159,6 +166,7 @@ func (s *DeviceStore) updateExisting(d *models.Device) error {
 		d.UserAgent,
 		d.Description,
 		d.LastSeen.Unix(),
+		d.Flagged,
 		d.ID,
 	)
 	if err != nil {
@@ -172,7 +180,7 @@ func (s *DeviceStore) saveNew(d *models.Device) error {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen") VALUES (?,?,?,?,?,?,?,?,?)`
+	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen", "flagged") VALUES (?,?,?,?,?,?,?,?,?,?)`
 
 	result, err := s.e.DB.Exec(
 		sql,
@@ -185,6 +193,7 @@ func (s *DeviceStore) saveNew(d *models.Device) error {
 		d.UserAgent,
 		d.Description,
 		d.LastSeen.Unix(),
+		d.Flagged,
 	)
 	if err != nil {
 		return err

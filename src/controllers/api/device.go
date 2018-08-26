@@ -580,3 +580,52 @@ func (d *Device) GetDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 
 	common.NewAPIResponse("Registration successful", device).WriteResponse(w, http.StatusOK)
 }
+
+func (d *Device) EditFlaggedHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	sessionUser := models.GetUserFromContext(r)
+	var err error
+	mac, err := net.ParseMAC(p.ByName("mac"))
+	if err != nil {
+		common.NewAPIResponse("Invalid MAC address", nil).WriteResponse(w, http.StatusBadRequest)
+	}
+
+	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
+	if err != nil {
+		d.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:api:device",
+			"mac":     mac.String(),
+		}).Error("Error getting device")
+		common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
+	}
+
+	if !sessionUser.Can(models.EditDevice) {
+		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
+		return
+	}
+
+	flagged := r.FormValue("flagged")
+	if flagged != "" {
+		device.Flagged = (flagged == "1" || flagged == "true")
+	}
+
+	if err := device.Save(); err != nil {
+		d.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:api:device",
+		}).Error("Error saving device")
+		common.NewAPIResponse("Error saving device", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
+	}
+
+	d.e.Log.WithFields(verbose.Fields{
+		"mac":        device.MAC.String(),
+		"username":   device.Username,
+		"changed-by": sessionUser.Username,
+		"flagged":    device.Flagged,
+		"package":    "controllers:api:device",
+		"action":     "edit_flagged_device",
+	}).Info("Device flagged status changed")
+	common.NewAPIResponse("Device saved successfully", nil).WriteResponse(w, http.StatusOK)
+}

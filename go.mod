@@ -20,7 +20,9 @@ require (
 	golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac
 	golang.org/x/text v0.3.0 // indirect
 	google.golang.org/appengine v1.1.0 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/ldap.v2 v2.5.1
+	gopkg.in/mail.v2 v2.0.0-20180731213649-a0242b2233b4
 	gopkg.in/tylerb/graceful.v1 v1.2.15
 )
