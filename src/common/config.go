@@ -194,9 +194,9 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Logging.Path = setStringOrDefault(c.Logging.Path, "logs/pg.log")
 
 	// Database
-	c.Database.Type = setStringOrDefault(c.Database.Type, "sqlite")
-	c.Database.Address = setStringOrDefault(c.Database.Address, "config/database.sqlite3")
-	c.Database.RetryTimeout = setStringOrDefault(c.Database.RetryTimeout, "1m")
+	c.Database.Type = setStringOrDefault(c.Database.Type, "mysql")
+	c.Database.Address = setStringOrDefault(c.Database.Address, "localhost")
+	c.Database.RetryTimeout = setStringOrDefault(c.Database.RetryTimeout, "10s")
 
 	// Registration
 	c.Registration.RegistrationPolicyFile = setStringOrDefault(c.Registration.RegistrationPolicyFile, "config/policy.txt")
@@ -213,8 +213,8 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Guest.VerifyCodeExpiration = setIntOrDefault(c.Guest.VerifyCodeExpiration, 3)
 
 	// Webserver
-	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 8080)
-	c.Webserver.HttpsPort = setIntOrDefault(c.Webserver.HttpsPort, 1443)
+	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 80)
+	c.Webserver.HttpsPort = setIntOrDefault(c.Webserver.HttpsPort, 443)
 	c.Webserver.SessionName = setStringOrDefault(c.Webserver.SessionName, "packet-guardian")
 	c.Webserver.SessionsDir = setStringOrDefault(c.Webserver.SessionsDir, "sessions")
 	c.Webserver.SessionStore = setStringOrDefault(c.Webserver.SessionStore, "filesystem")

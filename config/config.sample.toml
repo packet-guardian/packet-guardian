@@ -42,13 +42,13 @@ level = "notice"
 path = "/var/log/packet-guardian/pg.log"
 
 [database]
-## Supported database types are: sqlite
-type = "sqlite"
+## Supported database types are: mysql
+type = "mysql"
 
 ## The address, socket, or filename of the database
-address = "/var/lib/packet-guardian/database.sqlite3"
+address = "localhost"
 
-# Port, not needed for SQLite, defaults to database-specific default port
+# Port defaults to database-specific default port
 # port = 0
 
 ## Username of database
@@ -57,14 +57,14 @@ address = "/var/lib/packet-guardian/database.sqlite3"
 ## Password of database
 # password = ""
 
-## Name of the database to use, not needed for SQLite
+## Name of the database to use
 # name = ""
 
 ## Number of connection retries before failing. 0 means retry indefinitly
 # retry = 0
 
 ## Timeout before the next connection retry
-# retryTimeout = "1m"
+# retryTimeout = "10s"
 
 [registration]
 ## The file containing the policy text that's shown on the registration page
@@ -98,7 +98,7 @@ manualRegPlatforms = []
 
 [guest]
 ## Enabled guest registrations
-enabled = true
+# enabled = true
 
 ## Skip the normal registration page and go straight to the guest page
 # guestOnly = false
@@ -184,19 +184,6 @@ sessionsAuthKey = "change me please"
 ## Make sure local is first, it will save headaches.
 ## Valid values: local, ldap, radius, cas
 authMethod = ["local"]
-
-## List of usernames who are administrative users. Does not matter what type
-## of authentication is used. It's soley based on username.
-adminUsers = ["admin"]
-
-## List of usernames who are helpdesk users. Does not matter what type
-## of authentication is used. It's soley based on username.
-## A helpdesk user can manage user devices but cannot manage user accounts.
-helpDeskUsers = ["helpdesk"]
-
-## List of usernames who are read-only admin users. Does not matter what type
-## of authentication is used. It's soley based on username.
-readOnlyUsers = ["readonly"]
 
 ## LDAP authentication settings
 [auth.ldap]
