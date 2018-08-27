@@ -143,9 +143,13 @@ func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
 	if len(flashes) > 0 {
 		flash = flashes[0].(string)
 	}
+
 	if session.GetString("username") != "" {
-		session.Save(v.r, w)
+		if err := session.Save(v.r, w); err != nil {
+			v.e.Log.WithField("error", err).Error("Failed to save session")
+		}
 	}
+
 	data["config"] = v.e.Config
 	data["flashMessage"] = flash
 	if err := v.t.ExecuteTemplate(w, v.name, data); err != nil {

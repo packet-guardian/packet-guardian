@@ -35,7 +35,12 @@ func LoginUser(r *http.Request, w http.ResponseWriter) bool {
 				sess.Set("loggedin", true)
 				sess.Set("username", username)
 				sess.Set("_authMethod", method)
-				sess.Save(r, w)
+
+				if err := sess.Save(r, w); err != nil {
+					e.Log.WithField("error", err).Error("Failed to save login session")
+					return false
+				}
+
 				e.Log.WithFields(verbose.Fields{
 					"username": username,
 					"method":   method,
