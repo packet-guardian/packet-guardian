@@ -1,5 +1,7 @@
 module github.com/packet-guardian/packet-guardian
 
+replace github.com/gorilla/sessions v1.1.1 => github.com/packet-guardian/sessions v1.1.2
+
 require (
 	bitbucket.org/ckvist/twilio v0.0.0-20170512072134-13c593a1721b
 	github.com/BurntSushi/toml v0.3.1-0.20180815104733-3012a1dbe2e4

@@ -14,7 +14,7 @@ github.com/go-sql-driver/mysql
 github.com/gorilla/context
 # github.com/gorilla/securecookie v1.1.1
 github.com/gorilla/securecookie
-# github.com/gorilla/sessions v1.1.1
+# github.com/gorilla/sessions v1.1.1 => github.com/packet-guardian/sessions v1.1.2
 github.com/gorilla/sessions
 # github.com/julienschmidt/httprouter v0.0.0-20180715161854-348b672cd90d
 github.com/julienschmidt/httprouter

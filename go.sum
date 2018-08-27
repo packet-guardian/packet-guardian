@@ -35,6 +35,8 @@ github.com/packet-guardian/cas-auth v1.0.1 h1:BtgXhEa8iSmCkjzziROWUy23kZiNQcUBKj
 github.com/packet-guardian/cas-auth v1.0.1/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
 github.com/packet-guardian/dhcp-lib v1.2.0 h1:tgU7DE4pk5xnmykLv/EJ9RGQKa7mJSAuhJMh4gzbUIA=
 github.com/packet-guardian/dhcp-lib v1.2.0/go.mod h1:tBHEkKITuYBPvUXOdR64KDwSoROdteyGz42tRe6Gs6E=
+github.com/packet-guardian/sessions v1.1.2 h1:8dJ9WaVoqtJa1lEjr/txPuHxGi9Gfyme1MNwQpAAaZc=
+github.com/packet-guardian/sessions v1.1.2/go.mod h1:Ieo8HYsV0qN9WIJeic1HRzDxX9UY5BkplHncRmmZPwU=
 golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac h1:7d7lG9fHOLdL6jZPtnV4LpI41SbohIJ1Atq7U991dMg=
 golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/net v0.0.0-20180824152047-4bcd98cce591 h1:4S2XUgvg3hUNTvxI307qkFPb9zKHG3Nf9TXFzX/DZZI=
