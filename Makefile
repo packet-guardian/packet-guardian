@@ -26,9 +26,12 @@ LDFLAGS := -X 'main.version=$(VERSION)' \
 			-X 'main.builder=$(BUILDER)' \
 			-X 'main.goversion=$(GOVERSION)'
 
-.PHONY: all fmt alltests test benchmark lint build dist clean docker codeclimate bindata
+.PHONY: all fmt alltests test benchmark lint build dist clean docker codeclimate bindata yarn
 
-all: bindata test build
+all: yarn bindata test build
+
+yarn:
+	yarn run build:prod
 
 bindata:
 	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/dist/...
