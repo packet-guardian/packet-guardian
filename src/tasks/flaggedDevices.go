@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/packet-guardian/packet-guardian/src/common"
-	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 
 	"gopkg.in/mail.v2"
@@ -23,14 +22,24 @@ The following flagged devices were detected on the network:
 
 {{range .}}
 ==================================
-MAC:       {{.MAC.String}}
-Username:  {{.Username}}
-Last Seen: {{.LastSeen.Format "2006-01-02 15:04"}}
+MAC:        {{.MAC}}
+Username:   {{.Username}}
+Last Seen:  {{.LastSeen.Format "2006-01-02 15:04"}}
+Network:    {{.Network}}
+IP Address: {{.Address}}
 ==================================
 
 {{end}}
 `))
 )
+
+type tempDevice struct {
+	MAC      string
+	Username string
+	LastSeen time.Time
+	Network  string
+	Address  string
+}
 
 func setupMailDialer(c *common.Config) {
 	mailServer = mail.NewDialer(
@@ -74,7 +83,7 @@ func flaggedDevicesTask(e *common.Environment) {
 		}
 
 		// Filter devices
-		filtered := make([]*models.Device, 0, len(flaggedDevices)/2)
+		filtered := make([]tempDevice, 0, len(flaggedDevices)/2)
 
 		for _, d := range flaggedDevices {
 			cl := d.GetCurrentLease()
@@ -96,7 +105,13 @@ func flaggedDevicesTask(e *common.Environment) {
 				}
 			}
 
-			filtered = append(filtered, d)
+			filtered = append(filtered, tempDevice{
+				MAC:      d.MAC.String(),
+				Username: d.Username,
+				LastSeen: d.LastSeen,
+				Network:  cl.GetNetworkName(),
+				Address:  cl.GetIP().String(),
+			})
 		}
 
 		if len(filtered) == 0 {
@@ -121,7 +136,7 @@ func flaggedDevicesTask(e *common.Environment) {
 
 		// Update memory cache of alerted devices
 		for _, d := range filtered {
-			deviceCache[d.MAC.String()] = d.LastSeen
+			deviceCache[d.MAC] = d.LastSeen
 		}
 
 		trimmap := make(map[string]bool, len(flaggedDevices))
