@@ -99,16 +99,12 @@ type Config struct {
 		APIStatusUsers    []string
 
 		LDAP struct {
-			UseAD         bool
-			Servers       []string
-			VerifySSLCert bool
-			DomainName    string
-
-			BaseDN       string
-			BindDN       string
-			BindPassword string
-			UserFilter   string
-			GroupFilter  string
+			Server             string
+			Port               int
+			UseSSL             bool
+			InsecureSkipVerify bool
+			SkipTLS            bool
+			DomainName         string
 		}
 		Radius struct {
 			Servers []string
@@ -242,6 +238,9 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	if len(c.Auth.APIStatusUsers) > 0 {
 		fmt.Println("Setting Auth.APIStatusUsers is deprecated and no longer used")
 	}
+
+	c.Auth.LDAP.Server = setStringOrDefault(c.Auth.LDAP.Server, "127.0.0.1")
+	c.Auth.LDAP.Port = setIntOrDefault(c.Auth.LDAP.Port, 389)
 
 	// DHCP
 	c.DHCP.ConfigFile = setStringOrDefault(c.DHCP.ConfigFile, "config/dhcp.conf")
