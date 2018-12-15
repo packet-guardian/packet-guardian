@@ -65,7 +65,7 @@ codeclimate:
 		-v /tmp/cc:/tmp/cc \
 		codeclimate/codeclimate analyze $(CODECLIMATE_ARGS)
 
-dist: vet all
+dist: all
 	@rm -rf ./dist
 	@mkdir -p dist/packet-guardian
 	@cp -R config dist/packet-guardian/
@@ -73,10 +73,10 @@ dist: vet all
 	@cp LICENSE dist/packet-guardian/
 	@cp README.md dist/packet-guardian/
 	@cp -R scripts dist/packet-guardian/
+	@rm -rf dist/packet-guardian/scripts/dev-docker
 
 	@mkdir dist/packet-guardian/bin
 	@cp bin/pg dist/packet-guardian/bin/pg
-	@cp bin/dhcp dist/packet-guardian/bin/dhcp
 
 	@mkdir dist/packet-guardian/sessions
 
