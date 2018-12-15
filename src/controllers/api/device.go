@@ -13,6 +13,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose/v4"
+	"github.com/packet-guardian/useragent"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
@@ -121,7 +122,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 			platform = r.FormValue("platform")
 		}
 	} else {
-		platform = common.ParseUserAgent(r.UserAgent())
+		platform = useragent.ParseUserAgent(r.UserAgent()).String()
 	}
 
 	// Fill in device information

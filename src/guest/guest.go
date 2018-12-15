@@ -16,6 +16,7 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
+	"github.com/packet-guardian/useragent"
 )
 
 func init() {
@@ -116,7 +117,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	}
 
 	// Validate platform, we don't want someone to submit an inappropriate value
-	platform := common.ParseUserAgent(r.UserAgent())
+	platform := useragent.ParseUserAgent(r.UserAgent()).String()
 
 	// Fill in device information
 	device.Username = credential
