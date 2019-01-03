@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/lfkeitel/verbose/v4"
+	"github.com/packet-guardian/packet-guardian/src/bindata"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/db"
 	"github.com/packet-guardian/packet-guardian/src/server"
@@ -105,6 +106,10 @@ func main() {
 
 	e.Views, err = common.NewViews(e, "templates")
 	if err != nil {
+		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
+	}
+
+	if err := bindata.SetCustomDir(e.Config.Webserver.CustomDataDir); err != nil {
 		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
 	}
 

@@ -92,6 +92,7 @@ type Config struct {
 		SessionsDir         string
 		SessionsAuthKey     string
 		SessionsEncryptKey  string
+		CustomDataDir       string
 	}
 	Auth struct {
 		AuthMethod        []string
@@ -222,6 +223,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Webserver.SessionName = setStringOrDefault(c.Webserver.SessionName, "packet-guardian")
 	c.Webserver.SessionsDir = setStringOrDefault(c.Webserver.SessionsDir, "sessions")
 	c.Webserver.SessionStore = setStringOrDefault(c.Webserver.SessionStore, "filesystem")
+	c.Webserver.CustomDataDir = setStringOrDefault(c.Webserver.CustomDataDir, "custom")
 
 	// Authentication
 	if len(c.Auth.AuthMethod) == 0 {
