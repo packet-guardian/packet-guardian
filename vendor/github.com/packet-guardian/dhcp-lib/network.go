@@ -15,8 +15,12 @@ type network struct {
 	name                 string
 	settings             *settings
 	registeredSettings   *settings
+	regOptionsCached     bool
 	unregisteredSettings *settings
+	unregOptionsCached   bool
 	subnets              []*subnet
+	local                bool
+	ignoreRegistration   bool
 }
 
 func newNetwork(name string) *network {

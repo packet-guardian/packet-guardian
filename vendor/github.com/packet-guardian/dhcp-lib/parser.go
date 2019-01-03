@@ -6,11 +6,17 @@ package dhcp
 
 import (
 	"bufio"
+	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"strings"
 	"time"
+
+	"strconv"
+
+	dhcp4 "github.com/packet-guardian/pg-dhcp/dhcp"
 )
 
 // ParseFile takes the file name to a configuration file.
@@ -25,12 +31,16 @@ func ParseFile(path string) (*Config, error) {
 }
 
 type parser struct {
-	l *lexer
-	c *Config
+	l           *lexer
+	c           *Config
+	vendorTypes map[string]*dhcpOptionBlock
 }
 
 func newParser(r *bufio.Reader) *parser {
-	return &parser{l: newLexer(r)}
+	return &parser{
+		l:           newLexer(r),
+		vendorTypes: make(map[string]*dhcpOptionBlock),
+	}
 }
 
 func (p *parser) parse() (*Config, error) {
@@ -58,6 +68,8 @@ mainLoop:
 			}
 			p.l.pushReader(bufio.NewReader(file))
 			continue
+		case DECL_OPTION:
+			err = p.parseOptionDeclaration()
 		case EOF:
 			break mainLoop
 		default:
@@ -119,16 +131,25 @@ mainLoop:
 }
 
 func (p *parser) parseNetwork() error {
+	local := false
 	nameToken := p.l.next()
+	if nameToken.token == LOCAL {
+		local = true
+		nameToken = p.l.next()
+	}
 	if nameToken.token != STRING {
 		return fmt.Errorf("Expected STRING on line %d", nameToken.line)
 	}
 	name := strings.ToLower(nameToken.value.(string))
+	if len(name) > 255 {
+		return fmt.Errorf("Network name is too long on line %d", nameToken.line)
+	}
 
 	if _, exists := p.c.networks[name]; exists {
 		return fmt.Errorf("Network %s already declared, line %d", name, nameToken.line)
 	}
 	netBlock := newNetwork(name)
+	netBlock.local = local
 	mode := 0 // 0 = root, 1 = registered, 2 = unregistered
 mainLoop:
 	for {
@@ -138,6 +159,8 @@ mainLoop:
 			break mainLoop
 		case COMMENT, EOL:
 			continue
+		case IGNORE_REGISTRATION:
+			netBlock.ignoreRegistration = true
 		case SUBNET:
 			shortSyntax := false
 			if mode == 0 {
@@ -149,6 +172,7 @@ mainLoop:
 				return err
 			}
 			if mode == 2 { // Unregistered block
+				// This will also set shortmode subnet blocks to unregistered
 				subnet.allowUnknown = true
 			}
 			subnet.network = netBlock
@@ -248,6 +272,9 @@ mainLoop:
 			return nil, fmt.Errorf("Unexpected token %s on line %d in subnet", tok.string(), tok.line)
 		}
 	}
+	if _, ok := sub.settings.options[dhcp4.OptionSubnetMask]; !ok {
+		sub.settings.options[dhcp4.OptionSubnetMask] = []byte(sub.net.Mask)
+	}
 	return sub, nil
 }
 
@@ -321,7 +348,29 @@ func (p *parser) parseSetting(setBlock *settings) error {
 	case COMMENT, EOF:
 		return nil
 	case OPTION:
-		p.parseOption()
+		opt, err := p.parseOption()
+		if err != nil {
+			return err
+		}
+
+		// Generate an apply vendor options
+		if !opt.vendor && opt.Code == dhcp4.OptionVendorSpecificInformation {
+			if opt.Value[0] == 0 { // For some reason the user declared the option as false, abide by their wishes
+				return nil
+			}
+
+			opt.Value = setBlock.genVendorOption()
+			// Vendor options must be at least one byte
+			if len(opt.Value) == 0 {
+				return nil
+			}
+		}
+
+		if opt.vendor {
+			setBlock.vendorOptions[opt.Code] = opt.Value
+		} else {
+			setBlock.options[opt.Code] = opt.Value
+		}
 		return nil
 	case DEFAULT_LEASE_TIME:
 		tokn := p.l.next()
@@ -349,4 +398,161 @@ func (p *parser) parseSetting(setBlock *settings) error {
 	return fmt.Errorf("Unexpected token %s on line %d in settings", tok.string(), tok.line)
 }
 
-func (p *parser) parseOption() { p.l.untilNext(EOL) }
+func (p *parser) parseOption() (*option, error) {
+	// Consume all tokens to the next line end
+	tokens := p.l.untilNext(EOL)
+	if len(tokens) < 2 { // An option must be at least a name and one parameter
+		return nil, errors.New("Options require a name and value")
+	}
+
+	n := tokens[0] // The first token is the name of the option
+	if n.token != STRING {
+		return nil, fmt.Errorf("Invalid option name on line %d", n.line)
+	}
+
+	optionName := n.value.(string)
+	vendorOption := true
+	block, exists := p.vendorTypes[optionName]
+	if !exists {
+		vendorOption = false
+		block, exists = options[optionName]
+		if !exists {
+			// Manual options take the form "option-xxx" where xxx is an integer < 255
+			p := strings.Split(optionName, "-")
+			if len(p) != 2 {
+				return nil, fmt.Errorf("Option %s is not supported on line %d", optionName, n.line)
+			}
+			code, err := strconv.Atoi(p[1])
+			if err != nil || code > 255 {
+				return nil, fmt.Errorf("Custom option code %s is not valid on line %d", p[1], n.line)
+			}
+			// Use a custom option block that allows any parameters and any number of them
+			block = &dhcpOptionBlock{code: dhcp4.OptionCode(code), schema: anySchema}
+		}
+	}
+
+	if block.schema.multi != oneOrMore && len(tokens)-1 > int(block.schema.multi) {
+		return nil, fmt.Errorf("Option %s requires %d parameters", optionName, block.schema.multi)
+	}
+
+	var optionData []byte
+	for _, tok := range tokens[1:] {
+		if block.schema.token != ANY && tok.token != block.schema.token {
+			return nil, fmt.Errorf("Expected %s, got %s on line %d", block.schema.token.string(), tok.token.string(), tok.line)
+		}
+		switch t := tok.value.(type) {
+		case uint64:
+			buf := make([]byte, 8)
+			written := binary.PutUvarint(buf, t)
+			if written > int(block.schema.maxlen) {
+				return nil, fmt.Errorf("Number is too big on line %d", tok.line)
+			}
+			optionData = append(optionData, buf...)
+		case int64:
+			buf := make([]byte, 8)
+			written := binary.PutVarint(buf, t)
+			if written > int(block.schema.maxlen) {
+				return nil, fmt.Errorf("Number is too big on line %d", tok.line)
+			}
+			optionData = append(optionData, buf...)
+		case string:
+			optionData = append(optionData, []byte(t)...)
+		case bool:
+			if t {
+				optionData = append(optionData, byte(1))
+			} else {
+				optionData = append(optionData, byte(0))
+			}
+		case []byte:
+			optionData = append(optionData, t...)
+		case net.IP:
+			optionData = append(optionData, []byte(t.To4())...)
+		}
+	}
+
+	if block.schema.maxlen != unlimited && len(optionData) > int(block.schema.maxlen) {
+		return nil, fmt.Errorf("Incorrect option length on line %d", n.line)
+	}
+	if len(optionData)%block.schema.multipleOf != 0 {
+		return nil, fmt.Errorf("Incorrect option length on line %d", n.line)
+	}
+
+	opt := &option{}
+	opt.Code = block.code
+	opt.Value = optionData
+	opt.vendor = vendorOption
+	return opt, nil
+}
+
+func (p *parser) parseOptionDeclaration() error {
+	nameToken := p.l.next()
+	if nameToken.token != STRING {
+		return fmt.Errorf("Expected STRING on line %d", nameToken.line)
+	}
+	name := strings.ToLower(nameToken.value.(string))
+	if _, exists := p.vendorTypes[name]; exists {
+		return fmt.Errorf("Custom type %s already defined on line %d", name, nameToken.line)
+	}
+
+	optionType := &dhcpOptionBlock{}
+
+mainLoop:
+	for {
+		tok := p.l.next()
+		switch tok.token {
+		case COMMENT, EOL:
+			continue
+		case EOF, END:
+			break mainLoop
+		case CODE:
+			if optionType.code != 0 {
+				return fmt.Errorf("Duplicate code value on line %d", tok.line)
+			}
+
+			tok = p.l.next()
+			if tok.token != NUMBER {
+				return fmt.Errorf("Expected code number on line %d", tok.line)
+			}
+
+			v, ok := tok.value.(uint64)
+			if !ok || v <= 0 || v >= 255 {
+				return fmt.Errorf("Invalid code number on line %d, must be between 1 and 254", tok.line)
+			}
+			optionType.code = dhcp4.OptionCode(v)
+		case OPTION_TYPE:
+			if optionType.schema != nil {
+				return fmt.Errorf("Duplicate type value on line %d", tok.line)
+			}
+
+			tok = p.l.next()
+			if tok.token != STRING {
+				return fmt.Errorf("Expected type name on line %d", tok.line)
+			}
+
+			v := tok.value.(string)
+			switch v {
+			case "bool":
+				optionType.schema = booleanSchema
+			case "address":
+				optionType.schema = singleIPSchema
+			case "address-list":
+				optionType.schema = multiIPSchema
+			case "string":
+				optionType.schema = stringSchema
+			case "int8":
+				optionType.schema = int8Schema
+			case "int16":
+				optionType.schema = int16Schema
+			case "int32":
+				optionType.schema = int32Schema
+			default:
+				return fmt.Errorf("Invalid option type on line %d", tok.line)
+			}
+		default:
+			return fmt.Errorf("Unexpected token %s on line %d in decloption", tok.string(), tok.line)
+		}
+	}
+
+	p.vendorTypes[name] = optionType
+	return nil
+}
