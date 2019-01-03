@@ -8,49 +8,54 @@
     </div>
     <div class="info">
         <p>
-            <span class="label">Registered</span>
-            {{if .registered}}Yes{{else}}No{{end}}
+            <span class="label">Registered:</span> {{if .registered}}Yes{{else}}No{{end}}
         </p>
         <p>
-            <span class="label">Leases</span>
-            {{len .leases}}
+            <span class="label">Leases:</span> {{.leaseCnt}}
         </p>
     </div>
 
-    <div class="lease-list">
-        {{range .leases}}
-        <div class="lease">
-            <p>
-                <span class="label">IP Address</span>
-                <span class="data">{{.IP.String}}</span>
-            </p>
-            <p>
-                <span class="label">MAC Address</span>
-                <span class="data"><a href="/admin/manage/device/{{urlquery .MAC.String}}">{{.MAC.String}}</a></span>
-            </p>
-            <p>
-                <span class="label">Start</span>
-                <span class="data">{{.Start.Format "2006-01-02 15:04"}}</span>
-            </p>
-            <p>
-                <span class="label">End</span>
-                <span class="data">{{.End.Format "2006-01-02 15:04"}}</span>
-            </p>
-            <p>
-                <span class="label">Hostname</span>
-                <span class="data">{{.Hostname}}</span>
-            </p>
-            <p>
-                <span class="label">Abandoned</span>
-                {{if .IsAbandoned}}
-                <span class="data">Yes</span>
-                {{else}}
-                <span class="data">No</span>
-                {{end}}
-            </p>
-        </div>
+    <div class="device-pager device-pager-top">
+        <span class="pager-direction">
+        {{if ne .page 1}}
+        <a href="/admin/reports/lease-stats?network={{.network}}&{{if .registered}}registered&{{end}}&page={{sub1 .page}}">&lt; Prev</a>
         {{end}}
+        </span>
+
+        <span class="pager-start-end">{{.pageStart}} - {{.pageEnd}}</span>
+
+        <span class="pager-direction">
+        {{if .hasNextPage}}
+        <a href="/admin/reports/lease-stats?network={{.network}}&{{if .registered}}registered&{{end}}&page={{plus1 .page}}">Next &gt;</a>
+        {{end}}
+        </span>
     </div>
+
+    <table class="lease-list">
+        <thead>
+            <tr>
+                <th>IP Address</th>
+                <th>MAC Address</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Hostname</th>
+                <th>Abandoned</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {{range .leases}}
+            <tr>
+                <td>{{.IP.String}}</td>
+                <td><a href="/admin/manage/device/{{urlquery .MAC.String}}">{{.MAC.String}}</a></td>
+                <td>{{.Start.Format "2006-01-02 15:04"}}</td>
+                <td>{{.End.Format "2006-01-02 15:04"}}</td>
+                <td>{{.Hostname}}</td>
+                <td>{{if .IsAbandoned}}Yes{{else}}No{{end}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
 </div>
 {{template "footer"}}
 {{end}}

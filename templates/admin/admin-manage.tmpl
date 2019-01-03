@@ -3,6 +3,7 @@
 <div class="manager">
     <form>
         <input type="hidden" name="username" value="{{.user.Username}}">
+
         <div class="user-info">
             <section>
                 <span class="text-label">Username:</span>
@@ -16,9 +17,10 @@
             </section>
             <section>
                 <span class="text-label"># of Devices:</span>
-                <span class="username">{{len .devices}}</span>
+                <span class="username">{{.deviceCnt}}</span>
             </section>
         </div>
+
         <div class="controls">
             <section>
                 {{if .canCreateDevice}}

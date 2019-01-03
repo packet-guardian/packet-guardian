@@ -2,16 +2,16 @@
 {{template "header" dict "css" (list "device-list" "manage") "main" . "pageTitle" "Device Management"}}
 <div class="manager">
     <form>
-        <input type="hidden" name="username" value="{{.sessionUser.Username}}">
+        <input type="hidden" name="username" value="{{.user.Username}}">
         <div class="user-info">
             <section>
                 <span class="text-label">Username:</span>
-                <span class="username">{{.sessionUser.Username}}</span>
-                {{if .sessionUser.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
+                <span class="username">{{.user.Username}}</span>
+                {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
             </section>
             <section>
                 <span class="text-label"># of Devices:</span>
-                <span class="username">{{len .devices}}</span>
+                <span class="username">{{.deviceCnt}}</span>
             </section>
         </div>
         <div class="controls">

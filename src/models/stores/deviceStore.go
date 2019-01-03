@@ -57,12 +57,13 @@ func (s *DeviceStore) GetFlaggedDevices() ([]*models.Device, error) {
 }
 
 func (s *DeviceStore) GetDevicesForUser(u *models.User) ([]*models.Device, error) {
-	sql := `WHERE "username" = ? ORDER BY "mac"`
-	if s.e.DB.Driver == "sqlite" {
-		sql += " COLLATE NOCASE"
-	}
-	sql += " ASC"
+	sql := `WHERE "username" = ? ORDER BY "mac" ASC`
 	return s.getDevicesFromDatabase(sql, u.Username)
+}
+
+func (s *DeviceStore) GetDevicesForUserPage(u *models.User, page int) ([]*models.Device, error) {
+	sql := `WHERE "username" = ? ORDER BY "mac" ASC LIMIT ?,?`
+	return s.getDevicesFromDatabase(sql, u.Username, (common.PageSize*page)-common.PageSize, common.PageSize)
 }
 
 func (s *DeviceStore) GetDeviceCountForUser(u *models.User) (int, error) {

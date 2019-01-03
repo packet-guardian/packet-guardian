@@ -10,10 +10,11 @@ import (
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose/v4"
-	"github.com/packet-guardian/dhcp-lib"
+	dhcp "github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
@@ -73,7 +74,12 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 		return
 	}
 
-	results, err := stores.GetDeviceStore(a.e).GetDevicesForUser(user)
+	pageNum := 1
+	if page, _ := strconv.Atoi(r.URL.Query().Get("page")); page > 0 {
+		pageNum = page
+	}
+
+	results, err := stores.GetDeviceStore(a.e).GetDevicesForUserPage(user, pageNum)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -84,9 +90,32 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 		return
 	}
 
+	deviceCnt, err := stores.GetDeviceStore(a.e).GetDeviceCountForUser(user)
+	if err != nil {
+		a.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:admin",
+			"username": user.Username,
+		}).Error("Error getting devices")
+		a.e.Views.RenderError(w, r, nil)
+		return
+	}
+
+	pageEnd := pageNum * common.PageSize
+	if deviceCnt < pageEnd {
+		pageEnd = deviceCnt
+	}
+
 	data := map[string]interface{}{
 		"user":               user,
 		"devices":            results,
+		"deviceCnt":          deviceCnt,
+		"usePages":           deviceCnt > common.PageSize,
+		"page":               pageNum,
+		"hasNextPage":        pageNum*common.PageSize < deviceCnt,
+		"adminManage":        true,
+		"pageStart":          ((pageNum - 1) * common.PageSize) + 1,
+		"pageEnd":            pageEnd,
 		"canCreateDevice":    sessionUser.Can(models.CreateDevice),
 		"canEditDevice":      sessionUser.Can(models.EditDevice),
 		"canDeleteDevice":    sessionUser.Can(models.DeleteDevice),

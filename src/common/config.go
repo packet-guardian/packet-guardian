@@ -13,6 +13,9 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+// PageSize is the number of items per page
+var PageSize = 30
+
 // Config defines the configuration struct for the application
 type Config struct {
 	sourceFile string
@@ -22,6 +25,7 @@ type Config struct {
 		SiteDomainName     string
 		SiteFooterText     string
 		JobSchedulerWakeUp string
+		PageSize           int
 	}
 	Logging struct {
 		Enabled    bool
@@ -171,7 +175,10 @@ func NewConfig(configFile string) (conf *Config, err error) {
 		return nil, err
 	}
 	con.sourceFile = configFile
-	return setSensibleDefaults(&con)
+
+	c, err := setSensibleDefaults(&con)
+	PageSize = c.Core.PageSize
+	return c, err
 }
 
 func setSensibleDefaults(c *Config) (*Config, error) {
@@ -184,6 +191,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	if _, err := time.ParseDuration(c.Core.JobSchedulerWakeUp); err != nil {
 		c.Core.JobSchedulerWakeUp = "1h"
 	}
+	c.Core.PageSize = setIntOrDefault(c.Core.PageSize, 30)
 
 	// Logging
 	c.Logging.Level = setStringOrDefault(c.Logging.Level, "notice")

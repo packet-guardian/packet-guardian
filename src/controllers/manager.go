@@ -6,10 +6,11 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/lfkeitel/verbose/v4"
-	"github.com/packet-guardian/dhcp-lib"
+	dhcp "github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/auth"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
@@ -83,7 +84,12 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results, err := stores.GetDeviceStore(m.e).GetDevicesForUser(sessionUser)
+	pageNum := 1
+	if page, _ := strconv.Atoi(r.URL.Query().Get("page")); page > 0 {
+		pageNum = page
+	}
+
+	results, err := stores.GetDeviceStore(m.e).GetDevicesForUserPage(sessionUser, pageNum)
 	if err != nil {
 		m.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -94,11 +100,34 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	deviceCnt, err := stores.GetDeviceStore(m.e).GetDeviceCountForUser(sessionUser)
+	if err != nil {
+		m.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:manager",
+			"username": sessionUser.Username,
+		}).Error("Error getting devices")
+		m.e.Views.RenderError(w, r, nil)
+		return
+	}
+
+	pageEnd := pageNum * common.PageSize
+	if deviceCnt < pageEnd {
+		pageEnd = deviceCnt
+	}
+
 	showAddBtn := (m.e.Config.Registration.AllowManualRegistrations && !sessionUser.IsBlacklisted())
 
 	data := map[string]interface{}{
-		"sessionUser":     sessionUser,
+		"user":            sessionUser,
 		"devices":         results,
+		"deviceCnt":       deviceCnt,
+		"usePages":        deviceCnt > common.PageSize,
+		"page":            pageNum,
+		"adminManage":     false,
+		"pageStart":       ((pageNum - 1) * common.PageSize) + 1,
+		"pageEnd":         pageEnd,
+		"hasNextPage":     pageNum*common.PageSize < deviceCnt,
 		"showAddBtn":      showAddBtn && sessionUser.Can(models.CreateOwn) && !sessionUser.IsBlacklisted(),
 		"canEditDevice":   sessionUser.Can(models.EditOwn) && !sessionUser.IsBlacklisted(),
 		"canDeleteDevice": sessionUser.Can(models.DeleteOwn) && !sessionUser.IsBlacklisted(),
