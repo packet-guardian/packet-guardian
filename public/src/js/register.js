@@ -54,7 +54,7 @@ function register() {
     } else {
         registerDevice(data);
     }
-};
+}
 
 function disableRegBtn() {
     $('#register-btn').prop('disabled', true);

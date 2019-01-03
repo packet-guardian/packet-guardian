@@ -16,7 +16,7 @@
         "webpack-merge": "^4.1.1"
     },
     "scripts": {
-        "lint": "./node_modules/.bin/eslint --no-ignore public/dist/js/**.js || true",
+        "lint": "eslint --no-ignore public/src/js/**.js",
         "build:dev": "webpack --config webpack.dev.js",
         "build:prod": "webpack --config webpack.prod.js",
         "watch": "webpack --config webpack.dev.js --watch"
