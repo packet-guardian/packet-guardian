@@ -5,12 +5,30 @@
 
     <form id="user-form">
         <input type="hidden" name="user-id" value="{{.user.ID}}">
+
+        <fieldset>
+            <p>
+                <a href="/admin/users" class="btn">Back to User List</a>
+                <a href="/admin/manage/user/{{.user.Username}}" class="btn">Device List</a>
+                {{if eq .user.ID 0}}
+                <button type="submit" id="submit-btn" class="ok-btn">Create</button>
+                {{else}}
+                <button type="submit"  id="submit-btn" class="ok-btn">Save</button>
+                {{end}}
+                <button type="button" name="delete-btn" class="danger-btn">Delete</button>
+            </p>
+        </fieldset>
+
+        <hr class="user-edit-separator">
+
         <fieldset>
             <h3>User Information</h3>
+
             <p>
                 <label for="username">Username:</label>
                 <input type="text" name="username" value="{{.user.Username}}" disabled="disabled">
             </p>
+
             <p>
                 {{if .user.HasPassword}}
                 <span class="label">Has Password</span>: <span id="has-password">Yes</span>
@@ -18,15 +36,19 @@
                 <span class="label">Has Password</span>: <span id="has-password">No</span>
                 {{end}}
             </p>
+
             <p>
                 <label for="password">New Password:</label>
                 <input type="password" name="password">
                 <input type="checkbox" name="clear-pass"> Clear Password
             </p>
         </fieldset>
+
         <hr class="user-edit-separator">
+
         <fieldset>
             <h3>Device Settings</h3>
+
             <p>
                 <label for="device-limit">Device Limit:</label>
                 <select name="special-limit">
@@ -52,15 +74,19 @@
                     <option value="rolling">Rolling</option>
                 </select>
             </p>
+
             <p>
                 <label for="device-expiration"><span title="When the user's device will expire by default">Default Device Expiration Value:</span></label>
                 <input type="text" name="device-expiration" value="{{.user.DeviceExpiration.String}}">
                 <span id="dev-exp-tooltip" class="tooltip"></span>
             </p>
         </fieldset>
+
         <hr class="user-edit-separator">
+
         <fieldset>
             <h3>User Expiration</h3>
+
             <p>
                 <label for="val-bef-sel">User Valid:</label>
                 <select name="val-bef-sel" data-forever="{{.user.ValidForever}}">
@@ -68,19 +94,24 @@
                     <option value="specific">Specify</option>
                 </select>
             </p>
+
             <p>
                 <label for="valid-after">Start:</label>
                 <input type="text" name="valid-after" value="{{.user.ValidStart.Format "2006-01-02 15:04"}}">
                 <span id="user-exp-tooltip" class="tooltip"></span>
             </p>
+
             <p>
                 <label for="valid-before">End:</label>
                 <input type="text" name="valid-before" value="{{.user.ValidEnd.Format "2006-01-02 15:04"}}">
             </p>
         </fieldset>
+
         <hr class="user-edit-separator">
+
         <fieldset>
             <h3>Other Settings</h3>
+
             <p>
                 <label for="can-manage">Can Manage Own Devices:</label>
                 {{if .user.CanManage}}
@@ -89,6 +120,7 @@
                 <input type="checkbox" name="can-manage">
                 {{end}}
             </p>
+
             <p>
                 <label for="can-autoreg">Can Auto Register Devices:</label>
                 {{if .user.CanAutoreg}}
@@ -98,7 +130,9 @@
                 {{end}}
             </p>
         </fieldset>
+
         <hr class="user-edit-separator">
+
         <fieldset>
             <h3>Permissions</h3>
             <p>
@@ -110,6 +144,7 @@
                     <option value="readonly" {{if eq .user.UIGroup "readonly"}}selected{{end}}>Readonly Admin</option>
                 </select>
             </p>
+
             <p>
                 <label for="user-api-group"><span title="The group this user belongs to">API Group:</span></label>
                 <select name="user-api-group">
@@ -118,6 +153,7 @@
                     <option value="readwrite-api" {{if eq .user.APIGroup "readwrite-api"}}selected{{end}}>Readwrite</option>
                 </select>
             </p>
+
             <p>
                 <label for="user-api-status">View Status API:</label>
                 {{if .user.AllowStatusAPI}}
@@ -125,19 +161,6 @@
                 {{else}}
                 <input type="checkbox" name="user-api-status">
                 {{end}}
-            </p>
-        </fieldset>
-        <hr class="user-edit-separator">
-        <fieldset>
-            <p>
-                {{if eq .user.ID 0}}
-                <button type="submit" id="submit-btn">Create</button>
-                {{else}}
-                <button type="submit"  id="submit-btn">Save</button>
-                {{end}}
-                <button type="button" name="delete-btn">Delete</button>
-                <a href="/admin/manage/user/{{.user.Username}}" class="btn">Device List</a>
-                <a href="/admin/users" class="btn">Back to User List</a>
             </p>
         </fieldset>
     </form>

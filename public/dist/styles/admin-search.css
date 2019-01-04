@@ -2,25 +2,15 @@ h2 {
     margin-top: 0;
 }
 
-h2.sub {
+.sub {
     margin-top: .5em;
     text-align: center;
 }
 
 .controls {
     margin-left: 5px;
-}
-
-.search-box {
-    margin-top: 10px;
-    width: 100%;
-}
-
-.search-box input {
-    display: block;
-    width: 98%;
-    margin-bottom: 5px;
-    max-width: 450px;
+    display: flex;
+    justify-content: space-between;
 }
 
 button {
@@ -84,18 +74,6 @@ button {
     .admin-search {
         width: 75%;
         margin: 0 auto;
-    }
-
-    .search-box {
-        float: right;
-        margin-top: 0;
-        width: auto;
-    }
-
-    .search-box input {
-        display: inline;
-        width: auto;
-        margin-bottom: 0;
     }
 }
 

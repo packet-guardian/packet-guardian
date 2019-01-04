@@ -64,17 +64,18 @@ select > .placeholder {
     margin-top: 5px;
 }
 
+.header-metadata {
+    display: flex;
+    justify-content: space-between;
+}
+
 @media (min-width: 875px) {
     .user-info {
         margin-left: 10px;
-        float: left;
     }
 
     .controls {
         text-align: right;
-        float: right;
-        margin-right: 0;
-        margin-left: 0;
     }
 
     .manager {

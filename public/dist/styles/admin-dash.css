@@ -4,17 +4,8 @@ h2 {
 
 .controls {
     margin-left: 5px;
-}
-
-.search-box {
-    margin-top: 10px;
-    width: 100%;
-}
-
-.search-box input {
-    display: block;
-    width: 98%;
-    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
 }
 
 .dash-status {
@@ -36,19 +27,5 @@ h2 {
     .admin-dash {
         width: 60%;
         margin: 0 auto;
-    }
-}
-
-@media (min-width: 850px) {
-    .search-box {
-        float: right;
-        margin-top: 0;
-        width: auto;
-    }
-
-    .search-box input {
-        display: inline;
-        width: auto;
-        margin-bottom: 0;
     }
 }

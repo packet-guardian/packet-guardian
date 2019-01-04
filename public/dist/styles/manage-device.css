@@ -16,7 +16,7 @@
     margin-left: 2em;
 }
 
-hr.lease-separator {
+.lease-separator {
     width: 10em;
     display: inline-block;
     margin: 0;

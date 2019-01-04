@@ -1,8 +1,9 @@
 {{define "manage"}}
 {{template "header" dict "css" (list "device-list" "manage") "main" . "pageTitle" "Device Management"}}
 <div class="manager">
-    <form>
+    <form class="header-metadata">
         <input type="hidden" name="username" value="{{.user.Username}}">
+
         <div class="user-info">
             <section>
                 <span class="text-label">Username:</span>
@@ -14,6 +15,7 @@
                 <span class="username">{{.deviceCnt}}</span>
             </section>
         </div>
+
         <div class="controls">
             <section>
                 {{if .showAddBtn}}

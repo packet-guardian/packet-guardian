@@ -9,18 +9,8 @@ h2 {
 
 .controls {
     margin-left: 5px;
-}
-
-.new-user {
-    margin-top: 10px;
-    width: 100%;
-}
-
-.new-user input {
-    display: block;
-    width: 98%;
-    margin-bottom: 5px;
-    max-width: 450px;
+    display: flex;
+    justify-content: space-between;
 }
 
 button {
@@ -30,6 +20,16 @@ button {
     border: 0;
     background-color: #0083A8;
     background: linear-gradient(to bottom, #0083A8, #007899);
+}
+
+.ok-btn {
+    background-color: rgb(0, 168, 56);
+    background: linear-gradient(to bottom, rgb(0, 168, 56), rgb(0, 136, 45));
+}
+
+.danger-btn {
+    background-color: rgb(241, 81, 81);
+    background: linear-gradient(to bottom, rgb(241, 81, 81), rgb(180, 59, 59));
 }
 
 table {
@@ -87,17 +87,5 @@ fieldset p {
 @media (min-width: 850px) {
     table {
         margin: 20px auto;
-    }
-
-    .new-user {
-        float: right;
-        margin-top: 0;
-        width: auto;
-    }
-
-    .new-user input {
-        display: inline;
-        width: auto;
-        margin-bottom: 0;
     }
 }

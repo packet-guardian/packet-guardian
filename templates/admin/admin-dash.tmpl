@@ -3,11 +3,13 @@
 <div class="admin-dash">
     <h2>Administration Dashboard</h2>
     <div class="controls">
-        {{if .canViewUsers}}
-        <a href="/admin/users" class="btn">Manage Users</a>
-        {{end}}
-        <a href="/admin/reports" class="btn">Reports</a>
-        <a href="/logout" class="btn">Logout</a>
+        <nav>
+            {{if .canViewUsers}}
+            <a href="/admin/users" class="btn">Manage Users</a>
+            {{end}}
+            <a href="/admin/reports" class="btn">Reports</a>
+            <a href="/logout" class="btn">Logout</a>
+        </nav>
 
         <div class="search-box">
             <form method="GET" action="/admin/search">
@@ -21,8 +23,7 @@
         <h2>System Statistics</h2>
         <h3>Registrations</h3>
         <div class="stat-block">
-            <h3 class="hlabel">Total Registered Devices:</h3> {{.deviceTotal}}<br>
-            <h3 class="hlabel">Average Devices per User:</h3> {{.deviceAvg}}
+            <h3 class="hlabel">Total Registered Devices:</h3> {{.deviceTotal}}
         </div>
 
         {{if gt (len .leaseStats) 0}}
