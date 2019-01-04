@@ -43,7 +43,7 @@ func leaseReport(e *common.Environment, w http.ResponseWriter, r *http.Request) 
 	endTime := time.Now().Unix()
 	leases, err := stores.GetLeaseStore(e).SearchLeases(
 		`network = ? AND registered = ? AND end > ? ORDER BY "mac" ASC LIMIT ?,?`,
-		networkName, registered, endTime, (common.PageSize-1)*pageNum, common.PageSize,
+		networkName, registered, endTime, (common.PageSize*pageNum)-common.PageSize, common.PageSize,
 	)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
