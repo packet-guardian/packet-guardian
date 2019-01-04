@@ -1,11 +1,13 @@
 package reports
 
 import (
-	"encoding/json"
+	"bytes"
+	"net"
 	"net/http"
+	"sort"
 
 	"github.com/lfkeitel/verbose/v4"
-	"github.com/packet-guardian/dhcp-lib"
+	dhcp "github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
@@ -31,7 +33,30 @@ func poolReport(e *common.Environment, w http.ResponseWriter, r *http.Request) e
 	handler := dhcp.NewDHCPServer(dhcpConfig, dhcpPkgConfig)
 	handler.LoadLeases()
 	stats := handler.GetPoolStats()
-	b, _ := json.MarshalIndent(stats, "", "  ")
-	w.Write(b)
+
+	sort.Stable(poolSubnetSorter(stats))
+	sort.Stable(poolNameSorter(stats))
+
+	data := map[string]interface{}{
+		"pools": stats,
+	}
+
+	e.Views.NewView("reports-network-pools", r).Render(w, data)
 	return nil
 }
+
+type poolNameSorter []*dhcp.PoolStat
+
+func (l poolNameSorter) Len() int           { return len(l) }
+func (l poolNameSorter) Less(i, j int) bool { return l[i].NetworkName < l[j].NetworkName }
+func (l poolNameSorter) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
+
+type poolSubnetSorter []*dhcp.PoolStat
+
+func (l poolSubnetSorter) Len() int { return len(l) }
+func (l poolSubnetSorter) Less(i, j int) bool {
+	ipI, _, _ := net.ParseCIDR(l[i].Subnet)
+	ipJ, _, _ := net.ParseCIDR(l[j].Subnet)
+	return bytes.Compare([]byte(ipI), []byte(ipJ)) < 0
+}
+func (l poolSubnetSorter) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
