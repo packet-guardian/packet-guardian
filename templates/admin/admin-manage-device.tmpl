@@ -1,7 +1,7 @@
 {{define "admin-manage-device"}}
 {{template "header" dict "css" (list "manage" "manage-device") "main" . "pageTitle" "Admin - Device Management"}}
 <div class="manager">
-    <form>
+    <form class="header-metadata">
         <input type="hidden" id="username" value="{{.user.Username}}">
         <div class="user-info">
             <section>
