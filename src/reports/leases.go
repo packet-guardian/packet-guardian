@@ -11,6 +11,7 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
+	"github.com/packet-guardian/packet-guardian/src/stats"
 )
 
 func init() {
@@ -20,8 +21,17 @@ func init() {
 func leaseReport(e *common.Environment, w http.ResponseWriter, r *http.Request) error {
 	network, ok := r.URL.Query()["network"]
 	if !ok || len(network) != 1 {
+		networks := stats.DHCPNetworkList(e)
+		sort.Strings(networks)
+
+		data := map[string]interface{}{
+			"networks": networks,
+		}
+
+		e.Views.NewView("reports-leases-list", r).Render(w, data)
 		return nil
 	}
+
 	networkName := network[0]
 	_, registered := r.URL.Query()["registered"]
 

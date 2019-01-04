@@ -26,7 +26,7 @@ github.com/lfkeitel/verbose/v4
 github.com/oec/goradius
 # github.com/packet-guardian/cas-auth v1.0.1
 github.com/packet-guardian/cas-auth
-# github.com/packet-guardian/dhcp-lib v1.3.0
+# github.com/packet-guardian/dhcp-lib v1.3.1-0.20190104170538-6e6243d987ae
 github.com/packet-guardian/dhcp-lib
 # github.com/packet-guardian/pg-dhcp v2.0.0+incompatible
 github.com/packet-guardian/pg-dhcp/dhcp

@@ -29,3 +29,11 @@ func (c *Config) searchNetworksFor(ip net.IP) *network {
 	}
 	return nil
 }
+
+func (c *Config) Networks() []string {
+	networks := make([]string, 0, len(c.networks))
+	for n := range c.networks {
+		networks = append(networks, n)
+	}
+	return networks
+}

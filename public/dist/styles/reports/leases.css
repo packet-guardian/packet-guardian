@@ -6,17 +6,26 @@
     width: 100%;
 }
 
-.lease-list td {
+.list-center {
+    text-align: center;
+}
+
+.network-list {
+    width: 50%;
+    margin: 1rem auto;
+}
+
+.lease-list td, .network-list td {
     padding: 7px 10px;
 }
 
-.lease-list th {
+.lease-list th, .network-list th {
     padding: 10px 10px;
     background-color: #808080;
     color: white;
 }
 
-.lease-list tbody tr:nth-child(even){
+.lease-list tbody tr:nth-child(even), .network-list tbody tr:nth-child(even) {
     background-color: #b9b9b9;
 }
 
@@ -52,11 +61,11 @@
     min-width: 5rem;
 }
 
-.device-pager .pager-direction a, .device-pager .pager-direction a:visited {
+a:not(.btn), a:visited:not(.btn) {
     text-decoration: none;
     color: #0097A7;
 }
 
-.device-pager .pager-direction a:hover {
+a:hover:not(.btn) {
     text-decoration: underline;
 }
