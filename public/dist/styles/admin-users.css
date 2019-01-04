@@ -13,25 +13,6 @@ h2 {
     justify-content: space-between;
 }
 
-button {
-    font-weight: bold;
-    padding: 5px 10px;
-    color: white;
-    border: 0;
-    background-color: #0083A8;
-    background: linear-gradient(to bottom, #0083A8, #007899);
-}
-
-.ok-btn {
-    background-color: rgb(0, 168, 56);
-    background: linear-gradient(to bottom, rgb(0, 168, 56), rgb(0, 136, 45));
-}
-
-.danger-btn {
-    background-color: rgb(241, 81, 81);
-    background: linear-gradient(to bottom, rgb(241, 81, 81), rgb(180, 59, 59));
-}
-
 table {
     margin-top: 10px;
     border-collapse: collapse;

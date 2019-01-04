@@ -11,11 +11,11 @@
                 <a href="/admin/users" class="btn">Back to User List</a>
                 <a href="/admin/manage/user/{{.user.Username}}" class="btn">Device List</a>
                 {{if eq .user.ID 0}}
-                <button type="submit" id="submit-btn" class="ok-btn">Create</button>
+                <button type="submit" id="submit-btn" class="btn ok-btn">Create</button>
                 {{else}}
-                <button type="submit"  id="submit-btn" class="ok-btn">Save</button>
+                <button type="submit"  id="submit-btn" class="btn ok-btn">Save</button>
                 {{end}}
-                <button type="button" name="delete-btn" class="danger-btn">Delete</button>
+                <button type="button" name="delete-btn" class="btn danger-btn">Delete</button>
             </p>
         </fieldset>
 

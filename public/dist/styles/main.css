@@ -81,6 +81,16 @@ header img {
     white-space: nowrap;
 }
 
+.ok-btn {
+    background-color: rgb(0, 168, 56);
+    background: linear-gradient(to bottom, rgb(0, 168, 56), rgb(0, 136, 45));
+}
+
+.danger-btn {
+    background-color: rgb(241, 81, 81);
+    background: linear-gradient(to bottom, rgb(241, 81, 81), rgb(180, 59, 59));
+}
+
 @media (max-width: 600px) {
     .btn {
         margin-top: 5px;
@@ -88,10 +98,10 @@ header img {
 }
 
 .truncate {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 20em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 20em;
 }
 
 .edit-property {
