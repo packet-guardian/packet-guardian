@@ -13,8 +13,10 @@ import (
 	"github.com/lfkeitel/verbose/v4"
 )
 
+// EnvironmentEnv is an environment type
 type EnvironmentEnv string
 
+// Indicates what environment the software is running in
 const (
 	EnvTesting EnvironmentEnv = "testing"
 	EnvProd    EnvironmentEnv = "production"
@@ -38,10 +40,12 @@ type Environment struct {
 	shutdownChan chan os.Signal
 }
 
+// NewEnvironment creates an environment.
 func NewEnvironment(t EnvironmentEnv) *Environment {
 	return &Environment{Env: t}
 }
 
+// NewTestEnvironment creates and environment setup for testing.
 func NewTestEnvironment() *Environment {
 	e := &Environment{
 		Config: NewEmptyConfig(),
@@ -60,18 +64,23 @@ func NewTestEnvironment() *Environment {
 
 // Get and Set Environment to context, moved to context files
 
+// IsTesting checks if the current environment is testing
 func (e *Environment) IsTesting() bool {
 	return (e.Env == EnvTesting)
 }
 
+// IsProd checks if the current environment is production
 func (e *Environment) IsProd() bool {
 	return (e.Env == EnvProd)
 }
 
+// IsDev checks if the current environment is development
 func (e *Environment) IsDev() bool {
 	return (e.Env == EnvDev)
 }
 
+// SubscribeShutdown returns a channel that the caller can block on. The channel
+// will receive a value when the application receives a shutdown signal.
 func (e *Environment) SubscribeShutdown() <-chan bool {
 	e.shutdownWatcher() // Start the watcher
 
@@ -100,11 +109,13 @@ func (e *Environment) shutdownWatcher() {
 	}(e)
 }
 
+// DatabaseAccessor wraps an sql.DB with a driver string.
 type DatabaseAccessor struct {
 	*sql.DB
 	Driver string
 }
 
+// SchemaVersion queries the database and returns the current version.
 func (d *DatabaseAccessor) SchemaVersion() int {
 	var currDBVer int
 	verRow := d.DB.QueryRow(`SELECT "value" FROM "settings" WHERE "id" = 'db_version'`)
@@ -115,10 +126,12 @@ func (d *DatabaseAccessor) SchemaVersion() int {
 	return currDBVer
 }
 
+// SystemInitFunc is a function to be run at the start of the application.
 type SystemInitFunc func(*Environment) error
 
 var systemInitFuncs []SystemInitFunc
 
+// RegisterSystemInitFunc registers a function to be run on system init.
 func RegisterSystemInitFunc(f SystemInitFunc) {
 	if systemInitFuncs == nil {
 		systemInitFuncs = make([]SystemInitFunc, 0, 1)
@@ -126,6 +139,8 @@ func RegisterSystemInitFunc(f SystemInitFunc) {
 	systemInitFuncs = append(systemInitFuncs, f)
 }
 
+// RunSystemInits executes the registered init functions in the order they were
+// registered.
 func RunSystemInits(e *Environment) error {
 	for _, f := range systemInitFuncs {
 		if err := f(e); err != nil {

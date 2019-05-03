@@ -82,11 +82,11 @@ type Config struct {
 	}
 	Webserver struct {
 		Address             string
-		HttpPort            int
-		HttpsPort           int
+		HTTPPort            int
+		HTTPSPort           int
 		TLSCertFile         string
 		TLSKeyFile          string
-		RedirectHttpToHttps bool
+		RedirectHTTPToHTTPS bool
 		SessionStore        string
 		SessionName         string
 		SessionsDir         string
@@ -134,25 +134,33 @@ type Config struct {
 	}
 }
 
+// FindConfigFile searches for a configuration file. The order of search is
+// environment, current dir, home dir, and /etc.
 func FindConfigFile() string {
+	filename := ""
+
 	if os.Getenv("PG_CONFIG") != "" && FileExists(os.Getenv("PG_CONFIG")) {
-		return os.Getenv("PG_CONFIG")
+		filename = os.Getenv("PG_CONFIG")
 	} else if FileExists("./config.toml") {
-		return "./config.toml"
+		filename = "./config.toml"
 	} else if FileExists("./config/config.toml") {
-		return "./config/config.toml"
+		filename = "./config/config.toml"
 	} else if FileExists(os.ExpandEnv("$HOME/.pg/config.toml")) {
-		return os.ExpandEnv("$HOME/.pg/config.toml")
+		filename = os.ExpandEnv("$HOME/.pg/config.toml")
 	} else if FileExists("/etc/packet-guardian/config.toml") {
-		return "/etc/packet-guardian/config.toml"
+		filename = "/etc/packet-guardian/config.toml"
 	}
-	return ""
+
+	return filename
 }
 
+// NewEmptyConfig returns an empty config with type defaults only.
 func NewEmptyConfig() *Config {
 	return &Config{}
 }
 
+// NewConfig reads the given filename into a Config. If filename is empty,
+// the config is looked for in the documented order.
 func NewConfig(configFile string) (conf *Config, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -218,8 +226,8 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Guest.VerifyCodeExpiration = setIntOrDefault(c.Guest.VerifyCodeExpiration, 3)
 
 	// Webserver
-	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 80)
-	c.Webserver.HttpsPort = setIntOrDefault(c.Webserver.HttpsPort, 443)
+	c.Webserver.HTTPPort = setIntOrDefault(c.Webserver.HTTPPort, 80)
+	c.Webserver.HTTPPort = setIntOrDefault(c.Webserver.HTTPPort, 443)
 	c.Webserver.SessionName = setStringOrDefault(c.Webserver.SessionName, "packet-guardian")
 	c.Webserver.SessionsDir = setStringOrDefault(c.Webserver.SessionsDir, "sessions")
 	c.Webserver.SessionStore = setStringOrDefault(c.Webserver.SessionStore, "filesystem")

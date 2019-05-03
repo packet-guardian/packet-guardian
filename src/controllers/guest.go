@@ -115,7 +115,6 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Check ban filter for email or phone number
 	verifyCode := guest.GenerateGuestCode()
 	session.Set("_verify-code", verifyCode)
 	session.Set("_expires", time.Now().Add(time.Duration(g.e.Config.Guest.VerifyCodeExpiration)*time.Minute).Unix())

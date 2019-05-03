@@ -29,6 +29,7 @@ type dbStore struct {
 	Options *Options
 }
 
+// Options to control the session cookie
 type Options struct {
 	Path      string
 	Domain    string

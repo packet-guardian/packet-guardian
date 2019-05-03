@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	// TimeFormat standard for the application
 	TimeFormat string = "2006-01-02 15:04"
 
 	secondsInMinute int = 60
@@ -53,11 +54,15 @@ func FormatMacAddress(mac string) (net.HardwareAddr, error) {
 	return m, nil
 }
 
+// FileExists tests if a file exists
 func FileExists(file string) bool {
 	_, err := os.Stat(file)
 	return !os.IsNotExist(err)
 }
 
+// ParseTime return the number of seconds represented by the string.
+// Valid input looks like "HH:mm". HH must be between 0-24 inclusive
+// and mm must be between 0-59 inclusive.
 func ParseTime(time string) (int64, error) {
 	clock := strings.Split(time, ":")
 	if len(clock) != 2 {
@@ -83,6 +88,9 @@ func ParseTime(time string) (int64, error) {
 	return int64((hours * secondsInHour) + (minutes * secondsInMinute)), nil
 }
 
+// LoadPolicyText loads a file and wraps it in a template type to ensure
+// custom HTML is allowed. The file should be secured so unauthorized
+// HTML/JS isn't allowed.
 func LoadPolicyText(file string) []template.HTML {
 	f, err := os.Open(file)
 	if err != nil {

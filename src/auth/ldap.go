@@ -41,6 +41,7 @@ func (l *ldapAuthenticator) checkLogin(username, password string, r *http.Reques
 			"username": username,
 			"package":  "auth:ldap",
 		}).Error("Error authenticating with LDAP server")
+		return false
 	}
 
 	if !ok {

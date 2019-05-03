@@ -10,7 +10,6 @@ import (
 
 	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
-	"github.com/packet-guardian/packet-guardian/src/models"
 )
 
 type authenticator interface {
@@ -58,6 +57,11 @@ func LoginUser(r *http.Request, w http.ResponseWriter) bool {
 	return false
 }
 
+// CheckLogin returns if a username and password combo are valid. LoginUser
+// and CheckLogin perform the same check. The only difference is LoginUser
+// will setup a server-side session for the request. CheckLogin doesn't
+// change anything about the session, it's up to the caller for perform any
+// state change.
 func CheckLogin(username, password string, r *http.Request) bool {
 	if password == "" || username == "" {
 		return false
@@ -85,24 +89,27 @@ func CheckLogin(username, password string, r *http.Request) bool {
 	return false
 }
 
+// IsLoggedIn checks the current session and returns if a user is logged in.
 func IsLoggedIn(r *http.Request) bool {
 	return common.GetSessionFromContext(r).GetBool("loggedin")
 }
 
+// LogoutUser modifies the current session to mark the user as logged out.
 func LogoutUser(r *http.Request, w http.ResponseWriter) {
 	sess := common.GetSessionFromContext(r)
 	if !sess.GetBool("loggedin") {
 		return
 	}
 
+	username := sess.GetString("username", "<unknown>")
+
 	sess.Set("loggedin", false)
 	sess.Set("username", "")
 	sess.Save(r, w)
 
 	e := common.GetEnvironmentFromContext(r)
-	user := models.GetUserFromContext(r)
 	e.Log.WithFields(verbose.Fields{
-		"username": user.Username,
+		"username": username,
 		"method":   sess.GetString("_authMethod"),
 		"action":   "logout",
 		"package":  "auth",

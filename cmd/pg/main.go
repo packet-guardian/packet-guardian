@@ -64,6 +64,24 @@ func main() {
 		return
 	}
 
+	e := setupEnvironment()
+	startShutdownWatcher(e)
+
+	if err := bindata.SetCustomDir(e.Config.Webserver.CustomDataDir); err != nil {
+		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
+	}
+
+	if err := common.RunSystemInits(e); err != nil {
+		e.Log.WithField("error", err).Fatal("System initialization failed")
+	}
+
+	go tasks.StartTaskScheduler(e)
+
+	// Start web server
+	server.NewServer(e, server.LoadRoutes(e)).Run()
+}
+
+func setupEnvironment() *common.Environment {
 	var err error
 	e := common.NewEnvironment(common.EnvProd)
 	if dev {
@@ -89,16 +107,6 @@ func main() {
 		"address": e.Config.Database.Address,
 	}).Debug("Loaded database")
 
-	c := e.SubscribeShutdown()
-	go func(e *common.Environment) {
-		<-c
-		if err := e.DB.Close(); err != nil {
-			e.Log.Warningf("Error closing database: %s", err)
-		}
-		e.Log.Notice("Shutting down...")
-		time.Sleep(2)
-	}(e)
-
 	e.Sessions, err = common.NewSessionStore(e)
 	if err != nil {
 		e.Log.WithField("error", err).Fatal("Error loading session store")
@@ -109,18 +117,19 @@ func main() {
 		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
 	}
 
-	if err := bindata.SetCustomDir(e.Config.Webserver.CustomDataDir); err != nil {
-		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
-	}
+	return e
+}
 
-	if err := common.RunSystemInits(e); err != nil {
-		e.Log.WithField("error", err).Fatal("System initialization failed")
-	}
-
-	go tasks.StartTaskScheduler(e)
-
-	// Start web server
-	server.NewServer(e, server.LoadRoutes(e)).Run()
+func startShutdownWatcher(e *common.Environment) {
+	c := e.SubscribeShutdown()
+	go func(e *common.Environment) {
+		<-c
+		if err := e.DB.Close(); err != nil {
+			e.Log.Warningf("Error closing database: %s", err)
+		}
+		e.Log.Notice("Shutting down...")
+		time.Sleep(2)
+	}(e)
 }
 
 func displayVersionInfo() {
