@@ -1,12 +1,19 @@
 ---
-engines:
+version: "2"
+
+checks:
+  method-lines:
+    config:
+      threshold: 50
+  file-lines:
+    config:
+      threshold: 500
+
+plugins:
   csslint:
     enabled: true
   duplication:
     enabled: true
-    config:
-      languages:
-      - javascript
   eslint:
     enabled: true
   fixme:
@@ -19,16 +26,13 @@ engines:
     enabled: true
   markdownlint:
     enabled: true
-ratings:
-  paths:
-  - "**.css"
-  - "**.js"
-  - "**.go"
-  - "**.md"
-exclude_paths:
+
+exclude_patterns:
   - config/
   - vendor/
   - node_modules/
+  - private/
+  - public/dist/js/
   - public/dist/styles/font-awesome.css
   - public/dist/styles/normalize.css
   - src/bindata/bindata.go
