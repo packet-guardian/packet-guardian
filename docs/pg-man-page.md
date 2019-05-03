@@ -10,7 +10,9 @@
 
 ## DESCRIPTION
 
-**pg** starts a web server to host the mangement frontend for Packet Guardian. It's where clients are redirected to register a device and where users can login to manage their own devices if the configuration allows.
+**pg** starts a web server to host the mangement frontend for Packet Guardian.
+It's where clients are redirected to register a device and where users can login
+to manage their own devices if the configuration allows.
 
 ## OPTIONS
 

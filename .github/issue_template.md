@@ -1,8 +1,8 @@
 ### I'm submitting a:
 
-- [ ] Bug report
-- [ ] Feature request
-- [ ] Other
+* [ ] Bug report
+* [ ] Feature request
+* [ ] Other
 
 ### Description
 
@@ -20,7 +20,8 @@
 
 ### Versions
 
-You can get this information from executing the web or DHCP binary with the `-v` flag.
+You can get this information from executing the web or DHCP binary with the `-v`
+flag.
 
 * Managment Interface Version:
 * DHCP Server Version:
