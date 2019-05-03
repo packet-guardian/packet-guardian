@@ -140,6 +140,7 @@ class API {
   registerDevice(data, ok, error) {
     if (!('username' in data) || !('mac-address' in data) || !('description' in data)) {
       console.error('Invalid data object');
+      return;
     }
     $.post('/api/device', data, ok, error);
   }

@@ -74,7 +74,7 @@ function registerDevice(data) {
     $('.register-box').hide();
 
     if (data.password) {
-      // If the use had to login to register, let's log them out.
+      // If the user had to login to register, let's log them out.
       // It may be a bit confusing if they go back and forget they
       // had to enter a password.
       api.logout();

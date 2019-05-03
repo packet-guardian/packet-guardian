@@ -1,26 +1,31 @@
 import $ from 'jLib';
 
 /* eslint-disable max-statements */
-function ModalOverlay() {
-  var o = $(document.createElement('div'));
-  o.addClass('js-modal-overlay');
-  this.show = function() {
-    document.body.insertBefore(o[0], document.body.firstChild);
-    o.show();
-  };
+class ModalOverlay {
+  constructor() {
+    this.o = $(document.createElement('div'));
+    this.o.addClass('js-modal-overlay');
+  }
 
-  this.hide = function() {
-    o.hide();
-    document.body.removeChild(o[0]);
-  };
+  show() {
+    document.body.insertBefore(this.o[0], document.body.firstChild);
+    this.o.show();
+  }
+
+  hide() {
+    this.o.hide();
+    document.body.removeChild(this.o[0]);
+  }
 }
 
-function ModalAlert() {
-  this._okCallback = function() { };
-  this._overlay = new ModalOverlay();
-  this._container = null;
+class ModalAlert {
+  constructor() {
+    this._okCallback = function() { };
+    this._overlay = new ModalOverlay();
+    this._container = null;
+  }
 
-  this.show = function(dialog, callback) {
+  show(dialog, callback) {
     this._okCallback = callback || function() { };
     var winW = window.innerWidth;
     var winH = window.innerHeight;
@@ -57,7 +62,7 @@ function ModalAlert() {
     jContainer.show();
   };
 
-  this.ok = function() {
+  ok() {
     $(this._container).hide();
     this._overlay.hide();
     this._okCallback();
@@ -65,13 +70,15 @@ function ModalAlert() {
   };
 }
 
-function ModalConfirm() {
-  this._okCallback = function() { };
-  this._cancelCallback = function() { };
-  this._overlay = null;
-  this._container = null;
+class ModalConfirm {
+  constructor() {
+    this._okCallback = function() { };
+    this._cancelCallback = function() { };
+    this._overlay = null;
+    this._container = null;
+  }
 
-  this.show = function(dialog, okCallback, cnlCallback) {
+  show(dialog, okCallback, cnlCallback) {
     this._okCallback = okCallback || function() { };
     this._cancelCallback = cnlCallback || function() { };
     var winW = window.innerWidth;
@@ -92,12 +99,15 @@ function ModalConfirm() {
 
     var footer = document.createElement('div');
     $(footer).addClass('js-modal-footer');
+
     var okButton = document.createElement('button');
     okButton.innerHTML = 'OK';
     $(okButton).click(this.ok.bind(this));
+
     var cnlButton = document.createElement('button');
     cnlButton.innerHTML = 'Cancel';
     $(cnlButton).click(this.cancel.bind(this));
+
     footer.appendChild(okButton);
     footer.appendChild(cnlButton);
     this._container.appendChild(footer);
@@ -111,30 +121,32 @@ function ModalConfirm() {
     this._overlay = new ModalOverlay();
     this._overlay.show();
     jContainer.show();
-  };
+  }
 
-  this.ok = function() {
+  ok() {
     $(this._container).hide();
     this._overlay.hide();
     this._okCallback();
     document.body.removeChild(document.getElementsByClassName('js-modal')[0]);
-  };
+  }
 
-  this.cancel = function() {
+  cancel() {
     $(this._container).hide();
     this._overlay.hide();
     this._cancelCallback();
     document.body.removeChild(document.getElementsByClassName('js-modal')[0]);
-  };
+  }
 }
 
-function ModalPrompt() {
-  this._okCallback = function() { };
-  this._cancelCallback = function() { };
-  this._overlay = new ModalOverlay();
-  this._container = null;
+class ModalPrompt {
+  constructor() {
+    this._okCallback = function() { };
+    this._cancelCallback = function() { };
+    this._overlay = new ModalOverlay();
+    this._container = null;
+  }
 
-  this.show = function(dialog, value, okkCallback, cnlCallback) {
+  show(dialog, value, okkCallback, cnlCallback) {
     if (typeof value === 'function') {
       // Shift variables
       cnlCallback = okkCallback;
@@ -199,30 +211,30 @@ function ModalPrompt() {
     jContainer.show();
     document.getElementById('js-modal-prompt-input').focus();
     bindMouseMove('#js-modal-header-id', '#js-modal-container');
-  };
+  }
 
   // This is called when a user presses enter in the input box
   // It stops the form submittion and calls the ok function
-  this.enter = function(e) {
+  enter(e) {
     e.preventDefault();
     e.stopPropagation();
     this.ok();
     return false;
-  };
+  }
 
-  this.ok = function() {
+  ok() {
     $(this._container).hide();
     this._overlay.hide();
     this._okCallback($('#js-modal-prompt-input').value());
     document.body.removeChild(document.getElementsByClassName('js-modal')[0]);
-  };
+  }
 
-  this.cancel = function() {
+  cancel() {
     $(this._container).hide();
     this._overlay.hide();
     this._cancelCallback();
     document.body.removeChild(document.getElementsByClassName('js-modal')[0]);
-  };
+  }
 }
 
 function bindMouseMove(binderID, movediv) {

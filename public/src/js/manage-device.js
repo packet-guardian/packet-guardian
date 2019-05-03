@@ -143,17 +143,7 @@ function editDeviceDescription(desc) {
   api.saveDeviceDescription(getMacAddress(), desc, function() {
     $('#device-desc').text(desc);
     flashMessage('Device description saved', 'success');
-  }, function(req) {
-    var resp = JSON.parse(req.responseText);
-    switch (req.status) {
-      case 500:
-        flashMessage(`Internal Server Error - ${resp.Message}`);
-        break;
-      default:
-        flashMessage(resp.Message);
-        break;
-    }
-  });
+  }, apiResponseCheck);
 }
 
 function editDeviceExpiration(type, value) {
@@ -161,15 +151,17 @@ function editDeviceExpiration(type, value) {
     resp = JSON.parse(resp);
     clearExpirationControls(resp.Data.newExpiration);
     flashMessage('Device expiration saved', 'success');
-  }, function(req) {
-    var resp = JSON.parse(req.responseText);
-    switch (req.status) {
-      case 500:
-        flashMessage(`Internal Server Error - ${resp.Message}`);
-        break;
-      default:
-        flashMessage(resp.Message);
-        break;
-    }
-  });
+  }, apiResponseCheck);
+}
+
+function apiResponseCheck(req) {
+  var resp = JSON.parse(req.responseText);
+  switch (req.status) {
+    case 500:
+      flashMessage(`Internal Server Error - ${resp.Message}`);
+      break;
+    default:
+      flashMessage(resp.Message);
+      break;
+  }
 }
