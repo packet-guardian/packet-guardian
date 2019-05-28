@@ -47,7 +47,7 @@ $('[name=reassign-selected-btn]').click(function() {
 var blacklistSelect = $('[name=blacklist-sel]');
 if (blacklistSelect.length !== 0) {
   if (blacklistSelect.data('blacklisted') === 'true') {
-    $('[name=black-user-option]').text('Remove Username');
+    $('[name=black-user-option]').text('Remove User');
   }
 }
 

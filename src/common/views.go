@@ -14,12 +14,15 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/bindata"
 )
 
+// Views is a collection of templates
 type Views struct {
 	source string
 	t      *template.Template
 	e      *Environment
 }
 
+// NewViews reads a set of templates from a directory and loads them
+// into a Views. Custom functions are injected into the templates.
 func NewViews(e *Environment, basepath string) (v *Views, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -34,7 +37,22 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 		}
 	}()
 
-	tmpl := template.New("").Funcs(template.FuncMap{
+	tmpl := template.New("").Funcs(customTemplateFuncs())
+
+	if err := loadTemplates(tmpl, "templates"); err != nil {
+		return nil, err
+	}
+
+	v = &Views{
+		source: basepath,
+		t:      tmpl,
+		e:      e,
+	}
+	return v, nil
+}
+
+func customTemplateFuncs() template.FuncMap {
+	return template.FuncMap{
 		"dict": func(values ...interface{}) (map[string]interface{}, error) {
 			if len(values)%2 != 0 {
 				return nil, errors.New("invalid dict call")
@@ -67,18 +85,7 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 		"title": func(s string) string {
 			return strings.Title(s)
 		},
-	})
-
-	if err := loadTemplates(tmpl, "templates"); err != nil {
-		return nil, err
 	}
-
-	v = &Views{
-		source: basepath,
-		t:      tmpl,
-		e:      e,
-	}
-	return v, nil
 }
 
 func loadTemplates(tmpl *template.Template, dir string) error {
@@ -106,6 +113,7 @@ func loadTemplates(tmpl *template.Template, dir string) error {
 	return nil
 }
 
+// NewView returns a template associated with a request.
 func (v *Views) NewView(view string, r *http.Request) *View {
 	return &View{
 		name: view,
@@ -115,6 +123,10 @@ func (v *Views) NewView(view string, r *http.Request) *View {
 	}
 }
 
+// Reload replaces the Views object with a new one using the same source
+// directory. DO NOT call this function in production. This functions should
+// only be called in a development environment. This functions is very
+// susceptible to race conditions.
 func (v *Views) Reload() error {
 	views, err := NewViews(v.e, v.source)
 	if err != nil {
@@ -124,6 +136,9 @@ func (v *Views) Reload() error {
 	return nil
 }
 
+// RenderError renders an error template with the given data. If data is nil,
+// the generic "error" template is used. If data is not nil, "custom-error"
+// is used.
 func (v *Views) RenderError(w http.ResponseWriter, r *http.Request, data map[string]interface{}) {
 	if data == nil {
 		v.NewView("error", r).Render(w, nil)
@@ -132,6 +147,7 @@ func (v *Views) RenderError(w http.ResponseWriter, r *http.Request, data map[str
 	v.NewView("custom-error", r).Render(w, data)
 }
 
+// View represents a template associated with a specific request.
 type View struct {
 	name string
 	t    *template.Template
@@ -139,6 +155,8 @@ type View struct {
 	r    *http.Request
 }
 
+// Render executes the template and writes it to w. This function will also
+// save a web session to the client if "username" is set in the current session.
 func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
 	if data == nil {
 		data = make(map[string]interface{})

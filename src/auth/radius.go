@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/lfkeitel/verbose/v4"
-	"github.com/oec/goradius"
+	radius "github.com/oec/goradius"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
@@ -31,6 +31,7 @@ func (rad *radAuthenticator) checkLogin(username, password string, r *http.Reque
 			e.Config.Auth.Radius.Secret,
 		)
 	}
+
 	ok, err := rad.a.Authenticate(username, password)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{

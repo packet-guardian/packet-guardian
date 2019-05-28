@@ -13,10 +13,10 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose/v4"
-	"github.com/packet-guardian/useragent"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
+	"github.com/packet-guardian/useragent"
 )
 
 type Device struct {

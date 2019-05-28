@@ -8,6 +8,9 @@ checks:
   file-lines:
     config:
       threshold: 500
+  return-statements:
+    config:
+      threshold: 8
 
 plugins:
   csslint:

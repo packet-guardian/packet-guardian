@@ -31,8 +31,8 @@ func NewServer(e *common.Environment, routes http.Handler) *Server {
 		address: e.Config.Webserver.Address,
 	}
 
-	serv.httpPort = strconv.Itoa(e.Config.Webserver.HttpPort)
-	serv.httpsPort = strconv.Itoa(e.Config.Webserver.HttpsPort)
+	serv.httpPort = strconv.Itoa(e.Config.Webserver.HTTPPort)
+	serv.httpsPort = strconv.Itoa(e.Config.Webserver.HTTPSPort)
 	return serv
 }
 
@@ -43,7 +43,7 @@ func (s *Server) Run() {
 		return
 	}
 
-	if s.e.Config.Webserver.RedirectHttpToHttps {
+	if s.e.Config.Webserver.RedirectHTTPToHTTPS {
 		go s.startRedirector()
 	}
 	s.startHTTPS()

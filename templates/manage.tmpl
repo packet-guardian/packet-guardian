@@ -19,7 +19,7 @@
         <div class="controls">
             <section>
                 {{if .showAddBtn}}
-                <button type="button" name="add-device-btn">Add New Device</button>
+                <button type="button" name="add-device-btn">Add Device</button>
                 {{end}}
                 {{if and .canDeleteDevice (gt (len .devices) 0)}}
                 <button type="button" name="del-selected-btn">Delete Selected</button>
