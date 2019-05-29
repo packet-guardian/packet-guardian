@@ -18,7 +18,7 @@ func init() {
 	RegisterReport("lease-stats", "Lease Statistics", leaseReport)
 }
 
-func leaseReport(e *common.Environment, w http.ResponseWriter, r *http.Request) error {
+func leaseReport(e *common.Environment, w http.ResponseWriter, r *http.Request, stores stores.StoreCollection) error {
 	network, ok := r.URL.Query()["network"]
 	if !ok || len(network) != 1 {
 		networks := stats.DHCPNetworkList(e)
@@ -41,7 +41,7 @@ func leaseReport(e *common.Environment, w http.ResponseWriter, r *http.Request) 
 	}
 
 	endTime := time.Now().Unix()
-	leases, err := stores.GetLeaseStore(e).SearchLeases(
+	leases, err := stores.Leases.SearchLeases(
 		`network = ? AND registered = ? AND end > ? ORDER BY "mac" ASC LIMIT ?,?`,
 		networkName, registered, endTime, (common.PageSize*pageNum)-common.PageSize, common.PageSize,
 	)

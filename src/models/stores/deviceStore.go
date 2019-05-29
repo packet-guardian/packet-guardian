@@ -13,26 +13,40 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/models"
 )
 
-var deviceStore *DeviceStore
+var appDeviceStore DeviceStore
 
-type DeviceStore struct {
+type DeviceStore interface {
+	GetDeviceByMAC(mac net.HardwareAddr) (*models.Device, error)
+	GetDeviceByID(id int) (*models.Device, error)
+	GetFlaggedDevices() ([]*models.Device, error)
+	GetDevicesForUser(u *models.User) ([]*models.Device, error)
+	GetDevicesForUserPage(u *models.User, page int) ([]*models.Device, error)
+	GetDeviceCountForUser(u *models.User) (int, error)
+	GetAllDevices(e *common.Environment) ([]*models.Device, error)
+	SearchDevicesByField(field, pattern string) ([]*models.Device, error)
+	Save(d *models.Device) error
+	Delete(d *models.Device) error
+	DeleteAllDeviceForUser(u *models.User) error
+}
+
+type deviceStore struct {
 	e *common.Environment
 }
 
-func newDeviceStore(e *common.Environment) *DeviceStore {
-	return &DeviceStore{
+func newDeviceStore(e *common.Environment) *deviceStore {
+	return &deviceStore{
 		e: e,
 	}
 }
 
-func GetDeviceStore(e *common.Environment) *DeviceStore {
-	if deviceStore == nil || e.IsTesting() {
-		deviceStore = newDeviceStore(e)
+func GetDeviceStore(e *common.Environment) DeviceStore {
+	if appDeviceStore == nil {
+		appDeviceStore = newDeviceStore(e)
 	}
-	return deviceStore
+	return appDeviceStore
 }
 
-func (s *DeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (*models.Device, error) {
+func (s *deviceStore) GetDeviceByMAC(mac net.HardwareAddr) (*models.Device, error) {
 	sql := `WHERE "mac" = ?`
 	devices, err := s.getDevicesFromDatabase(sql, mac.String())
 	if len(devices) == 0 {
@@ -43,7 +57,7 @@ func (s *DeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (*models.Device, erro
 	return devices[0], nil
 }
 
-func (s *DeviceStore) GetDeviceByID(id int) (*models.Device, error) {
+func (s *deviceStore) GetDeviceByID(id int) (*models.Device, error) {
 	sql := `WHERE "id" = ?`
 	devices, err := s.getDevicesFromDatabase(sql, id)
 	if len(devices) == 0 {
@@ -52,21 +66,21 @@ func (s *DeviceStore) GetDeviceByID(id int) (*models.Device, error) {
 	return devices[0], nil
 }
 
-func (s *DeviceStore) GetFlaggedDevices() ([]*models.Device, error) {
+func (s *deviceStore) GetFlaggedDevices() ([]*models.Device, error) {
 	return s.getDevicesFromDatabase(`WHERE "flagged" = 1`)
 }
 
-func (s *DeviceStore) GetDevicesForUser(u *models.User) ([]*models.Device, error) {
+func (s *deviceStore) GetDevicesForUser(u *models.User) ([]*models.Device, error) {
 	sql := `WHERE "username" = ? ORDER BY "mac" ASC`
 	return s.getDevicesFromDatabase(sql, u.Username)
 }
 
-func (s *DeviceStore) GetDevicesForUserPage(u *models.User, page int) ([]*models.Device, error) {
+func (s *deviceStore) GetDevicesForUserPage(u *models.User, page int) ([]*models.Device, error) {
 	sql := `WHERE "username" = ? ORDER BY "mac" ASC LIMIT ?,?`
 	return s.getDevicesFromDatabase(sql, u.Username, (common.PageSize*page)-common.PageSize, common.PageSize)
 }
 
-func (s *DeviceStore) GetDeviceCountForUser(u *models.User) (int, error) {
+func (s *deviceStore) GetDeviceCountForUser(u *models.User) (int, error) {
 	sql := `SELECT count(*) as "device_count" FROM "device" WHERE "username" = ?`
 	row := s.e.DB.QueryRow(sql, u.Username)
 	var deviceCount int
@@ -77,16 +91,16 @@ func (s *DeviceStore) GetDeviceCountForUser(u *models.User) (int, error) {
 	return deviceCount, nil
 }
 
-func (s *DeviceStore) GetAllDevices(e *common.Environment) ([]*models.Device, error) {
+func (s *deviceStore) GetAllDevices(e *common.Environment) ([]*models.Device, error) {
 	return s.getDevicesFromDatabase("")
 }
 
-func (s *DeviceStore) SearchDevicesByField(field, pattern string) ([]*models.Device, error) {
+func (s *deviceStore) SearchDevicesByField(field, pattern string) ([]*models.Device, error) {
 	sql := `WHERE "` + field + `" LIKE ?`
 	return s.getDevicesFromDatabase(sql, pattern)
 }
 
-func (s *DeviceStore) getDevicesFromDatabase(where string, values ...interface{}) ([]*models.Device, error) {
+func (s *deviceStore) getDevicesFromDatabase(where string, values ...interface{}) ([]*models.Device, error) {
 	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen", "flagged" FROM "device" ` + where
 
 	rows, err := s.e.DB.Query(sql, values...)
@@ -146,14 +160,14 @@ func (s *DeviceStore) getDevicesFromDatabase(where string, values ...interface{}
 	return results, nil
 }
 
-func (s *DeviceStore) Save(d *models.Device) error {
+func (s *deviceStore) Save(d *models.Device) error {
 	if d.ID == 0 {
 		return s.saveNew(d)
 	}
 	return s.updateExisting(d)
 }
 
-func (s *DeviceStore) updateExisting(d *models.Device) error {
+func (s *deviceStore) updateExisting(d *models.Device) error {
 	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "description" = ?, "last_seen" = ?, "flagged" = ? WHERE "id" = ?`
 
 	_, err := s.e.DB.Exec(
@@ -176,7 +190,7 @@ func (s *DeviceStore) updateExisting(d *models.Device) error {
 	return d.SaveToBlacklist()
 }
 
-func (s *DeviceStore) saveNew(d *models.Device) error {
+func (s *deviceStore) saveNew(d *models.Device) error {
 	if d.Username == "" {
 		return errors.New("Username cannot be empty")
 	}
@@ -204,13 +218,13 @@ func (s *DeviceStore) saveNew(d *models.Device) error {
 	return d.SaveToBlacklist()
 }
 
-func (s *DeviceStore) Delete(d *models.Device) error {
+func (s *deviceStore) Delete(d *models.Device) error {
 	sql := `DELETE FROM "device" WHERE "id" = ?`
 	_, err := s.e.DB.Exec(sql, d.ID)
 	return err
 }
 
-func (s *DeviceStore) DeleteAllDeviceForUser(u *models.User) error {
+func (s *deviceStore) DeleteAllDeviceForUser(u *models.User) error {
 	sql := `DELETE FROM "device" WHERE "username" = ?`
 	_, err := s.e.DB.Exec(sql, u.Username)
 	return err

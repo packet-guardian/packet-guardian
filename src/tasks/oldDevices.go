@@ -10,6 +10,7 @@ import (
 
 	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -18,7 +19,7 @@ func init() {
 
 // Deletes devices that haven't been seen in the last 6 months
 // and devices which expired 7 days ago
-func cleanUpOldDevices(e *common.Environment) (string, error) {
+func cleanUpOldDevices(e *common.Environment, stores stores.StoreCollection) (string, error) {
 	// Use a constant date
 	now := time.Now()
 	d, err := time.ParseDuration(e.Config.Registration.RollingExpirationLength)

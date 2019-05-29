@@ -8,49 +8,26 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 const testSomethingHash = "$2a$04$zxGo0fl3SeyWAix1MrxqI.qEgO42Jqx94eAaXtUfqr.SK/pSZBEq2"
 
 func TestLocalAuth(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	testUser := &models.User{
+		ID:           1,
+		Username:     "tester1",
+		Password:     testSomethingHash,
+		ValidForever: true,
 	}
-	defer db.Close()
 
-	rows := sqlmock.NewRows([]string{
-		"id",
-		"username",
-		"password",
-		"device_limit",
-		"default_expiration",
-		"expiration_type",
-		"can_manage",
-		"valid_forever",
-		"valid_start",
-		"valid_end",
-	}).AddRow(
-		1,
-		"tester1",
-		testSomethingHash,
-		0, 0, 0, 1, 1, 0, 0,
-	)
-
-	passRows := sqlmock.NewRows([]string{"password"}).AddRow(testSomethingHash)
-
-	mock.ExpectQuery("SELECT .*? FROM \"user\"").
-		WithArgs("tester1").
-		WillReturnRows(rows)
-
-	mock.ExpectQuery("SELECT \"password\"").
-		WithArgs("tester1").
-		WillReturnRows(passRows)
+	testUserStore := &stores.TestUserStore{
+		Users: []*models.User{testUser},
+	}
 
 	e := common.NewTestEnvironment()
-	e.DB = &common.DatabaseAccessor{DB: db}
 
 	session := common.NewTestSession()
 
@@ -60,53 +37,24 @@ func TestLocalAuth(t *testing.T) {
 
 	local := &localAuthenticator{}
 
-	if !local.checkLogin("tester1", "testSomething", req) {
+	if !local.checkLogin("tester1", "testSomething", req, testUserStore) {
 		t.Error("Failed to login user. Expected true, got false")
-	}
-
-	// we make sure that all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
 
 func TestFailedLocalAuth(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	testUser := &models.User{
+		ID:           1,
+		Username:     "tester1",
+		Password:     testSomethingHash,
+		ValidForever: true,
 	}
-	defer db.Close()
 
-	rows := sqlmock.NewRows([]string{
-		"id",
-		"username",
-		"password",
-		"device_limit",
-		"default_expiration",
-		"expiration_type",
-		"can_manage",
-		"valid_forever",
-		"valid_start",
-		"valid_end",
-	}).AddRow(
-		1,
-		"tester1",
-		testSomethingHash,
-		0, 0, 0, 1, 1, 0, 0,
-	)
-
-	passRows := sqlmock.NewRows([]string{"password"}).AddRow(testSomethingHash)
-
-	mock.ExpectQuery("SELECT .*? FROM \"user\"").
-		WithArgs("tester1").
-		WillReturnRows(rows)
-
-	mock.ExpectQuery("SELECT \"password\"").
-		WithArgs("tester1").
-		WillReturnRows(passRows)
+	testUserStore := &stores.TestUserStore{
+		Users: []*models.User{testUser},
+	}
 
 	e := common.NewTestEnvironment()
-	e.DB = &common.DatabaseAccessor{DB: db}
 
 	session := common.NewTestSession()
 
@@ -116,12 +64,7 @@ func TestFailedLocalAuth(t *testing.T) {
 
 	local := &localAuthenticator{}
 
-	if local.checkLogin("tester1", "testSomething1", req) {
+	if local.checkLogin("tester1", "testSomething1", req, testUserStore) {
 		t.Error("Failed to login user. Expected false, got true")
-	}
-
-	// we make sure that all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }

@@ -20,11 +20,19 @@ import (
 )
 
 type Device struct {
-	e *common.Environment
+	e       *common.Environment
+	users   stores.UserStore
+	devices stores.DeviceStore
+	leases  stores.LeaseStore
 }
 
-func NewDeviceController(e *common.Environment) *Device {
-	return &Device{e: e}
+func NewDeviceController(e *common.Environment, us stores.UserStore, ds stores.DeviceStore, ls stores.LeaseStore) *Device {
+	return &Device{
+		e:       e,
+		users:   us,
+		devices: ds,
+		leases:  ls,
+	}
 }
 
 func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -62,7 +70,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 		formUser = sessionUser
 	} else {
 		var err error
-		formUser, err = stores.GetUserStore(d.e).GetUserByUsername(formUsername)
+		formUser, err = d.users.GetUserByUsername(formUsername)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":    err,
@@ -92,7 +100,7 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 	}
 
 	// Get device from database
-	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
+	device, err := d.devices.GetDeviceByMAC(mac)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -182,7 +190,7 @@ func (d *Device) checkCanRegister(formUser *models.User) (int, error) {
 
 	// If user's limit is unlimited, bypass device count
 	if limit != models.UserDeviceLimitUnlimited {
-		deviceCount, err := stores.GetDeviceStore(d.e).GetDeviceCountForUser(formUser)
+		deviceCount, err := d.devices.GetDeviceCountForUser(formUser)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"package": "controllers:api:device",
@@ -211,7 +219,7 @@ func (d *Device) getRegMACAddress(manual bool, ip net.IP, macPost string, sessio
 	}
 
 	// Automatic registration
-	lease, err := stores.GetLeaseStore(d.e).GetLeaseByIP(ip)
+	lease, err := d.leases.GetLeaseByIP(ip)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -245,7 +253,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 			return
 		}
 		var err error
-		formUser, err = stores.GetUserStore(d.e).GetUserByUsername(username)
+		formUser, err = d.users.GetUserByUsername(username)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":    err,
@@ -264,7 +272,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 
 	deleteAll := (r.FormValue("mac") == "")
 	macsToDelete := strings.Split(r.FormValue("mac"), ",")
-	usersDevices, err := stores.GetDeviceStore(d.e).GetDevicesForUser(formUser)
+	usersDevices, err := d.devices.GetDevicesForUser(formUser)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -337,7 +345,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 
-	user, err := stores.GetUserStore(d.e).GetUserByUsername(username)
+	user, err := d.users.GetUserByUsername(username)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -356,7 +364,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			common.NewAPIResponse("Malformed MAC address "+devMacStr, nil).WriteResponse(w, http.StatusBadRequest)
 			return
 		}
-		dev, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
+		dev, err := d.devices.GetDeviceByMAC(mac)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":   err,
@@ -416,7 +424,7 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 		common.NewAPIResponse("Invalid MAC address", nil).WriteResponse(w, http.StatusBadRequest)
 	}
 
-	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
+	device, err := d.devices.GetDeviceByMAC(mac)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -435,7 +443,7 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 		}
 	} else {
 		// Check user privileges
-		deviceUser, err := stores.GetUserStore(d.e).GetUserByUsername(device.Username)
+		deviceUser, err := d.users.GetUserByUsername(device.Username)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":    err,
@@ -480,7 +488,7 @@ func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p
 		common.NewAPIResponse("Invalid MAC address", nil).WriteResponse(w, http.StatusBadRequest)
 	}
 
-	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
+	device, err := d.devices.GetDeviceByMAC(mac)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -563,7 +571,7 @@ func (d *Device) GetDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 		return
 	}
 
-	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
+	device, err := d.devices.GetDeviceByMAC(mac)
 	if err != nil {
 		http.Error(w, "Error getting device from database", http.StatusInternalServerError)
 		return
@@ -590,7 +598,7 @@ func (d *Device) EditFlaggedHandler(w http.ResponseWriter, r *http.Request, p ht
 		common.NewAPIResponse("Invalid MAC address", nil).WriteResponse(w, http.StatusBadRequest)
 	}
 
-	device, err := stores.GetDeviceStore(d.e).GetDeviceByMAC(mac)
+	device, err := d.devices.GetDeviceByMAC(mac)
 	if err != nil {
 		d.e.Log.WithFields(verbose.Fields{
 			"error":   err,

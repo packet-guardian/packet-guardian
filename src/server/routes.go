@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/dchest/captcha"
-	"github.com/elazarl/go-bindata-assetfs"
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/context"
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose/v4"
@@ -28,11 +28,11 @@ import (
 	mid "github.com/packet-guardian/packet-guardian/src/server/middleware"
 )
 
-func LoadRoutes(e *common.Environment) http.Handler {
+func LoadRoutes(e *common.Environment, stores stores.StoreCollection) http.Handler {
 	r := httprouter.New()
 	r.NotFound = http.HandlerFunc(notFoundHandler)
 
-	r.Handler("GET", "/", midStack(e, http.HandlerFunc(rootHandler)))
+	r.Handler("GET", "/", midStack(e, stores, &rootHandler{leases: stores.Leases}))
 	r.ServeFiles(
 		"/public/*filepath",
 		&assetfs.AssetFS{
@@ -41,48 +41,48 @@ func LoadRoutes(e *common.Environment) http.Handler {
 			AssetInfo: bindata.GetAssetInfo,
 			Prefix:    "public"})
 
-	authController := controllers.NewAuthController(e)
-	r.Handler("GET", "/login", midStack(e, http.HandlerFunc(authController.LoginHandler)))
-	r.Handler("POST", "/login", midStack(e, http.HandlerFunc(authController.LoginHandler)))
-	r.Handler("GET", "/logout", midStack(e, http.HandlerFunc(authController.LogoutHandler)))
+	authController := controllers.NewAuthController(e, stores.Users)
+	r.Handler("GET", "/login", midStack(e, stores, http.HandlerFunc(authController.LoginHandler)))
+	r.Handler("POST", "/login", midStack(e, stores, http.HandlerFunc(authController.LoginHandler)))
+	r.Handler("GET", "/logout", midStack(e, stores, http.HandlerFunc(authController.LogoutHandler)))
 
-	manageController := controllers.NewManagerController(e)
-	r.Handler("GET", "/register", midStack(e, http.HandlerFunc(manageController.RegistrationHandler)))
-	r.Handler("GET", "/manage", midStack(e, mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler))))
+	manageController := controllers.NewManagerController(e, stores.Devices, stores.Leases)
+	r.Handler("GET", "/register", midStack(e, stores, http.HandlerFunc(manageController.RegistrationHandler)))
+	r.Handler("GET", "/manage", midStack(e, stores, mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler))))
 
-	guestController := controllers.NewGuestController(e)
-	r.Handler("GET", "/register/guest", midStack(e, mid.CheckGuestReg(e,
-		http.HandlerFunc(guestController.RegistrationHandler))))
-	r.Handler("POST", "/register/guest", midStack(e, mid.CheckGuestReg(e,
-		http.HandlerFunc(guestController.RegistrationHandler))))
-	r.Handler("GET", "/register/guest/verify", midStack(e, mid.CheckGuestReg(e,
-		http.HandlerFunc(guestController.VerificationHandler))))
-	r.Handler("POST", "/register/guest/verify", midStack(e, mid.CheckGuestReg(e,
-		http.HandlerFunc(guestController.VerificationHandler))))
+	guestController := controllers.NewGuestController(e, stores.Users, stores.Devices, stores.Leases)
+	r.Handler("GET", "/register/guest", midStack(e, stores, mid.CheckGuestReg(
+		http.HandlerFunc(guestController.RegistrationHandler), e, stores.Leases)))
+	r.Handler("POST", "/register/guest", midStack(e, stores, mid.CheckGuestReg(
+		http.HandlerFunc(guestController.RegistrationHandler), e, stores.Leases)))
+	r.Handler("GET", "/register/guest/verify", midStack(e, stores, mid.CheckGuestReg(
+		http.HandlerFunc(guestController.VerificationHandler), e, stores.Leases)))
+	r.Handler("POST", "/register/guest/verify", midStack(e, stores, mid.CheckGuestReg(
+		http.HandlerFunc(guestController.VerificationHandler), e, stores.Leases)))
 
-	r.Handler("GET", "/admin/*a", midStack(e, adminRouter(e)))
-	r.Handler("GET", "/api/*a", midStack(e, apiRouter(e)))
-	r.Handler("POST", "/api/*a", midStack(e, apiRouter(e)))
-	r.Handler("DELETE", "/api/*a", midStack(e, apiRouter(e)))
+	r.Handler("GET", "/admin/*a", midStack(e, stores, adminRouter(e, stores)))
+	r.Handler("GET", "/api/*a", midStack(e, stores, apiRouter(e, stores)))
+	r.Handler("POST", "/api/*a", midStack(e, stores, apiRouter(e, stores)))
+	r.Handler("DELETE", "/api/*a", midStack(e, stores, apiRouter(e, stores)))
 
 	r.Handler("GET", "/captcha/*a", captcha.Server(captcha.StdWidth, captcha.StdHeight))
 
 	if e.IsDev() {
-		r.Handler("GET", "/dev/*a", midStack(e, devRouter(e)))
-		r.Handler("GET", "/debug/*a", midStack(e, debugRouter(e)))
+		r.Handler("GET", "/dev/*a", midStack(e, stores, devRouter(e)))
+		r.Handler("GET", "/debug/*a", midStack(e, stores, debugRouter(e)))
 		e.Log.Debug("Profiling enabled")
 	}
 
-	h := mid.Logging(e, r) // Logging
-	h = mid.Panic(e, h)    // Panic catcher
+	h := mid.Logging(r, e) // Logging
+	h = mid.Panic(h, e)    // Panic catcher
 	return h
 }
 
-func midStack(e *common.Environment, h http.Handler) http.Handler {
-	h = mid.BlacklistCheck(e, h) // Enforce a blacklist check
-	h = mid.Cache(e, h)          // Set cache headers if needed
-	h = mid.SetSessionInfo(e, h) // Adds Environment and user information to requet context
-	h = context.ClearHandler(h)  // Clear Gorilla sessions
+func midStack(e *common.Environment, stores stores.StoreCollection, h http.Handler) http.Handler {
+	h = mid.BlacklistCheck(h, e, stores.Devices, stores.Leases) // Enforce a blacklist check
+	h = mid.Cache(h, e)                                         // Set cache headers if needed
+	h = mid.SetSessionInfo(h, e, stores.Users)                  // Adds Environment and user information to requet context
+	h = context.ClearHandler(h)                                 // Clear Gorilla sessions
 	return h
 }
 
@@ -132,11 +132,11 @@ func heapStats(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func adminRouter(e *common.Environment) http.Handler {
+func adminRouter(e *common.Environment, stores stores.StoreCollection) http.Handler {
 	r := httprouter.New()
 	r.NotFound = http.HandlerFunc(notFoundHandler)
 
-	adminController := controllers.NewAdminController(e)
+	adminController := controllers.NewAdminController(e, stores)
 	r.GET("/admin/", adminController.DashboardHandler)
 	r.GET("/admin/search", adminController.SearchHandler)
 	r.GET("/admin/manage/user/:username", adminController.ManageHandler)
@@ -151,10 +151,10 @@ func adminRouter(e *common.Environment) http.Handler {
 	return h
 }
 
-func apiRouter(e *common.Environment) http.Handler {
+func apiRouter(e *common.Environment, stores stores.StoreCollection) http.Handler {
 	r := httprouter.New()
 
-	deviceAPIController := api.NewDeviceController(e)
+	deviceAPIController := api.NewDeviceController(e, stores.Users, stores.Devices, stores.Leases)
 	r.POST("/api/device", deviceAPIController.RegistrationHandler)
 	r.DELETE("/api/device/user/:username", deviceAPIController.DeleteHandler)
 	r.POST("/api/device/reassign", deviceAPIController.ReassignHandler)
@@ -163,14 +163,14 @@ func apiRouter(e *common.Environment) http.Handler {
 	r.POST("/api/device/mac/:mac/flag", deviceAPIController.EditFlaggedHandler)
 	r.GET("/api/device/:mac", deviceAPIController.GetDeviceHandler)
 
-	blacklistController := api.NewBlacklistController(e)
+	blacklistController := api.NewBlacklistController(e, stores.Users, stores.Devices)
 	r.POST("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)
 	r.DELETE("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)
 
 	r.POST("/api/blacklist/device", blacklistController.BlacklistDeviceHandler)
 	r.DELETE("/api/blacklist/device", blacklistController.BlacklistDeviceHandler)
 
-	userAPIController := api.NewUserController(e)
+	userAPIController := api.NewUserController(e, stores.Users, stores.Devices)
 	r.POST("/api/user", userAPIController.UserHandler)
 	r.DELETE("/api/user", userAPIController.UserHandler)
 	r.GET("/api/user/:username", userAPIController.UserHandler)
@@ -178,10 +178,14 @@ func apiRouter(e *common.Environment) http.Handler {
 	statusAPIController := api.NewStatusController(e)
 	r.GET("/api/status", statusAPIController.GetStatus)
 
-	return mid.CheckAuthAPI(r)
+	return mid.CheckAuthAPI(r, stores.Users)
 }
 
-func rootHandler(w http.ResponseWriter, r *http.Request) {
+type rootHandler struct {
+	leases stores.LeaseStore
+}
+
+func (h *rootHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if auth.IsLoggedIn(r) {
 		sessionUser := models.GetUserFromContext(r)
 		if sessionUser.Can(models.ViewAdminPage) {
@@ -195,7 +199,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 	e := common.GetEnvironmentFromContext(r)
 	ip := common.GetIPFromContext(r)
-	reg, err := dhcp.IsRegisteredByIP(stores.GetLeaseStore(e), ip)
+	reg, err := dhcp.IsRegisteredByIP(h.leases, ip)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

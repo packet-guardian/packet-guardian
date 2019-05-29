@@ -18,11 +18,17 @@ import (
 )
 
 type UserController struct {
-	e *common.Environment
+	e       *common.Environment
+	users   stores.UserStore
+	devices stores.DeviceStore
 }
 
-func NewUserController(e *common.Environment) *UserController {
-	return &UserController{e: e}
+func NewUserController(e *common.Environment, us stores.UserStore, ds stores.DeviceStore) *UserController {
+	return &UserController{
+		e:       e,
+		users:   us,
+		devices: ds,
+	}
 }
 
 func (u *UserController) UserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -44,7 +50,7 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	user, err := stores.GetUserStore(u.e).GetUserByUsername(username)
+	user, err := u.users.GetUserByUsername(username)
 	if err != nil {
 		u.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -236,7 +242,7 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if updateDeviceExpirations {
-		devices, err := stores.GetDeviceStore(u.e).GetDevicesForUser(user)
+		devices, err := u.devices.GetDevicesForUser(user)
 		if err != nil {
 			u.e.Log.WithFields(verbose.Fields{
 				"error":   err,
@@ -283,7 +289,7 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	user, err := stores.GetUserStore(u.e).GetUserByUsername(username)
+	user, err := u.users.GetUserByUsername(username)
 	if err != nil {
 		u.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -316,7 +322,7 @@ func (u *UserController) getUserHandler(w http.ResponseWriter, r *http.Request, 
 	sessionUser := models.GetUserFromContext(r)
 	usernameParam := p.ByName("username")
 
-	user, err := stores.GetUserStore(u.e).GetUserByUsername(usernameParam)
+	user, err := u.users.GetUserByUsername(usernameParam)
 	if err != nil {
 		http.Error(w, "Error getting user from database", http.StatusInternalServerError)
 		return

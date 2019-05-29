@@ -20,11 +20,17 @@ import (
 var errInvalidMAC = errors.New("Incorrect MAC address format")
 
 type Blacklist struct {
-	e *common.Environment
+	e       *common.Environment
+	users   stores.UserStore
+	devices stores.DeviceStore
 }
 
-func NewBlacklistController(e *common.Environment) *Blacklist {
-	return &Blacklist{e: e}
+func NewBlacklistController(e *common.Environment, us stores.UserStore, ds stores.DeviceStore) *Blacklist {
+	return &Blacklist{
+		e:       e,
+		users:   us,
+		devices: ds,
+	}
 }
 
 func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -39,7 +45,7 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	user, err := stores.GetUserStore(b.e).GetUserByUsername(username)
+	user, err := b.users.GetUserByUsername(username)
 	if err != nil {
 		b.e.Log.WithFields(verbose.Fields{
 			"username": username,
@@ -172,7 +178,7 @@ func (b *Blacklist) buildDeviceList(w http.ResponseWriter, r *http.Request, macS
 	}
 
 	var user *models.User
-	user, err := stores.GetUserStore(b.e).GetUserByUsername(username)
+	user, err := b.users.GetUserByUsername(username)
 	if err != nil {
 		b.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -182,7 +188,7 @@ func (b *Blacklist) buildDeviceList(w http.ResponseWriter, r *http.Request, macS
 		return nil
 	}
 
-	devices, err := stores.GetDeviceStore(b.e).GetDevicesForUser(user)
+	devices, err := b.devices.GetDevicesForUser(user)
 	if err != nil {
 		b.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -203,7 +209,7 @@ func (b *Blacklist) getDevicesFromList(l []string, add bool) ([]*models.Device, 
 			return nil, errInvalidMAC
 		}
 
-		device, err := stores.GetDeviceStore(b.e).GetDeviceByMAC(mac)
+		device, err := b.devices.GetDeviceByMAC(mac)
 		if err != nil {
 			return nil, err
 		}

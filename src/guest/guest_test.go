@@ -1,11 +1,13 @@
 package guest
 
 import (
+	"net"
 	"net/http"
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 // TestGuestRegister tests the RegisterDevice function for guests.
@@ -13,40 +15,23 @@ import (
 // inspect the device object to make sure it's being created
 // and setup correctly.
 func TestGuestRegister(t *testing.T) {
-	// Setup Mock database
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	testUserStore := &stores.TestUserStore{}
+
+	testMac, _ := net.ParseMAC("ab:cd:ef:12:34:56")
+	testLease := &dhcp.Lease{
+		ID:         1,
+		IP:         net.ParseIP("192.168.1.2"),
+		MAC:        testMac,
+		Registered: true,
 	}
-	defer db.Close()
 
-	// Get user model
-	mock.ExpectQuery("SELECT .*? FROM \"user\" .*").
-		WithArgs("johndoe@example.com").
-		WillReturnRows(sqlmock.NewRows(common.UserTableCols))
+	testLeaseStore := &stores.TestLeaseStore{
+		Leases: []*dhcp.Lease{testLease},
+	}
 
-	// Check device count
-	mock.ExpectQuery("SELECT .*? FROM \"device\" .*").
-		WithArgs("johndoe@example.com").
-		WillReturnRows(sqlmock.NewRows([]string{"count(*)"}).AddRow(0))
-
-	// Get lease
-	mock.ExpectQuery("SELECT .*? FROM \"lease\" .*").
-		WithArgs("192.168.1.2").
-		WillReturnRows(sqlmock.NewRows(common.LeaseTableCols).AddRow(
-			1, "192.168.1.2", "ab:cd:ef:12:34:56", "", 0, 0, "", 0, 1,
-		))
-
-	// Get device
-	mock.ExpectQuery("SELECT .*? FROM \"device\"").
-		WithArgs("ab:cd:ef:12:34:56").
-		WillReturnRows(sqlmock.NewRows(common.DeviceTableRows))
-
-	// Save device
-	mock.ExpectExec("INSERT INTO \"device\"").WillReturnResult(sqlmock.NewResult(1, 1))
+	testDeviceStore := &stores.TestDeviceStore{}
 
 	e := common.NewTestEnvironment()
-	e.DB = &common.DatabaseAccessor{DB: db}
 	e.Config.Guest.DeviceExpirationType = "never"
 	r, err := http.NewRequest("POST", "/", nil)
 	r.RemoteAddr = "192.168.1.2"
@@ -55,12 +40,7 @@ func TestGuestRegister(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := RegisterDevice(e, "John Doe", "johndoe@example.com", r); err != nil {
+	if err := RegisterDevice(e, "John Doe", "johndoe@example.com", r, testUserStore, testDeviceStore, testLeaseStore); err != nil {
 		t.Fatal(err)
-	}
-
-	// we make sure that all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }

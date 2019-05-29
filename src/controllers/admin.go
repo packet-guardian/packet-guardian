@@ -28,11 +28,15 @@ var (
 )
 
 type Admin struct {
-	e *common.Environment
+	e      *common.Environment
+	stores stores.StoreCollection
 }
 
-func NewAdminController(e *common.Environment) *Admin {
-	return &Admin{e: e}
+func NewAdminController(e *common.Environment, stores stores.StoreCollection) *Admin {
+	return &Admin{
+		e:      e,
+		stores: stores,
+	}
 }
 
 func (a *Admin) redirectToRoot(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +67,7 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 		return
 	}
 
-	user, err := stores.GetUserStore(a.e).GetUserByUsername(p.ByName("username"))
+	user, err := a.stores.Users.GetUserByUsername(p.ByName("username"))
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -79,7 +83,7 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 		pageNum = page
 	}
 
-	results, err := stores.GetDeviceStore(a.e).GetDevicesForUserPage(user, pageNum)
+	results, err := a.stores.Devices.GetDevicesForUserPage(user, pageNum)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -90,7 +94,7 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 		return
 	}
 
-	deviceCnt, err := stores.GetDeviceStore(a.e).GetDeviceCountForUser(user)
+	deviceCnt, err := a.stores.Devices.GetDeviceCountForUser(user)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -142,7 +146,7 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 		})
 		return
 	}
-	device, err := stores.GetDeviceStore(a.e).GetDeviceByMAC(mac)
+	device, err := a.stores.Devices.GetDeviceByMAC(mac)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -153,7 +157,7 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 		return
 	}
 	device.LoadLeaseHistory()
-	user, err := stores.GetUserStore(a.e).GetUserByUsername(device.Username)
+	user, err := a.stores.Users.GetUserByUsername(device.Username)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -207,7 +211,7 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 		if r.L != nil {
 			continue
 		}
-		lease, err := stores.GetLeaseStore(a.e).GetRecentLeaseByMAC(r.D.MAC)
+		lease, err := a.stores.Leases.GetRecentLeaseByMAC(r.D.MAC)
 		if err != nil || lease.ID == 0 {
 			continue
 		}
@@ -241,7 +245,7 @@ func (a *Admin) search(query string) ([]*searchResults, string, error) {
 
 func (a *Admin) macSearch(query string) ([]*searchResults, string, error) {
 	var results []*searchResults
-	devices, err := stores.GetDeviceStore(a.e).SearchDevicesByField("mac", "%"+query+"%")
+	devices, err := a.stores.Devices.SearchDevicesByField("mac", "%"+query+"%")
 	for _, d := range devices {
 		results = append(results, &searchResults{
 			D: d,
@@ -254,11 +258,11 @@ func (a *Admin) ipSearch(query string) ([]*searchResults, string, error) {
 	var results []*searchResults
 	// Get leases matching IP
 	var leases []*dhcp.Lease
-	leases, err := stores.GetLeaseStore(a.e).SearchLeases(`"ip" LIKE ?`, "%"+query+"%")
+	leases, err := a.stores.Leases.SearchLeases(`"ip" LIKE ?`, "%"+query+"%")
 	// Get devices corresponding to each lease
 	var d *models.Device
 	for _, l := range leases {
-		d, err = stores.GetDeviceStore(a.e).GetDeviceByMAC(l.MAC)
+		d, err = a.stores.Devices.GetDeviceByMAC(l.MAC)
 		if err != nil {
 			continue
 		}
@@ -273,7 +277,7 @@ func (a *Admin) ipSearch(query string) ([]*searchResults, string, error) {
 func (a *Admin) userSearch(query string) ([]*searchResults, string, error) {
 	// Search for devices with the username
 	exact := true
-	devices, err := stores.GetDeviceStore(a.e).SearchDevicesByField("username", "%"+query+"%")
+	devices, err := a.stores.Devices.SearchDevicesByField("username", "%"+query+"%")
 	if len(devices) == 0 {
 		exact = false
 	}
@@ -290,7 +294,7 @@ func (a *Admin) userSearch(query string) ([]*searchResults, string, error) {
 
 	// All else fails, search the user agent for the query
 	if len(devices) == 0 {
-		devices, err = stores.GetDeviceStore(a.e).SearchDevicesByField("user_agent", "%"+query+"%")
+		devices, err = a.stores.Devices.SearchDevicesByField("user_agent", "%"+query+"%")
 	}
 
 	results := make([]*searchResults, len(devices))
@@ -309,7 +313,7 @@ func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request, _ h
 		return
 	}
 
-	users, err := stores.GetUserStore(a.e).GetAllUsers()
+	users, err := a.stores.Users.GetAllUsers()
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -334,7 +338,7 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request, p httpr
 	}
 
 	username := p.ByName("username")
-	user, err := stores.GetUserStore(a.e).GetUserByUsername(username)
+	user, err := a.stores.Users.GetUserByUsername(username)
 	if err != nil {
 		a.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -359,7 +363,7 @@ func (a *Admin) ReportHandler(w http.ResponseWriter, r *http.Request, p httprout
 
 	report := p.ByName("report")
 	if report != "" {
-		reports.RenderReport(report, w, r)
+		reports.RenderReport(report, w, r, a.stores)
 		return
 	}
 

@@ -25,7 +25,7 @@ func TestLeaseSaveNoHistory(t *testing.T) {
 	e := common.NewTestEnvironment()
 	e.DB = &common.DatabaseAccessor{DB: db}
 
-	lease := dhcp.NewLease(NewLeaseStore(e))
+	lease := dhcp.NewLease(newLeaseStore(e))
 	lease.IP = net.ParseIP("192.168.1.1")
 	lease.MAC = net.HardwareAddr([]byte{0xab, 0xcd, 0xef, 0x12, 0x34, 0x56})
 	lease.Network = "main"

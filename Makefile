@@ -37,6 +37,7 @@ yarn:
 yarn-dev:
 	yarn run build:dev
 
+# go get github.com/go-bindata/go-bindata/...
 bindata:
 	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/dist/...
 
@@ -53,7 +54,6 @@ test:
 	@go test ./src/...
 
 benchmark:
-	@echo "Running tests..."
 	@go test -bench=. $$(go list ./src/...)
 
 # https://github.com/golang/lint

@@ -57,7 +57,7 @@ func setupMailMessage(c *common.Config) {
 	mailMessage.SetHeader("Subject", "A flagged devices has been detected")
 }
 
-func flaggedDevicesTask(e *common.Environment) {
+func flaggedDevicesTask(e *common.Environment, stores stores.StoreCollection) {
 	if e.Config.Email.Address == "" {
 		e.Log.Info("SMTP server not set, won't alert about flagged devices")
 		return
@@ -71,7 +71,7 @@ func flaggedDevicesTask(e *common.Environment) {
 		now := time.Now()
 
 		// Get flagged devices
-		flaggedDevices, err := stores.GetDeviceStore(e).GetFlaggedDevices()
+		flaggedDevices, err := stores.Devices.GetFlaggedDevices()
 		if err != nil {
 			e.Log.WithField("error", err).Error("Failed to get flagged devices")
 			continue

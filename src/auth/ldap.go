@@ -20,7 +20,7 @@ func init() {
 
 type ldapAuthenticator struct{}
 
-func (l *ldapAuthenticator) checkLogin(username, password string, r *http.Request) bool {
+func (l *ldapAuthenticator) checkLogin(username, password string, r *http.Request, users stores.UserStore) bool {
 	e := common.GetEnvironmentFromContext(r)
 	// TODO: Support full LDAP servers and not just AD
 	// TODO: Support multiple LDAP servers, not just one
@@ -48,7 +48,7 @@ func (l *ldapAuthenticator) checkLogin(username, password string, r *http.Reques
 		return false
 	}
 
-	user, err := stores.GetUserStore(e).GetUserByUsername(username)
+	user, err := users.GetUserByUsername(username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

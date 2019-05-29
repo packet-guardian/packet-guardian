@@ -14,11 +14,15 @@ import (
 )
 
 type Auth struct {
-	e *common.Environment
+	e     *common.Environment
+	users stores.UserStore
 }
 
-func NewAuthController(e *common.Environment) *Auth {
-	return &Auth{e: e}
+func NewAuthController(e *common.Environment, us stores.UserStore) *Auth {
+	return &Auth{
+		e:     e,
+		users: us,
+	}
 }
 
 func (a *Auth) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +46,7 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	// Assume invalid until convinced otherwise
 	auth.LogoutUser(r, w)
 	resp := common.NewAPIResponse("Invalid login", nil)
-	ok := auth.LoginUser(r, w)
+	ok := auth.LoginUser(r, w, a.users)
 
 	// Bad login, return unauthorized
 	if !ok {
@@ -58,7 +62,7 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session := common.GetSessionFromContext(r)
-	user, err := stores.GetUserStore(a.e).GetUserByUsername(session.GetString("username"))
+	user, err := a.users.GetUserByUsername(session.GetString("username"))
 	if err != nil {
 		resp.Message = "Error getting user"
 		resp.WriteResponse(w, http.StatusInternalServerError)

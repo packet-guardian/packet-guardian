@@ -26,11 +26,17 @@ const (
 )
 
 type Manager struct {
-	e *common.Environment
+	e       *common.Environment
+	devices stores.DeviceStore
+	leases  stores.LeaseStore
 }
 
-func NewManagerController(e *common.Environment) *Manager {
-	return &Manager{e: e}
+func NewManagerController(e *common.Environment, ds stores.DeviceStore, ls stores.LeaseStore) *Manager {
+	return &Manager{
+		e:       e,
+		devices: ds,
+		leases:  ls,
+	}
 }
 
 func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +48,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	man := (r.FormValue("manual") == "1")
 	loggedIn := auth.IsLoggedIn(r)
 	ip := common.GetIPFromContext(r)
-	reg, _ := dhcp.IsRegisteredByIP(stores.GetLeaseStore(m.e), ip)
+	reg, _ := dhcp.IsRegisteredByIP(m.leases, ip)
 	if !man && reg {
 		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return
@@ -89,7 +95,7 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 		pageNum = page
 	}
 
-	results, err := stores.GetDeviceStore(m.e).GetDevicesForUserPage(sessionUser, pageNum)
+	results, err := m.devices.GetDevicesForUserPage(sessionUser, pageNum)
 	if err != nil {
 		m.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -100,7 +106,7 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deviceCnt, err := stores.GetDeviceStore(m.e).GetDeviceCountForUser(sessionUser)
+	deviceCnt, err := m.devices.GetDeviceCountForUser(sessionUser)
 	if err != nil {
 		m.e.Log.WithFields(verbose.Fields{
 			"error":    err,

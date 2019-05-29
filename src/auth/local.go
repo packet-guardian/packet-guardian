@@ -19,9 +19,9 @@ func init() {
 
 type localAuthenticator struct{}
 
-func (l *localAuthenticator) checkLogin(username, password string, r *http.Request) bool {
+func (l *localAuthenticator) checkLogin(username, password string, r *http.Request, users stores.UserStore) bool {
 	e := common.GetEnvironmentFromContext(r)
-	user, err := stores.GetUserStore(e).GetUserByUsername(username)
+	user, err := users.GetUserByUsername(username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

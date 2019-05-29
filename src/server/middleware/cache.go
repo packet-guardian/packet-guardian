@@ -10,7 +10,7 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
-func Cache(e *common.Environment, next http.Handler) http.Handler {
+func Cache(next http.Handler, e *common.Environment) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Host != e.Config.Core.SiteDomainName {
 			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate") // HTTP 1.1.

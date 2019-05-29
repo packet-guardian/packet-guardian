@@ -15,6 +15,7 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/bindata"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/db"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 	"github.com/packet-guardian/packet-guardian/src/server"
 	"github.com/packet-guardian/packet-guardian/src/tasks"
 )
@@ -75,10 +76,17 @@ func main() {
 		e.Log.WithField("error", err).Fatal("System initialization failed")
 	}
 
-	go tasks.StartTaskScheduler(e)
+	appStores := stores.StoreCollection{
+		Blacklist: stores.GetBlacklistStore(e),
+		Devices:   stores.GetDeviceStore(e),
+		Leases:    stores.GetLeaseStore(e),
+		Users:     stores.GetUserStore(e),
+	}
+
+	go tasks.StartTaskScheduler(e, appStores)
 
 	// Start web server
-	server.NewServer(e, server.LoadRoutes(e)).Run()
+	server.NewServer(e, server.LoadRoutes(e, appStores)).Run()
 }
 
 func setupEnvironment() *common.Environment {

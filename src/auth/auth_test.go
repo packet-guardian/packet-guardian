@@ -22,13 +22,13 @@ func init() {
 
 type testAuthOne struct{}
 
-func (t *testAuthOne) checkLogin(username, password string, r *http.Request) bool {
+func (t *testAuthOne) checkLogin(username, password string, r *http.Request, users stores.UserStore) bool {
 	return (username == "tester1")
 }
 
 type testAuthTwo struct{}
 
-func (t *testAuthTwo) checkLogin(username, password string, r *http.Request) bool {
+func (t *testAuthTwo) checkLogin(username, password string, r *http.Request, users stores.UserStore) bool {
 	return (username == "tester2")
 }
 
@@ -37,6 +37,8 @@ func TestLoginUser(t *testing.T) {
 	e.Config.Auth.AuthMethod = []string{"a1", "a2"}
 
 	session := common.NewTestSession()
+
+	testUserStore := &stores.TestUserStore{}
 
 	req, _ := http.NewRequest("", "", nil)
 	req = common.SetEnvironmentToContext(req, e)
@@ -47,7 +49,7 @@ func TestLoginUser(t *testing.T) {
 	// Test first auth method
 	req.Form.Add("username", "tester1")
 	req.Form.Add("password", "somePassword")
-	if !LoginUser(req, httptest.NewRecorder()) {
+	if !LoginUser(req, httptest.NewRecorder(), testUserStore) {
 		t.Error("Login failed for tester1. Expected true, got false")
 	}
 	if session.GetString("_authMethod") != "a1" {
@@ -63,7 +65,7 @@ func TestLoginUser(t *testing.T) {
 	// Test second auth method
 	req.Form.Set("username", "tester2")
 	req.Form.Set("password", "somePassword")
-	if !LoginUser(req, httptest.NewRecorder()) {
+	if !LoginUser(req, httptest.NewRecorder(), testUserStore) {
 		t.Error("Login failed for tester2. Expected true, got false")
 	}
 	if session.GetString("_authMethod") != "a2" {
@@ -100,7 +102,9 @@ func TestLogoutUser(t *testing.T) {
 	session.Set("loggedin", true)
 	session.Set("username", "Tester")
 
-	user := models.NewUser(e, stores.NewUserStore(e), stores.NewBlacklistItem(stores.NewBlacklistStore(e)), "Tester")
+	user := &models.User{
+		Username: "Tester",
+	}
 
 	req, _ := http.NewRequest("", "", nil)
 	req = common.SetEnvironmentToContext(req, e)

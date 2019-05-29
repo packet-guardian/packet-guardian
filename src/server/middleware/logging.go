@@ -35,7 +35,7 @@ func (w *responseWriter) requestTime() time.Duration {
 	return time.Since(w.startTime)
 }
 
-func Logging(e *common.Environment, next http.Handler) http.Handler {
+func Logging(next http.Handler, e *common.Environment) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// If HTTP logging is disabled, no need in wasting the space
 		if !e.Config.Logging.EnableHTTP {

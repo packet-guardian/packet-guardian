@@ -13,10 +13,10 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
-func SetSessionInfo(e *common.Environment, next http.Handler) http.Handler {
+func SetSessionInfo(next http.Handler, e *common.Environment, users stores.UserStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session := e.Sessions.GetSession(r)
-		sessionUser, err := stores.GetUserStore(e).GetUserByUsername(session.GetString("username"))
+		sessionUser, err := users.GetUserByUsername(session.GetString("username"))
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"error":    err,

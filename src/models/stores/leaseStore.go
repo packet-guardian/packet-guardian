@@ -38,17 +38,30 @@ func (l *LeaseHistory) GetEndTime() time.Time {
 	return l.End
 }
 
-type LeaseStore struct {
+type LeaseStore interface {
+	GetAllLeases() ([]*dhcp.Lease, error)
+	GetLeaseByIP(ip net.IP) (*dhcp.Lease, error)
+	GetRecentLeaseByMAC(mac net.HardwareAddr) (*dhcp.Lease, error)
+	GetAllLeasesByMAC(mac net.HardwareAddr) ([]*dhcp.Lease, error)
+	CreateLease(lease *dhcp.Lease) error
+	GetLeaseHistory(mac net.HardwareAddr) ([]models.LeaseHistory, error)
+	UpdateLease(lease *dhcp.Lease) error
+	DeleteLease(lease *dhcp.Lease) error
+	SearchLeases(where string, vals ...interface{}) ([]*dhcp.Lease, error)
+	GetLatestLease(mac net.HardwareAddr) models.LeaseHistory
+}
+
+type leaseStore struct {
 	e *common.Environment
 }
 
-var leaseStore *LeaseStore
+var appLeaseStore LeaseStore
 
 // NewLeaseStore will create a new LeaseStore object using the given Environment.
 // Client code should use GetLeaseStore unless it's absolutely necessary to have
 // a new LeaseStore object.
-func NewLeaseStore(e *common.Environment) *LeaseStore {
-	l := &LeaseStore{
+func newLeaseStore(e *common.Environment) *leaseStore {
+	l := &leaseStore{
 		e: e,
 	}
 
@@ -59,18 +72,18 @@ func NewLeaseStore(e *common.Environment) *LeaseStore {
 // or it will create a new one and return it. Client code should use this unless
 // it's required to get a new LeaseStore object. If the environment is testing,
 // it will always return a new store.
-func GetLeaseStore(e *common.Environment) *LeaseStore {
-	if leaseStore == nil || e.IsTesting() {
-		leaseStore = NewLeaseStore(e)
+func GetLeaseStore(e *common.Environment) LeaseStore {
+	if appLeaseStore == nil {
+		appLeaseStore = newLeaseStore(e)
 	}
-	return leaseStore
+	return appLeaseStore
 }
 
-func (l *LeaseStore) GetAllLeases() ([]*dhcp.Lease, error) {
+func (l *leaseStore) GetAllLeases() ([]*dhcp.Lease, error) {
 	return l.doDatabaseQuery("")
 }
 
-func (l *LeaseStore) GetLeaseByIP(ip net.IP) (*dhcp.Lease, error) {
+func (l *leaseStore) GetLeaseByIP(ip net.IP) (*dhcp.Lease, error) {
 	sql := `WHERE "ip" = ?`
 	leases, err := l.doDatabaseQuery(sql, ip.String())
 	if len(leases) == 0 {
@@ -81,7 +94,7 @@ func (l *LeaseStore) GetLeaseByIP(ip net.IP) (*dhcp.Lease, error) {
 	return leases[0], nil
 }
 
-func (l *LeaseStore) GetRecentLeaseByMAC(mac net.HardwareAddr) (*dhcp.Lease, error) {
+func (l *leaseStore) GetRecentLeaseByMAC(mac net.HardwareAddr) (*dhcp.Lease, error) {
 	sql := `WHERE "mac" = ? ORDER BY "start" DESC`
 	leases, err := l.doDatabaseQuery(sql, mac.String())
 	if len(leases) == 0 {
@@ -92,11 +105,11 @@ func (l *LeaseStore) GetRecentLeaseByMAC(mac net.HardwareAddr) (*dhcp.Lease, err
 	return leases[0], nil
 }
 
-func (l *LeaseStore) GetAllLeasesByMAC(mac net.HardwareAddr) ([]*dhcp.Lease, error) {
+func (l *leaseStore) GetAllLeasesByMAC(mac net.HardwareAddr) ([]*dhcp.Lease, error) {
 	return l.doDatabaseQuery(`WHERE "mac" = ?`, mac.String())
 }
 
-func (l *LeaseStore) CreateLease(lease *dhcp.Lease) error {
+func (l *leaseStore) CreateLease(lease *dhcp.Lease) error {
 	sql := `INSERT INTO "lease" ("ip", "mac", "network", "start", "end", "hostname", "abandoned", "registered") VALUES (?,?,?,?,?,?,?,?)`
 
 	result, err := l.e.DB.Exec(
@@ -118,7 +131,7 @@ func (l *LeaseStore) CreateLease(lease *dhcp.Lease) error {
 	return nil
 }
 
-func (l *LeaseStore) GetLeaseHistory(mac net.HardwareAddr) ([]models.LeaseHistory, error) {
+func (l *leaseStore) GetLeaseHistory(mac net.HardwareAddr) ([]models.LeaseHistory, error) {
 	leases, err := l.SearchLeases(`"mac" = ? ORDER BY "start" DESC`, mac.String())
 	if err != nil {
 		return nil, err
@@ -136,7 +149,7 @@ func (l *LeaseStore) GetLeaseHistory(mac net.HardwareAddr) ([]models.LeaseHistor
 	return history, nil
 }
 
-func (l *LeaseStore) UpdateLease(lease *dhcp.Lease) error {
+func (l *leaseStore) UpdateLease(lease *dhcp.Lease) error {
 	sql := `UPDATE "lease" SET "mac" = ?, "start" = ?, "end" = ?, "hostname" = ?, "abandoned" = ? WHERE "id" = ?`
 
 	_, err := l.e.DB.Exec(
@@ -154,7 +167,7 @@ func (l *LeaseStore) UpdateLease(lease *dhcp.Lease) error {
 	return nil
 }
 
-func (l *LeaseStore) DeleteLease(lease *dhcp.Lease) error {
+func (l *leaseStore) DeleteLease(lease *dhcp.Lease) error {
 	if lease.ID == 0 {
 		return nil
 	}
@@ -164,11 +177,11 @@ func (l *LeaseStore) DeleteLease(lease *dhcp.Lease) error {
 	return err
 }
 
-func (l *LeaseStore) SearchLeases(where string, vals ...interface{}) ([]*dhcp.Lease, error) {
+func (l *leaseStore) SearchLeases(where string, vals ...interface{}) ([]*dhcp.Lease, error) {
 	return l.doDatabaseQuery("WHERE "+where, vals...)
 }
 
-func (l *LeaseStore) GetLatestLease(mac net.HardwareAddr) models.LeaseHistory {
+func (l *leaseStore) GetLatestLease(mac net.HardwareAddr) models.LeaseHistory {
 	// Instead of using the lease history table, this always uses the active
 	// lease table. Lease history may be disabled so it can't be relied on.
 	// Since this is the current Active lease, it makes sense to use the active table.
@@ -185,7 +198,7 @@ func (l *LeaseStore) GetLatestLease(mac net.HardwareAddr) models.LeaseHistory {
 	}
 }
 
-func (l *LeaseStore) doDatabaseQuery(where string, values ...interface{}) ([]*dhcp.Lease, error) {
+func (l *leaseStore) doDatabaseQuery(where string, values ...interface{}) ([]*dhcp.Lease, error) {
 	sql := `SELECT "id", "ip", "mac", "network", "start", "end", "hostname", "abandoned", "registered" FROM "lease" ` + where
 
 	rows, err := l.e.DB.Query(sql, values...)

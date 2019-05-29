@@ -40,9 +40,9 @@ func GenerateGuestCode() string {
 
 // RegisterDevice will register the device for a guest. It is a simplified form of the
 // full registration function found in controllers.api.Device.RegistrationHandler().
-func RegisterDevice(e *common.Environment, name, credential string, r *http.Request) error {
+func RegisterDevice(e *common.Environment, name, credential string, r *http.Request, users stores.UserStore, devices stores.DeviceStore, leases stores.LeaseStore) error {
 	// Build guest user model
-	guest, err := stores.GetUserStore(e).GetUserByUsername(credential)
+	guest, err := users.GetUserByUsername(credential)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -61,7 +61,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	}).Error("Error parsing device expiration")
 
 	// Get and enforce the device limit
-	deviceCount, err := stores.GetDeviceStore(e).GetDeviceCountForUser(guest)
+	deviceCount, err := devices.GetDeviceCountForUser(guest)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"package": "guest",
@@ -78,7 +78,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	ip := common.GetIPFromContext(r)
 
 	// Automatic registration
-	lease, err := stores.GetLeaseStore(e).GetLeaseByIP(ip)
+	lease, err := leases.GetLeaseByIP(ip)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -96,7 +96,7 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	mac = lease.MAC
 
 	// Get device from database
-	device, err := stores.GetDeviceStore(e).GetDeviceByMAC(mac)
+	device, err := devices.GetDeviceByMAC(mac)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

@@ -325,8 +325,12 @@ func migrateUserPermissions(e *common.Environment) error {
 }
 
 func migrateUserGroup(e *common.Environment, members []string, group, groupName string) error {
+	// This usage of GetUserStore is an exception, getting dependencies injected this
+	// far would be too much trouble for little benefit.
+	users := stores.GetUserStore(e)
+
 	for _, username := range members {
-		user, err := stores.GetUserStore(e).GetUserByUsername(username)
+		user, err := users.GetUserByUsername(username)
 		if err != nil {
 			return err
 		}

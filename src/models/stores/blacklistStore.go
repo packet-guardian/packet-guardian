@@ -8,26 +8,32 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
-var bs *BlacklistStore
+var appBlacklistStore BlacklistStore
 
-type BlacklistStore struct {
+type BlacklistStore interface {
+	IsBlacklisted(s string) bool
+	AddToBlacklist(s string) error
+	RemoveFromBlacklist(s string) error
+}
+
+type blacklistStore struct {
 	e *common.Environment
 }
 
-func NewBlacklistStore(e *common.Environment) *BlacklistStore {
-	return &BlacklistStore{
+func newBlacklistStore(e *common.Environment) *blacklistStore {
+	return &blacklistStore{
 		e: e,
 	}
 }
 
-func GetBlacklistStore(e *common.Environment) *BlacklistStore {
-	if bs == nil || e.IsTesting() {
-		bs = NewBlacklistStore(e)
+func GetBlacklistStore(e *common.Environment) BlacklistStore {
+	if appBlacklistStore == nil {
+		appBlacklistStore = newBlacklistStore(e)
 	}
-	return bs
+	return appBlacklistStore
 }
 
-func (b *BlacklistStore) IsBlacklisted(s string) bool {
+func (b *blacklistStore) IsBlacklisted(s string) bool {
 	if s == "" {
 		return false
 	}
@@ -43,7 +49,7 @@ func (b *BlacklistStore) IsBlacklisted(s string) bool {
 	return (err == nil)
 }
 
-func (b *BlacklistStore) AddToBlacklist(s string) error {
+func (b *blacklistStore) AddToBlacklist(s string) error {
 	if s == "" {
 		return nil
 	}
@@ -53,7 +59,7 @@ func (b *BlacklistStore) AddToBlacklist(s string) error {
 	return err
 }
 
-func (b *BlacklistStore) RemoveFromBlacklist(s string) error {
+func (b *blacklistStore) RemoveFromBlacklist(s string) error {
 	if s == "" {
 		return nil
 	}
@@ -63,30 +69,37 @@ func (b *BlacklistStore) RemoveFromBlacklist(s string) error {
 	return err
 }
 
-type BlacklistItem struct {
-	bs      *BlacklistStore
+type BlacklistItem interface {
+	Blacklist()
+	Unblacklist()
+	IsBlacklisted(string) bool
+	Save(string) error
+}
+
+type blacklistItem struct {
+	bs      BlacklistStore
 	is      bool
 	cached  bool
 	changed bool
 }
 
-func NewBlacklistItem(bs *BlacklistStore) *BlacklistItem {
-	return &BlacklistItem{bs: bs}
+func NewBlacklistItem(bs BlacklistStore) BlacklistItem {
+	return &blacklistItem{bs: bs}
 }
 
-func (b *BlacklistItem) Blacklist() {
+func (b *blacklistItem) Blacklist() {
 	b.cached = true
 	b.is = true
 	b.changed = true
 }
 
-func (b *BlacklistItem) Unblacklist() {
+func (b *blacklistItem) Unblacklist() {
 	b.cached = true
 	b.is = false
 	b.changed = true
 }
 
-func (b *BlacklistItem) IsBlacklisted(key string) bool {
+func (b *blacklistItem) IsBlacklisted(key string) bool {
 	if b.cached {
 		return b.is
 	}
@@ -97,7 +110,7 @@ func (b *BlacklistItem) IsBlacklisted(key string) bool {
 	return b.is
 }
 
-func (b *BlacklistItem) Save(key string) error {
+func (b *blacklistItem) Save(key string) error {
 	// We only need to do something if the blacklist setting was changed
 	if !b.changed {
 		return nil

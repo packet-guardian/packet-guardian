@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 var sessionExpiration = time.Duration(-24) * time.Hour
@@ -19,7 +20,7 @@ func init() {
 	RegisterJob("Purge old web sessions", cleanUpExpiredSessions)
 }
 
-func cleanUpExpiredSessions(e *common.Environment) (string, error) {
+func cleanUpExpiredSessions(e *common.Environment, stores stores.StoreCollection) (string, error) {
 	switch e.Config.Webserver.SessionStore {
 	case "filesystem":
 		return cleanFileSystemSessions(e)

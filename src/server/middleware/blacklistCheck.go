@@ -14,7 +14,7 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
-func BlacklistCheck(e *common.Environment, next http.Handler) http.Handler {
+func BlacklistCheck(next http.Handler, e *common.Environment, devices stores.DeviceStore, leases stores.LeaseStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Public assets are available to everyone
 		if strings.HasPrefix(r.URL.Path, "/public") ||
@@ -32,9 +32,9 @@ func BlacklistCheck(e *common.Environment, next http.Handler) http.Handler {
 		}
 
 		ip := common.GetIPFromContext(r)
-		lease, err := stores.GetLeaseStore(e).GetLeaseByIP(ip)
+		lease, err := leases.GetLeaseByIP(ip)
 		if err == nil && lease.ID != 0 {
-			device, err := stores.GetDeviceStore(e).GetDeviceByMAC(lease.MAC)
+			device, err := devices.GetDeviceByMAC(lease.MAC)
 			if err != nil {
 				e.Log.WithFields(verbose.Fields{
 					"error":   err,

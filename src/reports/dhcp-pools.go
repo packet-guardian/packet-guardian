@@ -16,7 +16,7 @@ func init() {
 	RegisterReport("dhcp-pools", "DHCP Pool Statistics", poolReport)
 }
 
-func poolReport(e *common.Environment, w http.ResponseWriter, r *http.Request) error {
+func poolReport(e *common.Environment, w http.ResponseWriter, r *http.Request, stores stores.StoreCollection) error {
 	dhcpConfig, err := dhcp.ParseFile(e.Config.DHCP.ConfigFile)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
@@ -27,7 +27,7 @@ func poolReport(e *common.Environment, w http.ResponseWriter, r *http.Request) e
 	}
 
 	dhcpPkgConfig := &dhcp.ServerConfig{
-		LeaseStore: stores.GetLeaseStore(e),
+		LeaseStore: stores.Leases,
 	}
 
 	handler := dhcp.NewDHCPServer(dhcpConfig, dhcpPkgConfig)

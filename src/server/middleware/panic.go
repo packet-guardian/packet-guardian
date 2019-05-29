@@ -12,7 +12,7 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
-func Panic(e *common.Environment, next http.Handler) http.Handler {
+func Panic(next http.Handler, e *common.Environment) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {

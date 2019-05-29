@@ -28,7 +28,7 @@ func CheckAuth(next http.Handler) http.Handler {
 }
 
 // CheckAuth is middleware to check if a user is logged in, if not it will redirect to the login page
-func CheckAuthAPI(next http.Handler) http.Handler {
+func CheckAuthAPI(next http.Handler, users stores.UserStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if auth.IsLoggedIn(r) {
 			next.ServeHTTP(w, r)
@@ -42,7 +42,7 @@ func CheckAuthAPI(next http.Handler) http.Handler {
 			return
 		}
 
-		if !auth.CheckLogin(username, password, r) {
+		if !auth.CheckLogin(username, password, r, users) {
 			w.Header().Add("Authorization", "Basic realm=\"Packet Guardian\"")
 			common.NewAPIResponse("Invalid username or password", nil).WriteResponse(w, http.StatusUnauthorized)
 			return
@@ -50,7 +50,7 @@ func CheckAuthAPI(next http.Handler) http.Handler {
 
 		// Get user model
 		e := common.GetEnvironmentFromContext(r)
-		sessionUser, err := stores.GetUserStore(e).GetUserByUsername(username)
+		sessionUser, err := users.GetUserByUsername(username)
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"error":    err,
