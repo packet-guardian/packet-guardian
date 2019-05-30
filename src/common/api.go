@@ -11,6 +11,8 @@ import (
 	"github.com/lfkeitel/verbose/v4"
 )
 
+const ContentTypeJSON = "application/json; charset=utf-8"
+
 // A APIResponse is returned as a JSON struct to the client.
 type APIResponse struct {
 	Message string
@@ -43,16 +45,14 @@ func (a *APIResponse) Encode() []byte {
 }
 
 // WriteResponse encodes and writes a response back to the client.
-func (a *APIResponse) WriteResponse(w http.ResponseWriter, code int) (int64, error) {
+func (a *APIResponse) WriteResponse(w http.ResponseWriter, code int) (int, error) {
 	r := a.Encode()
-	l := len(r)
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Type", ContentTypeJSON)
 	w.WriteHeader(code)
 	if code == http.StatusNoContent {
 		return 0, nil
 	}
-	w.Write(r)
-	return int64(l), nil
+	return w.Write(r)
 }
 
 // SystemVersion is the current version of the software.
