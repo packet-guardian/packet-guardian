@@ -34,11 +34,6 @@ func NewBlacklistController(e *common.Environment, us stores.UserStore, ds store
 }
 
 func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	if !models.GetUserFromContext(r).Can(models.ManageBlacklist) {
-		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
-		return
-	}
-
 	username := p.ByName("username")
 	if username == "" {
 		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
@@ -93,10 +88,6 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 
 func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
-	if !sessionUser.Can(models.ManageBlacklist) {
-		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
-		return
-	}
 
 	//blacklistAll := (r.FormValue("mac") == "")
 	macStr := r.FormValue("mac")

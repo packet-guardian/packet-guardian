@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/auth"
 	"github.com/packet-guardian/packet-guardian/src/common"
@@ -108,4 +109,36 @@ var adminPagePermissions = map[string]models.Permission{
 	"/admin/users": models.ViewUsers,
 	"/debug":       models.ViewDebugInfo,
 	"/dev":         models.ViewDebugInfo,
+}
+
+// A PermissionChecker takes a request and a user and determines if the user
+// has sufficient permissions to perform the request.
+type PermissionChecker func(*http.Request, *models.User) bool
+
+// CheckPermissions middleware ensures a session user has the required
+// permissions to fulfill the request.
+func CheckPermissions(next httprouter.Handle, checker PermissionChecker) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		u := models.GetUserFromContext(r)
+		if !checker(r, u) {
+			common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
+			return
+		}
+
+		next(w, r, p)
+	}
+}
+
+// PermsCanAny returns a permission checker that checks if the user can
+// perform any of the supplied permissions. If any permission is allowed,
+// the request is allowed.
+func PermsCanAny(permissions ...models.Permission) PermissionChecker {
+	return func(r *http.Request, user *models.User) bool {
+		for _, p := range permissions {
+			if user.Can(p) {
+				return true
+			}
+		}
+		return false
+	}
 }

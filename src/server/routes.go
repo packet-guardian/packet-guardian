@@ -142,28 +142,47 @@ func apiRouter(e *common.Environment, stores stores.StoreCollection) http.Handle
 	r := httprouter.New()
 
 	deviceAPIController := api.NewDeviceController(e, stores.Users, stores.Devices, stores.Leases)
-	r.POST("/api/device", deviceAPIController.RegistrationHandler)
-	r.DELETE("/api/device/user/:username", deviceAPIController.DeleteHandler)
-	r.POST("/api/device/reassign", deviceAPIController.ReassignHandler)
+	r.POST("/api/device", deviceAPIController.RegistrationHandler)            // handles permission checks
+	r.DELETE("/api/device/user/:username", deviceAPIController.DeleteHandler) // handles permission checks
+	r.POST("/api/device/reassign",
+		mid.CheckPermissions(deviceAPIController.ReassignHandler,
+			mid.PermsCanAny(models.ReassignDevice)))
+	// handles permission checks
 	r.POST("/api/device/mac/:mac/description", deviceAPIController.EditDescriptionHandler)
-	r.POST("/api/device/mac/:mac/expiration", deviceAPIController.EditExpirationHandler)
-	r.POST("/api/device/mac/:mac/flag", deviceAPIController.EditFlaggedHandler)
+	r.POST("/api/device/mac/:mac/expiration",
+		mid.CheckPermissions(deviceAPIController.EditExpirationHandler,
+			mid.PermsCanAny(models.EditDevice)))
+	r.POST("/api/device/mac/:mac/flag",
+		mid.CheckPermissions(deviceAPIController.EditFlaggedHandler,
+			mid.PermsCanAny(models.EditDevice)))
 	r.GET("/api/device/:mac", deviceAPIController.GetDeviceHandler)
 
 	blacklistController := api.NewBlacklistController(e, stores.Users, stores.Devices)
-	r.POST("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)
-	r.DELETE("/api/blacklist/user/:username", blacklistController.BlacklistUserHandler)
+	r.POST("/api/blacklist/user/:username",
+		mid.CheckPermissions(blacklistController.BlacklistUserHandler,
+			mid.PermsCanAny(models.ManageBlacklist)))
+	r.DELETE("/api/blacklist/user/:username",
+		mid.CheckPermissions(blacklistController.BlacklistUserHandler,
+			mid.PermsCanAny(models.ManageBlacklist)))
 
-	r.POST("/api/blacklist/device", blacklistController.BlacklistDeviceHandler)
-	r.DELETE("/api/blacklist/device", blacklistController.BlacklistDeviceHandler)
+	r.POST("/api/blacklist/device",
+		mid.CheckPermissions(blacklistController.BlacklistDeviceHandler,
+			mid.PermsCanAny(models.ManageBlacklist)))
+	r.DELETE("/api/blacklist/device",
+		mid.CheckPermissions(blacklistController.BlacklistDeviceHandler,
+			mid.PermsCanAny(models.ManageBlacklist)))
 
 	userAPIController := api.NewUserController(e, stores.Users, stores.Devices)
-	r.POST("/api/user", userAPIController.UserHandler)
-	r.DELETE("/api/user", userAPIController.UserHandler)
-	r.GET("/api/user/:username", userAPIController.UserHandler)
+	r.POST("/api/user", userAPIController.SaveUserHandler)         // handles permission checks
+	r.GET("/api/user/:username", userAPIController.GetUserHandler) // handles permission checks
+	r.DELETE("/api/user",
+		mid.CheckPermissions(userAPIController.DeleteUserHandler,
+			mid.PermsCanAny(models.DeleteUser)))
 
 	statusAPIController := api.NewStatusController(e)
-	r.GET("/api/status", statusAPIController.GetStatus)
+	r.GET("/api/status",
+		mid.CheckPermissions(statusAPIController.GetStatus,
+			mid.PermsCanAny(models.ViewDebugInfo)))
 
 	return mid.CheckAuthAPI(r, stores.Users)
 }

@@ -328,10 +328,6 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 
 func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
-	if !sessionUser.Can(models.ReassignDevice) {
-		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusForbidden)
-		return
-	}
 
 	username := r.FormValue("username")
 	if username == "" {
@@ -442,19 +438,7 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 	} else {
-		// Check user privileges
-		deviceUser, err := d.users.GetUserByUsername(device.Username)
-		if err != nil {
-			d.e.Log.WithFields(verbose.Fields{
-				"error":    err,
-				"package":  "controllers:api:device",
-				"username": device.Username,
-			}).Error("Error getting user")
-			common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
-			return
-		}
-
-		if !deviceUser.Can(models.EditOwn) {
+		if !sessionUser.Can(models.EditOwn) {
 			common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
 			return
 		}
@@ -481,7 +465,6 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 }
 
 func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	sessionUser := models.GetUserFromContext(r)
 	var err error
 	mac, err := net.ParseMAC(p.ByName("mac"))
 	if err != nil {
@@ -496,11 +479,6 @@ func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p
 			"mac":     mac.String(),
 		}).Error("Error getting device")
 		common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
-		return
-	}
-
-	if !sessionUser.Can(models.EditDevice) {
-		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
 		return
 	}
 
@@ -552,7 +530,7 @@ func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p
 	d.e.Log.WithFields(verbose.Fields{
 		"mac":        device.MAC.String(),
 		"username":   device.Username,
-		"changed-by": sessionUser.Username,
+		"changed-by": models.GetUserFromContext(r).Username,
 		"expiration": newExpireResp,
 		"package":    "controllers:api:device",
 		"action":     "edit_exp_device",
@@ -591,7 +569,6 @@ func (d *Device) GetDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 }
 
 func (d *Device) EditFlaggedHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	sessionUser := models.GetUserFromContext(r)
 	var err error
 	mac, err := net.ParseMAC(p.ByName("mac"))
 	if err != nil {
@@ -606,11 +583,6 @@ func (d *Device) EditFlaggedHandler(w http.ResponseWriter, r *http.Request, p ht
 			"mac":     mac.String(),
 		}).Error("Error getting device")
 		common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
-		return
-	}
-
-	if !sessionUser.Can(models.EditDevice) {
-		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
 		return
 	}
 
@@ -631,7 +603,7 @@ func (d *Device) EditFlaggedHandler(w http.ResponseWriter, r *http.Request, p ht
 	d.e.Log.WithFields(verbose.Fields{
 		"mac":        device.MAC.String(),
 		"username":   device.Username,
-		"changed-by": sessionUser.Username,
+		"changed-by": models.GetUserFromContext(r).Username,
 		"flagged":    device.Flagged,
 		"package":    "controllers:api:device",
 		"action":     "edit_flagged_device",

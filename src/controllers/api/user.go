@@ -31,18 +31,7 @@ func NewUserController(e *common.Environment, us stores.UserStore, ds stores.Dev
 	}
 }
 
-func (u *UserController) UserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	switch r.Method {
-	case "POST":
-		u.saveUserHandler(w, r)
-	case "DELETE":
-		u.deleteUserHandler(w, r)
-	case "GET":
-		u.getUserHandler(w, r, p)
-	}
-}
-
-func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request) {
+func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	username := strings.ToLower(r.FormValue("username"))
 	if username == "" {
@@ -276,13 +265,8 @@ func (u *UserController) saveUserHandler(w http.ResponseWriter, r *http.Request)
 	common.NewAPIResponse("User saved successfully", nil).WriteResponse(w, http.StatusNoContent)
 }
 
-func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+func (u *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
-	if !sessionUser.Can(models.DeleteUser) {
-		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
-		return
-	}
-
 	username := r.FormValue("username")
 	if username == "" {
 		common.NewAPIResponse("Username required", nil).WriteResponse(w, http.StatusBadRequest)
@@ -318,7 +302,7 @@ func (u *UserController) deleteUserHandler(w http.ResponseWriter, r *http.Reques
 	common.NewAPIResponse("User deleted", nil).WriteResponse(w, http.StatusNoContent)
 }
 
-func (u *UserController) getUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (u *UserController) GetUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	usernameParam := p.ByName("username")
 

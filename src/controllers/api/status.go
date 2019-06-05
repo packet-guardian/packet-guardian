@@ -8,7 +8,6 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/db"
-	"github.com/packet-guardian/packet-guardian/src/models"
 )
 
 type Status struct {
@@ -53,13 +52,6 @@ func NewStatusController(e *common.Environment) *Status {
 }
 
 func (s *Status) GetStatus(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	sessionUser := models.GetUserFromContext(r)
-
-	if !sessionUser.Can(models.ViewDebugInfo) {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
 	data := &StatusResp{
 		Application: s.applicationStatus(),
 		Database:    s.databaseStatus(),
