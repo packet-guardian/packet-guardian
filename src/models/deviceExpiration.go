@@ -96,18 +96,20 @@ func GetGlobalDefaultExpiration(e *common.Environment) *UserDeviceExpiration {
 }
 
 func (e *UserDeviceExpiration) String() string {
-	if e.Mode == UserDeviceExpirationNever {
+	switch e.Mode {
+	case UserDeviceExpirationNever:
 		return "Never"
-	} else if e.Mode == UserDeviceExpirationGlobal {
+	case UserDeviceExpirationGlobal:
 		return "Global"
-	} else if e.Mode == UserDeviceExpirationRolling {
+	case UserDeviceExpirationRolling:
 		return "Rolling"
-	} else if e.Mode == UserDeviceExpirationSpecific {
+	case UserDeviceExpirationSpecific:
 		return time.Unix(e.Value, 0).Format(common.TimeFormat)
-	} else if e.Mode == UserDeviceExpirationDuration {
+	case UserDeviceExpirationDuration:
 		return (time.Duration(e.Value) * time.Second).String()
 	}
 
+	// Daily
 	year, month, day := time.Now().Date()
 	bod := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
 	bod = bod.Add(time.Duration(e.Value) * time.Second)
@@ -115,18 +117,21 @@ func (e *UserDeviceExpiration) String() string {
 }
 
 func (e *UserDeviceExpiration) NextExpiration(env *common.Environment, base time.Time) time.Time {
-	if e.Mode == UserDeviceExpirationGlobal {
+	switch e.Mode {
+	case UserDeviceExpirationGlobal:
 		if globalDeviceExpiration != nil {
 			return globalDeviceExpiration.NextExpiration(env, base)
 		}
 		// Build the global default, typically it's the most used mode
 		globalDeviceExpiration = GetGlobalDefaultExpiration(env)
 		return globalDeviceExpiration.NextExpiration(env, base)
-	} else if e.Mode == UserDeviceExpirationSpecific {
+	case UserDeviceExpirationRolling:
+		return time.Unix(1, 0)
+	case UserDeviceExpirationSpecific:
 		return time.Unix(e.Value, 0)
-	} else if e.Mode == UserDeviceExpirationDuration {
+	case UserDeviceExpirationDuration:
 		return base.Add(time.Duration(e.Value) * time.Second)
-	} else if e.Mode == UserDeviceExpirationDaily {
+	case UserDeviceExpirationDaily:
 		year, month, day := base.Date()
 		bod := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
 		bod = bod.Add(time.Duration(e.Value) * time.Second)
@@ -134,8 +139,6 @@ func (e *UserDeviceExpiration) NextExpiration(env *common.Environment, base time
 			bod = bod.Add(time.Duration(24) * time.Hour)
 		}
 		return bod
-	} else if e.Mode == UserDeviceExpirationRolling {
-		return time.Unix(1, 0)
 	}
 
 	// Default to never

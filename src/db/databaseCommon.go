@@ -8,11 +8,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
-const DBVersion = 3
+const DBVersion = 5
 
 type dbInit interface {
 	init(*common.DatabaseAccessor, *common.Config) error

@@ -13,7 +13,13 @@
 - [Building](docs/building.md)
 - [Contributing](CONTRIBUTING.md)
 
+Packet Guardian is an easy to use captive portal for wired or wireless networks.
+It works in conjunction with a local DNS and DHCP server to redirect clients to
+a registration page where they can log in or register as a guest to gain access
+to a network. The configuration provides a lot of customization to fit any
+environment.
 
-Packet Guardian is an easy to use captive portal for wired or wireless networks. It works in conjunction with a local DNS server and integrated DHCP server to redirect clients to a registration page where they can log in or register as a guest to gain access to a network. The configuration provides a lot of customization to fit any environment.
-
-The source code for the DHCP server has been separated and moved to its own repository. You can find the project [here](https://github.com/packet-guardian/pg-dhcp).
+The DHCP server needs to be able to read and write to Packet Guardian's database
+to read device registration status and write lease information for the web
+interface. [pg-dhcp](https://github.com/packet-guardian/pg-dhcp) is one such
+DHCP server.

@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/dragonlibs/cas"
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
+	"github.com/packet-guardian/cas-auth"
 
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
@@ -24,51 +24,24 @@ type casAuthenticator struct {
 	client *cas.Client
 }
 
-func (c *casAuthenticator) checkLogin(username, password string, r *http.Request) bool {
+func (c *casAuthenticator) checkLogin(username, password string, r *http.Request, users stores.UserStore) bool {
 	e := common.GetEnvironmentFromContext(r)
-	if c.client == nil {
-		casURLStr := strings.TrimRight(e.Config.Auth.CAS.Server, "/") + "/" // Ensure server ends in /
-		casURL, err := url.Parse(casURLStr)
-		if err != nil {
-			e.Log.WithFields(verbose.Fields{
-				"error":   err,
-				"url":     casURLStr,
-				"package": "auth:cas",
-			}).Error("Failed to parse CAS url")
-			return false
-		}
-
-		c.client = &cas.Client{
-			URL: casURL,
-		}
-
-		if e.Config.Auth.CAS.ServiceURL != "" {
-			serviceURL, err := url.Parse(e.Config.Auth.CAS.ServiceURL)
-			if err != nil {
-				e.Log.WithFields(verbose.Fields{
-					"error":   err,
-					"url":     e.Config.Auth.CAS.ServiceURL,
-					"package": "auth:cas",
-				}).Notice("Failed to parse CAS request url, using default")
-			} else {
-				c.client.ServiceURL = serviceURL
-			}
-		}
+	if c.client == nil && !c.setupClient(e) {
+		return false
 	}
 
 	_, err := c.client.AuthenticateUser(username, password, r)
-	if err == cas.InvalidCredentials {
-		return false
-	}
 	if err != nil {
-		e.Log.WithFields(verbose.Fields{
-			"error":   err,
-			"package": "auth:cas",
-		}).Error("Error communicating with CAS server")
+		if err != cas.InvalidCredentials {
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "auth:cas",
+			}).Error("Error communicating with CAS server")
+		}
 		return false
 	}
 
-	user, err := stores.GetUserStore(e).GetUserByUsername(username)
+	user, err := users.GetUserByUsername(username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,
@@ -82,6 +55,38 @@ func (c *casAuthenticator) checkLogin(username, password string, r *http.Request
 			"package":  "auth:cas",
 		}).Info("User expired")
 		return false
+	}
+
+	return true
+}
+
+func (c *casAuthenticator) setupClient(e *common.Environment) bool {
+	casURLStr := strings.TrimRight(e.Config.Auth.CAS.Server, "/") + "/" // Ensure server ends in /
+	casURL, err := url.Parse(casURLStr)
+	if err != nil {
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"url":     casURLStr,
+			"package": "auth:cas",
+		}).Error("Failed to parse CAS url")
+		return false
+	}
+
+	c.client = &cas.Client{
+		URL: casURL,
+	}
+
+	if e.Config.Auth.CAS.ServiceURL != "" {
+		serviceURL, err := url.Parse(e.Config.Auth.CAS.ServiceURL)
+		if err != nil {
+			e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"url":     e.Config.Auth.CAS.ServiceURL,
+				"package": "auth:cas",
+			}).Notice("Failed to parse CAS request url, using default")
+		} else {
+			c.client.ServiceURL = serviceURL
+		}
 	}
 
 	return true

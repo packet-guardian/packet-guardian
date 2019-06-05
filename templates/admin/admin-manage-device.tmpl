@@ -1,7 +1,7 @@
 {{define "admin-manage-device"}}
 {{template "header" dict "css" (list "manage" "manage-device") "main" . "pageTitle" "Admin - Device Management"}}
 <div class="manager">
-    <form>
+    <form class="header-metadata">
         <input type="hidden" id="username" value="{{.user.Username}}">
         <div class="user-info">
             <section>
@@ -27,6 +27,13 @@
                 <a href="/logout" class="btn">Logout</a>
             </section>
             <section>
+                {{if and .canEditDevice (ne .device.ID 0)}}
+                {{if .device.Flagged}}
+                <button type="button" class="admin-btn" id="unflag-dev-btn">Unflag</button>
+                {{else}}
+                <button type="button" class="admin-btn" id="flag-dev-btn">Flag</button>
+                {{end}}
+                {{end}}
                 {{if .canManageBlacklist}}
                 {{if .device.IsBlacklisted}}
                 <button type="button" class="admin-btn" id="unblacklist-btn">Remove From Blacklist</button>
@@ -47,12 +54,14 @@
 
     <div class="clearfix device-info">
         {{with .device}}
-            {{if .IsBlacklisted}}
             <p>
                 <span class="label">Blacklisted</span>:
-                <span class="data">Yes</span>
+                <span class="data">{{titleBool .IsBlacklisted}}</span>
             </p>
-            {{end}}
+            <p>
+                <span class="label">Flagged</span>:
+                <span class="data">{{titleBool .Flagged}}</span>
+            </p>
             <p>
                 <span class="label">MAC Address</span>:
                 <span class="data" id="mac-address">{{.MAC}}</span>

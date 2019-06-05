@@ -6,12 +6,15 @@ package common
 
 import (
 	"errors"
-	"io/ioutil"
+	"fmt"
 	"os"
 	"time"
 
-	"github.com/naoina/toml"
+	"github.com/BurntSushi/toml"
 )
+
+// PageSize is the number of items per page
+var PageSize = 30
 
 // Config defines the configuration struct for the application
 type Config struct {
@@ -22,6 +25,7 @@ type Config struct {
 		SiteDomainName     string
 		SiteFooterText     string
 		JobSchedulerWakeUp string
+		PageSize           int
 	}
 	Logging struct {
 		Enabled    bool
@@ -47,11 +51,6 @@ type Config struct {
 		RollingExpirationLength     string
 		DefaultDeviceExpiration     string
 		ManualRegPlatforms          []string
-	}
-	Leases struct {
-		HistoryEnabled   bool
-		DeleteWithDevice bool
-		DeleteAfter      string
 	}
 	Guest struct {
 		Enabled              bool
@@ -83,16 +82,17 @@ type Config struct {
 	}
 	Webserver struct {
 		Address             string
-		HttpPort            int
-		HttpsPort           int
+		HTTPPort            int
+		HTTPSPort           int
 		TLSCertFile         string
 		TLSKeyFile          string
-		RedirectHttpToHttps bool
+		RedirectHTTPToHTTPS bool
 		SessionStore        string
 		SessionName         string
 		SessionsDir         string
 		SessionsAuthKey     string
 		SessionsEncryptKey  string
+		CustomDataDir       string
 	}
 	Auth struct {
 		AuthMethod        []string
@@ -104,16 +104,12 @@ type Config struct {
 		APIStatusUsers    []string
 
 		LDAP struct {
-			UseAD         bool
-			Servers       []string
-			VerifySSLCert bool
-			DomainName    string
-
-			BaseDN       string
-			BindDN       string
-			BindPassword string
-			UserFilter   string
-			GroupFilter  string
+			Server             string
+			Port               int
+			UseSSL             bool
+			InsecureSkipVerify bool
+			SkipTLS            bool
+			DomainName         string
 		}
 		Radius struct {
 			Servers []string
@@ -128,27 +124,43 @@ type Config struct {
 	DHCP struct {
 		ConfigFile string
 	}
-}
-
-func FindConfigFile() string {
-	if os.Getenv("PG_CONFIG") != "" && FileExists(os.Getenv("PG_CONFIG")) {
-		return os.Getenv("PG_CONFIG")
-	} else if FileExists("./config.toml") {
-		return "./config.toml"
-	} else if FileExists("./config/config.toml") {
-		return "./config/config.toml"
-	} else if FileExists(os.ExpandEnv("$HOME/.pg/config.toml")) {
-		return os.ExpandEnv("$HOME/.pg/config.toml")
-	} else if FileExists("/etc/packet-guardian/config.toml") {
-		return "/etc/packet-guardian/config.toml"
+	Email struct {
+		Address     string
+		Port        int
+		Username    string
+		Password    string
+		FromAddress string
+		ToAddresses []string
 	}
-	return ""
 }
 
+// FindConfigFile searches for a configuration file. The order of search is
+// environment, current dir, home dir, and /etc.
+func FindConfigFile() string {
+	filename := ""
+
+	if os.Getenv("PG_CONFIG") != "" && FileExists(os.Getenv("PG_CONFIG")) {
+		filename = os.Getenv("PG_CONFIG")
+	} else if FileExists("./config.toml") {
+		filename = "./config.toml"
+	} else if FileExists("./config/config.toml") {
+		filename = "./config/config.toml"
+	} else if FileExists(os.ExpandEnv("$HOME/.pg/config.toml")) {
+		filename = os.ExpandEnv("$HOME/.pg/config.toml")
+	} else if FileExists("/etc/packet-guardian/config.toml") {
+		filename = "/etc/packet-guardian/config.toml"
+	}
+
+	return filename
+}
+
+// NewEmptyConfig returns an empty config with type defaults only.
 func NewEmptyConfig() *Config {
 	return &Config{}
 }
 
+// NewConfig reads the given filename into a Config. If filename is empty,
+// the config is looked for in the documented order.
 func NewConfig(configFile string) (conf *Config, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -167,21 +179,15 @@ func NewConfig(configFile string) (conf *Config, err error) {
 		configFile = "config.toml"
 	}
 
-	f, err := os.Open(configFile)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	buf, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
 	var con Config
-	if err := toml.Unmarshal(buf, &con); err != nil {
+	if _, err := toml.DecodeFile(configFile, &con); err != nil {
 		return nil, err
 	}
 	con.sourceFile = configFile
-	return setSensibleDefaults(&con)
+
+	c, err := setSensibleDefaults(&con)
+	PageSize = c.Core.PageSize
+	return c, err
 }
 
 func setSensibleDefaults(c *Config) (*Config, error) {
@@ -194,15 +200,16 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	if _, err := time.ParseDuration(c.Core.JobSchedulerWakeUp); err != nil {
 		c.Core.JobSchedulerWakeUp = "1h"
 	}
+	c.Core.PageSize = setIntOrDefault(c.Core.PageSize, 30)
 
 	// Logging
 	c.Logging.Level = setStringOrDefault(c.Logging.Level, "notice")
 	c.Logging.Path = setStringOrDefault(c.Logging.Path, "logs/pg.log")
 
 	// Database
-	c.Database.Type = setStringOrDefault(c.Database.Type, "sqlite")
-	c.Database.Address = setStringOrDefault(c.Database.Address, "config/database.sqlite3")
-	c.Database.RetryTimeout = setStringOrDefault(c.Database.RetryTimeout, "1m")
+	c.Database.Type = setStringOrDefault(c.Database.Type, "mysql")
+	c.Database.Address = setStringOrDefault(c.Database.Address, "localhost")
+	c.Database.RetryTimeout = setStringOrDefault(c.Database.RetryTimeout, "10s")
 
 	// Registration
 	c.Registration.RegistrationPolicyFile = setStringOrDefault(c.Registration.RegistrationPolicyFile, "config/policy.txt")
@@ -212,12 +219,6 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 		c.Registration.RollingExpirationLength = "4380h"
 	}
 
-	// Leases
-	c.Leases.DeleteAfter = setStringOrDefault(c.Leases.DeleteAfter, "96h")
-	if _, err := time.ParseDuration(c.Leases.DeleteAfter); err != nil {
-		c.Leases.DeleteAfter = "96h"
-	}
-
 	// Guest registrations
 	c.Guest.DeviceExpirationType = setStringOrDefault(c.Guest.DeviceExpirationType, "daily")
 	c.Guest.DeviceExpiration = setStringOrDefault(c.Guest.DeviceExpiration, "24:00")
@@ -225,19 +226,53 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Guest.VerifyCodeExpiration = setIntOrDefault(c.Guest.VerifyCodeExpiration, 3)
 
 	// Webserver
-	c.Webserver.HttpPort = setIntOrDefault(c.Webserver.HttpPort, 8080)
-	c.Webserver.HttpsPort = setIntOrDefault(c.Webserver.HttpsPort, 1443)
+	c.Webserver.HTTPPort = setIntOrDefault(c.Webserver.HTTPPort, 80)
+	c.Webserver.HTTPPort = setIntOrDefault(c.Webserver.HTTPPort, 443)
 	c.Webserver.SessionName = setStringOrDefault(c.Webserver.SessionName, "packet-guardian")
 	c.Webserver.SessionsDir = setStringOrDefault(c.Webserver.SessionsDir, "sessions")
 	c.Webserver.SessionStore = setStringOrDefault(c.Webserver.SessionStore, "filesystem")
+	c.Webserver.CustomDataDir = setStringOrDefault(c.Webserver.CustomDataDir, "custom")
 
 	// Authentication
 	if len(c.Auth.AuthMethod) == 0 {
 		c.Auth.AuthMethod = []string{"local"}
 	}
 
+	if len(c.Auth.AdminUsers) > 0 {
+		fmt.Println("Setting Auth.AdminUsers is deprecated and no longer used")
+	}
+	if len(c.Auth.HelpDeskUsers) > 0 {
+		fmt.Println("Setting Auth.HelpDeskUsers is deprecated and no longer used")
+	}
+	if len(c.Auth.ReadOnlyUsers) > 0 {
+		fmt.Println("Setting Auth.ReadOnlyUsers is deprecated and no longer used")
+	}
+	if len(c.Auth.APIReadOnlyUsers) > 0 {
+		fmt.Println("Setting Auth.APIReadOnlyUsers is deprecated and no longer used")
+	}
+	if len(c.Auth.APIReadWriteUsers) > 0 {
+		fmt.Println("Setting Auth.APIReadWriteUsers is deprecated and no longer used")
+	}
+	if len(c.Auth.APIStatusUsers) > 0 {
+		fmt.Println("Setting Auth.APIStatusUsers is deprecated and no longer used")
+	}
+
+	c.Auth.LDAP.Server = setStringOrDefault(c.Auth.LDAP.Server, "127.0.0.1")
+	c.Auth.LDAP.Port = setIntOrDefault(c.Auth.LDAP.Port, 389)
+
 	// DHCP
 	c.DHCP.ConfigFile = setStringOrDefault(c.DHCP.ConfigFile, "config/dhcp.conf")
+
+	// Email
+	if c.Email.Address != "" {
+		if c.Email.FromAddress == "" {
+			return nil, errors.New("Email.FromAddress cannot be empty")
+		}
+		if len(c.Email.ToAddresses) == 0 {
+			return nil, errors.New("Email.ToAddresses cannot be empty")
+		}
+		c.Email.Port = setIntOrDefault(c.Email.Port, 25)
+	}
 	return c, nil
 }
 

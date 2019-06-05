@@ -1,0 +1,71 @@
+.controls {
+    margin-left: 5px;
+}
+
+.lease-list {
+    width: 100%;
+}
+
+.list-center {
+    text-align: center;
+}
+
+.network-list {
+    width: 50%;
+    margin: 1rem auto;
+}
+
+.lease-list td, .network-list td {
+    padding: 7px 10px;
+}
+
+.lease-list th, .network-list th {
+    padding: 10px 10px;
+    background-color: #808080;
+    color: white;
+}
+
+.lease-list tbody tr:nth-child(even), .network-list tbody tr:nth-child(even) {
+    background-color: #b9b9b9;
+}
+
+.label {
+    font-weight: bold;
+}
+
+@media (min-width: 850px) {
+    .content {
+        width: 80%;
+        margin: 0 auto;
+    }
+}
+
+.device-pager {
+    text-align: center;
+    display: flex;
+}
+
+.device-pager-top {
+    margin-bottom: .5rem;
+}
+
+.device-pager-bottom {
+    margin-top: .5rem;
+}
+
+.device-pager .pager-start-end {
+    flex-grow: 2;
+}
+
+.device-pager .pager-direction {
+    min-width: 5rem;
+}
+
+a:not(.btn), a:visited:not(.btn) {
+    text-decoration: none;
+    color: #0097A7;
+}
+
+a:hover:not(.btn) {
+    text-decoration: underline;
+}

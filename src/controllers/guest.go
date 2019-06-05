@@ -10,20 +10,28 @@ import (
 	"time"
 
 	"github.com/dchest/captcha"
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
+	"github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/auth"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/guest"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
-	"github.com/packet-guardian/pg-dhcp"
 )
 
 type Guest struct {
-	e *common.Environment
+	e       *common.Environment
+	users   stores.UserStore
+	devices stores.DeviceStore
+	leases  stores.LeaseStore
 }
 
-func NewGuestController(e *common.Environment) *Guest {
-	return &Guest{e: e}
+func NewGuestController(e *common.Environment, us stores.UserStore, ds stores.DeviceStore, ls stores.LeaseStore) *Guest {
+	return &Guest{
+		e:       e,
+		users:   us,
+		devices: ds,
+		leases:  ls,
+	}
 }
 
 func (g *Guest) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +47,7 @@ func (g *Guest) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ip := common.GetIPFromContext(r)
-	reg, _ := dhcp.IsRegisteredByIP(stores.GetLeaseStore(g.e), ip)
+	reg, _ := dhcp.IsRegisteredByIP(g.leases, ip)
 	if reg {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -98,7 +106,7 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	guestUser, err := stores.GetUserStore(g.e).GetUserByUsername(guestCred)
+	guestUser, err := g.users.GetUserByUsername(guestCred)
 	if err != nil {
 		g.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -115,7 +123,6 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Check ban filter for email or phone number
 	verifyCode := guest.GenerateGuestCode()
 	session.Set("_verify-code", verifyCode)
 	session.Set("_expires", time.Now().Add(time.Duration(g.e.Config.Guest.VerifyCodeExpiration)*time.Minute).Unix())
@@ -144,7 +151,7 @@ func (g *Guest) VerificationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ip := common.GetIPFromContext(r)
-	reg, _ := dhcp.IsRegisteredByIP(stores.GetLeaseStore(g.e), ip)
+	reg, _ := dhcp.IsRegisteredByIP(g.leases, ip)
 	if reg {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -191,6 +198,9 @@ func (g *Guest) verifyGuestRegistration(w http.ResponseWriter, r *http.Request) 
 		session.GetString("_guest-name"),
 		session.GetString("_guest-credential"),
 		r,
+		g.users,
+		g.devices,
+		g.leases,
 	); err != nil {
 		g.renderErrorMessage(err.Error(), w, r)
 		return

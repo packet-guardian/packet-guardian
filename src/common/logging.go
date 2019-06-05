@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 )
 
 var logLevels = map[string]verbose.LogLevel{
@@ -24,18 +24,21 @@ var logLevels = map[string]verbose.LogLevel{
 	"fatal":     verbose.LogLevelFatal,
 }
 
+// SystemLogger application wide logger.
 var SystemLogger *Logger
 
 func init() {
 	SystemLogger = NewEmptyLogger()
 }
 
+// Logger wraps a verbose.Logger with a config and timer.
 type Logger struct {
 	*verbose.Logger
 	c      *Config
 	timers map[string]time.Time
 }
 
+// NewEmptyLogger creates a null logger.
 func NewEmptyLogger() *Logger {
 	return &Logger{
 		Logger: verbose.New("null"),
@@ -44,6 +47,7 @@ func NewEmptyLogger() *Logger {
 	}
 }
 
+// NewLogger creates a standard logger with console and file logging.
 func NewLogger(c *Config, name string) *Logger {
 	logger := verbose.New(name)
 	if !c.Logging.Enabled {
@@ -94,10 +98,12 @@ func (l *Logger) GetLogger(name string) *Logger {
 	return NewLogger(l.c, name)
 }
 
+// StartTimer starts a named timer on this logger.
 func (l *Logger) StartTimer(name string) {
 	l.timers[name] = time.Now()
 }
 
+// StopTimer stops a named timer on this logger.
 func (l *Logger) StopTimer(name string) {
 	t, ok := l.timers[name]
 	if !ok {

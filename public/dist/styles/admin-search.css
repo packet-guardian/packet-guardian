@@ -1,0 +1,84 @@
+h2 {
+    margin-top: 0;
+}
+
+.sub {
+    margin-top: .5em;
+    text-align: center;
+}
+
+.controls {
+    margin-left: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+button {
+    font-weight: bold;
+    padding: 5px 10px;
+    color: white;
+    border: 0;
+    background-color: #0083A8;
+    background: linear-gradient(to bottom, #0083A8, #007899);
+}
+
+.no-devices {
+    text-align: center;
+    width: 600px;
+    margin: 0 auto;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+.no-devices-register {
+    font-weight: normal;
+    margin-top: 1em;
+}
+
+.no-devices-register a {
+    font-size: 1em;
+}
+
+.text-label {
+    font-weight: bold;
+}
+
+.unregistered {
+    color: red;
+    font-weight: bold;
+}
+
+.device-info {
+    padding: 1em 0;
+    min-width: 20%;
+    display: inline-block;
+}
+
+.expired-sample-block {
+    margin-bottom: 1em;
+    margin-left: 15%;
+}
+
+.expired-sample {
+    display: inline-block;
+    height: 1em;
+    width: 1em;
+}
+
+.expired {
+    background-color: #cd5c5c;
+    color: black;
+}
+
+@media (min-width: 850px) {
+    .admin-search {
+        width: 75%;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 1024px) {
+    .devices-list {
+        width: 75%;
+    }
+}

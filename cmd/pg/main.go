@@ -11,9 +11,11 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
+	"github.com/packet-guardian/packet-guardian/src/bindata"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/db"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 	"github.com/packet-guardian/packet-guardian/src/server"
 	"github.com/packet-guardian/packet-guardian/src/tasks"
 )
@@ -40,6 +42,7 @@ func init() {
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	common.SystemVersion = version
 
 	// Parse CLI flags
 	flag.Parse()
@@ -62,6 +65,31 @@ func main() {
 		return
 	}
 
+	e := setupEnvironment()
+	startShutdownWatcher(e)
+
+	if err := bindata.SetCustomDir(e.Config.Webserver.CustomDataDir); err != nil {
+		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
+	}
+
+	if err := common.RunSystemInits(e); err != nil {
+		e.Log.WithField("error", err).Fatal("System initialization failed")
+	}
+
+	appStores := stores.StoreCollection{
+		Blacklist: stores.GetBlacklistStore(e),
+		Devices:   stores.GetDeviceStore(e),
+		Leases:    stores.GetLeaseStore(e),
+		Users:     stores.GetUserStore(e),
+	}
+
+	go tasks.StartTaskScheduler(e, appStores)
+
+	// Start web server
+	server.NewServer(e, server.LoadRoutes(e, appStores)).Run()
+}
+
+func setupEnvironment() *common.Environment {
 	var err error
 	e := common.NewEnvironment(common.EnvProd)
 	if dev {
@@ -87,16 +115,6 @@ func main() {
 		"address": e.Config.Database.Address,
 	}).Debug("Loaded database")
 
-	c := e.SubscribeShutdown()
-	go func(e *common.Environment) {
-		<-c
-		if err := e.DB.Close(); err != nil {
-			e.Log.Warningf("Error closing database: %s", err)
-		}
-		e.Log.Notice("Shutting down...")
-		time.Sleep(2)
-	}(e)
-
 	e.Sessions, err = common.NewSessionStore(e)
 	if err != nil {
 		e.Log.WithField("error", err).Fatal("Error loading session store")
@@ -107,14 +125,19 @@ func main() {
 		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
 	}
 
-	if err := common.RunSystemInits(e); err != nil {
-		e.Log.WithField("error", err).Fatal("System initialization failed")
-	}
+	return e
+}
 
-	go tasks.StartTaskScheduler(e)
-
-	// Start web server
-	server.NewServer(e, server.LoadRoutes(e)).Run()
+func startShutdownWatcher(e *common.Environment) {
+	c := e.SubscribeShutdown()
+	go func(e *common.Environment) {
+		<-c
+		if err := e.DB.Close(); err != nil {
+			e.Log.Warningf("Error closing database: %s", err)
+		}
+		e.Log.Notice("Shutting down...")
+		time.Sleep(2)
+	}(e)
 }
 
 func displayVersionInfo() {

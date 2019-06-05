@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
@@ -20,26 +20,27 @@ import (
 var errInvalidMAC = errors.New("Incorrect MAC address format")
 
 type Blacklist struct {
-	e *common.Environment
+	e       *common.Environment
+	users   stores.UserStore
+	devices stores.DeviceStore
 }
 
-func NewBlacklistController(e *common.Environment) *Blacklist {
-	return &Blacklist{e: e}
+func NewBlacklistController(e *common.Environment, us stores.UserStore, ds stores.DeviceStore) *Blacklist {
+	return &Blacklist{
+		e:       e,
+		users:   us,
+		devices: ds,
+	}
 }
 
 func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	if !models.GetUserFromContext(r).Can(models.ManageBlacklist) {
-		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
-		return
-	}
-
 	username := p.ByName("username")
 	if username == "" {
 		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
 		return
 	}
 
-	user, err := stores.GetUserStore(b.e).GetUserByUsername(username)
+	user, err := b.users.GetUserByUsername(username)
 	if err != nil {
 		b.e.Log.WithFields(verbose.Fields{
 			"username": username,
@@ -87,60 +88,15 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 
 func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
-	if !sessionUser.Can(models.ManageBlacklist) {
-		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
-		return
-	}
 
 	//blacklistAll := (r.FormValue("mac") == "")
 	macStr := r.FormValue("mac")
 	addToBlacklist := (r.Method == "POST")
 
 	finishedWithErrors := false
-	var devices []*models.Device
-	var err error
-	// Build list of devices to blacklist
-	if macStr != "" {
-		devices, err = b.getDevicesFromList(strings.Split(macStr, ","), addToBlacklist)
-		if err != nil {
-			if err == errInvalidMAC {
-				common.NewAPIResponse(err.Error(), nil).WriteResponse(w, http.StatusBadRequest)
-				return
-			}
-			b.e.Log.WithFields(verbose.Fields{
-				"error":   err,
-				"package": "controllers:api:blacklist",
-			}).Error("Error blacklisting devices")
-			common.NewAPIResponse("Error blacklisting devices", nil).WriteResponse(w, http.StatusInternalServerError)
-			return
-		}
-	} else {
-		username := r.FormValue("username")
-		if username == "" {
-			common.NewAPIResponse("Username required to delete all devices", nil).WriteResponse(w, http.StatusBadRequest)
-			return
-		}
-
-		var user *models.User
-		user, err = stores.GetUserStore(b.e).GetUserByUsername(username)
-		if err != nil {
-			b.e.Log.WithFields(verbose.Fields{
-				"error":   err,
-				"package": "controllers:api:blacklist",
-			}).Error("Error blacklisting devices")
-			common.NewAPIResponse("Error blacklisting devices", nil).WriteResponse(w, http.StatusInternalServerError)
-			return
-		}
-
-		devices, err = stores.GetDeviceStore(b.e).GetDevicesForUser(user)
-		if err != nil {
-			b.e.Log.WithFields(verbose.Fields{
-				"error":   err,
-				"package": "controllers:api:blacklist",
-			}).Error("Error blacklisting devices")
-			common.NewAPIResponse("Error blacklisting devices", nil).WriteResponse(w, http.StatusInternalServerError)
-			return
-		}
+	devices := b.buildDeviceList(w, r, macStr, addToBlacklist)
+	if devices == nil {
+		return
 	}
 
 	// Blacklist selected devices
@@ -188,6 +144,53 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 	common.NewAPIResponse("Devices removed from blacklist successful", nil).WriteResponse(w, http.StatusNoContent)
 }
 
+func (b *Blacklist) buildDeviceList(w http.ResponseWriter, r *http.Request, macStr string, addToBlacklist bool) []*models.Device {
+	if macStr != "" {
+		devices, err := b.getDevicesFromList(strings.Split(macStr, ","), addToBlacklist)
+		if err != nil {
+			if err == errInvalidMAC {
+				common.NewAPIResponse(err.Error(), nil).WriteResponse(w, http.StatusBadRequest)
+				return nil
+			}
+			b.e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "controllers:api:blacklist",
+			}).Error("Error blacklisting devices")
+			common.NewAPIResponse("Error blacklisting devices", nil).WriteResponse(w, http.StatusInternalServerError)
+			return nil
+		}
+		return devices
+	}
+
+	username := r.FormValue("username")
+	if username == "" {
+		common.NewAPIResponse("Username required to delete all devices", nil).WriteResponse(w, http.StatusBadRequest)
+		return nil
+	}
+
+	var user *models.User
+	user, err := b.users.GetUserByUsername(username)
+	if err != nil {
+		b.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:api:blacklist",
+		}).Error("Error blacklisting devices")
+		common.NewAPIResponse("Error blacklisting devices", nil).WriteResponse(w, http.StatusInternalServerError)
+		return nil
+	}
+
+	devices, err := b.devices.GetDevicesForUser(user)
+	if err != nil {
+		b.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:api:blacklist",
+		}).Error("Error blacklisting devices")
+		common.NewAPIResponse("Error blacklisting devices", nil).WriteResponse(w, http.StatusInternalServerError)
+		return nil
+	}
+	return devices
+}
+
 func (b *Blacklist) getDevicesFromList(l []string, add bool) ([]*models.Device, error) {
 	var devices []*models.Device
 	// Build list of devices to blacklist
@@ -197,7 +200,7 @@ func (b *Blacklist) getDevicesFromList(l []string, add bool) ([]*models.Device, 
 			return nil, errInvalidMAC
 		}
 
-		device, err := stores.GetDeviceStore(b.e).GetDeviceByMAC(mac)
+		device, err := b.devices.GetDeviceByMAC(mac)
 		if err != nil {
 			return nil, err
 		}

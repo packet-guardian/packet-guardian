@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/lfkeitel/verbose"
-	"github.com/oec/goradius"
+	"github.com/lfkeitel/verbose/v4"
+	radius "github.com/oec/goradius"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
@@ -22,7 +22,7 @@ type radAuthenticator struct {
 	a *radius.Authenticator
 }
 
-func (rad *radAuthenticator) checkLogin(username, password string, r *http.Request) bool {
+func (rad *radAuthenticator) checkLogin(username, password string, r *http.Request, users stores.UserStore) bool {
 	e := common.GetEnvironmentFromContext(r)
 	if rad.a == nil {
 		rad.a = radius.New(
@@ -31,6 +31,7 @@ func (rad *radAuthenticator) checkLogin(username, password string, r *http.Reque
 			e.Config.Auth.Radius.Secret,
 		)
 	}
+
 	ok, err := rad.a.Authenticate(username, password)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
@@ -44,7 +45,7 @@ func (rad *radAuthenticator) checkLogin(username, password string, r *http.Reque
 		return false
 	}
 
-	user, err := stores.GetUserStore(e).GetUserByUsername(username)
+	user, err := users.GetUserByUsername(username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

@@ -1,0 +1,30 @@
+version: '3.6'
+services:
+    pg-web:
+        image: alpine:edge
+        container_name: 'pg-web'
+        depends_on:
+            - pg-database
+        links:
+            - pg-database
+            - pg-email
+        volumes:
+            - ./config.toml:/app/packet-guardian/config/config.toml:ro
+            - ../../bin/pg:/app/pg
+        ports:
+            - 8080:80
+        command: /app/pg -c /app/packet-guardian/config/config.toml
+
+    pg-database:
+        image: mariadb:latest
+        container_name: 'pg-database'
+        environment:
+            MYSQL_ROOT_PASSWORD: password
+            MYSQL_DATABASE: pg
+        command: mysqld --ansi --sql-mode=ANSI,TRADITIONAL
+
+    pg-email:
+        image: mailhog/mailhog:latest
+        container_name: 'pg-email'
+        ports:
+            - 8025:8025

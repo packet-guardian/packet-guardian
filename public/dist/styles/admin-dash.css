@@ -1,0 +1,31 @@
+h2 {
+    margin-top: 0;
+}
+
+.controls {
+    margin-left: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.dash-status {
+    margin-top: 20px;
+    background-color: lightgray;
+    padding: 1em;
+}
+
+.hlabel {
+    display: inline-block;
+    margin: .25em 0;
+}
+
+.stat-block {
+    margin-left: 2em;
+}
+
+@media (min-width: 600px) {
+    .admin-dash {
+        width: 60%;
+        margin: 0 auto;
+    }
+}

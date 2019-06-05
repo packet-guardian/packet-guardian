@@ -1,25 +1,24 @@
 language: go
 go:
-    - 1.7
-    - 1.8
-    - 1.9
-    - "1.10"
-    - tip
+  - "1.11"
+  - "1.12"
+  - tip
 
 matrix:
-    allow_failures:
-        - go: tip
+  allow_failures:
+    - go: tip
 
 branches:
-    only:
-        - master
-        - develop
+  only:
+    - master
+    - develop
 
 notifications:
-    email:
-        - lee@keitel.xyz
+  email:
+    - lee@keitel.xyz
 
-install: go get -u github.com/jteeuwen/go-bindata/...
+install: go get -u github.com/go-bindata/go-bindata/...
 script:
-    - make bindata
-    - make test
+  - export GO111MODULE=on
+  - make bindata
+  - make test

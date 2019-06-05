@@ -3,8 +3,10 @@
 <div class="admin-search">
     <h2>Administration Search</h2>
     <div class="controls">
-        <a href="/admin" class="btn">Dashboard</a>
-        <a href="/logout" class="btn">Logout</a>
+        <nav>
+            <a href="/admin" class="btn">Dashboard</a>
+            <a href="/logout" class="btn">Logout</a>
+        </nav>
 
         <div class="search-box">
             <form method="GET">
@@ -18,5 +20,5 @@
 
     {{template "device-list-search" $}}
 </div>
-{{template "footer" dict "main" $ "js" (list "device-list" "admin-search")}}
+{{template "footer" dict "main" $ "js" (list "admin-search")}}
 {{end}}

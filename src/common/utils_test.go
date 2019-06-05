@@ -1,88 +1,185 @@
-// This source file is part of the Packet Guardian project.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package common
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
-type test struct {
-	ua       string
-	expected string
-}
-
-var userAgents = [...]test{
+var stringInSliceTests = []struct {
+	list     []string
+	input    string
+	expected bool
+}{
 	{
-		ua:       "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.815.0 Safari/535.1",
-		expected: "Windows XP",
+		list:     []string{"aa", "bb", "cc"},
+		input:    "aa",
+		expected: true,
 	},
 	{
-		ua:       "Mozilla/6.0 (Windows NT 6.2; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1",
-		expected: "Windows 8",
+		list:     []string{"aa", "bb", "cc"},
+		input:    "a",
+		expected: false,
 	},
 	{
-		ua:       "Mozilla/5.0 (Windows; U; Windows NT 6.0; tr-TR) AppleWebKit/533.18.1 (KHTML, like Gecko) Version/5.0.2 Safari/533.18.5",
-		expected: "Windows Vista",
+		list:     []string{},
+		input:    "aa",
+		expected: false,
 	},
 	{
-		ua:       "Mozilla/5.0 (Macintosh; U; PPC Mac OS X 10_4_11; en) AppleWebKit/528.4+ (KHTML, like Gecko) Version/4.0dp1 Safari/526.11.2",
-		expected: "Mac OS X 10.4.11",
+		list:     nil,
+		input:    "aa",
+		expected: false,
 	},
 	{
-		ua:       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2",
-		expected: "Mac OS X 10.6.8 (Snow Leopard)",
-	},
-	{
-		ua:       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_8) AppleWebKit/537.13+ (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2",
-		expected: "Mac OS X 10.11.8 (El Capitan)",
-	},
-	{
-		ua:       "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25",
-		expected: "iPad iOS 6.0",
-	},
-	{
-		ua:       "Mozilla/5.0 (iPod touch; CPU iPhone OS 7_0_3) AppleWebKit/537.51.1 (KHTML, like Gecko) Version/7.0 Mobile/11B511 Safari/9537.53",
-		expected: "iPod touch iOS 7.0.3",
-	},
-	{
-		ua:       "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_5) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8L1 Safari/6533.18.5",
-		expected: "iPhone iOS 4.3.5",
-	},
-	{
-		ua:       "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:15.0) Gecko/20100101 Firefox/15.0.1",
-		expected: "Ubuntu",
-	},
-	{
-		ua:       "Mozilla/5.0 (Fedora; Linux x86_64) AppleWebKit/602.1 (KHTML, like Gecko) Version/8.0 Safari/602.1",
-		expected: "Fedora",
-	},
-	{
-		ua:       "Mozilla/5.0 (X11; CrOS i686 12.0.742.91) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.93 Safari/534.30",
-		expected: "Chromium OS",
-	},
-	{
-		ua:       "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.23 (KHTML, like Gecko) Chrome/11.0.686.3 Safari/534.23",
-		expected: "Linux 32 bit",
-	},
-	{
-		ua:       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11",
-		expected: "Linux 64 bit",
-	},
-	{
-		ua:       "Mozilla/5.0 (Linux; U; Android 2.3; en-us) AppleWebKit/999+ (KHTML, like Gecko) Safari/999.9",
-		expected: "Android 2.3",
-	},
-	{
-		ua:       "Mozilla/5.0 (Android 5.1.1; Tablet; rv:46.0) Gecko/46.0 Firefox/46.0",
-		expected: "Android 5.1.1",
+		list:     []string{"aa", "bb", "cc"},
+		input:    "dd",
+		expected: false,
 	},
 }
 
-func TestParseUserAgent(t *testing.T) {
-	for i, uaTest := range userAgents {
-		result := ParseUserAgent(uaTest.ua)
-		if result != uaTest.expected {
-			t.Errorf("Test %d: Incorrectly parsed user agent. Expected %s, got %s.", i, uaTest.expected, result)
+func TestStringInSlice(t *testing.T) {
+	for _, testcase := range stringInSliceTests {
+		if StringInSlice(testcase.input, testcase.list) != testcase.expected {
+			t.Errorf("StringInSlice failed, expected %t, got %t", testcase.expected, !testcase.expected)
+		}
+	}
+}
+
+var convertToInt = []struct {
+	input    string
+	expected int
+}{
+	{
+		input:    "-1",
+		expected: -1,
+	},
+	{
+		input:    "",
+		expected: 0,
+	},
+	{
+		input:    "0",
+		expected: 0,
+	},
+	{
+		input:    "aa",
+		expected: 0,
+	},
+	{
+		input:    "125346",
+		expected: 125346,
+	},
+}
+
+func TestConvertToInt(t *testing.T) {
+	for _, testcase := range convertToInt {
+		i := ConvertToInt(testcase.input)
+		if i != testcase.expected {
+			t.Errorf("ConvertToInt failed, expected %d, got %d", testcase.expected, i)
+		}
+	}
+}
+
+var formatMACAddressTests = []struct {
+	input     string
+	expected  []byte
+	shouldErr bool
+}{
+	{
+		input:    "1234567890ab",
+		expected: []byte{0x12, 0x34, 0x56, 0x78, 0x90, 0xAB},
+	},
+	{
+		input:    "12:34:56:78:90:ab",
+		expected: []byte{0x12, 0x34, 0x56, 0x78, 0x90, 0xAB},
+	},
+	{
+		input:    "1234.5678.90ab",
+		expected: []byte{0x12, 0x34, 0x56, 0x78, 0x90, 0xAB},
+	},
+	{
+		input:     "1234567890abcdef",
+		shouldErr: true,
+	},
+	{
+		input:     "",
+		shouldErr: true,
+	},
+}
+
+func TestFormatMACAddress(t *testing.T) {
+	for _, testcase := range formatMACAddressTests {
+		i, err := FormatMacAddress(testcase.input)
+		if err != nil {
+			if !testcase.shouldErr {
+				t.Errorf("FormatMacAddress errored, %q", err.Error())
+			}
+			continue
+		}
+
+		if testcase.shouldErr {
+			t.Errorf("FormatMacAddress didn't return an error for input %s", testcase.input)
+			continue
+		}
+
+		if !bytes.Equal(i, testcase.expected) {
+			t.Errorf("FormatMacAddress failed, expected %q, got %q", testcase.expected, i)
+		}
+	}
+}
+
+var parseTimeIntervalTests = []struct {
+	input     string
+	expected  int64
+	shouldErr bool
+}{
+	{
+		input:     "",
+		shouldErr: true,
+	},
+	{
+		input:     ":",
+		shouldErr: true,
+	},
+	{
+		input:    "00:00",
+		expected: 0,
+	},
+	{
+		input:    "1:00",
+		expected: 3600,
+	},
+	{
+		input:     "25:00",
+		shouldErr: true,
+	},
+	{
+		input:    "24:00",
+		expected: 24 * 60 * 60,
+	},
+	{
+		input:    "24:30",
+		expected: 24*60*60 + 30*60,
+	},
+}
+
+func TestParseTime(t *testing.T) {
+	for _, testcase := range parseTimeIntervalTests {
+		i, err := ParseTime(testcase.input)
+		if err != nil {
+			if !testcase.shouldErr {
+				t.Errorf("ParseTime errored, %q", err.Error())
+			}
+			continue
+		}
+
+		if testcase.shouldErr {
+			t.Errorf("ParseTime didn't return an error for input %s", testcase.input)
+			continue
+		}
+
+		if i != testcase.expected {
+			t.Errorf("ParseTime failed, expected %d, got %d", testcase.expected, i)
 		}
 	}
 }

@@ -6,14 +6,15 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
+	dhcp "github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/auth"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
-	"github.com/packet-guardian/pg-dhcp"
 )
 
 const (
@@ -25,11 +26,17 @@ const (
 )
 
 type Manager struct {
-	e *common.Environment
+	e       *common.Environment
+	devices stores.DeviceStore
+	leases  stores.LeaseStore
 }
 
-func NewManagerController(e *common.Environment) *Manager {
-	return &Manager{e: e}
+func NewManagerController(e *common.Environment, ds stores.DeviceStore, ls stores.LeaseStore) *Manager {
+	return &Manager{
+		e:       e,
+		devices: ds,
+		leases:  ls,
+	}
 }
 
 func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +48,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	man := (r.FormValue("manual") == "1")
 	loggedIn := auth.IsLoggedIn(r)
 	ip := common.GetIPFromContext(r)
-	reg, _ := dhcp.IsRegisteredByIP(stores.GetLeaseStore(m.e), ip)
+	reg, _ := dhcp.IsRegisteredByIP(m.leases, ip)
 	if !man && reg {
 		http.Redirect(w, r, "/manage", http.StatusTemporaryRedirect)
 		return
@@ -83,7 +90,12 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results, err := stores.GetDeviceStore(m.e).GetDevicesForUser(sessionUser)
+	pageNum := 1
+	if page, _ := strconv.Atoi(r.URL.Query().Get("page")); page > 0 {
+		pageNum = page
+	}
+
+	results, err := m.devices.GetDevicesForUserPage(sessionUser, pageNum)
 	if err != nil {
 		m.e.Log.WithFields(verbose.Fields{
 			"error":    err,
@@ -94,11 +106,34 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	deviceCnt, err := m.devices.GetDeviceCountForUser(sessionUser)
+	if err != nil {
+		m.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:manager",
+			"username": sessionUser.Username,
+		}).Error("Error getting devices")
+		m.e.Views.RenderError(w, r, nil)
+		return
+	}
+
+	pageEnd := pageNum * common.PageSize
+	if deviceCnt < pageEnd {
+		pageEnd = deviceCnt
+	}
+
 	showAddBtn := (m.e.Config.Registration.AllowManualRegistrations && !sessionUser.IsBlacklisted())
 
 	data := map[string]interface{}{
-		"sessionUser":     sessionUser,
+		"user":            sessionUser,
 		"devices":         results,
+		"deviceCnt":       deviceCnt,
+		"usePages":        deviceCnt > common.PageSize,
+		"page":            pageNum,
+		"adminManage":     false,
+		"pageStart":       ((pageNum - 1) * common.PageSize) + 1,
+		"pageEnd":         pageEnd,
+		"hasNextPage":     pageNum*common.PageSize < deviceCnt,
 		"showAddBtn":      showAddBtn && sessionUser.Can(models.CreateOwn) && !sessionUser.IsBlacklisted(),
 		"canEditDevice":   sessionUser.Can(models.EditOwn) && !sessionUser.IsBlacklisted(),
 		"canDeleteDevice": sessionUser.Can(models.DeleteOwn) && !sessionUser.IsBlacklisted(),

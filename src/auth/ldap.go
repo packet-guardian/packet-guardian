@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	ldapc "github.com/lfkeitel/go-ldap-client"
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 	"gopkg.in/ldap.v2"
@@ -18,38 +18,37 @@ func init() {
 	authFunctions["ldap"] = &ldapAuthenticator{}
 }
 
-type ldapAuthenticator struct {
-	client *ldapc.LDAPClient
-}
+type ldapAuthenticator struct{}
 
-func (l *ldapAuthenticator) checkLogin(username, password string, r *http.Request) bool {
+func (l *ldapAuthenticator) checkLogin(username, password string, r *http.Request, users stores.UserStore) bool {
 	e := common.GetEnvironmentFromContext(r)
 	// TODO: Support full LDAP servers and not just AD
 	// TODO: Support multiple LDAP servers, not just one
-	if l.client == nil {
-		l.client = &ldapc.LDAPClient{
-			Host:         e.Config.Auth.LDAP.Servers[0],
-			Port:         389,
-			UseSSL:       e.Config.Auth.LDAP.VerifySSLCert,
-			ADDomainName: e.Config.Auth.LDAP.DomainName,
-		}
+	client := &ldapc.LDAPClient{
+		Host:               e.Config.Auth.LDAP.Server,
+		Port:               e.Config.Auth.LDAP.Port,
+		UseSSL:             e.Config.Auth.LDAP.UseSSL,
+		SkipTLS:            e.Config.Auth.LDAP.SkipTLS,
+		InsecureSkipVerify: e.Config.Auth.LDAP.InsecureSkipVerify,
+		ADDomainName:       e.Config.Auth.LDAP.DomainName,
 	}
-	defer l.client.Close()
+	defer client.Close()
 
-	ok, _, err := l.client.Authenticate(username, password)
+	ok, _, err := client.Authenticate(username, password)
 	if err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultInvalidCredentials) {
 		e.Log.WithFields(verbose.Fields{
 			"error":    err,
 			"username": username,
 			"package":  "auth:ldap",
 		}).Error("Error authenticating with LDAP server")
+		return false
 	}
 
 	if !ok {
 		return false
 	}
 
-	user, err := stores.GetUserStore(e).GetUserByUsername(username)
+	user, err := users.GetUserByUsername(username)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
 			"error":   err,

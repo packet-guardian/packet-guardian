@@ -8,11 +8,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
-type Job func(e *common.Environment) (string, error)
+type Job func(*common.Environment, stores.StoreCollection) (string, error)
 
 var jobs = make(map[string]Job)
 
@@ -24,7 +25,7 @@ func RegisterJob(name string, job Job) error {
 	return nil
 }
 
-func StartTaskScheduler(e *common.Environment) {
+func StartTaskScheduler(e *common.Environment, stores stores.StoreCollection) {
 	d, err := time.ParseDuration(e.Config.Core.JobSchedulerWakeUp)
 	if err != nil {
 		e.Log.WithFields(verbose.Fields{
@@ -33,17 +34,19 @@ func StartTaskScheduler(e *common.Environment) {
 		}).Notice("Invalid JobSchedulerWakeUp setting, using default")
 		d = time.Hour
 	}
+
+	go flaggedDevicesTask(e, stores)
 	for {
 		e.Log.WithFields(verbose.Fields{
 			"package":  "tasks",
 			"duration": d.String(),
 		}).Info("Job scheduler sleeping")
 		time.Sleep(d)
-		runJobs(e)
+		runJobs(e, stores)
 	}
 }
 
-func runJobs(e *common.Environment) {
+func runJobs(e *common.Environment, stores stores.StoreCollection) {
 	defer func() {
 		if r := recover(); r != nil {
 			e.Log.WithField("Err", r).
@@ -57,7 +60,7 @@ func runJobs(e *common.Environment) {
 			"package": "tasks",
 			"job":     name,
 		}).Info("Running scheduled job")
-		result, err := job(e)
+		result, err := job(e, stores)
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"package": "tasks",

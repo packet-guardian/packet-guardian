@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
@@ -17,7 +17,7 @@ func init() {
 	RegisterReport("blackisted-devices", "Blacklisted Devices", blacklistedDevicesReport)
 }
 
-func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *http.Request) error {
+func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *http.Request, stores stores.StoreCollection) error {
 	sql := `SELECT "value" FROM "blacklist";`
 	blkUserRows, err := e.DB.Query(sql)
 	if err != nil {
@@ -44,7 +44,7 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 		if err == nil { // Probably a MAC address
 			continue
 		}
-		user, err := stores.GetUserStore(e).GetUserByUsername(username)
+		user, err := stores.Users.GetUserByUsername(username)
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"error":    err,
@@ -66,7 +66,7 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 	return nil
 }
 
-func blacklistedDevicesReport(e *common.Environment, w http.ResponseWriter, r *http.Request) error {
+func blacklistedDevicesReport(e *common.Environment, w http.ResponseWriter, r *http.Request, stores stores.StoreCollection) error {
 	sql := `SELECT "value" FROM "blacklist";`
 	blkDevRows, err := e.DB.Query(sql)
 	if err != nil {
@@ -93,7 +93,7 @@ func blacklistedDevicesReport(e *common.Environment, w http.ResponseWriter, r *h
 		if err != nil { // Not a mac address, probably a username
 			continue
 		}
-		device, err := stores.GetDeviceStore(e).GetDeviceByMAC(mac)
+		device, err := stores.Devices.GetDeviceByMAC(mac)
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{
 				"error":   err,

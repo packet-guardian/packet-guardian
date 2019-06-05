@@ -1,0 +1,230 @@
+## Packet Guardian Configuration File
+
+[core]
+## The site title will be shown on ever page on the right side of the logo.
+# siteTitle = "Packet Guardian"
+
+## The company name is shown in the browser title bar. It can also be used with
+## a modified template to show in the header.
+# siteCompanyName = ""
+
+## The site domain name is used to determine when to tell the client to cache.
+## Packet Guardian relies on DNS redirection to work and may be configured to accept
+## requests from any domain name. If the domain name matches this setting, the client
+## is instructed to cache. Otherwise it's instructed to never cache. This should avoid
+## situation where a registered client shows a ghost page when going to the same domain
+## as was redirected to this application. It must include the port if not normal http/https
+## Example: wifi.example.com  OR  wifi.example.com:5000
+# siteDomainName = ""
+
+## This text will show up in the footer of every page
+# siteFooterText = "The Guardian of Packets"
+
+## This is the time between wake ups for the job scheduler. When the appliacation first
+## starts, it will wait this long, perform tasks, and then wait again. The format
+## uses Go's time.Duration format. E.g. 1h = 1 hour, 30m = 30 minutes. If an invalid
+## value is used, it will default to 1h.
+# jobSchedulerWakeUp = "1h"
+
+[logging]
+## Enable or disable normal application logging.
+enabled = true
+
+## Enable to disable web server logging. The log format is very similar to Apache.
+enableHTTP = true
+
+## Lowest level to log. Recommended to be information in dev/testing and notice in prod.
+## Standard syslog levels plus fatal.
+level = "notice"
+
+## File path or directory to store log files. If a directory is given, each log level
+## will be outputted to its own file.
+path = "/var/log/packet-guardian/pg.log"
+
+[database]
+## Supported database types are: mysql
+type = "mysql"
+
+## The address, socket, or filename of the database
+address = "localhost"
+
+# Port defaults to database-specific default port
+# port = 0
+
+## Username of database
+# username = ""
+
+## Password of database
+# password = ""
+
+## Name of the database to use
+# name = ""
+
+## Number of connection retries before failing. 0 means retry indefinitly
+# retry = 0
+
+## Timeout before the next connection retry
+# retryTimeout = "10s"
+
+[registration]
+## The file containing the policy text that's shown on the registration page
+## HTML is allowed in the file. An empty line denotes a new paragraph
+registrationPolicyFile = "/etc/packet-guardian/policy.txt"
+
+## Whether or not manual registrations are permitted. An admin can always
+## manually register a device, regardless of this setting.
+allowManualRegistrations = true
+
+## Default number of devices for per user. 0 means unlimited.
+defaultDeviceLimit = 0
+
+## The type of device expiration. Valid values: never, date, duration, daily, rolling
+defaultDeviceExpirationType = "rolling"
+
+## This is the length of time a device must be inactive to be purged from
+## the database on a rolling release. It uses Go's time.Duration syntax.
+## E.g. 1h = 1 hour, 30m = 30 minutes. Default is 6 months (4380h)
+# rollingExpirationLength = "4380h"
+
+## The value for the device expiration type.
+## date - Specific date in yyyy-mm-dd format
+## duration - Duration of device in Go time.Duration syntax: 1h = 1 hour, 7d = 7 days
+## daily - Time each day the device will expire in HH:mm format (24 hour time)
+# defaultDeviceExpiration = ""
+
+## Available platforms for a user to choose when manually registering a device.
+## Automatic registrations will determine the platform based on the user agent.
+manualRegPlatforms = []
+
+[guest]
+## Enabled guest registrations
+# enabled = true
+
+## Skip the normal registration page and go straight to the guest page
+# guestOnly = false
+
+## Device limit for each guest. 0 means unlimited (default).
+deviceLimit = 10
+
+## See registrations config section. Valid values: never, daily, duration, date.
+# deviceExpirationType = "daily"
+
+## date - Specific date in yyyy-mm-dd format
+## duration - Duration of device in Go time.Duration syntax: 1h = 1 hour, 7d = 7 days
+## daily - Time each day the device will expire in HH:mm format (24 hour time)
+# deviceExpiration = "24:00"
+
+## The duration in minutes a verification code will be usable
+# verifyCodeExpiration = 3
+
+## The mechanism used to send a verification code to the user.
+## Possible values: null, email, twilio
+# checker = "email"
+
+# disableCaptcha = false
+
+## This text is displayed above the registration form on the guest page.
+## Use this for extra instructions or site specific information.
+# regPageHeader = ""
+
+[guest.email]
+## Settings used when the checker is email
+## Coming soon
+
+[guest.twilio]
+## Settings used when the checker is twilio
+# accountSID = ""
+# authToken = ""
+# phoneNumber = ""
+
+[guest.smseagle]
+# Settings used when the checker is an SMSEagle appliance
+# address = ""
+# username = ""
+# password = ""
+
+[webserver]
+## IP address to listen on. Leave blank to listen on all addresses.
+address = ""
+
+## Plain HTTP port to listen on
+httpPort = 80
+
+## Encrypted HTTP port to listen on, if the TLS settings are blank, HTTPS will not start
+httpsPort = 443
+
+## TLS Certificate, must be concatentated with all intermediate certificates
+# TLSCertFile = ""
+
+## Private key file for main certificate
+# TLSKeyFile = ""
+
+## Enable/disable HTTP redirect to HTTPS
+# redirectHttpToHttps = false
+
+## SessionStore is how sessions will be stored.
+## Valid values: filesystem, database
+# sessionStore = "database"
+
+## The name given to the cookie on the client that stores a session token
+sessionName = "packet-guardian"
+
+## Directory path to store session data
+sessionsDir = "sessions"
+
+# This is the authentication key for web sessions. Make sure this is unique and protected.
+sessionsAuthKey = "change me please"
+
+# Key to use when encrypting session data server-side. Optional.
+# Should be 16, 24, or 32 characters long.
+# sessionsEncryptKey = ""
+
+[auth]
+## An array of auth types in order of preference.
+## Make sure local is first, it will save headaches.
+## Valid values: local, ldap, radius, cas
+authMethod = ["local"]
+
+## LDAP authentication settings
+[auth.ldap]
+## Active Directory domain name
+# domainName = "example.com"
+
+## Currently on the first server in the list is used
+# server = "127.0.0.1" # Default 127.0.0.1
+# port = 389 # Default 389
+
+## Use LDAPS instead of LDAP with StartTLS
+# useSSL = false
+
+## Use LDAP with StartTLS
+# skipTLS = false
+
+## Disable TLS certificate verification
+# insecureSkipVerify = false
+
+## RADIUS authentication settings
+[auth.radius]
+## List of RADIUS servers to try, currently only uses the first server
+# servers = [""]
+
+## Authentication port
+# port = 1812
+
+## RADIUS secret
+# secret = ""
+
+## CAS authentication settings
+[auth.cas]
+## CAS server URI
+# server = ""
+
+## Email settings are used to send alerts for flagged devices
+## Leaving address unset or empty will disable all email
+[email]
+# address = "localhost"
+# port = 25
+# username = ""
+# password = ""
+# fromAddress = "alerts@packetguardian"
+# toAddresses = ["alerts@example.com"]

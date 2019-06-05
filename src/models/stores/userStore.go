@@ -13,26 +13,35 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/models"
 )
 
-var userStore *UserStore
+var appUserStore UserStore
 
-type UserStore struct {
+type UserStore interface {
+	GetUserByUsername(username string) (*models.User, error)
+	GetAllUsers() ([]*models.User, error)
+	SearchUsersByField(field, pattern string) ([]*models.User, error)
+	GetPassword(username string) (string, error)
+	Save(u *models.User) error
+	Delete(u *models.User) error
+}
+
+type userStore struct {
 	e *common.Environment
 }
 
-func NewUserStore(e *common.Environment) *UserStore {
-	return &UserStore{
+func newUserStore(e *common.Environment) *userStore {
+	return &userStore{
 		e: e,
 	}
 }
 
-func GetUserStore(e *common.Environment) *UserStore {
-	if userStore == nil || e.IsTesting() {
-		userStore = NewUserStore(e)
+func GetUserStore(e *common.Environment) UserStore {
+	if appUserStore == nil {
+		appUserStore = newUserStore(e)
 	}
-	return userStore
+	return appUserStore
 }
 
-func (s *UserStore) GetUserByUsername(username string) (*models.User, error) {
+func (s *userStore) GetUserByUsername(username string) (*models.User, error) {
 	if username == "" {
 		return models.NewUser(s.e, s, NewBlacklistItem(GetBlacklistStore(s.e)), ""), nil
 	}
@@ -48,7 +57,7 @@ func (s *UserStore) GetUserByUsername(username string) (*models.User, error) {
 	return users[0], nil
 }
 
-func (s *UserStore) GetAllUsers() ([]*models.User, error) {
+func (s *userStore) GetAllUsers() ([]*models.User, error) {
 	sql := `ORDER BY "username"`
 	if s.e.DB.Driver == "sqlite" {
 		sql += " COLLATE NOCASE"
@@ -57,12 +66,12 @@ func (s *UserStore) GetAllUsers() ([]*models.User, error) {
 	return s.getUsersFromDatabase(sql)
 }
 
-func (s *UserStore) SearchUsersByField(field, pattern string) ([]*models.User, error) {
+func (s *userStore) SearchUsersByField(field, pattern string) ([]*models.User, error) {
 	sql := `WHERE "` + field + `" LIKE ?`
 	return s.getUsersFromDatabase(sql, pattern)
 }
 
-func (s *UserStore) getUsersFromDatabase(where string, values ...interface{}) ([]*models.User, error) {
+func (s *userStore) getUsersFromDatabase(where string, values ...interface{}) ([]*models.User, error) {
 	sql := `SELECT "id", "username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end", "ui_group", "api_group", "allow_status_api" FROM "user" ` + where
 	rows, err := s.e.DB.Query(sql, values...)
 	if err != nil {
@@ -137,21 +146,21 @@ func (s *UserStore) getUsersFromDatabase(where string, values ...interface{}) ([
 	return results, nil
 }
 
-func (s *UserStore) GetPassword(username string) (string, error) {
+func (s *userStore) GetPassword(username string) (string, error) {
 	result := s.e.DB.QueryRow(`SELECT "password" FROM "user" WHERE "username" = ?`, username)
 	var p string
 	err := result.Scan(&p)
 	return p, err
 }
 
-func (s *UserStore) Save(u *models.User) error {
+func (s *userStore) Save(u *models.User) error {
 	if u.ID == 0 {
 		return s.saveNew(u)
 	}
 	return s.updateExisting(u)
 }
 
-func (s *UserStore) updateExisting(u *models.User) error {
+func (s *userStore) updateExisting(u *models.User) error {
 	sql := `UPDATE "user" SET "device_limit"=?, "default_expiration"=?, "expiration_type"=?, "can_manage"=?, "can_autoreg"=?, "valid_forever"=?, "valid_start"=?, "valid_end"=?, "ui_group"=?, "api_group"=?, "allow_status_api"=?`
 
 	if u.NeedToSavePassword() {
@@ -198,7 +207,7 @@ func (s *UserStore) updateExisting(u *models.User) error {
 	return err
 }
 
-func (s *UserStore) saveNew(u *models.User) error {
+func (s *userStore) saveNew(u *models.User) error {
 	if u.Username == "" {
 		return errors.New("Username cannot be empty")
 	}
@@ -229,7 +238,7 @@ func (s *UserStore) saveNew(u *models.User) error {
 	return nil
 }
 
-func (s *UserStore) Delete(u *models.User) error {
+func (s *userStore) Delete(u *models.User) error {
 	if u.ID == 0 {
 		return nil
 	}

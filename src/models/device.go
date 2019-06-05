@@ -8,8 +8,6 @@ import (
 	"encoding/json"
 	"net"
 	"time"
-
-	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 type DeviceStore interface {
@@ -21,11 +19,9 @@ type DeviceStore interface {
 type LeaseStore interface {
 	GetLeaseHistory(net.HardwareAddr) ([]LeaseHistory, error)
 	GetLatestLease(net.HardwareAddr) LeaseHistory
-	ClearLeaseHistory(net.HardwareAddr) error
 }
 
 type LeaseHistory interface {
-	GetID() int
 	GetIP() net.IP
 	GetMAC() net.HardwareAddr
 	GetNetworkName() string
@@ -42,7 +38,6 @@ type BlacklistItem interface {
 
 // Device represents a device in the system
 type Device struct {
-	e              *common.Environment
 	deviceStore    DeviceStore
 	leaseStore     LeaseStore
 	ID             int              `json:"id"`
@@ -57,11 +52,11 @@ type Device struct {
 	blacklist      BlacklistItem
 	LastSeen       time.Time      `json:"-"`
 	Leases         []LeaseHistory `json:"-"`
+	Flagged        bool           `json:"flagged"`
 }
 
-func NewDevice(e *common.Environment, s DeviceStore, l LeaseStore, b BlacklistItem) *Device {
+func NewDevice(s DeviceStore, l LeaseStore, b BlacklistItem) *Device {
 	return &Device{
-		e:           e,
 		deviceStore: s,
 		leaseStore:  l,
 		blacklist:   b,
@@ -119,10 +114,11 @@ func (d *Device) SetLastSeen(t time.Time) {
 	d.LastSeen = t
 }
 
-// LoadLeaseHistory gets the device's lease history from the lease_history
-// table. If lease history is disabled, this function will use the active lease
-// table which won't be as accurate, and won't show continuity.
 func (d *Device) LoadLeaseHistory() error {
+	if d.Leases != nil {
+		return nil
+	}
+
 	leases, err := d.leaseStore.GetLeaseHistory(d.MAC)
 	if err != nil {
 		return err
@@ -156,10 +152,6 @@ func (d *Device) Save() error {
 func (d *Device) Delete() error {
 	if err := d.deviceStore.Delete(d); err != nil {
 		return err
-	}
-
-	if d.e.Config.Leases.DeleteWithDevice {
-		d.leaseStore.ClearLeaseHistory(d.MAC)
 	}
 	return nil
 }

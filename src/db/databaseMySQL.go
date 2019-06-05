@@ -15,7 +15,7 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 
 	"github.com/go-sql-driver/mysql" // MySQL driver
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
@@ -32,17 +32,18 @@ func newmySQLDBInit() *mySQLDB {
 	m := &mySQLDB{}
 
 	m.createFuncs = map[string]func(*common.DatabaseAccessor) error{
-		"blacklist":     m.createBlacklistTable,
-		"device":        m.createDeviceTable,
-		"lease":         m.createLeaseTable,
-		"lease_history": m.createLeaseHistoryTable,
-		"settings":      m.createSettingTable,
-		"user":          m.createUserTable,
+		"blacklist": m.createBlacklistTable,
+		"device":    m.createDeviceTable,
+		"lease":     m.createLeaseTable,
+		"settings":  m.createSettingTable,
+		"user":      m.createUserTable,
 	}
 
 	m.migrateFuncs = []migrateFunc{
-		1: m.migrate1,
-		2: m.migrate2,
+		1: m.migrateFrom1,
+		2: m.migrateFrom2,
+		3: m.migrateFrom3,
+		4: m.migrateFrom4,
 	}
 
 	return m
@@ -53,14 +54,13 @@ func (m *mySQLDB) connect(d *common.DatabaseAccessor, c *common.Config) error {
 		c.Database.Port = 3306
 	}
 
-	mc := &mysql.Config{
-		User:   c.Database.Username,
-		Passwd: c.Database.Password,
-		Net:    "tcp",
-		Addr:   fmt.Sprintf("%s:%d", c.Database.Address, c.Database.Port),
-		DBName: c.Database.Name,
-		Strict: true,
-	}
+	mc := mysql.NewConfig()
+	mc.User = c.Database.Username
+	mc.Passwd = c.Database.Password
+	mc.Net = "tcp"
+	mc.Addr = fmt.Sprintf("%s:%d", c.Database.Address, c.Database.Port)
+	mc.DBName = c.Database.Name
+
 	var err error
 	d.DB, err = sql.Open("mysql", mc.FormatDSN())
 	if err != nil {
@@ -79,9 +79,7 @@ func (m *mySQLDB) connect(d *common.DatabaseAccessor, c *common.Config) error {
 		return err
 	}
 
-	ansiOK := strings.Contains(mode, "ANSI")
-
-	if !ansiOK {
+	if !strings.Contains(mode, "ANSI") {
 		return errors.New("MySQL must be in ANSI mode. Please set the global mode or edit the my.cnf file to enable ANSI sql_mode.")
 	}
 	return nil
@@ -188,9 +186,9 @@ func (m *mySQLDB) createDeviceTable(d *common.DatabaseAccessor) error {
 	    "expires" INTEGER DEFAULT 0,
 	    "date_registered" INTEGER NOT NULL,
 	    "user_agent" TEXT,
-	    "blacklisted" TINYINT DEFAULT 0,
 	    "description" TEXT,
-	    "last_seen" INTEGER NOT NULL
+	    "last_seen" INTEGER NOT NULL,
+	    "flagged" TINYINT DEFAULT 0
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1`
 
 	_, err := d.DB.Exec(sql)
@@ -208,20 +206,6 @@ func (m *mySQLDB) createLeaseTable(d *common.DatabaseAccessor) error {
 	    "hostname" TEXT NOT NULL,
 	    "abandoned" TINYINT DEFAULT 0,
 	    "registered" TINYINT DEFAULT 0
-	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1`
-
-	_, err := d.DB.Exec(sql)
-	return err
-}
-
-func (m *mySQLDB) createLeaseHistoryTable(d *common.DatabaseAccessor) error {
-	sql := `CREATE TABLE "lease_history" (
-	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
-	    "ip" VARCHAR(15) NOT NULL,
-	    "mac" VARCHAR(17) NOT NULL,
-	    "network" TEXT NOT NULL,
-	    "start" INTEGER NOT NULL,
-	    "end" INTEGER NOT NULL
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1`
 
 	_, err := d.DB.Exec(sql)
@@ -272,7 +256,7 @@ func (m *mySQLDB) createUserTable(d *common.DatabaseAccessor) error {
 	return err
 }
 
-func (m *mySQLDB) migrate1(d *common.DatabaseAccessor, c *common.Config) error {
+func (m *mySQLDB) migrateFrom1(d *common.DatabaseAccessor, c *common.Config) error {
 	// Move device blacklist to blacklist table
 	bd, err := d.DB.Query(`SELECT "mac" FROM "device" WHERE "blacklisted" = 1`)
 	if err != nil {
@@ -303,7 +287,7 @@ func (m *mySQLDB) migrate1(d *common.DatabaseAccessor, c *common.Config) error {
 	return nil
 }
 
-func (m *mySQLDB) migrate2(d *common.DatabaseAccessor, c *common.Config) error {
+func (m *mySQLDB) migrateFrom2(d *common.DatabaseAccessor, c *common.Config) error {
 	sql := `ALTER TABLE "user" ADD COLUMN (
 		"ui_group" VARCHAR(20) NOT NULL DEFAULT 'default',
 		"api_group" VARCHAR(20) NOT NULL DEFAULT 'disable',
@@ -341,8 +325,12 @@ func migrateUserPermissions(e *common.Environment) error {
 }
 
 func migrateUserGroup(e *common.Environment, members []string, group, groupName string) error {
+	// This usage of GetUserStore is an exception, getting dependencies injected this
+	// far would be too much trouble for little benefit.
+	users := stores.GetUserStore(e)
+
 	for _, username := range members {
-		user, err := stores.GetUserStore(e).GetUserByUsername(username)
+		user, err := users.GetUserByUsername(username)
 		if err != nil {
 			return err
 		}
@@ -361,4 +349,18 @@ func migrateUserGroup(e *common.Environment, members []string, group, groupName 
 		}
 	}
 	return nil
+}
+
+func (m *mySQLDB) migrateFrom3(d *common.DatabaseAccessor, c *common.Config) error {
+	sql := `DROP TABLE IF EXISTS "lease_history"`
+	_, err := d.DB.Exec(sql)
+	return err
+}
+
+func (m *mySQLDB) migrateFrom4(d *common.DatabaseAccessor, c *common.Config) error {
+	sql := `ALTER TABLE "device" ADD COLUMN (
+		"flagged" TINYINT DEFAULT 0
+	);`
+	_, err := d.DB.Exec(sql)
+	return err
 }

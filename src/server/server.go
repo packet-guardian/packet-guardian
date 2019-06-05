@@ -5,12 +5,12 @@
 package server
 
 import (
+	"net"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
 
 	"gopkg.in/tylerb/graceful.v1"
@@ -31,8 +31,8 @@ func NewServer(e *common.Environment, routes http.Handler) *Server {
 		address: e.Config.Webserver.Address,
 	}
 
-	serv.httpPort = strconv.Itoa(e.Config.Webserver.HttpPort)
-	serv.httpsPort = strconv.Itoa(e.Config.Webserver.HttpsPort)
+	serv.httpPort = strconv.Itoa(e.Config.Webserver.HTTPPort)
+	serv.httpsPort = strconv.Itoa(e.Config.Webserver.HTTPSPort)
 	return serv
 }
 
@@ -43,7 +43,7 @@ func (s *Server) Run() {
 		return
 	}
 
-	if s.e.Config.Webserver.RedirectHttpToHttps {
+	if s.e.Config.Webserver.RedirectHTTPToHTTPS {
 		go s.startRedirector()
 	}
 	s.startHTTPS()
@@ -60,7 +60,13 @@ func (s *Server) startRedirector() {
 	}
 	srv := &graceful.Server{
 		Timeout: timeout,
-		Server:  &http.Server{Addr: s.address + ":" + s.httpPort, Handler: http.HandlerFunc(s.redirectToHTTPS)},
+		Server: &http.Server{
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  120 * time.Second,
+			Addr:         s.address + ":" + s.httpPort,
+			Handler:      http.HandlerFunc(s.redirectToHTTPS),
+		},
 	}
 	if err := srv.ListenAndServe(); err != nil {
 		s.e.Log.Fatal(err)
@@ -78,7 +84,13 @@ func (s *Server) startHTTP() {
 	}
 	srv := &graceful.Server{
 		Timeout: timeout,
-		Server:  &http.Server{Addr: s.address + ":" + s.httpPort, Handler: s.routes},
+		Server: &http.Server{
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  120 * time.Second,
+			Addr:         s.address + ":" + s.httpPort,
+			Handler:      s.routes,
+		},
 	}
 	if err := srv.ListenAndServe(); err != nil {
 		s.e.Log.Fatal(err)
@@ -96,7 +108,13 @@ func (s *Server) startHTTPS() {
 	}
 	srv := &graceful.Server{
 		Timeout: timeout,
-		Server:  &http.Server{Addr: s.address + ":" + s.httpsPort, Handler: s.routes},
+		Server: &http.Server{
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  120 * time.Second,
+			Addr:         s.address + ":" + s.httpsPort,
+			Handler:      s.routes,
+		},
 	}
 	if err := srv.ListenAndServeTLS(
 		s.e.Config.Webserver.TLSCertFile,
@@ -113,6 +131,6 @@ func (s *Server) redirectToHTTPS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	host := strings.Split(r.Host, ":")[0]
+	host, _, _ := net.SplitHostPort(r.Host)
 	http.Redirect(w, r, "https://"+host+":"+s.httpsPort+r.RequestURI, http.StatusMovedPermanently)
 }

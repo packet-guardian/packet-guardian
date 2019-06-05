@@ -1,0 +1,31 @@
+.unregistered {
+    color: red;
+    font-weight: bold;
+}
+
+.device-info {
+    width: 75%;
+    margin: 0 auto;
+}
+
+.label {
+    font-weight: bold;
+}
+
+.leases {
+    margin-left: 2em;
+}
+
+.lease-separator {
+    width: 10em;
+    display: inline-block;
+    margin: 0;
+}
+
+.controls section {
+    margin-top: 15px;
+}
+
+#edit-expire-controls, #confirmation-icons, #dev-exp-val {
+    display: none;
+}

@@ -4,6 +4,7 @@
 
 package common
 
+// Database table and column names for enumeration and misc use.
 var (
 	DatabaseTableNames = []string{
 		"blacklist",
@@ -45,15 +46,6 @@ var (
 		"hostname",
 		"abandoned",
 		"registered",
-	}
-
-	LeaseHistoryTableCols = []string{
-		"id",
-		"ip",
-		"mac",
-		"network",
-		"start",
-		"end",
 	}
 
 	UserTableCols = []string{

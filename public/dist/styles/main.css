@@ -1,0 +1,168 @@
+html, body {
+    height: 100%;
+}
+
+body {
+    color: black;
+    background-color: #EDEDED;
+    background: radial-gradient(circle, #FFFFFF, #EDEDED);
+}
+
+header {
+    padding-bottom: 1em;
+    background-color: #303030;
+    background: linear-gradient(to bottom, #454545, #303030);
+}
+
+header .header-title {
+    font-size: 2em;
+    font-weight: bold;
+    color: white;
+    margin-left: 5%;
+    margin-top: 10px;
+}
+
+header a {
+    color: white;
+    text-decoration: none;
+}
+
+header .logo-wrapper {
+    display: inline-block;
+    height: 100px;
+    margin-left: 5%;
+    /*background-color: white;*/
+}
+
+header img {
+    padding: 10px;
+    height: 80px;
+    vertical-align: middle;
+}
+
+.clearfix {
+    clear: both;
+}
+
+.flash {
+    height: 40px;
+    font-size: 25px;
+    /* display: block is for browsers that don't support flex */
+    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+}
+
+#flashText {
+    text-align: center;
+}
+
+.flashSuccess {
+    background-color: #72F786;
+    color: black;
+}
+
+.flashFailure {
+    background-color: #EC7A7A;
+    color: white;
+}
+
+.btn {
+    display: inline-block;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 5px 10px;
+    color: white;
+    border: 0;
+    background-color: #0083A8;
+    background: linear-gradient(to bottom, #0083A8, #007899);
+    white-space: nowrap;
+}
+
+.ok-btn {
+    background-color: rgb(0, 168, 56);
+    background: linear-gradient(to bottom, rgb(0, 168, 56), rgb(0, 136, 45));
+}
+
+.danger-btn {
+    background-color: rgb(241, 81, 81);
+    background: linear-gradient(to bottom, rgb(241, 81, 81), rgb(180, 59, 59));
+}
+
+@media (max-width: 600px) {
+    .btn {
+        margin-top: 5px;
+    }
+}
+
+.truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 20em;
+}
+
+.edit-property {
+    cursor: pointer;
+}
+
+.no-color-link {
+    color: black;
+}
+
+.main {
+    min-height: calc(100% - 220px);
+}
+
+.main:after {
+    content: "";
+    display: block;
+}
+
+footer, .main:after {
+    height: 40px;
+}
+
+footer {
+    background-color: #303030;
+}
+
+footer .copyright {
+    padding-top: 12px;
+    padding-left: 20px;
+    color: white;
+}
+
+@media (min-width: 600px) {
+    .main-content {
+        width: 60%;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 900px) {
+    header {
+        position: relative;
+        height: 100px;
+        padding-bottom: 0;
+    }
+
+    header .header-title {
+        display: inline-block;
+        font-size: 2em;
+        font-weight: bold;
+        color: white;
+        vertical-align: middle;
+        margin-left: 2%;
+    }
+
+    header .logo-wrapper {
+        height: 100%;
+    }
+
+    .main {
+        min-height: calc(100% - 140px);
+    }
+}

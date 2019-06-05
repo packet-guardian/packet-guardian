@@ -141,13 +141,14 @@ type Message struct {
 
 // Message struct for request to send a message
 type SendMessage struct {
-	resource       uri    `/Messages`
-	Text           string `Body=`
-	MediaUrl       string `MediaUrl=`
-	From           string `From=`
-	To             string `To=`
-	ApplicationSid string `ApplicationSid=`
-	StatusCallback string `StatusCallback=`
+	resource            uri    `/Messages`
+	Text                string `Body=`
+	MediaUrl            string `MediaUrl=`
+	From                string `From=`
+	To                  string `To=`
+	MessagingServiceSid string `MessagingServiceSid=`
+	ApplicationSid      string `ApplicationSid=`
+	StatusCallback      string `StatusCallback=`
 }
 
 // Notifications struct for request of a possible list of notifications

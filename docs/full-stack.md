@@ -1,12 +1,23 @@
 # Full Captive Portal Stack
 
-Packet Guardian is just one (or two) pieces of the puzzle. To get a fully working and integrated captive portal you'll need two other pieces of software. A DNS server, and a webserver. Bind and Nginx will be used throughout as examples. Any DNS and any webserver software should work fine so long as the webserver can wildcard match domain names.
+Packet Guardian is just one (or two) pieces of the puzzle. To get a fully
+working and integrated captive portal you'll need two other pieces of software.
+A DNS server, and a webserver. Bind and Nginx will be used throughout as
+examples. Any DNS and any webserver software should work fine so long as the
+webserver can wildcard match domain names.
 
 ## Setting up the Network
 
-Packet Guardian requires at least one vlan. Local subnets are currently not supported. All DHCP must be done via relays. The vlan needs to have two IP subnets assigned to it. The primary subnet will be for registered clients. The secondary is unregistered. A DHCP relay must be setup on the router/wireless controller to forward DHCP packets to Packet Guardian.
+Packet Guardian requires at least one vlan. Local subnets are currently not
+supported. All DHCP must be done via relays. The vlan needs to have two IP
+subnets assigned to it. The primary subnet will be for registered clients. The
+secondary is unregistered. A DHCP relay must be setup on the router/wireless
+controller to forward DHCP packets to Packet Guardian.
 
-If the server is going to be in a restricted network segment (recommended), the following ports will need to be allowed in: tcp/udp 53 (DNS), udp 67 (DHCP server), tcp 80, and tcp 443 (web). The server will need to be able to udp unicast back to relay agents.
+If the server is going to be in a restricted network segment (recommended), the
+following ports will need to be allowed in: tcp/udp 53 (DNS), udp 67 (DHCP
+server), tcp 80, and tcp 443 (web). The server will need to be able to udp
+unicast back to relay agents.
 
 ## Setting up Packet Guardian
 
@@ -21,9 +32,10 @@ Restart the Packet Guardian service.
 
 ## Setting up Bind
 
-Bind needs to be setup such that every request to it is resolved to the address of the Packet Guardian server. Here's an example zone file:
+Bind needs to be setup such that every request to it is resolved to the address
+of the Packet Guardian server. Here's an example zone file:
 
-```
+```bind
 $TTL 0
 . IN SOA localhost.  root.localhost. (
         201605236       ; serial
@@ -39,24 +51,33 @@ wifi.example.com.   IN      A       10.0.0.1
 *.              IN      CNAME   wifi.example.com.
 ```
 
-Change `wifi.example.com` to the domain name of the server. Change `10.0.0.1` to the real IP address of the server. Make sure to keep `$TTL` set to 0. This should prevent clients from caching the response. If you don't use a .com, make sure to change the first wildcard `*.com.` to the TLD of the real domain. For example, if you were using `wifi.example.edu`, it would be changed to `*.edu.`.
+Change `wifi.example.com` to the domain name of the server. Change `10.0.0.1` to
+the real IP address of the server. Make sure to keep `$TTL` set to 0. This
+should prevent clients from caching the response. If you don't use a .com, make
+sure to change the first wildcard `*.com.` to the TLD of the real domain. For
+example, if you were using `wifi.example.edu`, it would be changed to `*.edu.`.
 
 In named.conf, make sure to have the following:
 
-```
+```bind
 zone "." {
     type master;
     file "zones/named.ca";
 };
 ```
 
-Change the file path to match the zone file if needed. It's relative to the directory option.
+Change the file path to match the zone file if needed. It's relative to the
+directory option.
 
 ## Setting up Nginx
 
-Nginx needs to be setup to redirect all domains to the domain of the registration server. There will be three server blocks. A wildcard, the http version of the correct domain, and the https version of the correct domain. HTTPS is not required but highly recommended. A certificate can be issued by [Let's Encrypt](https://letsencrypt.org). Here's the site configuration:
+Nginx needs to be setup to redirect all domains to the domain of the
+registration server. There will be three server blocks. A wildcard, the http
+version of the correct domain, and the https version of the correct domain.
+HTTPS is not required but highly recommended. A certificate can be issued by
+[Let's Encrypt](https://letsencrypt.org). Here's the site configuration:
 
-```Nginx
+```nginx
 # Redirect wifi.example.com to HTTPS and preserve the request_uri
 server {
         listen 80;
@@ -109,4 +130,8 @@ server {
 
 ## Conclusions
 
-There are quite a few moving parts but when everything is in place it makes for nearly seamless portal system. In testing we've found that most modern devices automatically detect the need for the user to authenticate and will prompt the user to login. This provides a smooth transition for the user and with a simple disconnect, reconnect are back up and running.
+There are quite a few moving parts but when everything is in place it makes for
+nearly seamless portal system. In testing we've found that most modern devices
+automatically detect the need for the user to authenticate and will prompt the
+user to login. This provides a smooth transition for the user and with a simple
+disconnect, reconnect are back up and running.

@@ -5,26 +5,26 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=Edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="shortcut icon" href="/public/assets/images/favicon.ico" type="image/x-icon">
-        <link rel="icon" href="/public/assets/images/favicon.ico" type="image/x-icon">
+        <link rel="shortcut icon" href="/public/dist/images/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="/public/dist/images/favicon.ico" type="image/x-icon">
         {{if eq .main.config.Core.SiteCompanyName ""}}
         <title>{{.main.config.Core.SiteTitle}} - {{.pageTitle}}</title>
         {{else}}
         <title>{{.main.config.Core.SiteTitle}} - {{.main.config.Core.SiteCompanyName}} - {{.pageTitle}}</title>
         {{end}}
-        <link rel="stylesheet" href="/public/assets/styles/normalize.css">
-        <link rel="stylesheet" href="/public/assets/styles/main.css">
-        <link rel="stylesheet" href="/public/assets/styles/modals.css">
-        <link rel="stylesheet" href="/public/assets/styles/font-awesome.css">
+        <link rel="stylesheet" href="/public/dist/styles/normalize.css">
+        <link rel="stylesheet" href="/public/dist/styles/main.css">
+        <link rel="stylesheet" href="/public/dist/styles/modals.css">
+        <link rel="stylesheet" href="/public/dist/styles/font-awesome.css">
         {{range .css}}
-        <link rel="stylesheet" href="/public/assets/styles/{{.}}.css">
+        <link rel="stylesheet" href="/public/dist/styles/{{.}}.css">
         {{end}}
     </head>
     <body>
         <header>
             <a href="/">
                 <div class="logo-wrapper">
-                    <img src="/public/assets/images/logo.png">
+                    <img src="/public/dist/images/logo.png">
                 </div>
                 {{if ne .main.config.Core.SiteTitle ""}}
                 <div class="header-title">

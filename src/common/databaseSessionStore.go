@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 )
@@ -30,6 +29,7 @@ type dbStore struct {
 	Options *Options
 }
 
+// Options to control the session cookie
 type Options struct {
 	Path      string
 	Domain    string
@@ -53,21 +53,7 @@ func init() {
 func newDBStore(db *DatabaseAccessor, options *Options, keyPairs ...[]byte) (*dbStore, error) {
 	cTableQ := getTableCreate(db.Driver, options.TableName)
 	if _, err := db.Exec(cTableQ); err != nil {
-		switch err.(type) {
-		case *mysql.MySQLError:
-			// Error 1142 means permission denied for create command
-			if err.(*mysql.MySQLError).Number == 1142 {
-				break
-			}
-			return nil, err
-		case mysql.MySQLWarnings:
-			// Warning 1050 means table already exists
-			if err.(mysql.MySQLWarnings)[0].Code == "1050" {
-				break
-			}
-		default:
-			return nil, err
-		}
+		return nil, err
 	}
 
 	insQ := "INSERT INTO " + options.TableName +
@@ -109,22 +95,12 @@ func newDBStore(db *DatabaseAccessor, options *Options, keyPairs ...[]byte) (*db
 }
 
 func getTableCreate(typ, tableName string) string {
-	switch typ {
-	case "sqlite":
-		return "CREATE TABLE IF NOT EXISTS " +
-			tableName + " (id INTEGER PRIMARY KEY, " +
-			"session_data LONGBLOB, " +
-			"created_on BIGINT NOT NULL DEFAULT 0, " +
-			"modified_on BIGINT NOT NULL DEFAULT 0);"
-	case "mysql":
-		return "CREATE TABLE IF NOT EXISTS " +
-			tableName + " (id INT NOT NULL AUTO_INCREMENT, " +
-			"session_data LONGBLOB, " +
-			"created_on BIGINT NOT NULL DEFAULT 0, " +
-			"modified_on BIGINT NOT NULL DEFAULT 0, " +
-			"PRIMARY KEY(`id`)) ENGINE=InnoDB;"
-	}
-	return ""
+	return "CREATE TABLE IF NOT EXISTS " + tableName + ` (
+			id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
+			session_data LONGBLOB,
+			created_on BIGINT NOT NULL DEFAULT 0,
+			modified_on BIGINT NOT NULL DEFAULT 0
+		) ENGINE=InnoDB;`
 }
 
 func (m *dbStore) close() {

@@ -12,8 +12,10 @@ import (
 	"github.com/gorilla/sessions"
 )
 
+// Key is for contexts
 type Key int
 
+// Session values keys
 const (
 	SessionKey     Key = 0
 	SessionUserKey Key = 1
@@ -21,11 +23,13 @@ const (
 	SessionIPKey   Key = 3
 )
 
+// SessionStore wraps a Gorilla session and adds extra functionality.
 type SessionStore struct {
 	sessions.Store
 	sessionName string
 }
 
+// NewSessionStore creates a new store based the application configuration.
 func NewSessionStore(e *Environment) (*SessionStore, error) {
 	switch e.Config.Webserver.SessionStore {
 	case "filesystem":
@@ -71,8 +75,6 @@ func newDatabaseStore(e *Environment) (*SessionStore, error) {
 		TableName: "sessions",
 	}
 	switch e.DB.Driver {
-	case "sqlite":
-		fallthrough
 	case "mysql":
 		store, err = newDBStore(
 			e.DB,
@@ -109,9 +111,11 @@ type Session struct {
 	*sessions.Session
 }
 
-// Get and set Session to context moved to context files
-
+// Delete a session.
 func (s *Session) Delete(r *http.Request, w http.ResponseWriter) error {
+	// This relies on a patched version of gorilla sessions. The upstream version
+	// has a bug where MaxAge < 0 is considered "end of browser session" instead
+	// of "delete right now".
 	s.Options.MaxAge = -1
 	return s.Save(r, w)
 }
@@ -176,16 +180,23 @@ func (s *Session) GetInt64(key interface{}, def ...int64) int64 {
 	return 0
 }
 
+// NewTestSession creates a session for testing.
 func NewTestSession() *Session {
 	return &Session{
 		sessions.NewSession(&TestStore{}, "something"),
 	}
 }
 
+// TestStore is a mock session store for testing.
 type TestStore struct{}
 
+// Get session
 func (t *TestStore) Get(r *http.Request, name string) (*sessions.Session, error) { return nil, nil }
+
+// New session
 func (t *TestStore) New(r *http.Request, name string) (*sessions.Session, error) { return nil, nil }
+
+// Save session
 func (t *TestStore) Save(r *http.Request, w http.ResponseWriter, s *sessions.Session) error {
 	return nil
 }

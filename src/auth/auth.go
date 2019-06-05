@@ -8,20 +8,20 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/lfkeitel/verbose"
+	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/common"
-	"github.com/packet-guardian/packet-guardian/src/models"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 type authenticator interface {
-	checkLogin(username, password string, r *http.Request) bool
+	checkLogin(username, password string, r *http.Request, users stores.UserStore) bool
 }
 
 var authFunctions = make(map[string]authenticator)
 
 // LoginUser will verify the username and password against several login methods
 // If one method succeeds, true will be returned. False otherwise.
-func LoginUser(r *http.Request, w http.ResponseWriter) bool {
+func LoginUser(r *http.Request, w http.ResponseWriter, users stores.UserStore) bool {
 	if r.FormValue("password") == "" || r.FormValue("username") == "" {
 		return false
 	}
@@ -30,12 +30,17 @@ func LoginUser(r *http.Request, w http.ResponseWriter) bool {
 	username := strings.ToLower(r.FormValue("username"))
 	for _, method := range e.Config.Auth.AuthMethod {
 		if authMethod, ok := authFunctions[method]; ok {
-			if authMethod.checkLogin(username, r.FormValue("password"), r) {
+			if authMethod.checkLogin(username, r.FormValue("password"), r, users) {
 				sess := common.GetSessionFromContext(r)
 				sess.Set("loggedin", true)
 				sess.Set("username", username)
 				sess.Set("_authMethod", method)
-				sess.Save(r, w)
+
+				if err := sess.Save(r, w); err != nil {
+					e.Log.WithField("error", err).Error("Failed to save login session")
+					return false
+				}
+
 				e.Log.WithFields(verbose.Fields{
 					"username": username,
 					"method":   method,
@@ -53,7 +58,12 @@ func LoginUser(r *http.Request, w http.ResponseWriter) bool {
 	return false
 }
 
-func CheckLogin(username, password string, r *http.Request) bool {
+// CheckLogin returns if a username and password combo are valid. LoginUser
+// and CheckLogin perform the same check. The only difference is LoginUser
+// will setup a server-side session for the request. CheckLogin doesn't
+// change anything about the session, it's up to the caller for perform any
+// state change.
+func CheckLogin(username, password string, r *http.Request, users stores.UserStore) bool {
 	if password == "" || username == "" {
 		return false
 	}
@@ -62,7 +72,7 @@ func CheckLogin(username, password string, r *http.Request) bool {
 	username = strings.ToLower(username)
 	for _, method := range e.Config.Auth.AuthMethod {
 		if authMethod, ok := authFunctions[method]; ok {
-			if authMethod.checkLogin(username, password, r) {
+			if authMethod.checkLogin(username, password, r, users) {
 				e.Log.WithFields(verbose.Fields{
 					"username": username,
 					"method":   method,
@@ -80,24 +90,27 @@ func CheckLogin(username, password string, r *http.Request) bool {
 	return false
 }
 
+// IsLoggedIn checks the current session and returns if a user is logged in.
 func IsLoggedIn(r *http.Request) bool {
 	return common.GetSessionFromContext(r).GetBool("loggedin")
 }
 
+// LogoutUser modifies the current session to mark the user as logged out.
 func LogoutUser(r *http.Request, w http.ResponseWriter) {
 	sess := common.GetSessionFromContext(r)
 	if !sess.GetBool("loggedin") {
 		return
 	}
 
+	username := sess.GetString("username", "<unknown>")
+
 	sess.Set("loggedin", false)
 	sess.Set("username", "")
 	sess.Save(r, w)
 
 	e := common.GetEnvironmentFromContext(r)
-	user := models.GetUserFromContext(r)
 	e.Log.WithFields(verbose.Fields{
-		"username": user.Username,
+		"username": username,
 		"method":   sess.GetString("_authMethod"),
 		"action":   "logout",
 		"package":  "auth",

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 func init() {
@@ -16,7 +17,7 @@ func init() {
 }
 
 // Deletes users that expired 7 days ago
-func cleanUpExpiredUsers(e *common.Environment) (string, error) {
+func cleanUpExpiredUsers(e *common.Environment, stores stores.StoreCollection) (string, error) {
 	now := time.Now().Add(time.Duration(-7) * 24 * time.Hour)
 	sqlSel := `SELECT "username" FROM "user" WHERE "valid_forever" = 0 AND "valid_end" < ?`
 	rows, err := e.DB.Query(sqlSel, now.Unix())

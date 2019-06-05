@@ -5,31 +5,19 @@
 package server
 
 import (
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
 func TestRootHandlerLoggedInNormal(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	userRow := sqlmock.NewRows(common.UserTableCols).AddRow(
-		1, "testUser", "", 0, 0, 0, 1, 1, 1, 0, 0, "default", "disable", false,
-	)
-
-	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testuser").WillReturnRows(userRow)
-
 	e := common.NewTestEnvironment()
-	e.DB = &common.DatabaseAccessor{DB: db}
 
 	session := common.NewTestSession()
 	session.Set("loggedin", true)
@@ -39,43 +27,21 @@ func TestRootHandlerLoggedInNormal(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 
-	sessionUser, err := stores.NewUserStore(e).GetUserByUsername("testUser")
-	if err != nil {
-		t.Logf("Failed to get session user: %v", err.Error())
-	}
+	sessionUser := models.NewUser(e, &models.TestUserStore{}, &models.TestBlacklistItem{}, "testUser")
 	req = models.SetUserToContext(req, sessionUser)
 
 	w := httptest.NewRecorder()
-	rootHandler(w, req)
+	(&rootHandler{}).ServeHTTP(w, req)
 	if w.Code != 307 {
 		t.Errorf("Wrong redirect code. Expected 307, got %d", w.Code)
 	}
 	if w.HeaderMap.Get("Location") != "/manage" {
 		t.Errorf("Wrong location. Expected /manage, got %s", w.HeaderMap.Get("Location"))
 	}
-
-	// we make sure that all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
 }
 
 func TestRootHandlerLoggedInAdmin(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	userRow := sqlmock.NewRows(common.UserTableCols).AddRow(
-		1, "testUser", "", 0, 0, 0, 1, 1, 1, 0, 0, "admin", "disable", false,
-	)
-
-	mock.ExpectQuery("SELECT .*? FROM \"user\"").WithArgs("testuser").WillReturnRows(userRow)
-
 	e := common.NewTestEnvironment()
-	e.DB = &common.DatabaseAccessor{DB: db}
-	e.Config.Auth.AdminUsers = []string{"testUser"}
 
 	session := common.NewTestSession()
 	session.Set("loggedin", true)
@@ -85,42 +51,35 @@ func TestRootHandlerLoggedInAdmin(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 
-	sessionUser, err := stores.NewUserStore(e).GetUserByUsername("testUser")
-	if err != nil {
-		t.Fatalf("Failed to get session user: %v", err.Error())
-	}
+	sessionUser := models.NewUser(e, &models.TestUserStore{}, &models.TestBlacklistItem{}, "testUser")
+	sessionUser.UIGroup = "admin"
+	sessionUser.LoadRights()
+
 	req = models.SetUserToContext(req, sessionUser)
 
 	w := httptest.NewRecorder()
-	rootHandler(w, req)
+	(&rootHandler{}).ServeHTTP(w, req)
 	if w.Code != 307 {
 		t.Errorf("Wrong redirect code. Expected 307, got %d", w.Code)
 	}
 	if w.HeaderMap.Get("Location") != "/admin" {
 		t.Errorf("Wrong location. Expected /admin, got %s", w.HeaderMap.Get("Location"))
 	}
-
-	// we make sure that all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
 }
 
 func TestRootHandlerNotLoggedInNotRegistered(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	testMac, _ := net.ParseMAC("12:34:56:12:34:56")
+	testLease := &dhcp.Lease{
+		ID:  1,
+		IP:  net.ParseIP("192.168.1.10"),
+		MAC: testMac,
 	}
-	defer db.Close()
 
-	leaseRow := sqlmock.NewRows(common.LeaseTableCols).AddRow(
-		1, "192.168.1.10", "12:34:56:12:34:56", "", 0, 0, "", 0, 0,
-	)
-
-	mock.ExpectQuery("SELECT .*? FROM \"lease\"").WithArgs("192.168.1.10").WillReturnRows(leaseRow)
+	testLeaseStore := &stores.TestLeaseStore{
+		Leases: []*dhcp.Lease{testLease},
+	}
 
 	e := common.NewTestEnvironment()
-	e.DB = &common.DatabaseAccessor{DB: db}
 
 	session := common.NewTestSession()
 	session.Set("loggedin", false)
@@ -132,35 +91,29 @@ func TestRootHandlerNotLoggedInNotRegistered(t *testing.T) {
 	req = common.SetIPToContext(req)
 
 	w := httptest.NewRecorder()
-	rootHandler(w, req)
+	(&rootHandler{leases: testLeaseStore}).ServeHTTP(w, req)
 	if w.Code != 307 {
 		t.Errorf("Wrong redirect code. Expected 307, got %d", w.Code)
 	}
 	if w.HeaderMap.Get("Location") != "/register" {
 		t.Errorf("Wrong location. Expected /register, got %s", w.HeaderMap.Get("Location"))
 	}
-
-	// we make sure that all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
 }
 
 func TestRootHandlerNotLoggedInRegistered(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	testMac, _ := net.ParseMAC("12:34:56:12:34:56")
+	testLease := &dhcp.Lease{
+		ID:         1,
+		IP:         net.ParseIP("192.168.1.10"),
+		MAC:        testMac,
+		Registered: true,
 	}
-	defer db.Close()
 
-	leaseRow := sqlmock.NewRows(common.LeaseTableCols).AddRow(
-		1, "192.168.1.10", "12:34:56:12:34:56", "", 0, 0, "", 0, 1,
-	)
-
-	mock.ExpectQuery("SELECT .*? FROM \"lease\"").WithArgs("192.168.1.10").WillReturnRows(leaseRow)
+	testLeaseStore := &stores.TestLeaseStore{
+		Leases: []*dhcp.Lease{testLease},
+	}
 
 	e := common.NewTestEnvironment()
-	e.DB = &common.DatabaseAccessor{DB: db}
 
 	session := common.NewTestSession()
 	session.Set("loggedin", false)
@@ -172,16 +125,11 @@ func TestRootHandlerNotLoggedInRegistered(t *testing.T) {
 	req = common.SetIPToContext(req)
 
 	w := httptest.NewRecorder()
-	rootHandler(w, req)
+	(&rootHandler{leases: testLeaseStore}).ServeHTTP(w, req)
 	if w.Code != 307 {
 		t.Errorf("Wrong redirect code. Expected 307, got %d", w.Code)
 	}
 	if w.HeaderMap.Get("Location") != "/login" {
 		t.Errorf("Wrong location. Expected /login, got %s", w.HeaderMap.Get("Location"))
-	}
-
-	// we make sure that all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }

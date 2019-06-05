@@ -3,14 +3,42 @@
 <div class="clearfix no-devices">No devices registered</div>
 {{else}}
 <div class="clearfix devices-list">
+    {{if .main.usePages}}
+    <div class="device-pager device-pager-top">
+        <span class="pager-direction">
+        {{if ne .main.page 1}}
+        {{if .main.adminManage}}
+        <a href="/admin/manage/user/{{.main.user.Username}}?page={{sub1 .main.page}}">< Prev</a>
+        {{else}}
+        <a href="/manage/?page={{sub1 .main.page}}">< Prev</a>
+        {{end}}
+        {{end}}
+        </span>
+
+        <span class="pager-start-end">{{.main.pageStart}} - {{.main.pageEnd}}</span>
+
+        <span class="pager-direction">
+        {{if .main.hasNextPage}}
+        {{if .main.adminManage}}
+        <a href="/admin/manage/user/{{.main.user.Username}}?page={{plus1 .main.page}}">Next ></a>
+        {{else}}
+        <a href="/manage?page={{plus1 .main.page}}">Next ></a>
+        {{end}}
+        {{end}}
+        </span>
+    </div>
+    {{end}}
+
     {{range .main.devices}}
     <a name="{{.ID}}"></a>
+
     <div class="device-header {{if .IsBlacklisted}}blacklisted{{else}}good-standing{{end}}" data-device-id="{{.ID}}">
         {{if or $.main.canDeleteDevice $.main.canEditDevice $.main.canReassignDevice $.main.canManageBlacklist}}
         <div class="device-check-select device-info-check">
             <input type="checkbox" value="{{.MAC}}" class="device-checkbox">
         </div>
         {{end}}
+
         <div class="device-info">
             <div class="device-info-label">MAC Address</div>
             {{if $.linkMac}}
@@ -19,15 +47,18 @@
             <div class="device-info-text" id="device-{{.ID}}-mac">{{.MAC}}</div>
             {{end}}
         </div>
+
         <div class="device-info">
             <div class="device-info-label">Description <i class="fa fa-pencil edit-dev-desc" aria-hidden="true" data-device="{{.ID}}"></i></div>
             <div class="device-info-text" id="device-{{.ID}}-desc">{{.Description}}</div>
         </div>
+
         <div class="device-info">
             <div class="device-info-label">Last Seen</div>
             <div class="device-info-text">{{.LastSeen.Format "2006-01-02 15:04"}}</div>
         </div>
     </div>
+
     <div class="device-body" id="device-body-{{.ID}}">
         <div class="device-body-inner">
             {{if .IsBlacklisted}}
@@ -36,6 +67,7 @@
                 <div class="device-info-text">Yes</div>
             </div>
             {{end}}
+
             <div class="device-info">
                 <div class="device-info-label">Platform</div>
                 {{if eq .Platform ""}}
@@ -44,14 +76,17 @@
                 <div class="device-info-text">{{.Platform}}</div>
                 {{end}}
             </div>
+
             <div class="device-info">
                 <div class="device-info-label">Date Registered</div>
                 <div class="device-info-text">{{.DateRegistered.Format "2006-01-02 15:04"}}</div>
             </div>
+
             <div class="device-info">
                 <div class="device-info-label">Registered From</div>
                 <div class="device-info-text">{{.RegisteredFrom.String}}</div>
             </div>
+
             <div class="device-info">
                 <div class="device-info-label">Expires</div>
                 {{if eq .Expires.Unix 0}}
@@ -62,10 +97,12 @@
                 <div class="device-info-text">{{.Expires.Format "2006-01-02 15:04"}}</div>
                 {{end}}
             </div>
+
             <div class="device-info">
                 <div class="device-info-label">User Agent</div>
                 <div class="device-info-text truncate"><span title="{{.UserAgent}}">{{.UserAgent}}</span></div>
             </div>
+
             <div class="device-info">
                 <div class="device-info-label">Current Lease</div>
                 {{with .GetCurrentLease}}
@@ -75,6 +112,32 @@
                 {{end}}
             </div>
         </div>
+    </div>
+    {{end}}
+
+    {{if .main.usePages}}
+    <div class="device-pager device-pager-bottom">
+        <span class="pager-direction">
+        {{if ne .main.page 1}}
+        {{if .main.adminManage}}
+        <a href="/admin/manage/user/{{.main.user.Username}}?page={{sub1 .main.page}}">< Prev</a>
+        {{else}}
+        <a href="/manage/?page={{sub1 .main.page}}">< Prev</a>
+        {{end}}
+        {{end}}
+        </span>
+
+        <span class="pager-start-end">{{.main.pageStart}} - {{.main.pageEnd}}</span>
+
+        <span class="pager-direction">
+        {{if .main.hasNextPage}}
+        {{if .main.adminManage}}
+        <a href="/admin/manage/user/{{.main.user.Username}}?page={{plus1 .main.page}}">Next ></a>
+        {{else}}
+        <a href="/manage?page={{plus1 .main.page}}">Next ></a>
+        {{end}}
+        {{end}}
+        </span>
     </div>
     {{end}}
 </div>

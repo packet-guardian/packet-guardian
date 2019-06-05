@@ -6,12 +6,12 @@ GOVERSION := $(shell go version)
 BUILDTIME := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILDER := $(shell echo "`git config user.name` <`git config user.email`>")
 DIST_FILENAME ?= pg-dist-$(VERSION).tar.gz
-CGO_ENABLED ?= 0
+export CGO_ENABLED ?= 0
 PWD := $(shell pwd)
 GOBIN := $(PWD)/bin
 CODECLIMATE_CODE := $(PWD)
 
-ifeq ($(shell uname -o), Cygwin)
+ifeq ($(shell uname -s), Cygwin)
 CODECLIMATE_CODE := //c/cygwin64$(PWD)
 PWD := $(shell cygpath -w -a `pwd`)
 GOBIN := $(PWD)\bin
@@ -26,49 +26,40 @@ LDFLAGS := -X 'main.version=$(VERSION)' \
 			-X 'main.builder=$(BUILDER)' \
 			-X 'main.goversion=$(GOVERSION)'
 
-.PHONY: all doc fmt alltests test coverage benchmark lint vet dhcp management dist clean docker docker-compile docker-build codeclimate bindata
+.PHONY: all dev fmt alltests test benchmark lint build dist clean docker codeclimate bindata yarn yarn-dev
 
-all: bindata test management dhcp
+all: yarn bindata test build
+dev: yarn-dev bindata test build
 
+yarn:
+	yarn run build:prod
+
+yarn-dev:
+	yarn run build:dev
+
+# go get github.com/go-bindata/go-bindata/...
 bindata:
-	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/...
+	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/dist/...
 
-dhcp:
-	go build -o bin/dhcp -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/dhcp
-
-management:
+build:
 	go build -o bin/pg -v -ldflags "$(LDFLAGS)" -tags '$(BUILDTAGS)' ./cmd/pg
 
 # development tasks
-doc:
-	@godoc -http=:6060 -index
-
 fmt:
 	@gofmt -s -l -d ./src/*
 
-alltests: test lint vet
+alltests: test lint
 
 test:
-ifeq (CGO_ENABLED, 1)
-	@go test -race $$(go list ./src/...)
-else
-	@go test $$(go list ./src/...)
-endif
-
-coverage:
-	@go test -cover $$(go list ./src/...)
+	@go test ./src/...
 
 benchmark:
-	@echo "Running tests..."
 	@go test -bench=. $$(go list ./src/...)
 
 # https://github.com/golang/lint
 # go get github.com/golang/lint/golint
 lint:
 	@golint ./src/...
-
-vet:
-	@go vet $$(go list ./src/...)
 
 codeclimate:
 	@docker run -i --rm \
@@ -78,7 +69,7 @@ codeclimate:
 		-v /tmp/cc:/tmp/cc \
 		codeclimate/codeclimate analyze $(CODECLIMATE_ARGS)
 
-dist: vet all
+dist: all
 	@rm -rf ./dist
 	@mkdir -p dist/packet-guardian
 	@cp -R config dist/packet-guardian/
@@ -86,10 +77,10 @@ dist: vet all
 	@cp LICENSE dist/packet-guardian/
 	@cp README.md dist/packet-guardian/
 	@cp -R scripts dist/packet-guardian/
+	@rm -rf dist/packet-guardian/scripts/dev-docker
 
 	@mkdir dist/packet-guardian/bin
 	@cp bin/pg dist/packet-guardian/bin/pg
-	@cp bin/dhcp dist/packet-guardian/bin/dhcp
 
 	@mkdir dist/packet-guardian/sessions
 

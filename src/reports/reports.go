@@ -6,9 +6,10 @@ import (
 	"sync"
 
 	"github.com/packet-guardian/packet-guardian/src/common"
+	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
-type ReportFunc func(*common.Environment, http.ResponseWriter, *http.Request) error
+type ReportFunc func(*common.Environment, http.ResponseWriter, *http.Request, stores.StoreCollection) error
 
 type Report struct {
 	Shortname string
@@ -31,13 +32,13 @@ func RegisterReport(shortname, fullname string, report ReportFunc) {
 	reportFuncsMutex.Unlock()
 }
 
-func RenderReport(name string, w http.ResponseWriter, r *http.Request) error {
+func RenderReport(name string, w http.ResponseWriter, r *http.Request, stores stores.StoreCollection) error {
 	report, ok := reportFuncs[name]
 	if !ok {
 		return errors.New("Report doesn't exist")
 	}
 
-	return report.Call(common.GetEnvironmentFromContext(r), w, r)
+	return report.Call(common.GetEnvironmentFromContext(r), w, r, stores)
 }
 
 func GetReports() map[string]*Report {
