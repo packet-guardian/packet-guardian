@@ -68,7 +68,6 @@ func LoadRoutes(e *common.Environment, stores stores.StoreCollection) http.Handl
 	r.Handler("GET", "/captcha/*a", captcha.Server(captcha.StdWidth, captcha.StdHeight))
 
 	if e.IsDev() {
-		r.Handler("GET", "/dev/*a", midStack(e, stores, devRouter(e)))
 		r.Handler("GET", "/debug/*a", midStack(e, stores, debugRouter(e)))
 		e.Log.Debug("Profiling enabled")
 	}
@@ -83,18 +82,6 @@ func midStack(e *common.Environment, stores stores.StoreCollection, h http.Handl
 	h = mid.Cache(h, e)                                         // Set cache headers if needed
 	h = mid.SetSessionInfo(h, e, stores.Users)                  // Adds Environment and user information to requet context
 	h = context.ClearHandler(h)                                 // Clear Gorilla sessions
-	return h
-}
-
-func devRouter(e *common.Environment) http.Handler {
-	r := httprouter.New()
-	r.NotFound = http.HandlerFunc(notFoundHandler)
-
-	devController := controllers.NewDevController(e)
-	r.HandlerFunc("GET", "/dev/reloadtemp", devController.ReloadTemplates)
-
-	h := mid.CheckAdmin(r)
-	h = mid.CheckAuth(h)
 	return h
 }
 
