@@ -85,8 +85,7 @@ function registerDevice(data) {
       return;
     }
 
-    $('#suc-msg-manual').show();
-    setTimeout(function() { location.href = resp.Data.Location; }, 3000);
+    location.href = resp.Data.Location;
   }, function(req) {
     window.scrollTo(0, 0);
     enableRegBtn();
