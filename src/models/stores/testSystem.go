@@ -157,7 +157,23 @@ func (s *TestDeviceStore) GetAllDevices(e *common.Environment) ([]*models.Device
 func (s *TestDeviceStore) SearchDevicesByField(field, pattern string) ([]*models.Device, error) {
 	return nil, nil
 }
-func (s *TestDeviceStore) Save(d *models.Device) error                 { return nil }
+func (s *TestDeviceStore) Save(d *models.Device) error {
+	var dev *models.Device
+	for _, device := range s.Devices {
+		if bytes.Equal(device.MAC, d.MAC) {
+			dev = device
+			break
+		}
+	}
+
+	if dev == nil {
+		s.Devices = append(s.Devices, d)
+	} else {
+		*dev = *d
+	}
+
+	return nil
+}
 func (s *TestDeviceStore) Delete(d *models.Device) error               { return nil }
 func (s *TestDeviceStore) DeleteAllDeviceForUser(u *models.User) error { return nil }
 
@@ -174,3 +190,10 @@ func (s *TestBlacklistStore) RemoveFromBlacklist(key string) error {
 	delete(s.items, key)
 	return nil
 }
+
+type TestBlacklistItem struct{ Val bool }
+
+func (b *TestBlacklistItem) Blacklist()                { b.Val = true }
+func (b *TestBlacklistItem) Unblacklist()              { b.Val = false }
+func (b *TestBlacklistItem) IsBlacklisted(string) bool { return b.Val }
+func (b *TestBlacklistItem) Save(string) error         { return nil }
