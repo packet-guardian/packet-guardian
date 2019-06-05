@@ -50,7 +50,7 @@ func (s *deviceStore) GetDeviceByMAC(mac net.HardwareAddr) (*models.Device, erro
 	sql := `WHERE "mac" = ?`
 	devices, err := s.getDevicesFromDatabase(sql, mac.String())
 	if len(devices) == 0 {
-		dev := models.NewDevice(s.e, s, GetLeaseStore(s.e), NewBlacklistItem(GetBlacklistStore(s.e)))
+		dev := models.NewDevice(s, GetLeaseStore(s.e), NewBlacklistItem(GetBlacklistStore(s.e)))
 		dev.MAC = mac
 		return dev, err
 	}
@@ -61,7 +61,7 @@ func (s *deviceStore) GetDeviceByID(id int) (*models.Device, error) {
 	sql := `WHERE "id" = ?`
 	devices, err := s.getDevicesFromDatabase(sql, id)
 	if len(devices) == 0 {
-		return models.NewDevice(s.e, s, GetLeaseStore(s.e), NewBlacklistItem(GetBlacklistStore(s.e))), err
+		return models.NewDevice(s, GetLeaseStore(s.e), NewBlacklistItem(GetBlacklistStore(s.e))), err
 	}
 	return devices[0], nil
 }
@@ -142,7 +142,7 @@ func (s *deviceStore) getDevicesFromDatabase(where string, values ...interface{}
 
 		mac, _ := net.ParseMAC(macStr)
 
-		device := models.NewDevice(s.e, s, GetLeaseStore(s.e), NewBlacklistItem(GetBlacklistStore(s.e)))
+		device := models.NewDevice(s, GetLeaseStore(s.e), NewBlacklistItem(GetBlacklistStore(s.e)))
 		device.ID = id
 		device.MAC = mac
 		device.Username = username

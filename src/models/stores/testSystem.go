@@ -98,7 +98,7 @@ func (s *TestDeviceStore) GetDeviceByMAC(mac net.HardwareAddr) (*models.Device, 
 		}
 	}
 
-	d := models.NewDevice(nil, s, &TestLeaseStore{}, NewBlacklistItem(&TestBlacklistStore{}))
+	d := models.NewDevice(s, &TestLeaseStore{}, NewBlacklistItem(&TestBlacklistStore{}))
 	d.MAC = mac
 	return d, nil
 }
@@ -110,7 +110,7 @@ func (s *TestDeviceStore) GetDeviceByID(id int) (*models.Device, error) {
 		}
 	}
 
-	d := models.NewDevice(nil, s, &TestLeaseStore{}, NewBlacklistItem(&TestBlacklistStore{}))
+	d := models.NewDevice(s, &TestLeaseStore{}, NewBlacklistItem(&TestBlacklistStore{}))
 	return d, nil
 }
 func (s *TestDeviceStore) GetFlaggedDevices() ([]*models.Device, error) {

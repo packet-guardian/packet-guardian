@@ -8,8 +8,6 @@ import (
 	"encoding/json"
 	"net"
 	"time"
-
-	"github.com/packet-guardian/packet-guardian/src/common"
 )
 
 type DeviceStore interface {
@@ -40,7 +38,6 @@ type BlacklistItem interface {
 
 // Device represents a device in the system
 type Device struct {
-	e              *common.Environment
 	deviceStore    DeviceStore
 	leaseStore     LeaseStore
 	ID             int              `json:"id"`
@@ -58,9 +55,8 @@ type Device struct {
 	Flagged        bool           `json:"flagged"`
 }
 
-func NewDevice(e *common.Environment, s DeviceStore, l LeaseStore, b BlacklistItem) *Device {
+func NewDevice(s DeviceStore, l LeaseStore, b BlacklistItem) *Device {
 	return &Device{
-		e:           e,
 		deviceStore: s,
 		leaseStore:  l,
 		blacklist:   b,
