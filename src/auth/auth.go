@@ -31,23 +31,7 @@ func LoginUser(r *http.Request, w http.ResponseWriter, users stores.UserStore) b
 	for _, method := range e.Config.Auth.AuthMethod {
 		if authMethod, ok := authFunctions[method]; ok {
 			if authMethod.checkLogin(username, r.FormValue("password"), r, users) {
-				sess := common.GetSessionFromContext(r)
-				sess.Set("loggedin", true)
-				sess.Set("username", username)
-				sess.Set("_authMethod", method)
-
-				if err := sess.Save(r, w); err != nil {
-					e.Log.WithField("error", err).Error("Failed to save login session")
-					return false
-				}
-
-				e.Log.WithFields(verbose.Fields{
-					"username": username,
-					"method":   method,
-					"action":   "login",
-					"package":  "auth",
-				}).Info("Logged in user")
-				return true
+				return SetLoginUser(w, r, username, method)
 			}
 		}
 	}
@@ -56,6 +40,29 @@ func LoginUser(r *http.Request, w http.ResponseWriter, users stores.UserStore) b
 		"package":  "auth",
 	}).Info("Failed login")
 	return false
+}
+
+// SetLoginUser sets up the session to be loggedin with a specific username.
+// Method is the authentication mechanism used.
+func SetLoginUser(w http.ResponseWriter, r *http.Request, username, method string) bool {
+	e := common.GetEnvironmentFromContext(r)
+	sess := common.GetSessionFromContext(r)
+	sess.Set("loggedin", true)
+	sess.Set("username", username)
+	sess.Set("_authMethod", method)
+
+	if err := sess.Save(r, w); err != nil {
+		e.Log.WithField("error", err).Error("Failed to save login session")
+		return false
+	}
+
+	e.Log.WithFields(verbose.Fields{
+		"username": username,
+		"method":   method,
+		"action":   "login",
+		"package":  "auth",
+	}).Info("Logged in user")
+	return true
 }
 
 // CheckLogin returns if a username and password combo are valid. LoginUser

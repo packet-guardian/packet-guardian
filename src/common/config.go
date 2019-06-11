@@ -7,7 +7,9 @@ package common
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -119,6 +121,11 @@ type Config struct {
 		CAS struct {
 			Server     string
 			ServiceURL string
+		}
+		Openid struct {
+			Server       string
+			ClientID     string
+			ClientSecret string
 		}
 	}
 	DHCP struct {
@@ -259,6 +266,13 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	c.Auth.LDAP.Server = setStringOrDefault(c.Auth.LDAP.Server, "127.0.0.1")
 	c.Auth.LDAP.Port = setIntOrDefault(c.Auth.LDAP.Port, 389)
+
+	if c.Auth.Openid.Server != "" {
+		c.Auth.Openid.Server = strings.TrimRight(c.Auth.Openid.Server, "/")
+		if _, err := url.Parse(c.Auth.Openid.Server); err != nil {
+			return nil, errors.New("Invalid OpenID server URL")
+		}
+	}
 
 	// DHCP
 	c.DHCP.ConfigFile = setStringOrDefault(c.DHCP.ConfigFile, "config/dhcp.conf")

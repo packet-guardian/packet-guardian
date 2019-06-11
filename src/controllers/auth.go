@@ -5,13 +5,25 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/packet-guardian/packet-guardian/src/auth"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
+
+type openIDTokenResp struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int    `json:"expires_in"`
+	Scope       string `json:"scope"`
+	IDToken     string `json:"id_token"`
+}
 
 type Auth struct {
 	e     *common.Environment
@@ -88,4 +100,80 @@ func (a *Auth) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+}
+
+func (a *Auth) OpenIDHandler(w http.ResponseWriter, r *http.Request) {
+	openIDCode := r.URL.Query().Get("code")
+	openIDState := r.URL.Query().Get("state")
+
+	if openIDCode == "" || openIDState == "" {
+		// Start of authentication flow
+		a.redirectOpenID(w, r)
+		return
+	}
+
+	req, err := a.buildOpenIDRedirectRequest(openIDCode)
+	if err != nil {
+		a.e.Log.Errorf("Error building OpenID token request: %s", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		a.e.Log.Errorf("Error getting OpenID tokens: %s", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		a.e.Log.Error("Non 200 response while getting OpenID tokens")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var tokenResp openIDTokenResp
+	decoder := json.NewDecoder(resp.Body)
+	if err := decoder.Decode(&tokenResp); err != nil {
+		a.e.Log.Errorf("Error decoding OpenID tokens: %s", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Need to validate
+	a.e.Log.Infof("%#v", tokenResp)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (a *Auth) buildOpenIDRedirectRequest(authCode string) (*http.Request, error) {
+	formValues := url.Values{
+		"grant_type":   {"authorization_code"},
+		"redirect_uri": {fmt.Sprintf("%s/openid", a.e.Config.Core.SiteDomainName)},
+		"code":         {authCode},
+	}
+
+	tokenURL := fmt.Sprintf("%s/oauth2/default/v1/token", a.e.Config.Auth.Openid.Server)
+	req, err := http.NewRequest("POST", tokenURL, strings.NewReader(formValues.Encode()))
+	if err != nil {
+		return nil, err
+	}
+
+	req.SetBasicAuth(a.e.Config.Auth.Openid.ClientID, a.e.Config.Auth.Openid.ClientSecret)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	return req, nil
+}
+
+func (a *Auth) redirectOpenID(w http.ResponseWriter, r *http.Request) {
+	params := url.Values{
+		"client_id":     {a.e.Config.Auth.Openid.ClientID},
+		"response_type": {"code"},
+		"scope":         {"openid"},
+		"redirect_uri":  {fmt.Sprintf("%s/openid", a.e.Config.Core.SiteDomainName)},
+		"state":         {"state-authtest"}, // TODO: Generate random code and put in session
+	}
+
+	authURL := fmt.Sprintf("%s/oauth2/default/v1/authorize?%s", a.e.Config.Auth.Openid.Server, params.Encode())
+	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
