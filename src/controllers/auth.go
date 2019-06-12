@@ -32,21 +32,12 @@ type openIDTokenResp struct {
 	IDToken     string `json:"id_token"`
 }
 
-type openIDIntrospectResp struct {
-	Active    bool   `json:"active"`
-	Aud       string `json:"aud"`
-	ClientID  string `json:"client_id"`
-	DeviceID  string `json:"device_id"`
-	Exp       int    `json:"exp"`
-	Iat       int    `json:"iat"`
-	Iss       string `json:"iss"`
-	Jti       string `json:"jti"`
-	Nbf       int    `json:"nbf"`
-	Scope     string `json:"scope"`
-	Sub       string `json:"sub"`
-	TokenType string `json:"token_type"`
-	UID       string `json:"uid"`
-	Username  string `json:"username"`
+type openIDUserInfoResp struct {
+	Sub               string `json:"sub"`
+	Name              string `json:"name"`
+	Username          string `json:"username"`
+	PreferredUsername string `json:"preferred_username"`
+	Email             string `json:"email"`
 }
 
 type Auth struct {
@@ -157,26 +148,34 @@ func (a *Auth) OpenIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	introspectResp, err := a.getOpenIDUserProfile(tokenResp.AccessToken)
+	userInfoResp, err := a.getOpenIDUserInfo(tokenResp.AccessToken)
 	if err != nil {
 		a.e.Log.Error(err.Error())
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	expiration := time.Unix(int64(introspectResp.Exp), 0)
-	if !introspectResp.Active || expiration.Before(time.Now()) {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
+	username := userInfoResp.PreferredUsername
+	if username == "" { // No preferred username
+		if userInfoResp.Username != "" {
+			username = userInfoResp.Username
+		} else if userInfoResp.Email != "" {
+			a.e.Log.Info("No username returned from OpenID server, using email")
+			username = userInfoResp.Email
+		} else {
+			a.e.Log.Info("No email returned from OpenID server, failing login")
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			return
+		}
 	}
 
 	if !a.e.Config.Guest.GuestOnly {
-		auth.SetLoginUser(w, r, introspectResp.Username, "openid")
+		auth.SetLoginUser(w, r, username, "openid")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	user, err := a.users.GetUserByUsername(introspectResp.Username)
+	user, err := a.users.GetUserByUsername(username)
 	if err != nil {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
@@ -184,7 +183,7 @@ func (a *Auth) OpenIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	// If the session user is allowed to login with guest mode, allow them
 	if user.Can(models.BypassGuestLogin) {
-		auth.SetLoginUser(w, r, introspectResp.Username, "openid")
+		auth.SetLoginUser(w, r, username, "openid")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
@@ -204,7 +203,7 @@ func (a *Auth) redirectOpenID(w http.ResponseWriter, r *http.Request) {
 	params := url.Values{
 		"client_id":     {a.e.Config.Auth.Openid.ClientID},
 		"response_type": {"code"},
-		"scope":         {"openid"},
+		"scope":         {"openid profile email"},
 		"redirect_uri":  {fmt.Sprintf("%s/openid", a.e.Config.Core.SiteDomainName)},
 		"state":         {stateID.String()},
 	}
@@ -218,7 +217,7 @@ func (a *Auth) redirectOpenID(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 
-	authURL := fmt.Sprintf("%s/oauth2/default/v1/authorize?%s", a.e.Config.Auth.Openid.Server, params.Encode())
+	authURL := fmt.Sprintf("%s?%s", a.e.Config.Auth.Openid.AuthorizeEndoint, params.Encode())
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
@@ -254,7 +253,7 @@ func (a *Auth) buildOpenIDTokenRequest(authCode string) (*http.Request, error) {
 		"code":         {authCode},
 	}
 
-	tokenURL := fmt.Sprintf("%s/oauth2/default/v1/token", a.e.Config.Auth.Openid.Server)
+	tokenURL := a.e.Config.Auth.Openid.TokenEndoint
 	req, err := http.NewRequest("POST", tokenURL, strings.NewReader(formValues.Encode()))
 	if err != nil {
 		return nil, err
@@ -266,8 +265,8 @@ func (a *Auth) buildOpenIDTokenRequest(authCode string) (*http.Request, error) {
 	return req, nil
 }
 
-func (a *Auth) getOpenIDUserProfile(accessToken string) (*openIDIntrospectResp, error) {
-	req, err := a.buildOpenIDIntrospectRequest(accessToken)
+func (a *Auth) getOpenIDUserInfo(accessToken string) (*openIDUserInfoResp, error) {
+	req, err := a.buildOpenIDUserinfoRequest(accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("Error building OpenID introspect request: %s", err.Error())
 	}
@@ -282,29 +281,23 @@ func (a *Auth) getOpenIDUserProfile(accessToken string) (*openIDIntrospectResp, 
 		return nil, fmt.Errorf("Non 200 response while getting OpenID introspection")
 	}
 
-	var introspectResp openIDIntrospectResp
+	var userinfoResp openIDUserInfoResp
 	decoder := json.NewDecoder(resp.Body)
-	if err := decoder.Decode(&introspectResp); err != nil {
+	if err := decoder.Decode(&userinfoResp); err != nil {
 		return nil, fmt.Errorf("Error decoding OpenID introspection: %s", err.Error())
 	}
 
-	return &introspectResp, nil
+	return &userinfoResp, nil
 }
 
-func (a *Auth) buildOpenIDIntrospectRequest(accessToken string) (*http.Request, error) {
-	formValues := url.Values{
-		"token_type_hint": {"authorization_code"},
-		"token":           {accessToken},
-	}
-
-	tokenURL := fmt.Sprintf("%s/oauth2/default/v1/introspect", a.e.Config.Auth.Openid.Server)
-	req, err := http.NewRequest("POST", tokenURL, strings.NewReader(formValues.Encode()))
+func (a *Auth) buildOpenIDUserinfoRequest(accessToken string) (*http.Request, error) {
+	userInfoURL := a.e.Config.Auth.Openid.UserinfoEndpoint
+	req, err := http.NewRequest("GET", userInfoURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.SetBasicAuth(a.e.Config.Auth.Openid.ClientID, a.e.Config.Auth.Openid.ClientSecret)
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 	return req, nil
 }
