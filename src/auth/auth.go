@@ -21,7 +21,7 @@ var authFunctions = make(map[string]authenticator)
 
 // LoginUser will verify the username and password against several login methods
 // If one method succeeds, true will be returned. False otherwise.
-func LoginUser(r *http.Request, w http.ResponseWriter, users stores.UserStore) bool {
+func LoginUser(w http.ResponseWriter, r *http.Request, users stores.UserStore) bool {
 	if r.FormValue("password") == "" || r.FormValue("username") == "" {
 		return false
 	}
@@ -103,7 +103,7 @@ func IsLoggedIn(r *http.Request) bool {
 }
 
 // LogoutUser modifies the current session to mark the user as logged out.
-func LogoutUser(r *http.Request, w http.ResponseWriter) {
+func LogoutUser(w http.ResponseWriter, r *http.Request) {
 	sess := common.GetSessionFromContext(r)
 	if !sess.GetBool("loggedin") {
 		return

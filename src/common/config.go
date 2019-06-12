@@ -208,6 +208,12 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 		c.Core.JobSchedulerWakeUp = "1h"
 	}
 	c.Core.PageSize = setIntOrDefault(c.Core.PageSize, 30)
+	if c.Core.SiteDomainName != "" {
+		c.Core.SiteDomainName = strings.TrimRight(c.Core.SiteDomainName, "/")
+		if _, err := url.Parse(c.Core.SiteDomainName); err != nil {
+			return nil, errors.New("Invalid site domain name")
+		}
+	}
 
 	// Logging
 	c.Logging.Level = setStringOrDefault(c.Logging.Level, "notice")
@@ -271,6 +277,14 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 		c.Auth.Openid.Server = strings.TrimRight(c.Auth.Openid.Server, "/")
 		if _, err := url.Parse(c.Auth.Openid.Server); err != nil {
 			return nil, errors.New("Invalid OpenID server URL")
+		}
+
+		if c.Auth.Openid.ClientID == "" {
+			return nil, errors.New("OpenID server defined but no client ID configured")
+		}
+
+		if c.Auth.Openid.ClientSecret == "" {
+			return nil, errors.New("OpenID server defined but no client secret configured")
 		}
 	}
 
