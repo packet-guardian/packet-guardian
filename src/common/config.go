@@ -218,9 +218,9 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	}
 	c.Core.PageSize = setIntOrDefault(c.Core.PageSize, 30)
 	if c.Core.SiteDomainName != "" {
-		c.Core.SiteDomainName = strings.TrimRight(c.Core.SiteDomainName, "/")
-		if _, err := url.Parse(c.Core.SiteDomainName); err != nil {
-			return nil, errors.New("Invalid site domain name")
+		c.Core.SiteDomainName, err = validateURL(c.Core.SiteDomainName, "CAS server")
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -282,22 +282,30 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Auth.LDAP.Server = setStringOrDefault(c.Auth.LDAP.Server, "127.0.0.1")
 	c.Auth.LDAP.Port = setIntOrDefault(c.Auth.LDAP.Port, 389)
 
+
+		}
+
 	if c.Auth.Openid.Server != "" {
-		c.Auth.Openid.Server = strings.TrimRight(c.Auth.Openid.Server, "/")
-		if _, err := url.Parse(c.Auth.Openid.Server); err != nil {
-			return nil, errors.New("Invalid OpenID server URL")
-		}
+		if c.Core.SiteDomainName == "" {
+			fmt.Println("OpenID Connect is not available without SiteDomainName set")
+			c.Auth.Openid.Server = ""
+		} else {
+			c.Auth.Openid.Server, err = validateURL(c.Auth.Openid.Server, "OpenID server")
+			if err != nil {
+				return nil, err
+			}
 
-		if c.Auth.Openid.ClientID == "" {
-			return nil, errors.New("OpenID server defined but no client ID configured")
-		}
+			if c.Auth.Openid.ClientID == "" {
+				return nil, errors.New("OpenID server defined but no client ID configured")
+			}
 
-		if c.Auth.Openid.ClientSecret == "" {
-			return nil, errors.New("OpenID server defined but no client secret configured")
-		}
+			if c.Auth.Openid.ClientSecret == "" {
+				return nil, errors.New("OpenID server defined but no client secret configured")
+			}
 
-		if err := getOpenIDPaths(c); err != nil {
-			return nil, err
+			if err := getOpenIDPaths(c); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -383,4 +391,12 @@ func setIntOrDefault(s, v int) int {
 		return v
 	}
 	return s
+}
+
+func validateURL(path, description string) (string, error) {
+	path = strings.TrimRight(path, "/")
+	if _, err := url.Parse(path); err != nil {
+		return "", fmt.Errorf("Invalid %s URL", description)
+	}
+	return path, nil
 }
