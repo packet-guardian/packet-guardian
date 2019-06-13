@@ -5,6 +5,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -76,17 +77,16 @@ func (c *casAuthenticator) setupClient(e *common.Environment) bool {
 		URL: casURL,
 	}
 
-	if e.Config.Auth.CAS.ServiceURL != "" {
-		serviceURL, err := url.Parse(e.Config.Auth.CAS.ServiceURL)
-		if err != nil {
-			e.Log.WithFields(verbose.Fields{
-				"error":   err,
-				"url":     e.Config.Auth.CAS.ServiceURL,
-				"package": "auth:cas",
-			}).Notice("Failed to parse CAS request url, using default")
-		} else {
-			c.client.ServiceURL = serviceURL
-		}
+	serviceURLStr := fmt.Sprintf("%s/cas", e.Config.Core.SiteDomainName)
+	serviceURL, err := url.Parse(serviceURLStr)
+	if err != nil {
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"url":     serviceURLStr,
+			"package": "auth:cas",
+		}).Notice("Failed to parse CAS request url, using default")
+	} else {
+		c.client.ServiceURL = serviceURL
 	}
 
 	return true

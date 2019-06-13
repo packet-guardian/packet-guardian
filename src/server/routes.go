@@ -49,6 +49,9 @@ func LoadRoutes(e *common.Environment, stores stores.StoreCollection) http.Handl
 	openIDController := controllers.NewOpenIDController(e, stores.Users)
 	r.Handler("GET", "/openid", midStack(e, stores, http.HandlerFunc(openIDController.OpenIDHandler)))
 
+	casController := controllers.NewCASController(e, stores.Users)
+	r.Handler("GET", "/cas", midStack(e, stores, http.HandlerFunc(casController.CASHandler)))
+
 	manageController := controllers.NewManagerController(e, stores.Devices, stores.Leases)
 	r.Handler("GET", "/register", midStack(e, stores, http.HandlerFunc(manageController.RegistrationHandler)))
 	r.Handler("GET", "/manage", midStack(e, stores, mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler))))

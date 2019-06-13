@@ -121,8 +121,7 @@ type Config struct {
 			Secret  string
 		}
 		CAS struct {
-			Server     string
-			ServiceURL string
+			Server string
 		}
 		Openid struct {
 			Server           string
@@ -207,6 +206,7 @@ func NewConfig(configFile string) (conf *Config, err error) {
 }
 
 func setSensibleDefaults(c *Config) (*Config, error) {
+	var err error
 	// Anything not set here implies its zero value is the default
 
 	// Core
@@ -249,7 +249,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	// Webserver
 	c.Webserver.HTTPPort = setIntOrDefault(c.Webserver.HTTPPort, 80)
-	c.Webserver.HTTPPort = setIntOrDefault(c.Webserver.HTTPPort, 443)
+	c.Webserver.HTTPSPort = setIntOrDefault(c.Webserver.HTTPSPort, 443)
 	c.Webserver.SessionName = setStringOrDefault(c.Webserver.SessionName, "packet-guardian")
 	c.Webserver.SessionsDir = setStringOrDefault(c.Webserver.SessionsDir, "sessions")
 	c.Webserver.SessionStore = setStringOrDefault(c.Webserver.SessionStore, "filesystem")
@@ -282,8 +282,17 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Auth.LDAP.Server = setStringOrDefault(c.Auth.LDAP.Server, "127.0.0.1")
 	c.Auth.LDAP.Port = setIntOrDefault(c.Auth.LDAP.Port, 389)
 
+	c.Auth.CAS.Server, err = validateURL(c.Auth.CAS.Server, "CAS server")
+	if err != nil {
+		return nil, err
+	}
 
+	if c.Auth.CAS.Server != "" {
+		if c.Core.SiteDomainName == "" {
+			fmt.Println("CAS is not available without SiteDomainName set")
+			c.Auth.CAS.Server = ""
 		}
+	}
 
 	if c.Auth.Openid.Server != "" {
 		if c.Core.SiteDomainName == "" {
