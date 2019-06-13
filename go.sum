@@ -31,6 +31,10 @@ github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a h1:bMgpqSCUAcZfjNucx+
 github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a/go.mod h1:YzcHXKcQBjEjtgbVXioLzxVHMAYkDgoRjfb6JuVA1pA=
 github.com/packet-guardian/cas-auth v1.0.1 h1:BtgXhEa8iSmCkjzziROWUy23kZiNQcUBKjVq/up1rTk=
 github.com/packet-guardian/cas-auth v1.0.1/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
+github.com/packet-guardian/cas-auth v1.0.2 h1:0Za1dOrvwaSlcRiqCB47KYinUw8HcqZh/F9jIlZs3b0=
+github.com/packet-guardian/cas-auth v1.0.2/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
+github.com/packet-guardian/cas-auth v1.0.3 h1:3fySAiuInjyb9vZLfE56+MEYujXWEJvetrz9aWmsghY=
+github.com/packet-guardian/cas-auth v1.0.3/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
 github.com/packet-guardian/dhcp-lib v1.3.1-0.20190104170538-6e6243d987ae h1:cBIaCcEMih4VkZxlCOJGx9Xo8lRNQ19vlayn9nqo3Kc=
 github.com/packet-guardian/dhcp-lib v1.3.1-0.20190104170538-6e6243d987ae/go.mod h1:BO0VKz6xu7ztoqLk4DEyHbiDWIMjyPs5uzWPrLlGcWg=
 github.com/packet-guardian/pg-dhcp v2.0.0+incompatible h1:xNMJMhUfpztrah0ySt9eWcoGz+1vDd66F6TPF6RhL2I=

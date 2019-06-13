@@ -17,7 +17,7 @@ require (
 	github.com/lfkeitel/go-ldap-client v1.0.0
 	github.com/lfkeitel/verbose/v4 v4.0.1
 	github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a
-	github.com/packet-guardian/cas-auth v1.0.1
+	github.com/packet-guardian/cas-auth v1.0.3
 	github.com/packet-guardian/dhcp-lib v1.3.1-0.20190104170538-6e6243d987ae
 	github.com/packet-guardian/useragent v0.0.0-20181215171402-b01a15b7aeb8
 	golang.org/x/crypto v0.0.0-20190102171810-8d7daa0c54b3
