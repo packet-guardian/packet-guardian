@@ -10,20 +10,6 @@
     font-size: 1.5em;
 }
 
-button {
-    font-weight: bold;
-    padding: 5px 10px;
-    color: white;
-    border: 0;
-    background-color: #0083A8;
-    background: linear-gradient(to bottom, #0083A8, #007899);
-}
-
-.admin-btn {
-    background-color: #FF3131;
-    background: linear-gradient(to bottom, #FF3131, #EA2F2F);
-}
-
 .blacklist-icon {
     margin-right: 2px;
     color: red;

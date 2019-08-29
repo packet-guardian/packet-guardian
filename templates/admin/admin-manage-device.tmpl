@@ -29,25 +29,25 @@
             <section>
                 {{if and .canEditDevice (ne .device.ID 0)}}
                 {{if .device.Flagged}}
-                <button type="button" class="admin-btn" id="unflag-dev-btn">Unflag</button>
+                <button type="button" class="danger-btn" id="unflag-dev-btn">Unflag</button>
                 {{else}}
-                <button type="button" class="admin-btn" id="flag-dev-btn">Flag</button>
+                <button type="button" class="danger-btn" id="flag-dev-btn">Flag</button>
                 {{end}}
                 {{end}}
                 {{if .canManageBlacklist}}
                 {{if .device.IsBlacklisted}}
-                <button type="button" class="admin-btn" id="unblacklist-btn">Remove From Blacklist</button>
+                <button type="button" class="danger-btn" id="unblacklist-btn">Remove From Blacklist</button>
                 {{else}}
-                <button type="button" class="admin-btn" id="blacklist-btn">Blacklist</button>
+                <button type="button" class="danger-btn" id="blacklist-btn">Blacklist</button>
                 {{end}}
                 {{end}}
                 {{if ne .device.ID 0}}
                 {{if .canReassignDevice}}
-                <button type="button" id="reassign-btn" class="admin-btn">Reassign</button>
+                <button type="button" id="reassign-btn" class="danger-btn">Reassign</button>
                 {{end}}
-                <a href="/admin/manage/user/{{.user.Username}}" class="btn admin-btn">Device List</a>
+                <a href="/admin/manage/user/{{.user.Username}}" class="btn danger-btn">Device List</a>
                 {{end}}
-                <a href="/admin" class="btn admin-btn">Admin Dashboard</a>
+                <a href="/admin" class="btn danger-btn">Admin Dashboard</a>
             </section>
         </div>
     </form>

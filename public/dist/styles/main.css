@@ -69,7 +69,7 @@ header img {
     color: white;
 }
 
-.btn {
+.btn, button {
     display: inline-block;
     text-decoration: none;
     font-weight: bold;
@@ -77,8 +77,13 @@ header img {
     color: white;
     border: 0;
     background-color: #0083A8;
-    background: linear-gradient(to bottom, #0083A8, #007899);
+    background: linear-gradient(to bottom, #0083A8, #007292);
     white-space: nowrap;
+}
+
+.btn:hover, button:hover {
+    background-color: #007292;
+    background: linear-gradient(to bottom, #007292, #0083A8);
 }
 
 .ok-btn {
@@ -86,13 +91,23 @@ header img {
     background: linear-gradient(to bottom, rgb(0, 168, 56), rgb(0, 136, 45));
 }
 
+.ok-btn:hover {
+    background-color: rgb(0, 136, 45);
+    background: linear-gradient(to bottom, rgb(0, 136, 45), rgb(0, 168, 56));
+}
+
 .danger-btn {
-    background-color: rgb(241, 81, 81);
-    background: linear-gradient(to bottom, rgb(241, 81, 81), rgb(180, 59, 59));
+    background-color: #FF3131;
+    background: linear-gradient(to bottom, #FF3131, #EA2F2F);
+}
+
+.danger-btn:hover {
+    background-color: #EA2F2F;
+    background: linear-gradient(to bottom, #EA2F2F, #FF3131);
 }
 
 @media (max-width: 600px) {
-    .btn {
+    .btn, button {
         margin-top: 5px;
     }
 }
