@@ -1,5 +1,10 @@
-{{define "register-guest-verify"}}
-{{template "header" dict "css" (list "register") "main" . "pageTitle" "Register - Guest"}}
+{{define "pageTitle"}}Register - Guest{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "register")}}
+{{end}}
+
+{{define "content"}}
 <div class="register-box">
     <form method="POST" action="/register/guest/verify">
         <fieldset>
@@ -16,5 +21,4 @@
         </p>
     </form>
 </div>
-{{template "footer" dict "main" $}}
 {{end}}

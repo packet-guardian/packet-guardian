@@ -1,5 +1,10 @@
-{{define "report-blacklisted-devices"}}
-{{template "header" dict "css" (list "reports/blk-user") "main" . "pageTitle" "Report - Blacklisted Users"}}
+{{define "pageTitle"}}Report - Blacklisted Devices{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "reports/blk-user")}}
+{{end}}
+
+{{define "content"}}
 <div class="main-content">
     <div class="controls">
         <a href="/admin/reports" class="btn">Reports</a>
@@ -28,5 +33,4 @@
         </table>
     </div>
 </div>
-{{template "footer"}}
 {{end}}

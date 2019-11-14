@@ -1,5 +1,14 @@
-{{define "admin-user"}}
-{{template "header" dict "css" (list "admin-users") "main" . "pageTitle" "Admin - User Editor"}}
+{{define "pageTitle"}}Admin - User Editor{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "admin-users")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" (list "admin-user")}}
+{{end}}
+
+{{define "content"}}
 <div class="admin-user">
     <h2>Administration - User Editor</h2>
 
@@ -165,5 +174,4 @@
         </fieldset>
     </form>
 </div>
-{{template "footer" dict "main" $ "js" (list "admin-user")}}
 {{end}}

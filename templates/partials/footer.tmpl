@@ -6,11 +6,13 @@
         </div>
     </footer>
 
-    {{range .js}}
-    {{if ne . ""}}
-    <script type="text/javascript" src="/public/dist/js/{{.}}.min.js"></script>
-    {{end}}
-    {{end}}
+    {{block "js" .}}{{end}}
     </body>
 </html>
+{{end}}
+
+{{define "render-js"}}
+{{range .}}{{if ne . ""}}
+<script type="text/javascript" src="/public/dist/js/{{.}}.min.js"></script>
+{{end}}{{end}}
 {{end}}

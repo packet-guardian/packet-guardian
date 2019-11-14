@@ -1,5 +1,10 @@
-{{define "reports-network-pools"}}
-{{template "header" dict "css" (list "reports/dhcp-pools") "main" . "pageTitle" "Admin - DHCP Pools Stats"}}
+{{define "pageTitle"}}Report - DHCP Pools Stats{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "reports/dhcp-pools")}}
+{{end}}
+
+{{define "content"}}
 <div class="content">
     <h2>DHCP Pool Statistics</h2>
     <table class="pool-list">
@@ -36,5 +41,4 @@
         </tbody>
     </table>
 </div>
-{{template "footer"}}
 {{end}}

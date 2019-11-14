@@ -1,5 +1,10 @@
-{{define "error"}}
-{{template "header" dict "css" (list "error") "main" . "pageTitle" "Internal Server Error"}}
+{{define "pageTitle"}}Internal Server Error{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "error")}}
+{{end}}
+
+{{define "content"}}
 <div class="error">
     <h1>Oh my, an internal server error occured</h1>
 
@@ -10,5 +15,4 @@
         If the problem persists, please call your IT help desk.
     </p>
 </div>
-{{template "footer"}}
 {{end}}

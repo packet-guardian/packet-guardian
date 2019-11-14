@@ -1,5 +1,14 @@
-{{define "login"}}
-{{template "header" dict "css" (list "login") "main" . "pageTitle" "Login"}}
+{{define "pageTitle"}}Login{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "login")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" (list "login")}}
+{{end}}
+
+{{define "content"}}
 <div class="login-box">
     <form>
         <fieldset>
@@ -17,5 +26,4 @@
         </fieldset>
     </form>
 </div>
-{{template "footer" dict "main" $ "js" (list "login")}}
 {{end}}

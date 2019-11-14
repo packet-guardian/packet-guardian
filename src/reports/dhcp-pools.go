@@ -41,7 +41,7 @@ func poolReport(e *common.Environment, w http.ResponseWriter, r *http.Request, s
 		"pools": stats,
 	}
 
-	e.Views.NewView("reports-network-pools", r).Render(w, data)
+	e.Views.NewView("report-network-pools", r).Render(w, data)
 	return nil
 }
 

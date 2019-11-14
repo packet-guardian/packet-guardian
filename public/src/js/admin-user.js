@@ -194,7 +194,7 @@ $('#user-form').submit(function(e) {
     flashMessage('User saved', 'success');
     $('[name=password]').value('');
     $('[name=clear-pass]').prop('checked', false);
-    if (formData.password === -1 || formData.password === '') {
+    if (formData.password === -1) {
       $('#has-password').text('No');
     } else {
       $('#has-password').text('Yes');

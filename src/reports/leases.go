@@ -28,7 +28,7 @@ func leaseReport(e *common.Environment, w http.ResponseWriter, r *http.Request, 
 			"networks": networks,
 		}
 
-		e.Views.NewView("reports-leases-list", r).Render(w, data)
+		e.Views.NewView("report-leases-list", r).Render(w, data)
 		return nil
 	}
 
@@ -81,7 +81,7 @@ func leaseReport(e *common.Environment, w http.ResponseWriter, r *http.Request, 
 		"pageEnd":     pageEnd,
 	}
 
-	e.Views.NewView("reports-leases", r).Render(w, data)
+	e.Views.NewView("report-leases", r).Render(w, data)
 	return nil
 }
 

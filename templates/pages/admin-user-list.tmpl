@@ -1,5 +1,14 @@
-{{define "admin-user-list"}}
-{{template "header" dict "css" (list "admin-users") "main" . "pageTitle" "Admin - User Management"}}
+{{define "pageTitle"}}Admin - User Management{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "admin-users")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" (list "admin-users")}}
+{{end}}
+
+{{define "content"}}
 <div class="admin-users">
     <h2>Administration Users</h2>
 
@@ -45,5 +54,4 @@
         {{end}}
     </table>
 </div>
-{{template "footer" dict "main" $ "js" (list "admin-users")}}
 {{end}}

@@ -1,5 +1,14 @@
-{{define "register"}}
-{{template "header" dict "css" (list "register") "main" . "pageTitle" "Register"}}
+{{define "pageTitle"}}Register{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "register")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" (list "register")}}
+{{end}}
+
+{{define "content"}}
 <div id="suc-msg-auto" class="success-message start-hidden">
     <p class="instructions">
         Please disconnect your computer and reconnect to the network
@@ -67,5 +76,4 @@
         {{end}}
     </form>
 </div>
-{{template "footer" dict "main" $ "js" (list "register")}}
 {{end}}

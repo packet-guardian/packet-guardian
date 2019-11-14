@@ -1,5 +1,10 @@
-{{define "register-guest-msg"}}
-{{template "header" dict "css" (list "register") "main" . "pageTitle" "Register - Guest"}}
+{{define "pageTitle"}}Register - Guest{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "register")}}
+{{end}}
+
+{{define "content"}}
 {{if .error}}
 <div class="failure-message" style="display: block;">
 {{else}}
@@ -9,5 +14,4 @@
         {{.msg}}
     </p>
 </div>
-{{template "footer" dict "main" $}}
 {{end}}

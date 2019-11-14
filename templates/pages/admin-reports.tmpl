@@ -1,5 +1,10 @@
-{{define "admin-reports"}}
-{{template "header" dict "css" (list "admin-reports") "main" . "pageTitle" "Admin Reports"}}
+{{define "pageTitle"}}Admin - Reports{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "admin-reports")}}
+{{end}}
+
+{{define "content"}}
 <div class="admin-dash">
     <h2>Reports</h2>
     <div class="report-list">
@@ -11,5 +16,4 @@
         {{end}}
     </div>
 </div>
-{{template "footer" dict "main" $}}
 {{end}}

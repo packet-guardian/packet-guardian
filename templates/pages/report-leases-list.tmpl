@@ -1,5 +1,10 @@
-{{define "reports-leases-list"}}
-{{template "header" dict "css" (list "reports/leases") "main" . "pageTitle" "Admin - Leases"}}
+{{define "pageTitle"}}Report - Leases{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "reports/leases")}}
+{{end}}
+
+{{define "content"}}
 <div class="content">
     <h2>Lease Report</h2>
     <table class="network-list">
@@ -22,5 +27,4 @@
         </tbody>
     </table>
 </div>
-{{template "footer"}}
 {{end}}

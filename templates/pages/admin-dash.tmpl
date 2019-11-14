@@ -1,5 +1,10 @@
-{{define "admin-dash"}}
-{{template "header" dict "css" (list "admin-dash") "main" . "pageTitle" "Admin Dashboard"}}
+{{define "pageTitle"}}Admin Dashboard{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "admin-dash")}}
+{{end}}
+
+{{define "content"}}
 <div class="admin-dash">
     <h2>Administration Dashboard</h2>
     <div class="controls">
@@ -41,5 +46,4 @@
         {{end}}
     </div>
 </div>
-{{template "footer" dict "main" $}}
 {{end}}

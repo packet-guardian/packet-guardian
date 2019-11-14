@@ -1,5 +1,14 @@
-{{define "admin-manage-device"}}
-{{template "header" dict "css" (list "manage" "manage-device") "main" . "pageTitle" "Admin - Device Management"}}
+{{define "pageTitle"}}Admin - Device Management{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "manage" "manage-device")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" (list "manage-device")}}
+{{end}}
+
+{{define "content"}}
 <div class="manager">
     <form class="header-metadata">
         <input type="hidden" id="username" value="{{.user.Username}}">
@@ -159,5 +168,4 @@
         {{end}}
     </div>
 </div>
-{{template "footer" dict "main" $ "js" (list "manage-device")}}
 {{end}}

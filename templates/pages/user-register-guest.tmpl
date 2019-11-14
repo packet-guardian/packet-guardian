@@ -1,5 +1,14 @@
-{{define "register-guest"}}
-{{template "header" dict "css" (list "register") "main" . "pageTitle" "Register - Guest"}}
+{{define "pageTitle"}}Register - Guest{{end}}
+
+{{define "css"}}
+{{template "render-css" (list "register")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" (list "captcha")}}
+{{end}}
+
+{{define "content"}}
 <div class="register-box">
     <form method="POST" action="/register/guest">
         {{if .config.Guest.Enabled}}
@@ -52,5 +61,4 @@
         {{end}}
     </form>
 </div>
-{{template "footer" dict "main" $ "js" (list "captcha")}}
 {{end}}
