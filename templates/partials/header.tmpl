@@ -22,16 +22,23 @@
     </head>
     <body>
         <header>
-            <a href="/">
+            <section class="header-logo-area">
                 <div class="logo-wrapper">
-                    <img src="/public/dist/images/logo.png">
+                    <a href="/"><img src="/public/dist/images/logo.png"></a>
                 </div>
                 {{if ne .main.config.Core.SiteTitle ""}}
                 <div class="header-title">
-                    {{.main.config.Core.SiteTitle}}
+                    <a href="/">{{.main.config.Core.SiteTitle}}</a>
                 </div>
                 {{end}}
-            </a>
+            </section>
+
+            {{if ne .main.sessionUser.Username ""}}
+            <section class="header-user-profile">
+                <span>{{.main.sessionUser.Username}}</span>
+                <a href="/logout" class="btn">Logout</a>
+            </section>
+            {{end}}
         </header>
         <div class="main">
             <div id="flashDiv" class="flash">

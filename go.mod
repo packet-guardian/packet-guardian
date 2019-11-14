@@ -27,3 +27,5 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/tylerb/graceful.v1 v1.2.15
 )
+
+go 1.13

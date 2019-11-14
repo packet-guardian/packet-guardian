@@ -14,11 +14,15 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/bindata"
 )
 
+type DataFunc func(*http.Request) interface{}
+
 // Views is a collection of templates
 type Views struct {
-	source string
-	t      *template.Template
-	e      *Environment
+	source            string
+	t                 *template.Template
+	e                 *Environment
+	injectedData      map[string]interface{}
+	injectedDataFuncs map[string]DataFunc
 }
 
 // NewViews reads a set of templates from a directory and loads them
@@ -44,9 +48,11 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 	}
 
 	v = &Views{
-		source: basepath,
-		t:      tmpl,
-		e:      e,
+		source:            basepath,
+		t:                 tmpl,
+		e:                 e,
+		injectedData:      make(map[string]interface{}),
+		injectedDataFuncs: make(map[string]DataFunc),
 	}
 	return v, nil
 }
@@ -116,11 +122,23 @@ func loadTemplates(tmpl *template.Template, dir string) error {
 // NewView returns a template associated with a request.
 func (v *Views) NewView(view string, r *http.Request) *View {
 	return &View{
-		name: view,
-		t:    v.t,
-		e:    v.e,
-		r:    r,
+		name:              view,
+		t:                 v.t,
+		e:                 v.e,
+		r:                 r,
+		injectedData:      v.injectedData,
+		injectedDataFuncs: v.injectedDataFuncs,
 	}
+}
+
+// InjectData will always inject a specific key, value pair into every template
+func (v *Views) InjectData(key string, val interface{}) {
+	v.injectedData[key] = val
+}
+
+// InjectData will always inject a specific key, value pair into every template
+func (v *Views) InjectDataFunc(key string, fn DataFunc) {
+	v.injectedDataFuncs[key] = fn
 }
 
 // Reload replaces the Views object with a new one using the same source
@@ -149,10 +167,12 @@ func (v *Views) RenderError(w http.ResponseWriter, r *http.Request, data map[str
 
 // View represents a template associated with a specific request.
 type View struct {
-	name string
-	t    *template.Template
-	e    *Environment
-	r    *http.Request
+	name              string
+	t                 *template.Template
+	e                 *Environment
+	r                 *http.Request
+	injectedData      map[string]interface{}
+	injectedDataFuncs map[string]DataFunc
 }
 
 // Render executes the template and writes it to w. This function will also
@@ -174,8 +194,15 @@ func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
 		}
 	}
 
-	data["config"] = v.e.Config
 	data["flashMessage"] = flash
+
+	for key, val := range v.injectedData {
+		data[key] = val
+	}
+	for key, fn := range v.injectedDataFuncs {
+		data[key] = fn(v.r)
+	}
+
 	if err := v.t.ExecuteTemplate(w, v.name, data); err != nil {
 		v.e.Log.WithFields(verbose.Fields{
 			"template": v.name,

@@ -3,14 +3,13 @@ h2 {
 }
 
 .sub {
-    margin-top: .5em;
+    margin-top: 0.5em;
     text-align: center;
 }
 
 .controls {
     margin-left: 5px;
-    display: flex;
-    justify-content: space-between;
+    text-align: right;
 }
 
 button {
@@ -18,8 +17,8 @@ button {
     padding: 5px 10px;
     color: white;
     border: 0;
-    background-color: #0083A8;
-    background: linear-gradient(to bottom, #0083A8, #007899);
+    background-color: #0083a8;
+    background: linear-gradient(to bottom, #0083a8, #007899);
 }
 
 .no-devices {

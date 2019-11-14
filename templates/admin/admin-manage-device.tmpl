@@ -10,7 +10,7 @@
                 <span class="username unregistered">UNREGISTERED</span>
                 {{else}}
                 <span class="username">
-                    {{.user.Username}}
+                    <a href="/admin/manage/user/{{.user.Username}}" class="no-color-link">{{.user.Username}}</a>
                     {{if .canEditUser}}
                     <a href="/admin/users/{{.user.Username}}" class="no-color-link"><span class="fa fa-pencil edit-property"></span></a>
                     {{end}}
@@ -21,19 +21,8 @@
         </div>
         <div class="controls">
             <section>
-                {{if and .canDeleteDevice (ne .device.ID 0)}}
-                <button type="button" id="delete-btn">Delete</button>
-                {{end}}
-                <a href="/logout" class="btn">Logout</a>
             </section>
             <section>
-                {{if and .canEditDevice (ne .device.ID 0)}}
-                {{if .device.Flagged}}
-                <button type="button" class="danger-btn" id="unflag-dev-btn">Unflag</button>
-                {{else}}
-                <button type="button" class="danger-btn" id="flag-dev-btn">Flag</button>
-                {{end}}
-                {{end}}
                 {{if .canManageBlacklist}}
                 {{if .device.IsBlacklisted}}
                 <button type="button" class="danger-btn" id="unblacklist-btn">Remove From Blacklist</button>
@@ -41,13 +30,24 @@
                 <button type="button" class="danger-btn" id="blacklist-btn">Blacklist</button>
                 {{end}}
                 {{end}}
+
                 {{if ne .device.ID 0}}
+                {{if .canEditDevice}}
+                {{if .device.Flagged}}
+                <button type="button" class="danger-btn" id="unflag-dev-btn">Unflag</button>
+                {{else}}
+                <button type="button" class="danger-btn" id="flag-dev-btn">Flag</button>
+                {{end}}
+                {{end}}
+
                 {{if .canReassignDevice}}
                 <button type="button" id="reassign-btn" class="danger-btn">Reassign</button>
                 {{end}}
-                <a href="/admin/manage/user/{{.user.Username}}" class="btn danger-btn">Device List</a>
+
+                {{if .canDeleteDevice}}
+                <button type="button" id="delete-btn" class="danger-btn">Delete</button>
                 {{end}}
-                <a href="/admin" class="btn danger-btn">Admin Dashboard</a>
+                {{end}}
             </section>
         </div>
     </form>

@@ -1,25 +1,27 @@
-html, body {
+html,
+body {
     height: 100%;
 }
 
 body {
     color: black;
-    background-color: #EDEDED;
-    background: radial-gradient(circle, #FFFFFF, #EDEDED);
+    background-color: #ededed;
+    background: radial-gradient(circle, #ffffff, #ededed);
 }
 
 header {
     padding-bottom: 1em;
     background-color: #303030;
     background: linear-gradient(to bottom, #454545, #303030);
+    display: flex;
+    justify-content: space-between;
 }
 
 header .header-title {
     font-size: 2em;
     font-weight: bold;
     color: white;
-    margin-left: 5%;
-    margin-top: 10px;
+    padding-left: 5%;
 }
 
 header a {
@@ -27,17 +29,53 @@ header a {
     text-decoration: none;
 }
 
-header .logo-wrapper {
-    display: inline-block;
-    height: 100px;
-    margin-left: 5%;
-    /*background-color: white;*/
-}
-
 header img {
     padding: 10px;
     height: 80px;
     vertical-align: middle;
+}
+
+@media (min-width: 900px) {
+    header {
+        position: relative;
+        height: 100px;
+        padding-bottom: 0;
+    }
+
+    header .header-logo-area {
+        display: flex;
+        margin-left: 5%;
+    }
+
+    header .header-title {
+        font-size: 2em;
+        font-weight: bold;
+        color: white;
+        vertical-align: middle;
+        padding-left: 2%;
+        white-space: nowrap;
+        height: 100px;
+        line-height: 100px;
+    }
+
+    .main {
+        min-height: calc(100% - 140px);
+    }
+}
+
+header .header-user-profile {
+    color: white;
+    margin-right: 2rem;
+    padding-top: 35px;
+}
+
+header .header-user-profile a {
+    margin-left: 1rem;
+}
+
+header .header-user-profile > span {
+    font-weight: bold;
+    font-size: 1.25rem;
 }
 
 .clearfix {
@@ -60,30 +98,32 @@ header img {
 }
 
 .flashSuccess {
-    background-color: #72F786;
+    background-color: #72f786;
     color: black;
 }
 
 .flashFailure {
-    background-color: #EC7A7A;
+    background-color: #ec7a7a;
     color: white;
 }
 
-.btn, button {
+.btn,
+button {
     display: inline-block;
     text-decoration: none;
     font-weight: bold;
     padding: 5px 10px;
     color: white;
     border: 0;
-    background-color: #0083A8;
-    background: linear-gradient(to bottom, #0083A8, #007292);
+    background-color: #0083a8;
+    background: linear-gradient(to bottom, #0083a8, #007292);
     white-space: nowrap;
 }
 
-.btn:hover, button:hover {
+.btn:hover,
+button:hover {
     background-color: #007292;
-    background: linear-gradient(to bottom, #007292, #0083A8);
+    background: linear-gradient(to bottom, #007292, #0083a8);
 }
 
 .ok-btn {
@@ -97,17 +137,18 @@ header img {
 }
 
 .danger-btn {
-    background-color: #FF3131;
-    background: linear-gradient(to bottom, #FF3131, #EA2F2F);
+    background-color: #ff3131;
+    background: linear-gradient(to bottom, #ff3131, #ea2f2f);
 }
 
 .danger-btn:hover {
-    background-color: #EA2F2F;
-    background: linear-gradient(to bottom, #EA2F2F, #FF3131);
+    background-color: #ea2f2f;
+    background: linear-gradient(to bottom, #ea2f2f, #ff3131);
 }
 
 @media (max-width: 600px) {
-    .btn, button {
+    .btn,
+    button {
         margin-top: 5px;
     }
 }
@@ -136,7 +177,8 @@ header img {
     display: block;
 }
 
-footer, .main:after {
+footer,
+.main:after {
     height: 40px;
 }
 
@@ -158,25 +200,6 @@ footer .copyright {
 }
 
 @media (min-width: 900px) {
-    header {
-        position: relative;
-        height: 100px;
-        padding-bottom: 0;
-    }
-
-    header .header-title {
-        display: inline-block;
-        font-size: 2em;
-        font-weight: bold;
-        color: white;
-        vertical-align: middle;
-        margin-left: 2%;
-    }
-
-    header .logo-wrapper {
-        height: 100%;
-    }
-
     .main {
         min-height: calc(100% - 140px);
     }
