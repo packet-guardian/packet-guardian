@@ -4,9 +4,11 @@
         "doc": "docs"
     },
     "devDependencies": {
+        "@babel/core": "^7.7.2",
+        "@babel/preset-env": "^7.7.1",
         "babel-cli": "^6.26.0",
         "babel-core": "^6.0.0",
-        "babel-loader": "^7.1.2",
+        "babel-loader": "^8.0.6",
         "babel-preset-env": "^1.6.1",
         "clean-webpack-plugin": "^0.1.17",
         "csslint": "^1.0.5",
