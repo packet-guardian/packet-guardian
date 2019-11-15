@@ -30,4 +30,10 @@ nav a:hover {
 
 .admin-main {
     margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.main {
+    padding-top: 0;
+    padding-bottom: 0;
 }
