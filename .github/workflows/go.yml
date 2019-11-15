@@ -29,11 +29,14 @@ jobs:
       - name: Install NPM deps
         run: yarn install
 
-      - name: Download go-bindata tool
-        run: env GO111MODULE=off go get -u -v github.com/go-bindata/go-bindata/...
+      - name: Enforce Javascript lints
+        run: yarn run lint
 
       - name: Test and Build Javascript
-        run: make yarn
+        run: yarn run build:prod
+
+      - name: Download go-bindata tool
+        run: env GO111MODULE=off go get -u -v github.com/go-bindata/go-bindata/...
 
       - name: Test and Build Server
         run: env PATH="$HOME/go/bin:$PATH" make bindata test build

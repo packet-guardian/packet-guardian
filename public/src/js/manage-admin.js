@@ -1,58 +1,68 @@
-import $ from 'jLib';
-import api from 'pg-api';
-import flashMessage from 'flash';
-import 'manage';
-import 'device-list';
-import { ModalPrompt, ModalConfirm } from 'modals';
+import $ from "jLib";
+import api from "pg-api";
+import flashMessage from "flash";
+import "manage";
+import "device-list";
+import { ModalPrompt, ModalConfirm } from "modals";
 
 // Event handlers
-$('[name=blacklist-sel]').change(function(e) {
+$("[name=blacklist-sel]").change(function(e) {
   var self = $(e.target);
   var cmodal = new ModalConfirm();
   switch (self.value()) {
-    case 'username':
-      var isBl = (self.data('blacklisted') === 'true');
+    case "username":
+      var isBl = self.data("blacklisted") === "true";
       if (isBl) {
-        cmodal.show('Remove username from blacklist?',
-          function() { blacklistUsername(true); });
+        cmodal.show("Remove username from blacklist?", function() {
+          blacklistUsername(true);
+        });
       } else {
-        cmodal.show('Add username to blacklist?',
-          function() { blacklistUsername(false); });
+        cmodal.show("Add username to blacklist?", function() {
+          blacklistUsername(false);
+        });
       }
       break;
-    case 'black-all':
-      cmodal.show("Add all user's devices to blacklist?", addDevicesToBlacklist);
+    case "black-all":
+      cmodal.show(
+        "Add all user's devices to blacklist?",
+        addDevicesToBlacklist
+      );
       break;
-    case 'unblack-all':
-      cmodal.show("Remove all user's devices from blacklist?", removeDevicesFromBlacklist);
+    case "unblack-all":
+      cmodal.show(
+        "Remove all user's devices from blacklist?",
+        removeDevicesFromBlacklist
+      );
       break;
-    case 'black-sel':
-      cmodal.show("Add selected user's devices to blacklist?",
-        function() { blacklistSelectedDevices(true); });
+    case "black-sel":
+      cmodal.show("Add selected user's devices to blacklist?", function() {
+        blacklistSelectedDevices(true);
+      });
       break;
-    case 'unblack-sel':
-      cmodal.show("Remove selected user's devices from blacklist?",
-        function() { blacklistSelectedDevices(false); });
+    case "unblack-sel":
+      cmodal.show("Remove selected user's devices from blacklist?", function() {
+        blacklistSelectedDevices(false);
+      });
       break;
   }
-  self.value('');
+  self.value("");
 });
 
-$('[name=reassign-selected-btn]').click(function() {
+$("[name=reassign-selected-btn]").click(function() {
   var pmodal = new ModalPrompt();
   pmodal.show("New owner's username:", reassignSelectedDevices);
 });
 
 // Event callbacks
-var blacklistSelect = $('[name=blacklist-sel]');
+var blacklistSelect = $("[name=blacklist-sel]");
 if (blacklistSelect.length !== 0) {
-  if (blacklistSelect.data('blacklisted') === 'true') {
-    $('[name=black-user-option]').text('Remove User');
+  if (blacklistSelect.data("blacklisted") === "true") {
+    $("[name=black-user-option]").text("Remove User");
   }
 }
 
 function getUsername(encode) {
-  var u = $('[name=username]').value();
+  var u = $("[name=username]").value();
   if (encode) {
     return encodeURIComponent(u);
   }
@@ -60,8 +70,12 @@ function getUsername(encode) {
 }
 
 function blacklistUsername(isBlacklisted) {
-  var success = function() { location.reload(); };
-  var error = function() { flashMessage('Error blacklisting user'); };
+  var success = function() {
+    location.reload();
+  };
+  var error = function() {
+    flashMessage("Error blacklisting user");
+  };
 
   if (isBlacklisted) {
     api.unblacklistUser(getUsername(), success, error);
@@ -71,7 +85,7 @@ function blacklistUsername(isBlacklisted) {
 }
 
 function getCheckedDevices() {
-  var checked = $('.device-checkbox:checked');
+  var checked = $(".device-checkbox:checked");
   var devices = [];
   for (var i = 0; i < checked.length; i++) {
     devices.push(checked[i].value);
@@ -117,7 +131,9 @@ function reassignSelectedDevices(username) {
     return;
   }
 
-  api.reassignDevices(username, devices, reloadPage, () => flashMessage('Error reassigning devices'));
+  api.reassignDevices(username, devices, reloadPage, () =>
+    flashMessage("Error reassigning devices")
+  );
 }
 
 function reloadPage() {
@@ -125,9 +141,9 @@ function reloadPage() {
 }
 
 function errorAdding() {
-  flashMessage('Error blacklisting devices');
+  flashMessage("Error blacklisting devices");
 }
 
 function errorRemoving() {
-  flashMessage('Error removing devices from blacklist');
+  flashMessage("Error removing devices from blacklist");
 }

@@ -3,20 +3,20 @@
  * This library is extremely light-weight and only adds what is necessary for convenience.
  *
  * Licensed under the MIT license. Text available online: https://opensource.org/licenses/MIT
-**/
+ **/
 var JSLib = function(params) {
   return new JSLib.fn.JSLibInit(params);
 };
 
-JSLib.noop = function() { };
+JSLib.noop = function() {};
 
 // Document ready
 JSLib.onReady = function(fn) {
-  if (document.readyState !== 'loading') {
+  if (document.readyState !== "loading") {
     fn(); // DOM is already ready
     return;
   }
-  document.addEventListener('DOMContentLoaded', fn);
+  document.addEventListener("DOMContentLoaded", fn);
 };
 
 JSLib.fn = JSLib.prototype = {
@@ -47,14 +47,14 @@ JSLib.fn = JSLib.prototype = {
           const tg = ev.target;
           let cs = null;
 
-          if (typeof dgt !== 'string') {
+          if (typeof dgt !== "string") {
             return dgt(ev, tg);
           }
 
           nme = dgt.substr(1);
-          if (dgt[0] === '.') {
-            cs = tg.className.split(' ');
-          } else if (dgt[0] === '#') {
+          if (dgt[0] === ".") {
+            cs = tg.className.split(" ");
+          } else if (dgt[0] === "#") {
             cs = tg.id;
           } else {
             cs = tg.nodeName.toLowerCase();
@@ -80,13 +80,13 @@ JSLib.fn = JSLib.prototype = {
     if (document.attachEvent) {
       return function(evt, fn) {
         return this.forEach(function(el) {
-          el.attachEvent('on' + evt, fn);
+          el.attachEvent("on" + evt, fn);
         });
       };
     }
     return function(evt, fn) {
       return this.forEach(function(el) {
-        el['on' + evt] = fn;
+        el["on" + evt] = fn;
       });
     };
   })(),
@@ -102,24 +102,36 @@ JSLib.fn = JSLib.prototype = {
     if (document.detachEvent) {
       return function(evt, fn) {
         return this.forEach(function(el) {
-          el.detachEvent('on' + evt, fn);
+          el.detachEvent("on" + evt, fn);
         });
       };
     }
     return function(evt) {
       return this.forEach(function(el) {
-        el['on' + evt] = null;
+        el["on" + evt] = null;
       });
     };
   })(),
 
   // Event handling - Convenience functions
-  click: function(dgt, fn) { this.on('click', dgt, fn); },
-  submit: function(dgt, fn) { this.on('submit', dgt, fn); },
-  change: function(dgt, fn) { this.on('change', dgt, fn); },
-  keyup: function(dgt, fn) { this.on('keyup', dgt, fn); },
-  keydown: function(dgt, fn) { this.on('keydown', dgt, fn); },
-  keypress: function(dgt, fn) { this.on('keypress', dgt, fn); },
+  click: function(dgt, fn) {
+    this.on("click", dgt, fn);
+  },
+  submit: function(dgt, fn) {
+    this.on("submit", dgt, fn);
+  },
+  change: function(dgt, fn) {
+    this.on("change", dgt, fn);
+  },
+  keyup: function(dgt, fn) {
+    this.on("keyup", dgt, fn);
+  },
+  keydown: function(dgt, fn) {
+    this.on("keydown", dgt, fn);
+  },
+  keypress: function(dgt, fn) {
+    this.on("keypress", dgt, fn);
+  },
 
   // Element property functions
   text: function(text) {
@@ -203,7 +215,7 @@ JSLib.fn = JSLib.prototype = {
   removeClass: function(className) {
     if (className === undefined) {
       return this.forEach(function(el) {
-        el.removeAttribute('class');
+        el.removeAttribute("class");
       });
     }
     return this.forEach(function(el) {
@@ -233,13 +245,13 @@ JSLib.fn = JSLib.prototype = {
 
   show: function() {
     return this.forEach(function(el) {
-      el.style.display = 'block';
+      el.style.display = "block";
     });
   },
 
   hide: function() {
     return this.forEach(function(el) {
-      el.style.display = 'none';
+      el.style.display = "none";
     });
   },
 
@@ -255,30 +267,30 @@ JSLib.fn = JSLib.prototype = {
   },
 
   fadeIn: function(speed, callback) {
-    this.fadeGeneric(speed, callback, 'in');
+    this.fadeGeneric(speed, callback, "in");
   },
 
   fadeOut: function(speed, callback) {
-    this.fadeGeneric(speed, callback, 'out');
+    this.fadeGeneric(speed, callback, "out");
   },
 
   fadeGeneric: function(speed, callback, inOut) {
-    if (inOut !== 'in' && inOut !== 'out') {
+    if (inOut !== "in" && inOut !== "out") {
       console.error("Fade type must be either 'in' or 'out'");
       return;
     }
     callback = callback || JSLib.noop;
-    let opacity = (inOut === 'in') ? 0 : 1;
+    let opacity = inOut === "in" ? 0 : 1;
     let self = this;
 
     self.forEach(function(el) {
       el.style.opacity = opacity;
-      el.style.filter = '';
+      el.style.filter = "";
     });
 
     let last = +new Date();
     const tick = () => {
-      if (inOut === 'in') {
+      if (inOut === "in") {
         opacity += (new Date() - last) / speed;
       } else {
         opacity -= (new Date() - last) / speed;
@@ -290,7 +302,7 @@ JSLib.fn = JSLib.prototype = {
 
       last = +new Date();
 
-      if ((inOut === 'out' && opacity > 0) || (inOut === 'in' && opacity < 1)) {
+      if ((inOut === "out" && opacity > 0) || (inOut === "in" && opacity < 1)) {
         requestAnimationFrame(tick);
       } else {
         return callback();
@@ -300,14 +312,14 @@ JSLib.fn = JSLib.prototype = {
   }
 };
 
-const JSLibInit = JSLib.fn.JSLibInit = function(s) {
+const JSLibInit = (JSLib.fn.JSLibInit = function(s) {
   var els, chr, i, cl;
   if (!s) {
     return this;
   }
-  if (typeof s === 'string') {
+  if (typeof s === "string") {
     chr = s.substr(1);
-    if (s[0] === '#') {
+    if (s[0] === "#") {
       els = [document.getElementById(chr)];
     } else {
       els = document.querySelectorAll(s);
@@ -325,7 +337,7 @@ const JSLibInit = JSLib.fn.JSLibInit = function(s) {
   }
   this.length = cl;
   return this;
-};
+});
 
 JSLibInit.prototype = JSLib.fn;
 
@@ -367,17 +379,18 @@ JSLib.ajax = function(options) {
   options = checkAjaxSettings(options);
 
   const xhr = new XMLHttpRequest();
-  let xhrURL = '';
+  let xhrURL = "";
 
-  xhrURL = (options.params === '') ? options.url : options.url + '?' + options.params;
+  xhrURL =
+    options.params === "" ? options.url : options.url + "?" + options.params;
   xhr.open(options.method, xhrURL, true);
-  xhr.setRequestHeader('Content-Type', options.contentType);
+  xhr.setRequestHeader("Content-Type", options.contentType);
   for (var key in options.headers) {
     if (options.headers.hasOwnProperty(key)) {
       xhr.setRequestHeader(key, options.headers[key]);
     }
   }
-  xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+  xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
   xhr.onreadystatechange = function() {
     if (this.readyState === 4) {
       if (this.status >= 200 && this.status < 400) {
@@ -391,26 +404,28 @@ JSLib.ajax = function(options) {
 };
 
 JSLib.params = function(data) {
-  let dataStr = '';
+  let dataStr = "";
   let dataParts = [];
-  let key = '';
-  if (typeof data === 'string') {
+  let key = "";
+  if (typeof data === "string") {
     return data;
   }
-  if (typeof data === 'object') {
+  if (typeof data === "object") {
     for (key in data) {
       if (data.hasOwnProperty(key)) {
-        dataParts.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]));
+        dataParts.push(
+          encodeURIComponent(key) + "=" + encodeURIComponent(data[key])
+        );
       }
     }
-    dataStr = dataParts.join('&');
+    dataStr = dataParts.join("&");
   }
   return dataStr;
 };
 
 JSLib.get = function(url, data, success, error) {
   JSLib.ajax({
-    method: 'GET',
+    method: "GET",
     url: url,
     params: JSLib.params(data),
     success: success,
@@ -420,7 +435,7 @@ JSLib.get = function(url, data, success, error) {
 
 JSLib.post = function(url, data, success, error) {
   JSLib.ajax({
-    method: 'POST',
+    method: "POST",
     url: url,
     data: JSLib.params(data),
     success: success,
@@ -430,26 +445,26 @@ JSLib.post = function(url, data, success, error) {
 
 function checkAjaxSettings(options) {
   if (!options.method) {
-    options.method = 'GET';
+    options.method = "GET";
   }
   options.method.toUpperCase();
   if (!options.url) {
-    options.url = '';
+    options.url = "";
   }
   if (!options.data) {
-    options.data = '';
+    options.data = "";
   }
-  if (typeof options.data !== 'string') {
+  if (typeof options.data !== "string") {
     options.data = JSLib.params(options.data);
   }
   if (!options.params) {
-    options.params = '';
+    options.params = "";
   }
-  if (typeof options.params !== 'string') {
+  if (typeof options.params !== "string") {
     options.params = JSLib.params(options.params);
   }
   if (!options.contentType) {
-    options.contentType = 'application/x-www-form-urlencoded; charset=UTF-8';
+    options.contentType = "application/x-www-form-urlencoded; charset=UTF-8";
   }
   if (!options.success) {
     options.success = JSLib.noop;
@@ -469,7 +484,10 @@ function removeClass(el, className) {
   if (el.classList) {
     el.classList.remove(className);
   } else {
-    el.className = el.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
+    el.className = el.className.replace(
+      new RegExp("(^|\\b)" + className.split(" ").join("|") + "(\\b|$)", "gi"),
+      " "
+    );
   }
 }
 
@@ -477,7 +495,7 @@ function addClass(el, className) {
   if (el.classList) {
     el.classList.add(className);
   } else {
-    el.className += ' ' + className;
+    el.className += " " + className;
   }
 }
 
@@ -485,7 +503,7 @@ function hasClass(el, className) {
   if (el.classList) {
     return el.classList.contains(className);
   } else {
-    return (el.className.indexOf(className) !== -1);
+    return el.className.indexOf(className) !== -1;
   }
 }
 

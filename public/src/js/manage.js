@@ -1,3 +1,3 @@
-import 'device-list';
-import 'manage';
-import 'flash';
+import "device-list";
+import "manage";
+import "flash";
