@@ -8,13 +8,6 @@
 <div class="admin-dash">
     <h2>Administration Dashboard</h2>
     <div class="controls">
-        <nav>
-            {{if .canViewUsers}}
-            <a href="/admin/users" class="btn">Manage Users</a>
-            {{end}}
-            <a href="/admin/reports" class="btn">Reports</a>
-        </nav>
-
         <div class="search-box">
             <form method="GET" action="/admin/search">
                 <input type="text" name="q" placeholder="Search" autofocus="autofocus">

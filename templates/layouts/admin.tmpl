@@ -1,11 +1,24 @@
+{{define "layout-css"}}
+{{template "render-css" (list "admin-main")}}
+{{end}}
+
 {{define "admin-layout"}}
 {{template "header" .}}
-<aside>
-    Side menu
-</aside>
+<main>
+    <nav>
+        <span>Admin Console</span>
 
-<section>
-    {{template "content" .}}
-</section>
+        <a href="/">Dashboard</a>
+        <a href="/admin/reports">Reports</a>
+
+        {{if .canViewUsers}}
+        <a href="/admin/users">Manage Users</a>
+        {{end}}
+    </nav>
+
+    <section class="admin-main">
+        {{template "content" .}}
+    </section>
+</main>
 {{template "footer" .}}
 {{end}}

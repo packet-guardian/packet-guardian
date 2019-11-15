@@ -131,6 +131,9 @@ func setupEnvironment() *common.Environment {
 	e.Views.InjectDataFunc("sessionUser", func(r *http.Request) interface{} {
 		return models.GetUserFromContext(r)
 	})
+	e.Views.InjectDataFunc("canViewUsers", func(r *http.Request) interface{} {
+		return models.GetUserFromContext(r).Can(models.ViewUsers)
+	})
 
 	return e
 }

@@ -320,7 +320,8 @@ const JSLibInit = (JSLib.fn.JSLibInit = function(s) {
   if (typeof s === "string") {
     chr = s.substr(1);
     if (s[0] === "#") {
-      els = [document.getElementById(chr)];
+      const elem = document.getElementById(chr);
+      els = elem ? [elem] : [];
     } else {
       els = document.querySelectorAll(s);
     }

@@ -36,7 +36,13 @@ function flashMessage(text, type) {
 
 function checkAndFlash(element) {
   "use strict";
-  var flashMsg = $(element).html();
+  const flashElm = $(element);
+  console.dir(flashElm);
+  if (flashElm.length === 0) {
+    return;
+  }
+
+  var flashMsg = flashElm.html();
   if (flashMsg !== "") {
     flashMessage(flashMsg);
   }
