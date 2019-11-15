@@ -121,6 +121,11 @@ button:hover {
     background-color: #006885;
 }
 
+.btn:focus,
+button:focus {
+    outline: 1px dotted black;
+}
+
 .ok-btn {
     background-color: rgb(0, 168, 56);
 }

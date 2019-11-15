@@ -29,91 +29,49 @@
     </div>
     {{end}}
 
-    {{range .main.devices}}
-    <a name="{{.ID}}"></a>
-
-    <div class="device-header {{if .IsBlacklisted}}blacklisted{{else}}good-standing{{end}}" data-device-id="{{.ID}}">
-        {{if or $.main.canDeleteDevice $.main.canEditDevice $.main.canReassignDevice $.main.canManageBlacklist}}
-        <div class="device-check-select device-info-check">
-            <input type="checkbox" value="{{.MAC}}" class="device-checkbox">
-        </div>
+    <table>
+        <thead>
+            <tr>
+                <th>
+                    <label class="device-check">
+                        <input type="checkbox" id="select-all-checkbox">
+                        <span class="checkmark device-checkbox" id="select-all"></span>
+                    </label>
+                </th>
+                <th>MAC Address</th>
+                <th>Description</th>
+                <th>Last Seen</th>
+                <th>Registered</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{range .main.devices}}
+            <tr class="{{if .IsBlacklisted}}blacklisted{{end}}">
+                <td class="cell-check-select">
+                    <label class="device-check">
+                        <input type="checkbox" class="device-checkbox" value="{{.MAC}}">
+                        <span class="checkmark device-checkbox-target"></span>
+                    </label>
+                </td>
+                <td>
+                    <span id="device-{{.ID}}-mac">
+                    {{if $.linkMac}}
+                    <a href="/admin/manage/device/{{urlquery .MAC}}">{{.MAC}}</a>
+                    {{else}}
+                    {{.MAC}}
+                    {{end}}
+                    </span>
+                </td>
+                <td>
+                    <span id="device-{{.ID}}-desc">{{.Description}}</span>
+                    <a class="fa fa-pencil edit-dev-desc" tabindex="0" aria-role="button" data-device="{{.ID}}" href="#" title="Rename"></a>
+                </td>
+                <td>{{.LastSeen.Format "2006-01-02 15:04"}}</td>
+                <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>
+            </tr>
         {{end}}
-
-        <div class="device-info">
-            <div class="device-info-label">MAC Address</div>
-            {{if $.linkMac}}
-            <div class="device-info-text" id="device-{{.ID}}-mac"><a href="/admin/manage/device/{{urlquery .MAC}}">{{.MAC}}</a></div>
-            {{else}}
-            <div class="device-info-text" id="device-{{.ID}}-mac">{{.MAC}}</div>
-            {{end}}
-        </div>
-
-        <div class="device-info">
-            <div class="device-info-label">Description <i class="fa fa-pencil edit-dev-desc" aria-hidden="true" data-device="{{.ID}}"></i></div>
-            <div class="device-info-text" id="device-{{.ID}}-desc">{{.Description}}</div>
-        </div>
-
-        <div class="device-info">
-            <div class="device-info-label">Last Seen</div>
-            <div class="device-info-text">{{.LastSeen.Format "2006-01-02 15:04"}}</div>
-        </div>
-    </div>
-
-    <div class="device-body" id="device-body-{{.ID}}">
-        <div class="device-body-inner">
-            {{if .IsBlacklisted}}
-            <div class="device-info blacklisted">
-                <div class="device-info-label">Blacklisted</div>
-                <div class="device-info-text">Yes</div>
-            </div>
-            {{end}}
-
-            <div class="device-info">
-                <div class="device-info-label">Platform</div>
-                {{if eq .Platform ""}}
-                <div class="device-info-text">N/A</div>
-                {{else}}
-                <div class="device-info-text">{{.Platform}}</div>
-                {{end}}
-            </div>
-
-            <div class="device-info">
-                <div class="device-info-label">Date Registered</div>
-                <div class="device-info-text">{{.DateRegistered.Format "2006-01-02 15:04"}}</div>
-            </div>
-
-            <div class="device-info">
-                <div class="device-info-label">Registered From</div>
-                <div class="device-info-text">{{.RegisteredFrom.String}}</div>
-            </div>
-
-            <div class="device-info">
-                <div class="device-info-label">Expires</div>
-                {{if eq .Expires.Unix 0}}
-                <div class="device-info-text">Never</div>
-                {{else if eq .Expires.Unix 1}}
-                <div class="device-info-text">Rolling</div>
-                {{else}}
-                <div class="device-info-text">{{.Expires.Format "2006-01-02 15:04"}}</div>
-                {{end}}
-            </div>
-
-            <div class="device-info">
-                <div class="device-info-label">User Agent</div>
-                <div class="device-info-text truncate"><span title="{{.UserAgent}}">{{.UserAgent}}</span></div>
-            </div>
-
-            <div class="device-info">
-                <div class="device-info-label">Current Lease</div>
-                {{with .GetCurrentLease}}
-                <div class="device-info-text">{{.IP.String}}</div>
-                {{else}}
-                <div class="device-info-text">N/A</div>
-                {{end}}
-            </div>
-        </div>
-    </div>
-    {{end}}
+        </tbody>
+    </table>
 
     {{if .main.usePages}}
     <div class="device-pager device-pager-bottom">

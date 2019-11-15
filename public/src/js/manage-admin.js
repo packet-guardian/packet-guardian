@@ -2,7 +2,6 @@ import $ from "jLib";
 import api from "pg-api";
 import flashMessage from "flash";
 import "manage";
-import "device-list";
 import { ModalPrompt, ModalConfirm } from "modals";
 
 // Event handlers

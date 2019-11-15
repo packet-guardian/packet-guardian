@@ -32,12 +32,8 @@ function initManage() {
     );
   });
 
-  $("[name=dev-sel-all]").click(function(e) {
-    $(".device-checkbox").prop("checked", $(e.target).prop("checked"));
-  });
-
-  $(".device-checkbox").click(function(e) {
-    $("[name=dev-sel-all]").prop("checked", false);
+  $(".device-checkbox-target").click(function(e) {
+    $("#select-all-checkbox").prop("checked", false);
   });
 
   $(".edit-dev-desc").click(function(e) {
@@ -47,14 +43,22 @@ function initManage() {
     pmodal.show("Device Description:", $(`#device-${id}-desc`).text(), function(
       desc
     ) {
+      console.dir(id);
       editDeviceDescription(id, desc);
     });
+  });
+
+  $("#select-all").click(function(e) {
+    const state = !$("#select-all-checkbox").prop("checked");
+    $(".device-checkbox").prop("checked", state);
   });
 }
 
 // Event callbacks
 function editDeviceDescription(id, desc) {
-  var mac = $(`#device-${id}-mac`).text();
+  var mac = $(`#device-${id}-mac`)
+    .text()
+    .trim();
   api.saveDeviceDescription(
     mac,
     desc,

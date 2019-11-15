@@ -75,9 +75,3 @@ button {
         margin: 0 auto;
     }
 }
-
-@media (min-width: 1024px) {
-    .devices-list {
-        width: 75%;
-    }
-}
