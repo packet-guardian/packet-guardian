@@ -1,7 +1,0 @@
-{{ define "base" }}
-{{ if or (eq .layout "admin") (eq .layout "report") }}
-{{ template "admin-layout" . }}
-{{ else }}
-{{ template "user-layout" . }}
-{{ end }}
-{{ end }}

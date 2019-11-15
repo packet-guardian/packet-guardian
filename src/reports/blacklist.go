@@ -62,7 +62,7 @@ func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *htt
 		"users": blacklistedUsers,
 	}
 
-	e.Views.NewView("report-blacklisted-users", r).Render(w, data)
+	e.Views.NewView("admin-report-blacklisted-users", r).Render(w, data)
 	return nil
 }
 
@@ -111,6 +111,6 @@ func blacklistedDevicesReport(e *common.Environment, w http.ResponseWriter, r *h
 		"devices": devices,
 	}
 
-	e.Views.NewView("report-blacklisted-devices", r).Render(w, data)
+	e.Views.NewView("admin-report-blacklisted-devices", r).Render(w, data)
 	return nil
 }

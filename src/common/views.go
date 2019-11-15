@@ -104,11 +104,6 @@ func (v *Views) loadTemplates() error {
 	}
 	mainTemplate.Funcs(customTemplateFuncs())
 
-	layoutFiles, err := bindata.AssetDir(dir + "/layouts")
-	if err != nil {
-		return errors.New("layout templates not found")
-	}
-
 	partialFiles, err := bindata.AssetDir(dir + "/partials")
 	if err != nil {
 		return errors.New("layout templates not found")
@@ -131,17 +126,7 @@ func (v *Views) loadTemplates() error {
 
 		pageTemplate, _ := mainTemplate.Clone()
 
-		for _, layout := range layoutFiles {
-			fileBytes, _ := bindata.GetAsset(dir + "/layouts/" + layout)
-			if _, err := pageTemplate.Parse(string(fileBytes)); err != nil {
-				v.e.Log.WithFields(verbose.Fields{
-					"layout": layout,
-					"error":  err.Error(),
-				}).Debug("Failed to load layout template")
-				return err
-			}
-		}
-
+		// Partial templates available to all pages
 		for _, partial := range partialFiles {
 			fileBytes, _ := bindata.GetAsset(dir + "/partials/" + partial)
 			if _, err := pageTemplate.Parse(string(fileBytes)); err != nil {
@@ -153,7 +138,19 @@ func (v *Views) loadTemplates() error {
 			}
 		}
 
-		fileBytes, _ := bindata.GetAsset(dir + "/pages/" + file)
+		// Specific layout for this page
+		pageLayout := strings.SplitN(fileName, "-", 2)[0]
+		fileBytes, _ := bindata.GetAsset(dir + "/layouts/" + pageLayout + ".tmpl")
+		if _, err := pageTemplate.Parse(string(fileBytes)); err != nil {
+			v.e.Log.WithFields(verbose.Fields{
+				"layout": pageLayout,
+				"error":  err.Error(),
+			}).Debug("Failed to load layout template")
+			return err
+		}
+
+		// This page template
+		fileBytes, _ = bindata.GetAsset(dir + "/pages/" + file)
 		if _, err := pageTemplate.Parse(string(fileBytes)); err != nil {
 			v.e.Log.WithFields(verbose.Fields{
 				"file":  file,
