@@ -40,8 +40,10 @@ function register() {
   }
 
   if (data.password) { // Need to login first
-    api.login({ username: data.username, password: data.password }, () => registerDevice(data),
-      function(req) {
+    api.login(
+      { username: data.username, password: data.password },
+      () => registerDevice(data),
+      (req) => {
         window.scrollTo(0, 0);
         enableRegBtn();
         if (req.status === 401) {
