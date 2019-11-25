@@ -1,4 +1,4 @@
-import $ from "jLib";
+import $ from "jlib2";
 import api from "pg-api";
 import flashMessage from "flash";
 
@@ -84,7 +84,7 @@ function enableRegBtn() {
 function registerDevice(data) {
   api.registerDevice(
     data,
-    function(resp, req) {
+    (resp, req) => {
       resp = JSON.parse(resp);
       window.scrollTo(0, 0);
       flashMessage("Registration successful", "success");
@@ -104,7 +104,7 @@ function registerDevice(data) {
 
       location.href = resp.Data.Location;
     },
-    function(req) {
+    req => {
       window.scrollTo(0, 0);
       enableRegBtn();
       var resp = JSON.parse(req.responseText);

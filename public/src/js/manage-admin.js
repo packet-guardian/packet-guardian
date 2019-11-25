@@ -1,4 +1,4 @@
-import $ from "jLib";
+import $ from "jlib2";
 import api from "pg-api";
 import flashMessage from "flash";
 import "manage";

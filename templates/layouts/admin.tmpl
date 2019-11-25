@@ -17,6 +17,10 @@
     </nav>
 
     <section class="admin-main">
+        <div id="flashDiv" class="flash">
+            <div id="flashText">{{.flashMessage}}</div>
+        </div>
+
         {{template "content" .}}
     </section>
 </main>

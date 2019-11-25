@@ -1,21 +1,21 @@
-import $ from "jLib";
+import $ from "jlib2";
 
 let flashTimeout = 0;
 
 function flashMessage(text, type) {
-  "use strict";
   const flash = $("#flashDiv");
   const flashClass = type === "success" ? "flashSuccess" : "flashFailure";
 
   // Post is a callback which is called after the message has faded out
   function clear(post) {
-    post = post || $.noop;
     flash.fadeOut(500, function() {
       flash.removeClass("flashSuccess");
       flash.removeClass("flashFailure");
       $("#flashText").html("");
       flashTimeout = 0;
-      post();
+      if (post) {
+        post();
+      }
     });
   }
 
@@ -35,7 +35,6 @@ function flashMessage(text, type) {
 }
 
 function checkAndFlash(element) {
-  "use strict";
   const flashElm = $(element);
   if (flashElm.length === 0) {
     return;

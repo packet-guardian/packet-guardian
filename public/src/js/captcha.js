@@ -1,4 +1,4 @@
-import $ from "jLib";
+import $ from "jlib2";
 import "flash";
 import { playCaptchaAudio, reloadCaptcha } from "captcha";
 

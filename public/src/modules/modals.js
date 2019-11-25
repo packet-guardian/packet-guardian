@@ -1,4 +1,4 @@
-import $ from "jLib";
+import $ from "jlib2";
 
 /* eslint-disable max-statements */
 class ModalOverlay {
@@ -8,13 +8,13 @@ class ModalOverlay {
   }
 
   show() {
-    document.body.insertBefore(this.o[0], document.body.firstChild);
+    document.body.insertBefore(this.o.elements[0], document.body.firstChild);
     this.o.show();
   }
 
   hide() {
     this.o.hide();
-    document.body.removeChild(this.o[0]);
+    document.body.removeChild(this.o.elements[0]);
   }
 }
 

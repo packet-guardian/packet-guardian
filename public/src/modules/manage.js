@@ -1,20 +1,9 @@
-import $ from "jLib";
+import $ from "jlib2";
 import api from "pg-api";
 import flashMessage from "flash";
 import { ModalPrompt, ModalConfirm } from "modals";
 
 function initManage() {
-  // Event handlers
-  $("[name=add-device-btn]").click(function(e) {
-    var isAdmin = $(e.target).data("admin");
-    var user = $("[name=username]").value();
-    if (isAdmin !== null) {
-      location.href = `/register?manual=1&username=${user}`;
-    } else {
-      location.href = "/register?manual=1";
-    }
-  });
-
   // Delete buttons
   $("[name=del-selected-btn]").click(function() {
     var cmodal = new ModalConfirm();
@@ -35,7 +24,6 @@ function initManage() {
     pmodal.show("Device Description:", $(`#device-${id}-desc`).text(), function(
       desc
     ) {
-      console.dir(id);
       editDeviceDescription(id, desc);
     });
   });
@@ -74,14 +62,9 @@ function editDeviceDescription(id, desc) {
 
 // Delete buttons
 function deleteSelectedDevices() {
-  var checked = $(".device-checkbox:checked");
-  if (checked.length === 0) {
+  const devicesToRemove = $(".device-checkbox:checked").map(elem => elem.value);
+  if (devicesToRemove.length === 0) {
     return;
-  }
-
-  var devicesToRemove = [];
-  for (var i = 0; i < checked.length; i++) {
-    devicesToRemove.push(checked[i].value);
   }
 
   api.deleteDevices(
