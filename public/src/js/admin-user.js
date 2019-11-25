@@ -80,24 +80,23 @@ function checkExpires() {
 checkExpires();
 
 // Select boxes change events
-$("[name=special-limit]").change(function(e) {
+$("[name=special-limit]").change(e => {
   const devLimit = $("[name=device-limit]");
   devLimit.value("");
   devLimit.prop("disabled", $(e.target).value() !== "specific");
 });
 
-$("[name=dev-exp-sel]").change(function(e) {
+$("[name=dev-exp-sel]").change(e => {
   const self = $(e.target);
   // Enable/disable appropiate textboxes
-  if (
-    self.value() === "specific" ||
-    self.value() === "daily" ||
-    self.value() === "duration"
-  ) {
-    $("[name=device-expiration]").prop("disabled", false);
-  } else {
-    $("[name=device-expiration]").prop("disabled", true);
-  }
+  $("[name=device-expiration]").prop(
+    "disabled",
+    !(
+      self.value() === "specific" ||
+      self.value() === "daily" ||
+      self.value() === "duration"
+    )
+  );
 
   // Zero field by default
   $("[name=device-expiration]").value("");
@@ -119,7 +118,7 @@ $("[name=dev-exp-sel]").change(function(e) {
   }
 });
 
-$("[name=val-bef-sel]").change(function(e) {
+$("[name=val-bef-sel]").change(e => {
   const self = $(e.target);
   $("[name=valid-before]").prop("disabled", self.value() === "forever");
   $("[name=valid-after]").prop("disabled", self.value() === "forever");
@@ -135,8 +134,8 @@ $("[name=val-bef-sel]").change(function(e) {
   }
 });
 
-$("[name=delete-btn]").click(function() {
-  api.deleteUser($("[name=username]").value(), function(resp, req) {
+$("[name=delete-btn]").click(() => {
+  api.deleteUser($("[name=username]").value(), (resp, req) => {
     if (req.status > 204) {
       resp = JSON.parse(resp);
       flashMessage(resp.Message);
@@ -147,7 +146,7 @@ $("[name=delete-btn]").click(function() {
 });
 
 // Form submittion
-$("#user-form").submit(function(e) {
+$("#user-form").submit(e => {
   e.preventDefault();
   const formData = {
     username: $("[name=username]").value(),
@@ -168,7 +167,7 @@ $("#user-form").submit(function(e) {
     formData.password = -1;
   }
 
-  var devLimit = $("[name=special-limit]").value();
+  const devLimit = $("[name=special-limit]").value();
   if (devLimit === "global") {
     formData.device_limit = -1;
   } else if (devLimit === "unlimited") {
@@ -177,7 +176,7 @@ $("#user-form").submit(function(e) {
     formData.device_limit = $("[name=device-limit]").value();
   }
 
-  var devExpSel = $("[name=dev-exp-sel]").value();
+  const devExpSel = $("[name=dev-exp-sel]").value();
   formData.expiration_type = devExpirationTypes[devExpSel];
 
   if ($("[name=val-bef-sel]").value() !== "forever") {
@@ -187,7 +186,7 @@ $("#user-form").submit(function(e) {
 
   api.saveUser(
     formData,
-    function(resp, req) {
+    (resp, req) => {
       window.scroll(0, 0);
       if (req.status > 204) {
         resp = JSON.parse(resp);
@@ -205,8 +204,8 @@ $("#user-form").submit(function(e) {
       }
       $("#submit-btn").text("Save");
     },
-    function(req) {
-      var resp = JSON.parse(req.responseText);
+    req => {
+      const resp = JSON.parse(req.responseText);
       flashMessage(resp.Message);
     }
   );

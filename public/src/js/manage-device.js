@@ -4,106 +4,62 @@ import flashMessage from "flash";
 import { ModalPrompt, ModalConfirm } from "modals";
 import { setTextboxToToday } from "utils";
 
-var oldExpiration = "";
+let oldExpiration = "";
 
-$("#delete-btn").click(function() {
-  var cmodal = new ModalConfirm();
-  cmodal.show("Are you sure you want to delete this device?", function() {
-    var username = getUsername();
-
-    api.deleteDevices(
-      username,
-      [getMacAddress()],
-      function() {
-        location.reload();
-      },
-      function() {
-        flashMessage("Error deleting device");
-      }
-    );
-  });
-});
-
-$("#unflag-dev-btn").click(function() {
-  var cmodal = new ModalConfirm();
-  cmodal.show("Are you sure you want to unflag this device?", function() {
-    api.flagDevice(
-      getMacAddress(),
-      false,
-      function() {
-        location.reload();
-      },
-      function() {
-        flashMessage("Error unflagging device");
-      }
-    );
-  });
-});
-
-$("#flag-dev-btn").click(function() {
-  var cmodal = new ModalConfirm();
-  cmodal.show("Are you sure you want to flag this device?", function() {
-    api.flagDevice(
-      getMacAddress(),
-      true,
-      function() {
-        location.reload();
-      },
-      function() {
-        flashMessage("Error flagging device");
-      }
-    );
-  });
-});
-
-$("#unblacklist-btn").click(function() {
-  var cmodal = new ModalConfirm();
-  cmodal.show(
-    "Are you sure you want to remove this device from the blacklist?",
-    function() {
-      api.unblacklistDevices(
-        [getMacAddress()],
-        function() {
-          location.reload();
-        },
-        function() {
-          flashMessage("Error removing device from blacklist");
-        }
-      );
-    }
+$("#delete-btn").click(() => {
+  const cmodal = new ModalConfirm();
+  cmodal.show("Are you sure you want to delete this device?", () =>
+    api.deleteDevices(getUsername(), [getMacAddress()], reloadPage, () =>
+      flashMessage("Error deleting device")
+    )
   );
 });
 
-$("#blacklist-btn").click(function() {
-  var cmodal = new ModalConfirm();
-  cmodal.show("Are you sure you want to blacklist this device?", function() {
-    api.blacklistDevices(
-      [getMacAddress()],
-      function() {
-        location.reload();
-      },
-      function() {
-        flashMessage("Error blacklisting device");
-      }
-    );
-  });
+$("#unflag-dev-btn").click(() => {
+  const cmodal = new ModalConfirm();
+  cmodal.show("Are you sure you want to unflag this device?", () =>
+    api.flagDevice(getMacAddress(), false, reloadPage, () =>
+      flashMessage("Error unflagging device")
+    )
+  );
 });
 
-$("#reassign-btn").click(function() {
-  var pmodal = new ModalPrompt();
-  pmodal.show("New owner's username:", function(newUser) {
-    api.reassignDevices(
-      newUser,
-      [getMacAddress()],
-      function() {
-        location.reload();
-      },
-      function(req) {
-        const data = JSON.parse(req.responseText);
-        flashMessage(data.Message);
-      }
-    );
-  });
+$("#flag-dev-btn").click(() => {
+  const cmodal = new ModalConfirm();
+  cmodal.show("Are you sure you want to flag this device?", () =>
+    api.flagDevice(getMacAddress(), true, reloadPage, () =>
+      flashMessage("Error flagging device")
+    )
+  );
+});
+
+$("#unblacklist-btn").click(() => {
+  const cmodal = new ModalConfirm();
+  cmodal.show(
+    "Are you sure you want to remove this device from the blacklist?",
+    () =>
+      api.unblacklistDevices([getMacAddress()], reloadPage, () =>
+        flashMessage("Error removing device from blacklist")
+      )
+  );
+});
+
+$("#blacklist-btn").click(() => {
+  const cmodal = new ModalConfirm();
+  cmodal.show("Are you sure you want to blacklist this device?", () =>
+    api.blacklistDevices([getMacAddress()], reloadPage, () =>
+      flashMessage("Error blacklisting device")
+    )
+  );
+});
+
+$("#reassign-btn").click(() => {
+  const pmodal = new ModalPrompt();
+  pmodal.show("New owner's username:", newUser =>
+    api.reassignDevices(newUser, [getMacAddress()], reloadPage, req =>
+      flashMessage(JSON.parse(req.responseText).Message)
+    )
+  );
 });
 
 function getMacAddress() {
@@ -118,13 +74,13 @@ function getDescription() {
   return $("#device-desc").text();
 }
 
-$("#edit-dev-desc").click(function(e) {
+$("#edit-dev-desc").click(e => {
   e.stopPropagation();
-  var pmodal = new ModalPrompt();
+  const pmodal = new ModalPrompt();
   pmodal.show("Device Description:", getDescription(), editDeviceDescription);
 });
 
-$("#edit-dev-expiration").click(function(e) {
+$("#edit-dev-expiration").click(e => {
   e.stopPropagation();
   oldExpiration = $("#device-expiration").text();
   $("#device-expiration").text("");
@@ -142,7 +98,7 @@ $("#edit-dev-expiration").click(function(e) {
   $("#confirmation-icons").style("display", "inline");
 });
 
-$("#dev-exp-sel").change(function(e) {
+$("#dev-exp-sel").change(e => {
   if ($(e.target).value() !== "specific") {
     $("#dev-exp-val").style("display", "none");
   } else {
@@ -151,12 +107,12 @@ $("#dev-exp-sel").change(function(e) {
   }
 });
 
-$("#dev-expiration-cancel").click(function(e) {
+$("#dev-expiration-cancel").click(e => {
   e.stopPropagation();
   clearExpirationControls(oldExpiration);
 });
 
-$("#dev-expiration-ok").click(function(e) {
+$("#dev-expiration-ok").click(e => {
   e.stopPropagation();
   editDeviceExpiration($("#dev-exp-sel").value(), $("#dev-exp-val").value());
 });
@@ -174,7 +130,7 @@ function editDeviceDescription(desc) {
   api.saveDeviceDescription(
     getMacAddress(),
     desc,
-    function() {
+    () => {
       $("#device-desc").text(desc);
       flashMessage("Device description saved", "success");
     },
@@ -187,7 +143,7 @@ function editDeviceExpiration(type, value) {
     getMacAddress(),
     type,
     value,
-    function(resp, req) {
+    (resp, req) => {
       resp = JSON.parse(resp);
       clearExpirationControls(resp.Data.newExpiration);
       flashMessage("Device expiration saved", "success");
@@ -197,7 +153,7 @@ function editDeviceExpiration(type, value) {
 }
 
 function apiResponseCheck(req) {
-  var resp = JSON.parse(req.responseText);
+  const resp = JSON.parse(req.responseText);
   switch (req.status) {
     case 500:
       flashMessage(`Internal Server Error - ${resp.Message}`);
@@ -207,3 +163,5 @@ function apiResponseCheck(req) {
       break;
   }
 }
+
+const reloadPage = () => location.reload();

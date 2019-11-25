@@ -5,7 +5,7 @@ import "manage";
 import { ModalPrompt, ModalConfirm } from "modals";
 
 // Event handlers
-$("[name=blacklist-sel]").change(function(e) {
+$("[name=blacklist-sel]").change(e => {
   const self = $(e.target);
   const cmodal = new ModalConfirm();
 

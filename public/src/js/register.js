@@ -4,7 +4,7 @@ import flashMessage from "flash";
 
 function register() {
   disableRegBtn();
-  var data = {
+  const data = {
     username: "",
     "mac-address": "",
     description: $("[name=dev-desc]").value()
@@ -12,7 +12,7 @@ function register() {
 
   // It's not guaranteed that all fields will be shown
   // The username box will always be shown, sometimes disabled
-  var username = $("[name=username]");
+  const username = $("[name=username]");
   if (username.length !== 0) {
     data.username = username.value();
   }
@@ -22,7 +22,7 @@ function register() {
   } // Required
 
   // The password box will only show if the user isn't logged in
-  var password = $("[name=password]");
+  const password = $("[name=password]");
   if (password.length !== 0) {
     data.password = password.value();
     if (data.password === "") {
@@ -32,7 +32,7 @@ function register() {
   }
 
   // The mac-address field will only show for a manual registration
-  var mac = $("[name=mac-address]");
+  const mac = $("[name=mac-address]");
   if (mac.length !== 0) {
     data["mac-address"] = mac.value();
     if (data["mac-address"] === "") {
@@ -42,7 +42,7 @@ function register() {
   }
 
   // The platform field will only show for a manual registration
-  var platform = $("[name=platform]");
+  const platform = $("[name=platform]");
   if (platform.length !== 0) {
     data.platform = platform.value();
     if (data.platform === "") {
@@ -107,7 +107,7 @@ function registerDevice(data) {
     req => {
       window.scrollTo(0, 0);
       enableRegBtn();
-      var resp = JSON.parse(req.responseText);
+      const resp = JSON.parse(req.responseText);
       switch (req.status) {
         case 500:
           flashMessage(`Internal Server Error - ${resp.Message}`);

@@ -27,32 +27,34 @@ class ModalAlert {
 
   show(dialog, callback) {
     this._okCallback = callback || function() {};
-    var winW = window.innerWidth;
-    var winH = window.innerHeight;
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
 
     this._container = document.createElement("div");
 
-    var header = document.createElement("div");
+    const header = document.createElement("div");
     header.innerHTML = "Alert";
     $(header).addClass("js-modal-header");
+    $(header).addClass("grabbable");
     $(header).prop("id", "js-modal-header-id");
     this._container.appendChild(header);
 
-    var body = document.createElement("div");
+    const body = document.createElement("div");
     body.innerHTML = dialog;
     $(body).addClass("js-modal-body");
     this._container.appendChild(body);
 
-    var footer = document.createElement("div");
+    const footer = document.createElement("div");
     $(footer).addClass("js-modal-footer");
-    var okButton = document.createElement("button");
+    const okButton = document.createElement("button");
     okButton.innerHTML = "OK";
     $(okButton).click(this.ok.bind(this));
     footer.appendChild(okButton);
     this._container.appendChild(footer);
 
-    var jContainer = $(this._container);
+    const jContainer = $(this._container);
     jContainer.addClass("js-modal");
+    jContainer.prop("id", "js-modal-container");
     document.body.insertBefore(this._container, document.body.firstChild);
     jContainer.style("left", winW / 2 - 500 * 0.5 + "px");
     jContainer.style("top", winH / 2 - 250 * 0.5 + "px");
@@ -60,6 +62,7 @@ class ModalAlert {
     this._overlay = new ModalOverlay();
     this._overlay.show();
     jContainer.show();
+    bindMouseMove("#js-modal-header-id", "#js-modal-container");
   }
 
   ok() {
@@ -81,30 +84,31 @@ class ModalConfirm {
   show(dialog, okCallback, cnlCallback) {
     this._okCallback = okCallback || function() {};
     this._cancelCallback = cnlCallback || function() {};
-    var winW = window.innerWidth;
-    var winH = window.innerHeight;
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
 
     this._container = document.createElement("div");
 
-    var header = document.createElement("div");
+    const header = document.createElement("div");
     header.innerHTML = "Confirm";
     $(header).addClass("js-modal-header");
+    $(header).addClass("grabbable");
     $(header).prop("id", "js-modal-header-id");
     this._container.appendChild(header);
 
-    var body = document.createElement("div");
+    const body = document.createElement("div");
     body.innerHTML = dialog;
     $(body).addClass("js-modal-body");
     this._container.appendChild(body);
 
-    var footer = document.createElement("div");
+    const footer = document.createElement("div");
     $(footer).addClass("js-modal-footer");
 
-    var okButton = document.createElement("button");
+    const okButton = document.createElement("button");
     okButton.innerHTML = "OK";
     $(okButton).click(this.ok.bind(this));
 
-    var cnlButton = document.createElement("button");
+    const cnlButton = document.createElement("button");
     cnlButton.innerHTML = "Cancel";
     $(cnlButton).click(this.cancel.bind(this));
 
@@ -112,8 +116,9 @@ class ModalConfirm {
     footer.appendChild(cnlButton);
     this._container.appendChild(footer);
 
-    var jContainer = $(this._container);
+    const jContainer = $(this._container);
     jContainer.addClass("js-modal");
+    jContainer.prop("id", "js-modal-container");
     document.body.insertBefore(this._container, document.body.firstChild);
     jContainer.style("left", winW / 2 - 500 * 0.5 + "px");
     jContainer.style("top", winH / 2 - 250 * 0.5 + "px");
@@ -121,6 +126,7 @@ class ModalConfirm {
     this._overlay = new ModalOverlay();
     this._overlay.show();
     jContainer.show();
+    bindMouseMove("#js-modal-header-id", "#js-modal-container");
   }
 
   ok() {
@@ -155,12 +161,12 @@ class ModalPrompt {
     }
     this._okCallback = okkCallback || function() {};
     this._cancelCallback = cnlCallback || function() {};
-    var winW = window.innerWidth;
-    var winH = window.innerHeight;
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
 
     this._container = document.createElement("div");
 
-    var header = document.createElement("div");
+    const header = document.createElement("div");
     header.innerHTML = "Prompt";
     $(header).addClass("js-modal-header");
     $(header).addClass("grabbable");
@@ -168,14 +174,14 @@ class ModalPrompt {
     this._container.appendChild(header);
 
     // Create dialog body
-    var body = document.createElement("div");
+    const body = document.createElement("div");
     $(body).addClass("js-modal-body");
     body.innerHTML = dialog;
     // Create the main form
-    var form = document.createElement("form");
+    const form = document.createElement("form");
     $(form).submit(this.enter.bind(this));
     // Create the input for user data
-    var input = document.createElement("input");
+    const input = document.createElement("input");
     input.type = "text";
     input.id = "js-modal-prompt-input";
     input.size = 50;
@@ -187,19 +193,19 @@ class ModalPrompt {
     // Add body to container
     this._container.appendChild(body);
 
-    var footer = document.createElement("div");
+    const footer = document.createElement("div");
     $(footer).addClass("js-modal-footer");
-    var okButton = document.createElement("button");
+    const okButton = document.createElement("button");
     okButton.innerHTML = "OK";
     $(okButton).click(this.ok.bind(this));
-    var cnlButton = document.createElement("button");
+    const cnlButton = document.createElement("button");
     cnlButton.innerHTML = "Cancel";
     $(cnlButton).click(this.cancel.bind(this));
     footer.appendChild(okButton);
     footer.appendChild(cnlButton);
     this._container.appendChild(footer);
 
-    var jContainer = $(this._container);
+    const jContainer = $(this._container);
     jContainer.addClass("js-modal");
     jContainer.prop("id", "js-modal-container");
     document.body.insertBefore(this._container, document.body.firstChild);
@@ -238,13 +244,13 @@ class ModalPrompt {
 }
 
 function bindMouseMove(binderID, movediv) {
-  var binder = $(binderID);
+  const binder = $(binderID);
   binder.on("mousedown", function(e) {
     if (e.which !== 1) {
       return;
     }
-    var self = $(e.target);
-    var mover = $(movediv);
+    const self = $(e.target);
+    const mover = $(movediv);
     self.style("position", "relative");
 
     document.onmousemove = function(e) {
