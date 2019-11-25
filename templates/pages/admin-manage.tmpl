@@ -37,7 +37,6 @@
                 {{end}}
                 {{if and .canDeleteDevice (gt (len .devices) 0)}}
                 <button type="button" name="del-selected-btn" class="danger-btn">Delete Selected</button>
-                <button type="button" name="del-all-btn" class="danger-btn">Delete All</button>
                 {{end}}
             </section>
             <section>
@@ -45,10 +44,8 @@
                 <select name="blacklist-sel" data-blacklisted="{{.user.IsBlacklisted}}" required>
                     <option  class="placeholder" selected disabled value="">Blacklist</option>
                     <option value="username" name="black-user-option">Add User</option>
-                    <option value="black-all">Add All Devices</option>
-                    <option value="unblack-all">Remove All Devices</option>
-                    <option value="black-sel">Add Selected Devices</option>
-                    <option value="unblack-sel">Remove Selected Devices</option>
+                    <option value="black-sel">Add Devices</option>
+                    <option value="unblack-sel">Remove Devices</option>
                 </select>
                 {{end}}
                 {{if .canReassignDevice}}
