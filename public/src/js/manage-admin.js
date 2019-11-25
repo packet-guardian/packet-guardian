@@ -6,143 +6,84 @@ import { ModalPrompt, ModalConfirm } from "modals";
 
 // Event handlers
 $("[name=blacklist-sel]").change(function(e) {
-  var self = $(e.target);
-  var cmodal = new ModalConfirm();
+  const self = $(e.target);
+  const cmodal = new ModalConfirm();
+
   switch (self.value()) {
     case "username":
-      var isBl = self.data("blacklisted") === "true";
-      if (isBl) {
-        cmodal.show("Remove username from blacklist?", function() {
-          blacklistUsername(true);
-        });
+      if (self.data("blacklisted") === "true") {
+        cmodal.show("Remove username from blacklist?", removeUsernameBlacklist);
       } else {
-        cmodal.show("Add username to blacklist?", function() {
-          blacklistUsername(false);
-        });
+        cmodal.show("Add username to blacklist?", addUsernameBlacklist);
       }
       break;
-    case "black-all":
-      cmodal.show(
-        "Add all user's devices to blacklist?",
-        addDevicesToBlacklist
-      );
-      break;
-    case "unblack-all":
-      cmodal.show(
-        "Remove all user's devices from blacklist?",
-        removeDevicesFromBlacklist
-      );
-      break;
     case "black-sel":
-      cmodal.show("Add selected user's devices to blacklist?", function() {
-        blacklistSelectedDevices(true);
-      });
+      cmodal.show("Add selected user's devices to blacklist?", addToBlacklist);
       break;
     case "unblack-sel":
-      cmodal.show("Remove selected user's devices from blacklist?", function() {
-        blacklistSelectedDevices(false);
-      });
+      cmodal.show(
+        "Remove selected user's devices from blacklist?",
+        removeFromBlacklist
+      );
       break;
   }
+
   self.value("");
 });
 
-$("[name=reassign-selected-btn]").click(function() {
-  var pmodal = new ModalPrompt();
-  pmodal.show("New owner's username:", reassignSelectedDevices);
-});
+$("[name=reassign-selected-btn]").click(() =>
+  new ModalPrompt().show("New owner's username:", reassignSelectedDevices)
+);
 
 // Event callbacks
-var blacklistSelect = $("[name=blacklist-sel]");
+const blacklistSelect = $("[name=blacklist-sel]");
 if (blacklistSelect.length !== 0) {
   if (blacklistSelect.data("blacklisted") === "true") {
     $("[name=black-user-option]").text("Remove User");
   }
 }
 
-function getUsername(encode) {
-  var u = $("[name=username]").value();
-  if (encode) {
-    return encodeURIComponent(u);
-  }
-  return u;
-}
+const getUsername = () => $("[name=username]").value();
 
-function blacklistUsername(isBlacklisted) {
-  var success = function() {
-    location.reload();
-  };
-  var error = function() {
-    flashMessage("Error blacklisting user");
-  };
+const removeUsernameBlacklist = () =>
+  api.unblacklistUser(getUsername(), reloadPage, () =>
+    flashMessage("Error removing user from blacklist")
+  );
 
-  if (isBlacklisted) {
-    api.unblacklistUser(getUsername(), success, error);
-  } else {
-    api.blacklistUser(getUsername(), success, error);
-  }
-}
+const addUsernameBlacklist = () =>
+  api.blacklistUser(getUsername(), reloadPage, () =>
+    flashMessage("Error adding user to blacklist")
+  );
 
-function getCheckedDevices() {
-  var checked = $(".device-checkbox:checked");
-  var devices = [];
-  for (var i = 0; i < checked.length; i++) {
-    devices.push(checked[i].value);
-  }
-  return devices;
-}
+const getCheckedDevices = () =>
+  $(".device-checkbox:checked").map(elem => elem.value);
 
-function blacklistSelectedDevices(add) {
-  var devicesToRemove = getCheckedDevices();
-  if (devicesToRemove.length === 0) {
-    return;
-  }
-  blacklistDevices(devicesToRemove, add);
-}
-
-function blacklistDevices(devices, add) {
-  if (add) {
-    addDevicesToBlacklist(devices);
-  } else {
-    removeDevicesFromBlacklist(devices);
+function addToBlacklist() {
+  const devicesToRemove = getCheckedDevices();
+  if (devicesToRemove.length > 0) {
+    api.blacklistDevices(devicesToRemove, reloadPage, errorAdding);
   }
 }
 
-function addDevicesToBlacklist(devices) {
-  if (devices) {
-    api.blacklistDevices(devices, reloadPage, errorAdding);
-  } else {
-    api.blacklistAllDevices(getUsername(), reloadPage, errorAdding);
-  }
-}
-
-function removeDevicesFromBlacklist(devices) {
-  if (devices) {
-    api.unblacklistDevices(devices, reloadPage, errorRemoving);
-  } else {
-    api.unblacklistAllDevices(getUsername(), reloadPage, errorRemoving);
+function removeFromBlacklist() {
+  const devicesToRemove = getCheckedDevices();
+  if (devicesToRemove.length > 0) {
+    api.unblacklistDevices(devicesToRemove, reloadPage, errorRemoving);
   }
 }
 
 function reassignSelectedDevices(username) {
-  var devices = getCheckedDevices();
-  if (devices.length === 0 || !username) {
-    return;
+  const devices = getCheckedDevices();
+  if (devices.length > 0 && username) {
+    api.reassignDevices(username, devices, reloadPage, () =>
+      flashMessage("Error reassigning devices")
+    );
   }
-
-  api.reassignDevices(username, devices, reloadPage, () =>
-    flashMessage("Error reassigning devices")
-  );
 }
 
-function reloadPage() {
-  location.reload();
-}
+const reloadPage = () => location.reload();
 
-function errorAdding() {
-  flashMessage("Error blacklisting devices");
-}
+const errorAdding = () => flashMessage("Error blacklisting devices");
 
-function errorRemoving() {
+const errorRemoving = () =>
   flashMessage("Error removing devices from blacklist");
-}

@@ -16,14 +16,6 @@ function initManage() {
   });
 
   // Delete buttons
-  $("[name=del-all-btn]").click(function() {
-    var cmodal = new ModalConfirm();
-    cmodal.show(
-      "Are you sure you want to delete all devices?",
-      deleteAllDevices
-    );
-  });
-
   $("[name=del-selected-btn]").click(function() {
     var cmodal = new ModalConfirm();
     cmodal.show(
@@ -81,19 +73,6 @@ function editDeviceDescription(id, desc) {
 }
 
 // Delete buttons
-function deleteAllDevices() {
-  api.deleteDevices(
-    $("[name=username]").value(),
-    [],
-    function() {
-      location.reload();
-    },
-    function() {
-      flashMessage("Error deleting devices");
-    }
-  );
-}
-
 function deleteSelectedDevices() {
   var checked = $(".device-checkbox:checked");
   if (checked.length === 0) {
