@@ -42,6 +42,7 @@
                 <th>Description</th>
                 <th>Last Seen</th>
                 <th>Registered</th>
+                <th>Current Lease</th>
             </tr>
         </thead>
         <tbody>
@@ -68,6 +69,13 @@
                 </td>
                 <td>{{.LastSeen.Format "2006-01-02 15:04"}}</td>
                 <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>
+                <td>
+                    {{with .GetCurrentLease}}
+                    {{.IP.String}}
+                    {{else}}
+                    N/A
+                    {{end}}
+                </td>
             </tr>
         {{end}}
         </tbody>
