@@ -3,9 +3,7 @@ import api from "pg-api";
 import flashMessage from "flash";
 
 function login() {
-  $("#login-btn").prop("disabled", true);
-
-  var data = {
+  const data = {
     username: $("[name=username]").value(),
     password: $("[name=password]").value()
   };
@@ -14,15 +12,14 @@ function login() {
     return;
   }
 
+  $("#login-btn").prop("disabled", true);
   $("#login-btn").text("Logging in...");
 
   api.login(
     data,
-    function() {
-      location.href = "/";
-    },
-    function(req) {
-      $("#login-btn").text("Login >");
+    () => (location.href = "/"),
+    req => {
+      $("#login-btn").text("Login");
       $("#login-btn").prop("disabled", false);
       if (req.status === 401) {
         flashMessage("Incorrect username or password");
