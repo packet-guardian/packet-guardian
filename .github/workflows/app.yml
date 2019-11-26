@@ -29,10 +29,10 @@ jobs:
       - name: Install NPM deps
         run: yarn install
 
-      - name: Enforce Javascript lints
+      - name: Enforce TypeScript/CSS lints
         run: yarn run lint
 
-      - name: Test and Build Javascript
+      - name: Test and Build TypeScript
         run: yarn run build:prod
 
       - name: Download go-bindata tool

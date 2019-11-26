@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "outDir": "./public/dist/js",
+        "sourceMap": true,
+        "module": "esnext",
+        "target": "es5",
+        "strict": true,
+        "moduleResolution": "node",
+        "baseUrl": "public/src",
+        "paths": {
+            "@/*": [
+                "modules/*"
+            ],
+        },
+        "lib": [
+            "esnext",
+            "dom",
+            "dom.iterable"
+        ]
+    },
+    "include": [
+        "public/src/**/*.ts",
+        "public/src/**/*.js"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
