@@ -6,8 +6,9 @@
     "devDependencies": {
         "awesome-typescript-loader": "^5.2.1",
         "clean-webpack-plugin": "^0.1.17",
-        "csslint": "^1.0.5",
         "prettier": "^1.19.1",
+        "stylelint": "^12.0.0",
+        "stylelint-config-standard": "^19.0.0",
         "tslint": "^5.20.1",
         "tslint-config-prettier": "^1.18.0",
         "tslint-plugin-prettier": "^2.0.1",
@@ -20,7 +21,7 @@
     "scripts": {
         "lint": "yarn run lint:ts && yarn run lint:css",
         "lint:ts": "tslint --project tsconfig.json",
-        "lint:css": "csslint public/dist/styles/*.css",
+        "lint:css": "stylelint public/dist/styles/*.css",
         "build:dev": "webpack --config webpack.dev.js",
         "build:prod": "webpack --config webpack.prod.js",
         "watch": "webpack --config webpack.dev.js --watch"

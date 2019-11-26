@@ -21,6 +21,7 @@ thead tr {
     background-color: lightgray;
     border-bottom: 2px solid black;
 }
+
 /*** End device list table ***/
 
 .blacklisted {
@@ -71,6 +72,7 @@ thead tr {
 .device-pager .pager-direction a:hover {
     text-decoration: underline;
 }
+
 /*** End pager ***/
 
 /*** Begin custom checkbox ***/
@@ -122,19 +124,14 @@ thead tr {
 }
 
 /* Create the checkmark/indicator (hidden when not checked) */
-.checkmark:after {
+.checkmark::after {
     content: "";
     position: absolute;
     display: none;
 }
 
-/* Show the checkmark when checked */
-.device-check input:checked ~ .checkmark:after {
-    display: block;
-}
-
 /* Style the checkmark/indicator */
-.device-check .checkmark:after {
+.device-check .checkmark::after {
     left: 9px;
     top: 5px;
     width: 5px;
@@ -145,6 +142,12 @@ thead tr {
     -ms-transform: rotate(45deg);
     transform: rotate(45deg);
 }
+
+/* Show the checkmark when checked */
+.device-check input:checked ~ .checkmark::after {
+    display: block;
+}
+
 /*** End custom checkbox ***/
 
 /* @media (min-width: 1024px) {

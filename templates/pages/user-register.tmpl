@@ -47,7 +47,8 @@
             {{end}}
 
             <p>
-                <label for="dev-desc">Device Description (optional):</label>
+                <label for="dev-desc">Device Description (optional)
+                <i class="fa fa-question-circle info-mark" title="Use this to help you remember which device this is"></i>:</label>
                 <input type="text" name="dev-desc">
             </p>
             {{if .config.Guest.Enabled}}
@@ -67,7 +68,7 @@
         </div>
 
         <p class="reg-btn">
-            <button id="register-btn" type="button">Register &gt;</button>
+            <button id="register-btn" type="button">Register</button>
         </p>
         {{else}}
         <h2 style="text-align: center;">

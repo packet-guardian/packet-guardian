@@ -5,7 +5,7 @@ html {
 body {
     color: black;
     background-color: #ededed;
-    background: radial-gradient(circle, #ffffff, #ededed);
+    background: radial-gradient(circle, #fff, #ededed);
     display: flex;
     min-height: 100vh;
     flex-direction: column;
@@ -82,6 +82,7 @@ header .header-user-profile > span {
 .flash {
     height: 40px;
     font-size: 25px;
+
     /* display: block is for browsers that don't support flex */
     display: block;
     display: flex;
@@ -171,9 +172,6 @@ button:focus {
 
 footer {
     min-height: 40px;
-}
-
-footer {
     background-color: #303030;
 }
 

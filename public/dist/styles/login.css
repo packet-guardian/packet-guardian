@@ -3,8 +3,8 @@
     padding: 5px 10px;
     color: white;
     border: 0;
-    background-color: #0083A8;
-    background: linear-gradient(to bottom, #0083A8, #007899);
+    background-color: #0083a8;
+    background: linear-gradient(to bottom, #0083a8, #007899);
 }
 
 .login-box input {
@@ -25,8 +25,8 @@ label {
 
 @media (min-width: 600px) and (min-height: 430px) {
     body {
-        background-color: #EDEDED;
-        background: radial-gradient(circle, #FFFFFF, #EDEDED);
+        background-color: #ededed;
+        background: radial-gradient(circle, #fff, #ededed);
         color: white;
     }
 
@@ -38,7 +38,6 @@ label {
         left: 50%;
         margin-top: -100px;
         margin-left: -290px;
-
         border-radius: 15px;
         background-color: #303030;
         background: linear-gradient(to bottom, #454545, #303030);
