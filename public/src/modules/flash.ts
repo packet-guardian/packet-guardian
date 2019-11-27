@@ -34,22 +34,4 @@ function flashMessage(text: string, type = "") {
     show();
 }
 
-function checkAndFlash(element: string) {
-    const flashElm = $(element);
-    if (flashElm.length === 0) {
-        return;
-    }
-
-    const flashHtml = flashElm.html();
-    const flashMsg = flashHtml ?? "";
-    if (flashMsg !== "") {
-        flashMessage(flashMsg);
-    }
-}
-
-const defaultFlashElem = "#flashText";
-
-checkAndFlash(defaultFlashElem);
-
-export { flashMessage, checkAndFlash };
 export default flashMessage;

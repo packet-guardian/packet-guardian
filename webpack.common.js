@@ -5,7 +5,7 @@ module.exports = {
   entry: {
     login: "./public/src/ts/login.ts",
     register: "./public/src/ts/register.ts",
-    "admin-search": "./public/src/ts/admin-search.ts",
+    "flash-messages": "./public/src/ts/flash-messages.ts",
     "admin-users": "./public/src/ts/admin-users.ts",
     "admin-user": "./public/src/ts/admin-user.ts",
     "manage-admin": "./public/src/ts/manage-admin.ts",

@@ -4,23 +4,9 @@
 {{template "render-css" (list "device-list" "admin-search")}}
 {{end}}
 
-{{define "js"}}
-{{template "render-js" (list "admin-search")}}
-{{end}}
-
 {{define "content"}}
 <div class="admin-search">
-    <h2>Administration Search</h2>
-    <div class="controls">
-        <div class="search-box">
-            <form method="GET">
-                <input type="text" name="q" placeholder="Search" value="{{.query}}" autofocus="autofocus">
-                <button type="submit">Search</button>
-            </form>
-        </div>
-    </div>
-
-    <h2 class="sub">Search Results</h2>
+    <h2>Administration Search Results</h2>
 
     {{template "device-list-search" $}}
 </div>

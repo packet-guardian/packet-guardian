@@ -41,10 +41,7 @@
                 <td>{{.D.Description}}</td>
                 <td>{{.D.LastSeen.Format "2006-01-02 15:04"}}</td>
                 {{with .L}}
-                <td class="{{if .IsExpired}}expired{{end}}">
-                    {{.IP.String}}
-                    N/A
-                </td>
+                <td class="{{if .IsExpired}}expired{{end}}">{{.IP.String}}</td>
                 {{else}}
                 <td>N/A</td>
                 {{end}}

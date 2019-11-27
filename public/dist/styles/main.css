@@ -46,6 +46,7 @@ header img {
     header .header-logo-area {
         display: flex;
         margin-left: 5%;
+        flex-grow: 2;
     }
 
     header .header-title {
@@ -57,6 +58,28 @@ header img {
         white-space: nowrap;
         height: 100px;
         line-height: 100px;
+    }
+
+    .header-search-box {
+        display: flex;
+        align-items: center;
+        margin-right: 1rem;
+    }
+
+    .header-search-box input {
+        background-color: #6b6b6b;
+        color: white;
+        border: none;
+        padding: 10px;
+        width: 200px;
+        transition: width .25s, background-color .25s;
+    }
+
+    .header-search-box input:focus {
+        color: black;
+        background-color: white;
+        width: 300px;
+        transition: width .25s, background-color .25s;
     }
 }
 

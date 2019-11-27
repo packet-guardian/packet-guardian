@@ -1,5 +1,4 @@
 import $ from "@/jlib2";
-import "@/flash";
 
 // Form submittion
 $("#new-user-form").submit(e => {

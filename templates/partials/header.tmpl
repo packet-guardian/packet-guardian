@@ -34,6 +34,14 @@
                 {{end}}
             </section>
 
+            {{if ne .sessionUser.UIGroup "default"}}
+            <section class="header-search-box">
+                <form method="GET" action="/admin/search">
+                    <input type="text" name="q" value="{{.query}}" placeholder="Search">
+                </form>
+            </section>
+            {{end}}
+
             {{if ne .sessionUser.Username ""}}
             <section class="header-user-profile">
                 <span>{{.sessionUser.Username}}</span>
