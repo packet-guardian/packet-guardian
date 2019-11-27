@@ -6,14 +6,14 @@
         </div>
     </footer>
 
-    <script type="text/javascript" src="/public/dist/js/flash-messages.min.js"></script>
+    <script type="text/javascript" src="/public/dist/js/flash-messages.min.js?{{.buildTime}}"></script>
     {{block "js" .}}{{end}}
     </body>
 </html>
 {{end}}
 
 {{define "render-js"}}
-{{range .}}{{if ne . ""}}
-<script type="text/javascript" src="/public/dist/js/{{.}}.min.js"></script>
+{{range .js}}{{if ne . ""}}
+<script type="text/javascript" src="/public/dist/js/{{.}}.min.js?{{$.main.buildTime}}"></script>
 {{end}}{{end}}
 {{end}}

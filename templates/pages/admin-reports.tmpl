@@ -1,7 +1,7 @@
 {{define "pageTitle"}}Admin - Reports{{end}}
 
 {{define "css"}}
-{{template "render-css" (list "admin-reports")}}
+{{template "render-css" dict "main" . "css" (list "admin-reports")}}
 {{end}}
 
 {{define "content"}}

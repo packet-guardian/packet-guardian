@@ -14,10 +14,10 @@
             {{end}}
             {{block "pageTitle" .}}{{end}}
         </title>
-        <link rel="stylesheet" href="/public/dist/styles/normalize.css">
-        <link rel="stylesheet" href="/public/dist/styles/main.css">
-        <link rel="stylesheet" href="/public/dist/styles/modals.css">
-        <link rel="stylesheet" href="/public/dist/styles/font-awesome.css">
+        <link rel="stylesheet" href="/public/dist/styles/normalize.css?{{.buildTime}}">
+        <link rel="stylesheet" href="/public/dist/styles/font-awesome.css?{{.buildTime}}">
+        <link rel="stylesheet" href="/public/dist/styles/main.css?{{.buildTime}}">
+        <link rel="stylesheet" href="/public/dist/styles/modals.css?{{.buildTime}}">
         {{block "layout-css" .}}{{end}}
         {{block "css" .}}{{end}}
     </head>
@@ -49,7 +49,7 @@
 {{end}}
 
 {{define "render-css"}}
-{{range .}}{{if ne . ""}}
-<link rel="stylesheet" href="/public/dist/styles/{{.}}.css">
+{{range .css}}{{if ne . ""}}
+<link rel="stylesheet" href="/public/dist/styles/{{.}}.css?{{$.main.buildTime}}">
 {{end}}{{end}}
 {{end}}

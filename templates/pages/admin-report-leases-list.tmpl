@@ -1,7 +1,7 @@
 {{define "pageTitle"}}Report - Leases{{end}}
 
 {{define "css"}}
-{{template "render-css" (list "reports/leases")}}
+{{template "render-css" dict "main" . "css" (list "reports/leases")}}
 {{end}}
 
 {{define "content"}}

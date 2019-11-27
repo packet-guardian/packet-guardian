@@ -1,11 +1,11 @@
 {{define "pageTitle"}}Register{{end}}
 
 {{define "css"}}
-{{template "render-css" (list "register")}}
+{{template "render-css" dict "main" . "css" (list "register")}}
 {{end}}
 
 {{define "js"}}
-{{template "render-js" (list "register")}}
+{{template "render-js" dict "main" . "js" (list "register")}}
 {{end}}
 
 {{define "content"}}

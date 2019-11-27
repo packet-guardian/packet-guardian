@@ -128,6 +128,8 @@ func setupEnvironment() *common.Environment {
 	}
 
 	e.Views.InjectData("config", e.Config)
+	e.Views.InjectData("systemVersion", version)
+	e.Views.InjectData("buildTime", buildTime)
 	e.Views.InjectDataFunc("sessionUser", func(r *http.Request) interface{} {
 		return models.GetUserFromContext(r)
 	})

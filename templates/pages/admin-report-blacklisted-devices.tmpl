@@ -1,7 +1,7 @@
 {{define "pageTitle"}}Report - Blacklisted Devices{{end}}
 
 {{define "css"}}
-{{template "render-css" (list "reports/blk-user")}}
+{{template "render-css" dict "main" . "css" (list "reports/blk-user")}}
 {{end}}
 
 {{define "content"}}

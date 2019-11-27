@@ -1,5 +1,5 @@
 {{define "layout-css"}}
-{{template "render-css" (list "admin-main")}}
+{{template "render-css" dict "main" . "css" (list "admin-main")}}
 {{end}}
 
 {{define "base"}}

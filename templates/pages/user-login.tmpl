@@ -1,11 +1,11 @@
 {{define "pageTitle"}}Login{{end}}
 
 {{define "css"}}
-{{template "render-css" (list "login")}}
+{{template "render-css" dict "main" . "css" (list "login")}}
 {{end}}
 
 {{define "js"}}
-{{template "render-js" (list "login")}}
+{{template "render-js" dict "main" . "js" (list "login")}}
 {{end}}
 
 {{define "content"}}

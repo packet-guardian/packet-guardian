@@ -1,11 +1,11 @@
 {{define "pageTitle"}}Device Management{{end}}
 
 {{define "css"}}
-{{template "render-css" (list "device-list" "manage")}}
+{{template "render-css" dict "main" . "css" (list "device-list" "manage")}}
 {{end}}
 
 {{define "js"}}
-{{template "render-js" (list "manage")}}
+{{template "render-js" dict "main" . "js" (list "manage")}}
 {{end}}
 
 {{define "content"}}

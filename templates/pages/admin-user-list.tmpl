@@ -1,11 +1,11 @@
 {{define "pageTitle"}}Admin - User Management{{end}}
 
 {{define "css"}}
-{{template "render-css" (list "admin-users")}}
+{{template "render-css" dict "main" . "css" (list "admin-users")}}
 {{end}}
 
 {{define "js"}}
-{{template "render-js" (list "admin-users")}}
+{{template "render-js" dict "main" . "js" (list "admin-users")}}
 {{end}}
 
 {{define "content"}}

@@ -1,7 +1,7 @@
 {{define "pageTitle"}}Internal Server Error{{end}}
 
 {{define "css"}}
-{{template "render-css" (list "error")}}
+{{template "render-css" dict "main" . "css" (list "error")}}
 {{end}}
 
 {{define "content"}}
