@@ -23,7 +23,7 @@ header .header-title {
     font-size: 2em;
     font-weight: bold;
     color: white;
-    padding-left: 5%;
+    padding-left: 2rem;
 }
 
 header a {
@@ -45,19 +45,9 @@ header img {
 
     header .header-logo-area {
         display: flex;
-        margin-left: 5%;
+        margin-left: 2rem;
         flex-grow: 2;
-    }
-
-    header .header-title {
-        font-size: 2em;
-        font-weight: bold;
-        color: white;
-        vertical-align: middle;
-        padding-left: 2%;
-        white-space: nowrap;
-        height: 100px;
-        line-height: 100px;
+        align-items: center;
     }
 
     .header-search-box {

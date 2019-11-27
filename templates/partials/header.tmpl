@@ -24,13 +24,9 @@
     <body>
         <header>
             <section class="header-logo-area">
-                <div class="logo-wrapper">
-                    <a href="/"><img src="/public/dist/images/logo.png"></a>
-                </div>
+                <a href="/"><img src="/public/dist/images/logo.png"></a>
                 {{if ne .config.Core.SiteTitle ""}}
-                <div class="header-title">
-                    <a href="/">{{.config.Core.SiteTitle}}</a>
-                </div>
+                <a href="/" class="header-title">{{.config.Core.SiteTitle}}</a>
                 {{end}}
             </section>
 
