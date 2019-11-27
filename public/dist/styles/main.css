@@ -62,14 +62,14 @@ header img {
         border: none;
         padding: 10px;
         width: 200px;
-        transition: width .25s, background-color .25s;
+        transition: width 0.25s, background-color 0.25s;
     }
 
     .header-search-box input:focus {
         color: black;
         background-color: white;
         width: 300px;
-        transition: width .25s, background-color .25s;
+        transition: width 0.25s, background-color 0.25s;
     }
 }
 

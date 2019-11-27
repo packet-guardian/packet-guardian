@@ -23,6 +23,7 @@
         "lint": "yarn run lint:ts && yarn run lint:css",
         "lint:ts": "tslint --project tsconfig.json",
         "lint:css": "stylelint public/dist/styles/*.css",
+        "fix-css-lint": "stylelint --fix './public/dist/styles/**/*'",
         "build:dev": "webpack --config webpack.dev.js",
         "build:prod": "webpack --config webpack.prod.js",
         "watch": "webpack --config webpack.dev.js --watch"

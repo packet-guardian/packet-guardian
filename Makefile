@@ -39,6 +39,7 @@ yarn-dev:
 
 # go get github.com/go-bindata/go-bindata/...
 bindata:
+	rm public/dist/js/*.map
 	go-bindata -o src/bindata/bindata.go -pkg bindata templates/... public/dist/...
 
 build:
