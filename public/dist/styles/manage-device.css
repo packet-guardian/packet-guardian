@@ -26,6 +26,8 @@
     margin-top: 15px;
 }
 
-#edit-expire-controls, #confirmation-icons, #dev-exp-val {
+#edit-expire-controls,
+#confirmation-icons,
+#dev-exp-val {
     display: none;
 }

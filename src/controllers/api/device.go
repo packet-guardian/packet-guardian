@@ -565,7 +565,7 @@ func (d *Device) GetDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 		return
 	}
 
-	common.NewAPIResponse("Registration successful", device).WriteResponse(w, http.StatusOK)
+	common.NewAPIResponse("", device).WriteResponse(w, http.StatusOK)
 }
 
 func (d *Device) EditFlaggedHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

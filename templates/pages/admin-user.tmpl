@@ -1,0 +1,176 @@
+{{define "pageTitle"}}Admin - User Editor{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "admin-users")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" dict "main" . "js" (list "admin-user")}}
+{{end}}
+
+{{define "content"}}
+<div class="admin-user">
+    <h2>Administration - User Editor</h2>
+
+    <form id="user-form">
+        <input type="hidden" name="user-id" value="{{.user.ID}}">
+
+        <fieldset>
+            <p>
+                <a href="/admin/manage/user/{{.user.Username}}" class="btn">Device List</a>
+                {{if eq .user.ID 0}}
+                <button type="submit" id="submit-btn" class="ok-btn">Create</button>
+                {{else}}
+                <button type="submit" id="submit-btn" class="ok-btn">Save</button>
+                {{end}}
+                <button type="button" name="delete-btn" class="danger-btn">Delete</button>
+            </p>
+        </fieldset>
+
+        <hr class="user-edit-separator">
+
+        <fieldset>
+            <h3>User Information</h3>
+
+            <p>
+                <label for="username">Username:</label>
+                <input type="text" name="username" value="{{.user.Username}}" disabled="disabled">
+            </p>
+
+            <p>
+                {{if .user.HasPassword}}
+                <span class="label">Has Password</span>: <span id="has-password">Yes</span>
+                {{else}}
+                <span class="label">Has Password</span>: <span id="has-password">No</span>
+                {{end}}
+            </p>
+
+            <p>
+                <label for="password">New Password:</label>
+                <input type="password" name="password">
+                <input type="checkbox" name="clear-pass"> Clear Password
+            </p>
+        </fieldset>
+
+        <hr class="user-edit-separator">
+
+        <fieldset>
+            <h3>Device Settings</h3>
+
+            <p>
+                <label for="device-limit">Device Limit:</label>
+                <select name="special-limit">
+                    <option value="global">Global</option>
+                    <option value="unlimited">Unlimited</option>
+                    <option value="specific">Other:</option>
+                </select>
+                <input type="text" name="device-limit" value="{{.user.DeviceLimit}}">
+            </p>
+            <!-- <p>
+                <span class="label">Date format</span>: YYYY-MM-DD HH:mm<br>
+                <span class="label">Time format</span>: HH:mm<br>
+                <span class="label">Duration</span>: 5h30m = 5 hours and 30 minutes
+            </p> -->
+            <p>
+                <label for="dev-exp-sel"><span title="The method use to expire a device automatically">Default Device Expiration Type:</span></label>
+                <select name="dev-exp-sel" data-expires="{{.user.DeviceExpiration.Mode}}">
+                    <option value="global">Global</option>
+                    <option value="never">Never</option>
+                    <option value="specific">Specific</option>
+                    <option value="duration">Duration</option>
+                    <option value="daily">Daily @</option>
+                    <option value="rolling">Rolling</option>
+                </select>
+            </p>
+
+            <p>
+                <label for="device-expiration"><span title="When the user's device will expire by default">Default Device Expiration Value:</span></label>
+                <input type="text" name="device-expiration" value="{{.user.DeviceExpiration.String}}">
+                <span id="dev-exp-tooltip" class="tooltip"></span>
+            </p>
+        </fieldset>
+
+        <hr class="user-edit-separator">
+
+        <fieldset>
+            <h3>User Expiration</h3>
+
+            <p>
+                <label for="val-bef-sel">User Valid:</label>
+                <select name="val-bef-sel" data-forever="{{.user.ValidForever}}">
+                    <option value="forever">Forever</option>
+                    <option value="specific">Specify</option>
+                </select>
+            </p>
+
+            <p>
+                <label for="valid-after">Start:</label>
+                <input type="text" name="valid-after" value="{{.user.ValidStart.Format "2006-01-02 15:04"}}">
+                <span id="user-exp-tooltip" class="tooltip"></span>
+            </p>
+
+            <p>
+                <label for="valid-before">End:</label>
+                <input type="text" name="valid-before" value="{{.user.ValidEnd.Format "2006-01-02 15:04"}}">
+            </p>
+        </fieldset>
+
+        <hr class="user-edit-separator">
+
+        <fieldset>
+            <h3>Other Settings</h3>
+
+            <p>
+                <label for="can-manage">Can Manage Own Devices:</label>
+                {{if .user.CanManage}}
+                <input type="checkbox" name="can-manage" checked="true">
+                {{else}}
+                <input type="checkbox" name="can-manage">
+                {{end}}
+            </p>
+
+            <p>
+                <label for="can-autoreg">Can Auto Register Devices:</label>
+                {{if .user.CanAutoreg}}
+                <input type="checkbox" name="can-autoreg" checked="true">
+                {{else}}
+                <input type="checkbox" name="can-autoreg">
+                {{end}}
+            </p>
+        </fieldset>
+
+        <hr class="user-edit-separator">
+
+        <fieldset>
+            <h3>Permissions</h3>
+            <p>
+                <label for="user-ui-group"><span title="The group this user belongs to">UI Group:</span></label>
+                <select name="user-ui-group">
+                    <option value="default">Default</option>
+                    <option value="admin" {{if eq .user.UIGroup "admin"}}selected{{end}}>Administrator</option>
+                    <option value="helpdesk" {{if eq .user.UIGroup "helpdesk"}}selected{{end}}>Service Desk</option>
+                    <option value="readonly" {{if eq .user.UIGroup "readonly"}}selected{{end}}>Readonly Admin</option>
+                </select>
+            </p>
+
+            <p>
+                <label for="user-api-group"><span title="The group this user belongs to">API Group:</span></label>
+                <select name="user-api-group">
+                    <option value="disable">Disabled</option>
+                    <option value="readonly-api" {{if eq .user.APIGroup "readonly-api"}}selected{{end}}>Readonly</option>
+                    <option value="readwrite-api" {{if eq .user.APIGroup "readwrite-api"}}selected{{end}}>Readwrite</option>
+                </select>
+            </p>
+
+            <p>
+                <label for="user-api-status">View Status API:</label>
+                {{if .user.AllowStatusAPI}}
+                <input type="checkbox" name="user-api-status" checked="true">
+                {{else}}
+                <input type="checkbox" name="user-api-status">
+                {{end}}
+            </p>
+        </fieldset>
+    </form>
+</div>
+{{end}}

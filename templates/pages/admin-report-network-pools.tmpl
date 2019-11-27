@@ -1,0 +1,44 @@
+{{define "pageTitle"}}Report - DHCP Pools Stats{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "reports/dhcp-pools")}}
+{{end}}
+
+{{define "content"}}
+<div class="content">
+    <h2>DHCP Pool Statistics</h2>
+    <table class="pool-list">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Subnet</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Registered</th>
+                <th>Total</th>
+                <th>Active</th>
+                <th>Claimed</th>
+                <th>Abandoned</th>
+                <th>Free</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {{range .pools}}
+            <tr>
+                <td>{{.NetworkName}}</td>
+                <td>{{.Subnet}}</td>
+                <td>{{.Start}}</td>
+                <td>{{.End}}</td>
+                <td>{{if .Registered}}Yes{{else}}No{{end}}</td>
+                <td>{{.Total}}</td>
+                <td>{{.Active}}</td>
+                <td>{{.Claimed}}</td>
+                <td>{{.Abandoned}}</td>
+                <td>{{.Free}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

@@ -1,0 +1,38 @@
+main {
+    display: grid;
+    grid-template-columns: 10% auto;
+    height: 100%;
+}
+
+nav {
+    background-color: lightgray;
+    height: 100%;
+    text-align: center;
+    font-weight: bold;
+}
+
+nav span {
+    display: block;
+    padding: 0.75rem;
+}
+
+nav a {
+    display: block;
+    background-color: #0083a8;
+    padding: 0.75rem;
+    text-decoration: none;
+    color: white;
+}
+
+nav a:hover {
+    background-color: #006885;
+}
+
+.admin-main {
+    margin-bottom: 1rem;
+}
+
+.main {
+    padding-top: 0;
+    padding-bottom: 0;
+}

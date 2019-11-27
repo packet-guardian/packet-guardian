@@ -42,7 +42,7 @@ func (g *Guest) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !g.e.Config.Guest.Enabled {
-		g.e.Views.NewView("register-guest", r).Render(w, nil)
+		g.e.Views.NewView("user-register-guest", r).Render(w, nil)
 		return
 	}
 
@@ -74,7 +74,7 @@ func (g *Guest) showGuestRegPage(w http.ResponseWriter, r *http.Request) {
 		"captchaID":      captcha.New(),
 	}
 
-	g.e.Views.NewView("register-guest", r).Render(w, data)
+	g.e.Views.NewView("user-register-guest", r).Render(w, data)
 }
 
 func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
@@ -174,7 +174,7 @@ func (g *Guest) showGuestVerifyPage(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"guestVerText": guest.GetVerificationText(g.e),
 	}
-	g.e.Views.NewView("register-guest-verify", r).Render(w, data)
+	g.e.Views.NewView("user-register-guest-verify", r).Render(w, data)
 }
 
 func (g *Guest) verifyGuestRegistration(w http.ResponseWriter, r *http.Request) {
@@ -213,7 +213,7 @@ func (g *Guest) renderErrorMessage(message string, w http.ResponseWriter, r *htt
 		"msg":   message,
 		"error": true,
 	}
-	g.e.Views.NewView("register-guest-msg", r).Render(w, data)
+	g.e.Views.NewView("user-register-guest-msg", r).Render(w, data)
 }
 
 func (g *Guest) renderMessage(message string, w http.ResponseWriter, r *http.Request) {
@@ -221,5 +221,5 @@ func (g *Guest) renderMessage(message string, w http.ResponseWriter, r *http.Req
 		"msg":   message,
 		"error": false,
 	}
-	g.e.Views.NewView("register-guest-msg", r).Render(w, data)
+	g.e.Views.NewView("user-register-guest-msg", r).Render(w, data)
 }

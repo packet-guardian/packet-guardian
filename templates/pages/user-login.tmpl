@@ -1,0 +1,29 @@
+{{define "pageTitle"}}Login{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "login")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" dict "main" . "js" (list "login")}}
+{{end}}
+
+{{define "content"}}
+<div class="login-box">
+    <form>
+        <fieldset>
+            <p>
+                <label for="username">Username:</label>
+                <input type="text" name="username" autofocus="autofocus">
+            </p>
+            <p>
+                <label for="password">Password:</label>
+                <input type="password" name="password">
+            </p>
+            <p>
+                <button id="login-btn" type="button">Login</button>
+            </p>
+        </fieldset>
+    </form>
+</div>
+{{end}}

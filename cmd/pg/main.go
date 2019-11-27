@@ -7,6 +7,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"runtime"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/bindata"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/db"
+	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 	"github.com/packet-guardian/packet-guardian/src/server"
 	"github.com/packet-guardian/packet-guardian/src/tasks"
@@ -124,6 +126,16 @@ func setupEnvironment() *common.Environment {
 	if err != nil {
 		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
 	}
+
+	e.Views.InjectData("config", e.Config)
+	e.Views.InjectData("systemVersion", version)
+	e.Views.InjectData("buildTime", buildTime)
+	e.Views.InjectDataFunc("sessionUser", func(r *http.Request) interface{} {
+		return models.GetUserFromContext(r)
+	})
+	e.Views.InjectDataFunc("canViewUsers", func(r *http.Request) interface{} {
+		return models.GetUserFromContext(r).Can(models.ViewUsers)
+	})
 
 	return e
 }

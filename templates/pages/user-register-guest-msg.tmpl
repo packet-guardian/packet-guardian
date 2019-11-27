@@ -1,0 +1,17 @@
+{{define "pageTitle"}}Register - Guest{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "register")}}
+{{end}}
+
+{{define "content"}}
+{{if .error}}
+<div class="failure-message" style="display: block;">
+{{else}}
+<div class="success-message" style="display: block;">
+{{end}}
+    <p class="instructions">
+        {{.msg}}
+    </p>
+</div>
+{{end}}

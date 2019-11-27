@@ -17,83 +17,38 @@
     <div class="expired-sample expired"></div> = Expired IP Lease
 </div>
 <div class="clearfix devices-list">
-    {{range .results}}
-    <a name="{{.D.ID}}"></a>
-    <div class="device-header {{if .D.IsBlacklisted}}blacklisted{{else}}good-standing{{end}}" data-device-id="{{.D.ID}}">
-        <div class="device-info">
-            <div class="device-info-label">MAC Address</div>
-            <div class="device-info-text"><a href="/admin/manage/device/{{urlquery .D.MAC}}">{{.D.MAC}}</a></div>
-        </div>
-        <div class="device-info">
-            <div class="device-info-label">Username</div>
-            {{if eq .D.Username ""}}
-            <div class="device-info-text unregistered">UNREGISTERED</div>
-            {{else}}
-            <div class="device-info-text"><a href="/admin/manage/user/{{.D.Username}}">{{.D.Username}}</a></div>
-            {{end}}
-        </div>
-        <div class="device-info">
-            <div class="device-info-label">Description</div>
-            <div class="device-info-text">{{if ne .D.Description ""}}{{.D.Description}}{{else}}&nbsp;{{end}}</div>
-        </div>
-        <div class="device-info">
-            <div class="device-info-label">Last Seen</div>
-            <div class="device-info-text">{{if gt .D.LastSeen.Unix 0}}{{.D.LastSeen.Format "2006-01-02 15:04"}}{{else}}&nbsp;{{end}}</div>
-        </div>
-        <div class="device-info {{with .L}}{{if .IsExpired}}expired{{end}}{{end}}">
-            <div class="device-info-label">Last Address</div>
-            {{with .L}}
-            <div class="device-info-text {{if .IsExpired}}expired{{end}}">{{.IP.String}}</div>
-            {{else}}
-            <div class="device-info-text">N/A</div>
-            {{end}}
-        </div>
-    </div>
-    <div class="device-body" id="device-body-{{.D.ID}}">
-        <div class="device-body-inner">
-            {{if .D.IsBlacklisted}}
-            <div class="device-info blacklisted">
-                <div class="device-info-label">Blacklisted</div>
-                <div class="device-info-text">Yes</div>
-            </div>
-            {{end}}
-            <div class="device-info">
-                <div class="device-info-label">Platform</div>
-                <div class="device-info-text">{{.D.Platform}}</div>
-            </div>
-            <div class="device-info">
-                <div class="device-info-label">Date Registered</div>
-                <div class="device-info-text">{{.D.DateRegistered.Format "2006-01-02 15:04"}}</div>
-            </div>
-            <div class="device-info">
-                <div class="device-info-label">Registered From</div>
-                <div class="device-info-text">{{.D.RegisteredFrom.String}}</div>
-            </div>
-            <div class="device-info">
-                <div class="device-info-label">Expires</div>
-                {{if eq .D.Expires.Unix 0}}
-                <div class="device-info-text">Never</div>
-                {{else if eq .D.Expires.Unix 1}}
-                <div class="device-info-text">Rolling</div>
+    <table>
+        <thead>
+            <tr>
+                <th>MAC Address</th>
+                <th>Username</th>
+                <th>Description</th>
+                <th>Last Seen</th>
+                <th>Last Address</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{range .results}}
+            <tr class="{{if .D.IsBlacklisted}}blacklisted{{end}}">
+                <td><a href="/admin/manage/device/{{urlquery .D.MAC}}">{{.D.MAC}}</a></td>
+                <td>
+                    {{if eq .D.Username ""}}
+                    <span class="unregistered">UNREGISTERED</span>
+                    {{else}}
+                    <a href="/admin/manage/user/{{.D.Username}}">{{.D.Username}}</a>
+                    {{end}}
+                </td>
+                <td>{{.D.Description}}</td>
+                <td>{{.D.LastSeen.Format "2006-01-02 15:04"}}</td>
+                {{with .L}}
+                <td class="{{if .IsExpired}}expired{{end}}">{{.IP.String}}</td>
                 {{else}}
-                <div class="device-info-text">{{.D.Expires.Format "2006-01-02 15:04"}}</div>
+                <td>N/A</td>
                 {{end}}
-            </div>
-            <div class="device-info">
-                <div class="device-info-label">User Agent</div>
-                <div class="device-info-text truncate"><span title="{{.D.UserAgent}}">{{.D.UserAgent}}</span></div>
-            </div>
-            <div class="device-info">
-                <div class="device-info-label">Current Lease</div>
-                {{with .D.GetCurrentLease}}
-                <div class="device-info-text">{{.IP.String}}</div>
-                {{else}}
-                <div class="device-info-text">N/A</div>
-                {{end}}
-            </div>
-        </div>
-    </div>
-    {{end}}
+            </tr>
+        {{end}}
+        </tbody>
+    </table>
 </div>
 {{end}}
 {{end}}

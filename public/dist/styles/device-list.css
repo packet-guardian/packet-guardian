@@ -1,107 +1,157 @@
+/*** Begin device list table ***/
+table {
+    margin: 0 auto;
+}
+
+td,
+th {
+    padding: 0.75rem 0.75rem;
+}
+
+.cell-check-select {
+    text-align: center;
+    padding: 0;
+}
+
+tr {
+    background-color: rgb(255, 251, 251);
+}
+
+thead tr {
+    background-color: lightgray;
+    border-bottom: 2px solid black;
+}
+
+/*** End device list table ***/
+
 .blacklisted {
     background-color: #cd5c5c;
     color: white;
 }
 
 .good-standing {
-    background-color: #8FBC8F;
+    background-color: #8fbc8f;
 }
 
-.devices-list {
-    margin: 0 auto;
-    padding-top: 1rem;
-    display: flex;
-    flex-direction: column;
-}
-
-.device-header {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    align-items: center;
-    text-align: center;
-    border-bottom: .1em solid black;
-}
-
-.device-header:hover {
+.edit-dev-desc {
     cursor: pointer;
+    color: black;
+    text-decoration: none;
 }
 
-.device-body {
-    max-height: 0;
-	overflow: hidden;
-
-	/* Set our transitions up. */
-	-webkit-transition: max-height 0.8s;
-	   -moz-transition: max-height 0.8s;
-         -o-transition: max-height 0.8s;
-	        transition: max-height 0.8s;
+.edit-dev-desc:hover {
+    cursor: pointer;
+    color: black;
+    text-decoration: none;
 }
 
-.device-body-inner {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    flex-wrap: wrap;
-    text-align: center;
-}
-
-.device-info-check {
-    flex-basis: 30px;
-}
-
-.device-info {
-    padding: 1.1em;
-    min-width: 25%;
-    display: inline-block;
-}
-
-.device-info-label {
-    font-weight: bold;
-    font-size: 1.25em;
-    margin-bottom: .5em;
-}
-
-.device-checkbox {
-    -webkit-transform: scale(1.5); /* Safari and Chrome */
-       -moz-transform: scale(1.5); /* FF */
-        -ms-transform: scale(1.5); /* IE */
-         -o-transform: scale(1.5); /* Opera */
-            transform: scale(1.5);
-}
-
-@media (min-width: 1024px) {
-    .devices-list {
-        width: 60%;
-    }
-}
-
+/*** Begin pager ***/
 .device-pager {
-    text-align: center;
     display: flex;
+    justify-content: space-evenly;
 }
 
 .device-pager-top {
-    margin-bottom: .5rem;
+    margin-bottom: 0.5rem;
 }
 
 .device-pager-bottom {
-    margin-top: .5rem;
-}
-
-.device-pager .pager-start-end {
-    flex-grow: 2;
+    margin-top: 0.5rem;
 }
 
 .device-pager .pager-direction {
-    min-width: 5rem;
+    padding: 0 1rem;
 }
 
-.device-pager .pager-direction a, .device-pager .pager-direction a:visited {
+.device-pager .pager-direction a,
+.device-pager .pager-direction a:visited {
     text-decoration: none;
-    color: #0097A7;
+    color: #0097a7;
 }
 
 .device-pager .pager-direction a:hover {
     text-decoration: underline;
 }
+
+/*** End pager ***/
+
+/*** Begin custom checkbox ***/
+.device-check {
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 22px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.device-check input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: #eee;
+}
+
+.device-check input:focus ~ .checkmark {
+    outline: 1px dotted black;
+}
+
+/* On mouse-over, add a grey background color */
+.device-check:hover input ~ .checkmark {
+    background-color: #ccc;
+}
+
+/* When the checkbox is checked, add a blue background */
+.device-check input:checked ~ .checkmark {
+    background-color: #2196f3;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark::after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* Style the checkmark/indicator */
+.device-check .checkmark::after {
+    left: 9px;
+    top: 5px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+/* Show the checkmark when checked */
+.device-check input:checked ~ .checkmark::after {
+    display: block;
+}
+
+/*** End custom checkbox ***/
+
+/* @media (min-width: 1024px) {
+    .devices-list {
+        width: 60%;
+    }
+} */

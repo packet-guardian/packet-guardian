@@ -1,45 +1,41 @@
-const path = require('path');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const path = require("path");
+const CleanWebpackPlugin = require("clean-webpack-plugin");
 
 module.exports = {
   entry: {
-    login: './public/src/js/login.js',
-    register: './public/src/js/register.js',
-    'admin-search': './public/src/js/admin-search.js',
-    'admin-users': './public/src/js/admin-users.js',
-    'admin-user': './public/src/js/admin-user.js',
-    'manage-admin': './public/src/js/manage-admin.js',
-    'manage-device': './public/src/js/manage-device.js',
-    manage: './public/src/js/manage.js',
-    captcha: './public/src/js/captcha.js'
+    login: "./public/src/ts/login.ts",
+    register: "./public/src/ts/register.ts",
+    "flash-messages": "./public/src/ts/flash-messages.ts",
+    "admin-users": "./public/src/ts/admin-users.ts",
+    "admin-user": "./public/src/ts/admin-user.ts",
+    "manage-admin": "./public/src/ts/manage-admin.ts",
+    "manage-device": "./public/src/ts/manage-device.ts",
+    manage: "./public/src/ts/manage.ts",
+    captcha: "./public/src/ts/captcha.ts"
   },
 
-  plugins: [
-    new CleanWebpackPlugin(['public/dist/js'])
-  ],
+  plugins: [new CleanWebpackPlugin(["public/dist/js"])],
 
   output: {
-    filename: '[name].min.js',
-    path: path.resolve(__dirname, 'public/dist/js')
+    filename: "[name].min.js",
+    path: path.resolve(__dirname, "public/dist/js")
   },
 
   resolve: {
-    modules: [
-      path.resolve(__dirname, 'public/src/modules'),
-      'node_modules'
-    ]
+    extensions: [".ts", ".js"],
+    modules: [path.resolve(__dirname, "public/src/modules"), "node_modules"],
+    alias: {
+      "@": path.resolve(__dirname, "public/src/modules/")
+    }
   },
 
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.ts$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env']
-          }
+          loader: "awesome-typescript-loader"
         }
       }
     ]

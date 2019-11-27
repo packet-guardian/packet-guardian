@@ -8,17 +8,25 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/lfkeitel/verbose/v4"
 	"github.com/packet-guardian/packet-guardian/src/bindata"
 )
 
+type DataFunc func(*http.Request) interface{}
+
+const mainTmpl = `{{define "main" }} {{ template "base" . }} {{ end }}`
+
 // Views is a collection of templates
 type Views struct {
-	source string
-	t      *template.Template
-	e      *Environment
+	source            string
+	e                 *Environment
+	injectedData      map[string]interface{}
+	injectedDataFuncs map[string]DataFunc
+
+	templates map[string]*template.Template
 }
 
 // NewViews reads a set of templates from a directory and loads them
@@ -37,16 +45,15 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 		}
 	}()
 
-	tmpl := template.New("").Funcs(customTemplateFuncs())
-
-	if err := loadTemplates(tmpl, "templates"); err != nil {
-		return nil, err
-	}
-
 	v = &Views{
-		source: basepath,
-		t:      tmpl,
-		e:      e,
+		source:            basepath,
+		e:                 e,
+		injectedData:      make(map[string]interface{}),
+		injectedDataFuncs: make(map[string]DataFunc),
+		templates:         make(map[string]*template.Template),
+	}
+	if err := v.loadTemplates(); err != nil {
+		return nil, err
 	}
 	return v, nil
 }
@@ -88,39 +95,95 @@ func customTemplateFuncs() template.FuncMap {
 	}
 }
 
-func loadTemplates(tmpl *template.Template, dir string) error {
-	files, err := bindata.AssetDir(dir)
+func (v *Views) loadTemplates() error {
+	dir := v.source
+
+	mainTemplate, err := template.New("main").Parse(mainTmpl)
+	if err != nil {
+		return err
+	}
+	mainTemplate.Funcs(customTemplateFuncs())
+
+	partialFiles, err := bindata.AssetDir(dir + "/partials")
+	if err != nil {
+		return errors.New("layout templates not found")
+	}
+
+	pages, err := bindata.AssetDir(dir + "/pages")
 	if err != nil {
 		return errors.New("templates not found")
 	}
 
-	for _, file := range files {
-		if strings.HasSuffix(file, ".tmpl") {
-			fileBytes, _ := bindata.GetAsset(dir + "/" + file)
-			if _, err := tmpl.Parse(string(fileBytes)); err != nil {
-				return nil
-			}
+	for _, file := range pages {
+		if !strings.HasSuffix(file, ".tmpl") {
 			continue
 		}
 
-		_, err := bindata.AssetDir(dir + "/" + file)
-		if err == nil {
-			if err := loadTemplates(tmpl, dir+"/"+file); err != nil {
+		fileName := filepath.Base(file)
+		fileName = fileName[:len(fileName)-5]
+
+		v.e.Log.WithField("filename", fileName).Debug("Loading page template")
+
+		pageTemplate, _ := mainTemplate.Clone()
+
+		// Partial templates available to all pages
+		for _, partial := range partialFiles {
+			fileBytes, _ := bindata.GetAsset(dir + "/partials/" + partial)
+			if _, err := pageTemplate.Parse(string(fileBytes)); err != nil {
+				v.e.Log.WithFields(verbose.Fields{
+					"partial": partial,
+					"error":   err.Error(),
+				}).Debug("Failed to load partial template")
 				return err
 			}
 		}
+
+		// Specific layout for this page
+		pageLayout := strings.SplitN(fileName, "-", 2)[0]
+		fileBytes, _ := bindata.GetAsset(dir + "/layouts/" + pageLayout + ".tmpl")
+		if _, err := pageTemplate.Parse(string(fileBytes)); err != nil {
+			v.e.Log.WithFields(verbose.Fields{
+				"layout": pageLayout,
+				"error":  err.Error(),
+			}).Debug("Failed to load layout template")
+			return err
+		}
+
+		// This page template
+		fileBytes, _ = bindata.GetAsset(dir + "/pages/" + file)
+		if _, err := pageTemplate.Parse(string(fileBytes)); err != nil {
+			v.e.Log.WithFields(verbose.Fields{
+				"file":  file,
+				"error": err.Error(),
+			}).Debug("Failed to load page template")
+			return err
+		}
+
+		v.templates[fileName] = pageTemplate
 	}
 	return nil
 }
 
 // NewView returns a template associated with a request.
-func (v *Views) NewView(view string, r *http.Request) *View {
+func (v *Views) NewView(file string, r *http.Request) *View {
 	return &View{
-		name: view,
-		t:    v.t,
-		e:    v.e,
-		r:    r,
+		name:              file,
+		t:                 v.templates[file],
+		e:                 v.e,
+		r:                 r,
+		injectedData:      v.injectedData,
+		injectedDataFuncs: v.injectedDataFuncs,
 	}
+}
+
+// InjectData will always inject a specific key, value pair into every template
+func (v *Views) InjectData(key string, val interface{}) {
+	v.injectedData[key] = val
+}
+
+// InjectData will always inject a specific key, value pair into every template
+func (v *Views) InjectDataFunc(key string, fn DataFunc) {
+	v.injectedDataFuncs[key] = fn
 }
 
 // Reload replaces the Views object with a new one using the same source
@@ -132,7 +195,7 @@ func (v *Views) Reload() error {
 	if err != nil {
 		return err
 	}
-	v.t = views.t
+	v.templates = views.templates
 	return nil
 }
 
@@ -141,23 +204,33 @@ func (v *Views) Reload() error {
 // is used.
 func (v *Views) RenderError(w http.ResponseWriter, r *http.Request, data map[string]interface{}) {
 	if data == nil {
-		v.NewView("error", r).Render(w, nil)
+		v.NewView("user-error", r).Render(w, nil)
 		return
 	}
-	v.NewView("custom-error", r).Render(w, data)
+	v.NewView("user-custom-error", r).Render(w, data)
 }
 
 // View represents a template associated with a specific request.
 type View struct {
-	name string
-	t    *template.Template
-	e    *Environment
-	r    *http.Request
+	name              string
+	t                 *template.Template
+	e                 *Environment
+	r                 *http.Request
+	injectedData      map[string]interface{}
+	injectedDataFuncs map[string]DataFunc
 }
 
 // Render executes the template and writes it to w. This function will also
 // save a web session to the client if "username" is set in the current session.
 func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
+	if v.t == nil {
+		v.e.Log.WithFields(verbose.Fields{
+			"template": v.name,
+			"package":  "common:views",
+		}).Error("Error rendering template, v.t is nil")
+		return
+	}
+
 	if data == nil {
 		data = make(map[string]interface{})
 	}
@@ -174,9 +247,17 @@ func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
 		}
 	}
 
-	data["config"] = v.e.Config
 	data["flashMessage"] = flash
-	if err := v.t.ExecuteTemplate(w, v.name, data); err != nil {
+	data["layout"] = strings.SplitN(v.name, "-", 2)[0]
+
+	for key, val := range v.injectedData {
+		data[key] = val
+	}
+	for key, fn := range v.injectedDataFuncs {
+		data[key] = fn(v.r)
+	}
+
+	if err := v.t.Execute(w, data); err != nil {
 		v.e.Log.WithFields(verbose.Fields{
 			"template": v.name,
 			"error":    err,

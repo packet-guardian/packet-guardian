@@ -5,7 +5,7 @@
     top: 0;
     left: 0;
     z-index: 10;
-    opacity: .2;
+    opacity: 0.2;
     background-color: #000;
     display: none;
     width: 100%;
@@ -13,7 +13,7 @@
 }
 
 .js-modal {
-    position: fixed;;
+    position: fixed;
     top: 0;
     left: 0;
     z-index: 10;
@@ -24,20 +24,20 @@
 
 .js-modal-header {
     background-color: #666;
-    font-size:19px;
-    padding:10px;
-    color:#DDD;
+    font-size: 19px;
+    padding: 10px;
+    color: #ddd;
 }
 
 .js-modal-body {
     background-color: #333;
-    padding:20px;
+    padding: 20px;
     font-size: 1.25em;
-    color:#FFF;
+    color: #fff;
 }
 
 .js-modal-body input {
-    margin-top: .5em;
+    margin-top: 0.5em;
     width: 100%;
     box-sizing: border-box;
     color: black;
@@ -45,12 +45,12 @@
 
 .js-modal-footer {
     background-color: #666;
-    padding:10px;
-    text-align:right;
+    padding: 10px;
+    text-align: right;
 }
 
 .js-modal-footer button {
-    margin: 0 .25em;
+    margin: 0 0.25em;
     font-size: 1.25em;
 }
 

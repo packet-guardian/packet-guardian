@@ -2,15 +2,18 @@
     </div>
     <footer>
         <div class="copyright">
-            {{.main.config.Core.SiteFooterText}}
+            {{.config.Core.SiteFooterText}}
         </div>
     </footer>
 
-    {{range .js}}
-    {{if ne . ""}}
-    <script type="text/javascript" src="/public/dist/js/{{.}}.min.js"></script>
-    {{end}}
-    {{end}}
+    <script type="text/javascript" src="/public/dist/js/flash-messages.min.js?{{.buildTime}}"></script>
+    {{block "js" .}}{{end}}
     </body>
 </html>
+{{end}}
+
+{{define "render-js"}}
+{{range .js}}{{if ne . ""}}
+<script type="text/javascript" src="/public/dist/js/{{.}}.min.js?{{$.main.buildTime}}"></script>
+{{end}}{{end}}
 {{end}}

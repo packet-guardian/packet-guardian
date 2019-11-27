@@ -26,7 +26,7 @@ func CheckGuestReg(next http.Handler, e *common.Environment, leases stores.Lease
 				"msg":   "This device is already registered",
 				"error": true,
 			}
-			e.Views.NewView("register-guest-msg", r).Render(w, data)
+			e.Views.NewView("user-register-guest-msg", r).Render(w, data)
 			return
 		}
 

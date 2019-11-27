@@ -1,0 +1,30 @@
+{{define "pageTitle"}}Report - Leases{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "reports/leases")}}
+{{end}}
+
+{{define "content"}}
+<div class="content">
+    <h2>Lease Report</h2>
+    <table class="network-list">
+        <thead>
+            <tr>
+                <th>Network</th>
+                <th>Registered Report</th>
+                <th>Unregistered Report</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {{range .networks}}
+            <tr>
+                <td>{{title .}}</td>
+                <td class="list-center"><a href="/admin/reports/lease-stats?network={{.}}&registered">Registered</a></td>
+                <td class="list-center"><a href="/admin/reports/lease-stats?network={{.}}">Unregistered</a></td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

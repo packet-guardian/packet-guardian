@@ -1,0 +1,15 @@
+{{define "pageTitle"}}Error{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "error")}}
+{{end}}
+
+{{define "content"}}
+<div class="error">
+    <h1>{{.title}}</h1>
+
+    <p>
+        {{.body}}
+    </p>
+</div>
+{{end}}

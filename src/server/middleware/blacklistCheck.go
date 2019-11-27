@@ -42,7 +42,7 @@ func BlacklistCheck(next http.Handler, e *common.Environment, devices stores.Dev
 					"mac":     lease.MAC.String(),
 				}).Critical("Error getting device")
 			} else if device.IsBlacklisted() {
-				e.Views.NewView("blacklisted", r).Render(w, nil)
+				e.Views.NewView("user-blacklisted", r).Render(w, nil)
 				return
 			}
 		}
