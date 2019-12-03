@@ -1,25 +1,29 @@
-html, body {
+html {
     height: 100%;
 }
 
 body {
     color: black;
-    background-color: #EDEDED;
-    background: radial-gradient(circle, #FFFFFF, #EDEDED);
+    background-color: #ededed;
+    background: radial-gradient(circle, #fff, #ededed);
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
 }
 
 header {
     padding-bottom: 1em;
     background-color: #303030;
     background: linear-gradient(to bottom, #454545, #303030);
+    display: flex;
+    justify-content: space-between;
 }
 
 header .header-title {
     font-size: 2em;
     font-weight: bold;
     color: white;
-    margin-left: 5%;
-    margin-top: 10px;
+    padding-left: 2rem;
 }
 
 header a {
@@ -27,17 +31,61 @@ header a {
     text-decoration: none;
 }
 
-header .logo-wrapper {
-    display: inline-block;
-    height: 100px;
-    margin-left: 5%;
-    /*background-color: white;*/
-}
-
 header img {
     padding: 10px;
     height: 80px;
     vertical-align: middle;
+}
+
+@media (min-width: 900px) {
+    header {
+        height: 100px;
+        padding-bottom: 0;
+    }
+
+    header .header-logo-area {
+        display: flex;
+        margin-left: 2rem;
+        flex-grow: 2;
+        align-items: center;
+    }
+
+    .header-search-box {
+        display: flex;
+        align-items: center;
+        margin-right: 1rem;
+    }
+
+    .header-search-box input {
+        background-color: #6b6b6b;
+        color: white;
+        border: none;
+        padding: 10px;
+        width: 200px;
+        transition: width 0.25s, background-color 0.25s;
+    }
+
+    .header-search-box input:focus {
+        color: black;
+        background-color: white;
+        width: 300px;
+        transition: width 0.25s, background-color 0.25s;
+    }
+}
+
+header .header-user-profile {
+    color: white;
+    margin-right: 2rem;
+    padding-top: 35px;
+}
+
+header .header-user-profile a {
+    margin-left: 1rem;
+}
+
+header .header-user-profile > span {
+    font-weight: bold;
+    font-size: 1.25rem;
 }
 
 .clearfix {
@@ -47,6 +95,7 @@ header img {
 .flash {
     height: 40px;
     font-size: 25px;
+
     /* display: block is for browsers that don't support flex */
     display: block;
     display: flex;
@@ -60,39 +109,56 @@ header img {
 }
 
 .flashSuccess {
-    background-color: #72F786;
+    background-color: #72f786;
     color: black;
 }
 
 .flashFailure {
-    background-color: #EC7A7A;
+    background-color: #ec7a7a;
     color: white;
 }
 
-.btn {
+.btn,
+button {
     display: inline-block;
     text-decoration: none;
     font-weight: bold;
     padding: 5px 10px;
     color: white;
     border: 0;
-    background-color: #0083A8;
-    background: linear-gradient(to bottom, #0083A8, #007899);
+    background-color: #0083a8;
     white-space: nowrap;
+}
+
+.btn:hover,
+button:hover {
+    background-color: #006885;
+}
+
+.btn:focus,
+button:focus {
+    outline: 1px dotted black;
 }
 
 .ok-btn {
     background-color: rgb(0, 168, 56);
-    background: linear-gradient(to bottom, rgb(0, 168, 56), rgb(0, 136, 45));
+}
+
+.ok-btn:hover {
+    background-color: rgb(1, 128, 43);
 }
 
 .danger-btn {
-    background-color: rgb(241, 81, 81);
-    background: linear-gradient(to bottom, rgb(241, 81, 81), rgb(180, 59, 59));
+    background-color: #ff3131;
+}
+
+.danger-btn:hover {
+    background-color: #c72a2a;
 }
 
 @media (max-width: 600px) {
-    .btn {
+    .btn,
+    button {
         margin-top: 5px;
     }
 }
@@ -113,19 +179,12 @@ header img {
 }
 
 .main {
-    min-height: calc(100% - 220px);
-}
-
-.main:after {
-    content: "";
-    display: block;
-}
-
-footer, .main:after {
-    height: 40px;
+    flex-grow: 1;
+    padding-bottom: 1rem;
 }
 
 footer {
+    min-height: 40px;
     background-color: #303030;
 }
 
@@ -142,27 +201,25 @@ footer .copyright {
     }
 }
 
-@media (min-width: 900px) {
-    header {
-        position: relative;
-        height: 100px;
-        padding-bottom: 0;
-    }
+table {
+    margin: 0 auto;
+}
 
-    header .header-title {
-        display: inline-block;
-        font-size: 2em;
-        font-weight: bold;
-        color: white;
-        vertical-align: middle;
-        margin-left: 2%;
-    }
+td,
+th {
+    padding: 0.75rem 0.75rem;
+}
 
-    header .logo-wrapper {
-        height: 100%;
-    }
+.cell-check-select {
+    text-align: center;
+    padding: 0;
+}
 
-    .main {
-        min-height: calc(100% - 140px);
-    }
+tr {
+    background-color: rgb(255, 251, 251);
+}
+
+thead tr {
+    background-color: lightgray;
+    border-bottom: 2px solid black;
 }

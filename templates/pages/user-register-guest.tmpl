@@ -1,0 +1,64 @@
+{{define "pageTitle"}}Register - Guest{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "register")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" dict "main" . "js" (list "captcha")}}
+{{end}}
+
+{{define "content"}}
+<div class="register-box">
+    <form method="POST" action="/register/guest">
+        {{if .config.Guest.Enabled}}
+        <p class="reg-policy">
+            {{.config.Guest.RegPageHeader}}
+        </p>
+        <fieldset>
+            <p>
+                <label for="guest-name">Name:</label>
+                <input type="text" name="guest-name" autofocus="autofocus">
+            </p>
+            <p>
+                <label for="guest-cred">{{.guestCredLabel}}:</label> {{.guestCredText}}
+                <input type="text" name="guest-cred">
+            </p>
+            {{if not .config.Guest.DisableCaptcha}}
+            <p><img id="captchaImage" src="/captcha/{{.captchaID}}.png" alt="Captcha image"></p>
+
+            <a href="#" id="reload-captcha-btn">Reload</a> | <a href="#" id="play-captcha-btn">Play Audio</a>
+
+            <audio id="captchaAudio" controls style="display:none" src="/captcha/{{.captchaID}}.wav?lang=en" preload="none">
+                You browser doesn't support audio.
+                <a href="/captcha/download/{{.captchaID}}.wav">Download file</a> to play it in the external player.
+            </audio>
+
+            <input type="hidden" name="captchaId" value="{{.captchaID}}"><br>
+            <p>
+                <label for="captchaSolution">Captcha Answer:</label>
+                <input type="text" name="captchaSolution">
+            </p>
+            {{end}}
+        </fieldset>
+
+        <div class="reg-policy">
+            <p class="instructions">
+                Please read the policy below and click "Next":
+            </p>
+            {{range .policy}}
+            <p>{{.}}</p>
+            {{end}}
+        </div>
+
+        <p class="reg-btn">
+            <button id="register-btn" type="submit">Next &gt;</button>
+        </p>
+        {{else}}
+        <h2 style="text-align: center;">
+            Guest registrations are currently disabled
+        </h2>
+        {{end}}
+    </form>
+</div>
+{{end}}

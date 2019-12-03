@@ -39,14 +39,14 @@ func (a *Auth) showLoginPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
-	a.e.Views.NewView("login", r).Render(w, nil)
+	a.e.Views.NewView("user-login", r).Render(w, nil)
 }
 
 func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	// Assume invalid until convinced otherwise
-	auth.LogoutUser(r, w)
+	auth.LogoutUser(w, r)
 	resp := common.NewAPIResponse("Invalid login", nil)
-	ok := auth.LoginUser(r, w, a.users)
+	ok := auth.LoginUser(w, r, a.users)
 
 	// Bad login, return unauthorized
 	if !ok {
@@ -77,12 +77,13 @@ func (a *Auth) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Default to deny
+	auth.LogoutUser(w, r)
 	resp.WriteResponse(w, http.StatusUnauthorized)
 }
 
 // LogoutHandler voids a user's session
 func (a *Auth) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	auth.LogoutUser(r, w)
+	auth.LogoutUser(w, r)
 	if _, ok := r.URL.Query()["noredirect"]; ok {
 		w.WriteHeader(http.StatusNoContent)
 		return

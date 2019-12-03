@@ -1,0 +1,24 @@
+{{define "pageTitle"}}Register - Guest{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "register")}}
+{{end}}
+
+{{define "content"}}
+<div class="register-box">
+    <form method="POST" action="/register/guest/verify">
+        <fieldset>
+            <p>
+                {{.guestVerText}}
+                <br><br>
+                <label for="verify-code">Verification Code:</label>
+                <input type="text" name="verify-code" autofocus="autofocus">
+            </p>
+        </fieldset>
+
+        <p class="reg-btn">
+            <button id="register-btn" type="submit">Register as Guest &gt;</button>
+        </p>
+    </form>
+</div>
+{{end}}

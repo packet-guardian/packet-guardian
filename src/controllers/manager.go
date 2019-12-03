@@ -78,7 +78,7 @@ func (m *Manager) RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		"username": strings.ToLower(username),
 	}
 
-	m.e.Views.NewView("register", r).Render(w, data)
+	m.e.Views.NewView("user-register", r).Render(w, data)
 }
 
 func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
@@ -139,5 +139,5 @@ func (m *Manager) ManageHandler(w http.ResponseWriter, r *http.Request) {
 		"canDeleteDevice": sessionUser.Can(models.DeleteOwn) && !sessionUser.IsBlacklisted(),
 	}
 
-	m.e.Views.NewView("manage", r).Render(w, data)
+	m.e.Views.NewView("user-manage", r).Render(w, data)
 }

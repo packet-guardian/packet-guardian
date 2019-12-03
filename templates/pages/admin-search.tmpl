@@ -1,0 +1,13 @@
+{{define "pageTitle"}}Admin - Search{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "device-list" "admin-search")}}
+{{end}}
+
+{{define "content"}}
+<div class="admin-search">
+    <h2>Administration Search Results</h2>
+
+    {{template "device-list-search" $}}
+</div>
+{{end}}

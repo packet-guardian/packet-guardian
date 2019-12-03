@@ -1,0 +1,60 @@
+{{define "pageTitle"}}Admin - Device Management{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "device-list" "manage")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" dict "main" . "js" (list "manage-admin")}}
+{{end}}
+
+{{define "content"}}
+<div class="manager">
+    <form class="header-metadata">
+        <input type="hidden" name="username" value="{{.user.Username}}">
+
+        <div class="user-info">
+            <section>
+                <span class="text-label">Username:</span>
+                <span class="username">
+                    {{.user.Username}}
+                    {{if .canEditUser}}
+                    <a href="/admin/users/{{.user.Username}}" class="no-color-link"><span class="fa fa-pencil edit-property"></span></a>
+                    {{end}}
+                </span>
+                {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
+            </section>
+            <section>
+                <span class="text-label">Total Devices:</span>
+                <span class="username">{{.deviceCnt}}</span>
+            </section>
+        </div>
+
+        <div class="controls">
+            <section>
+                {{if .canCreateDevice}}
+                <a class="btn ok-btn" href="/register?manual=1&username={{.user.Username}}">Add Device</a>
+                {{end}}
+                {{if and .canDeleteDevice (gt (len .devices) 0)}}
+                <button type="button" name="del-selected-btn" class="danger-btn">Delete Selected</button>
+                {{end}}
+            </section>
+            <section>
+                {{if .canManageBlacklist}}
+                <select name="blacklist-sel" data-blacklisted="{{.user.IsBlacklisted}}" required>
+                    <option  class="placeholder" selected disabled value="">Blacklist</option>
+                    <option value="username" name="black-user-option">Add User</option>
+                    <option value="black-sel">Add Devices</option>
+                    <option value="unblack-sel">Remove Devices</option>
+                </select>
+                {{end}}
+                {{if .canReassignDevice}}
+                <button type="button" name="reassign-selected-btn">Reassign</button>
+                {{end}}
+            </section>
+        </div>
+    </form>
+
+    {{template "device-list" dict "main" $ "linkMac" true}}
+</div>
+{{end}}

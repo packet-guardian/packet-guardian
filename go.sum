@@ -8,8 +8,12 @@ github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364 h1:U+BMqUt8LFgyrF0/
 github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364/go.mod h1:QGrK8vMWWHQYQ3QU9bw9Y9OPNfxccGzfb41qjvVeXtY=
 github.com/elazarl/go-bindata-assetfs v1.0.0 h1:G/bYguwHIzWq9ZoyUQqrjTmJbbYn3j3CKKpKinvZLFk=
 github.com/elazarl/go-bindata-assetfs v1.0.0/go.mod h1:v+YaWX3bdea5J/mo8dSETolEo7R71Vk1u8bnjau5yw4=
+github.com/go-bindata/go-bindata v3.1.2+incompatible h1:5vjJMVhowQdPzjE1LdxyFF7YFTXg5IgGVW4gBr5IbvE=
+github.com/go-bindata/go-bindata v3.1.2+incompatible/go.mod h1:xK8Dsgwmeed+BBsSy2XTopBn/8uK2HWuGSnA11C3Joo=
 github.com/go-sql-driver/mysql v1.4.1 h1:g24URVg0OFbNUTx9qqY1IRZ9D9z3iPyi5zKhQZpNwpA=
 github.com/go-sql-driver/mysql v1.4.1/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
+github.com/gofrs/uuid v3.2.0+incompatible h1:y12jRkkFxsd7GpqdSZ+/KCs/fJbqpEXSGd4+jfEaewE=
+github.com/gofrs/uuid v3.2.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/gorilla/context v1.1.1 h1:AWwleXJkX/nhcU9bZSnZoi3h/qGYqQAGhq6zZe/aQW8=
 github.com/gorilla/context v1.1.1/go.mod h1:kBGZzfjB9CEq2AlWe17Uuf7NDRt0dE0s8S51q0aT7Yg=
@@ -29,6 +33,10 @@ github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a h1:bMgpqSCUAcZfjNucx+
 github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a/go.mod h1:YzcHXKcQBjEjtgbVXioLzxVHMAYkDgoRjfb6JuVA1pA=
 github.com/packet-guardian/cas-auth v1.0.1 h1:BtgXhEa8iSmCkjzziROWUy23kZiNQcUBKjVq/up1rTk=
 github.com/packet-guardian/cas-auth v1.0.1/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
+github.com/packet-guardian/cas-auth v1.0.2 h1:0Za1dOrvwaSlcRiqCB47KYinUw8HcqZh/F9jIlZs3b0=
+github.com/packet-guardian/cas-auth v1.0.2/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
+github.com/packet-guardian/cas-auth v1.0.3 h1:3fySAiuInjyb9vZLfE56+MEYujXWEJvetrz9aWmsghY=
+github.com/packet-guardian/cas-auth v1.0.3/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
 github.com/packet-guardian/dhcp-lib v1.3.1-0.20190104170538-6e6243d987ae h1:cBIaCcEMih4VkZxlCOJGx9Xo8lRNQ19vlayn9nqo3Kc=
 github.com/packet-guardian/dhcp-lib v1.3.1-0.20190104170538-6e6243d987ae/go.mod h1:BO0VKz6xu7ztoqLk4DEyHbiDWIMjyPs5uzWPrLlGcWg=
 github.com/packet-guardian/pg-dhcp v2.0.0+incompatible h1:xNMJMhUfpztrah0ySt9eWcoGz+1vDd66F6TPF6RhL2I=

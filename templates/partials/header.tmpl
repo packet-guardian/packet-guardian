@@ -7,34 +7,49 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="shortcut icon" href="/public/dist/images/favicon.ico" type="image/x-icon">
         <link rel="icon" href="/public/dist/images/favicon.ico" type="image/x-icon">
-        {{if eq .main.config.Core.SiteCompanyName ""}}
-        <title>{{.main.config.Core.SiteTitle}} - {{.pageTitle}}</title>
-        {{else}}
-        <title>{{.main.config.Core.SiteTitle}} - {{.main.config.Core.SiteCompanyName}} - {{.pageTitle}}</title>
-        {{end}}
-        <link rel="stylesheet" href="/public/dist/styles/normalize.css">
-        <link rel="stylesheet" href="/public/dist/styles/main.css">
-        <link rel="stylesheet" href="/public/dist/styles/modals.css">
-        <link rel="stylesheet" href="/public/dist/styles/font-awesome.css">
-        {{range .css}}
-        <link rel="stylesheet" href="/public/dist/styles/{{.}}.css">
-        {{end}}
+        <title>
+            {{.config.Core.SiteTitle}} -
+            {{if ne .config.Core.SiteCompanyName ""}}
+            {{.config.Core.SiteCompanyName}} -
+            {{end}}
+            {{block "pageTitle" .}}{{end}}
+        </title>
+        <link rel="stylesheet" href="/public/dist/styles/normalize.css?{{.buildTime}}">
+        <link rel="stylesheet" href="/public/dist/styles/font-awesome.css?{{.buildTime}}">
+        <link rel="stylesheet" href="/public/dist/styles/main.css?{{.buildTime}}">
+        <link rel="stylesheet" href="/public/dist/styles/modals.css?{{.buildTime}}">
+        {{block "layout-css" .}}{{end}}
+        {{block "css" .}}{{end}}
     </head>
     <body>
         <header>
-            <a href="/">
-                <div class="logo-wrapper">
-                    <img src="/public/dist/images/logo.png">
-                </div>
-                {{if ne .main.config.Core.SiteTitle ""}}
-                <div class="header-title">
-                    {{.main.config.Core.SiteTitle}}
-                </div>
+            <section class="header-logo-area">
+                <a href="/"><img src="/public/dist/images/logo.png"></a>
+                {{if ne .config.Core.SiteTitle ""}}
+                <a href="/" class="header-title">{{.config.Core.SiteTitle}}</a>
                 {{end}}
-            </a>
+            </section>
+
+            {{if ne .sessionUser.UIGroup "default"}}
+            <section class="header-search-box">
+                <form method="GET" action="/admin/search">
+                    <input type="text" name="q" value="{{.query}}" placeholder="Search">
+                </form>
+            </section>
+            {{end}}
+
+            {{if ne .sessionUser.Username ""}}
+            <section class="header-user-profile">
+                <span>{{.sessionUser.Username}}</span>
+                <a href="/logout" class="btn">Logout</a>
+            </section>
+            {{end}}
         </header>
         <div class="main">
-            <div id="flashDiv" class="flash">
-                <div id="flashText">{{.main.flashMessage}}</div>
-            </div>
+{{end}}
+
+{{define "render-css"}}
+{{range .css}}{{if ne . ""}}
+<link rel="stylesheet" href="/public/dist/styles/{{.}}.css?{{$.main.buildTime}}">
+{{end}}{{end}}
 {{end}}

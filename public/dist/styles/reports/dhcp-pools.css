@@ -1,0 +1,29 @@
+.controls {
+    margin-left: 5px;
+}
+
+.pool-list {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.pool-list td {
+    padding: 7px 10px;
+}
+
+.pool-list th {
+    padding: 10px 10px;
+    background-color: #808080;
+    color: white;
+}
+
+.pool-list tbody tr:nth-child(even) {
+    background-color: #b9b9b9;
+}
+
+@media (min-width: 850px) {
+    .content {
+        width: 80%;
+        margin: 0 auto;
+    }
+}

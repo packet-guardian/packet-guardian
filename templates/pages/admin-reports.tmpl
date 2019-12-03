@@ -1,0 +1,19 @@
+{{define "pageTitle"}}Admin - Reports{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "admin-reports")}}
+{{end}}
+
+{{define "content"}}
+<div class="admin-dash">
+    <h2>Reports</h2>
+    <div class="report-list">
+        <h3>Available Reports:</h3>
+        {{range .reports}}
+            <div class="report">
+                <a href="/admin/reports/{{.Shortname}}">{{.Fullname}}</a>
+            </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

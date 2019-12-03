@@ -5,9 +5,13 @@
 package common
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -117,8 +121,15 @@ type Config struct {
 			Secret  string
 		}
 		CAS struct {
-			Server     string
-			ServiceURL string
+			Server string
+		}
+		Openid struct {
+			Server           string
+			ClientID         string
+			ClientSecret     string
+			AuthorizeEndoint string `toml:"-"`
+			TokenEndoint     string `toml:"-"`
+			UserinfoEndpoint string `toml:"-"`
 		}
 	}
 	DHCP struct {
@@ -186,11 +197,16 @@ func NewConfig(configFile string) (conf *Config, err error) {
 	con.sourceFile = configFile
 
 	c, err := setSensibleDefaults(&con)
+	if err != nil {
+		return nil, err
+	}
+
 	PageSize = c.Core.PageSize
-	return c, err
+	return c, nil
 }
 
 func setSensibleDefaults(c *Config) (*Config, error) {
+	var err error
 	// Anything not set here implies its zero value is the default
 
 	// Core
@@ -201,6 +217,12 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 		c.Core.JobSchedulerWakeUp = "1h"
 	}
 	c.Core.PageSize = setIntOrDefault(c.Core.PageSize, 30)
+	if c.Core.SiteDomainName != "" {
+		c.Core.SiteDomainName, err = validateURL(c.Core.SiteDomainName, "CAS server")
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	// Logging
 	c.Logging.Level = setStringOrDefault(c.Logging.Level, "notice")
@@ -227,7 +249,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	// Webserver
 	c.Webserver.HTTPPort = setIntOrDefault(c.Webserver.HTTPPort, 80)
-	c.Webserver.HTTPPort = setIntOrDefault(c.Webserver.HTTPPort, 443)
+	c.Webserver.HTTPSPort = setIntOrDefault(c.Webserver.HTTPSPort, 443)
 	c.Webserver.SessionName = setStringOrDefault(c.Webserver.SessionName, "packet-guardian")
 	c.Webserver.SessionsDir = setStringOrDefault(c.Webserver.SessionsDir, "sessions")
 	c.Webserver.SessionStore = setStringOrDefault(c.Webserver.SessionStore, "filesystem")
@@ -260,6 +282,42 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Auth.LDAP.Server = setStringOrDefault(c.Auth.LDAP.Server, "127.0.0.1")
 	c.Auth.LDAP.Port = setIntOrDefault(c.Auth.LDAP.Port, 389)
 
+	c.Auth.CAS.Server, err = validateURL(c.Auth.CAS.Server, "CAS server")
+	if err != nil {
+		return nil, err
+	}
+
+	if c.Auth.CAS.Server != "" {
+		if c.Core.SiteDomainName == "" {
+			fmt.Println("CAS is not available without SiteDomainName set")
+			c.Auth.CAS.Server = ""
+		}
+	}
+
+	if c.Auth.Openid.Server != "" {
+		if c.Core.SiteDomainName == "" {
+			fmt.Println("OpenID Connect is not available without SiteDomainName set")
+			c.Auth.Openid.Server = ""
+		} else {
+			c.Auth.Openid.Server, err = validateURL(c.Auth.Openid.Server, "OpenID server")
+			if err != nil {
+				return nil, err
+			}
+
+			if c.Auth.Openid.ClientID == "" {
+				return nil, errors.New("OpenID server defined but no client ID configured")
+			}
+
+			if c.Auth.Openid.ClientSecret == "" {
+				return nil, errors.New("OpenID server defined but no client secret configured")
+			}
+
+			if err := getOpenIDPaths(c); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	// DHCP
 	c.DHCP.ConfigFile = setStringOrDefault(c.DHCP.ConfigFile, "config/dhcp.conf")
 
@@ -276,6 +334,58 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	return c, nil
 }
 
+type openIDDiscoveryConfResp struct {
+	AuthorizationEndpoint string   `json:"authorization_endpoint"`
+	UserinfoEndpoint      string   `json:"userinfo_endpoint"`
+	TokenEndpoint         string   `json:"token_endpoint"`
+	ScopesSupported       []string `json:"scopes_supported"`
+}
+
+func getOpenIDPaths(c *Config) error {
+	fmt.Println("Discovering OpenID Configuration")
+
+	configPath := fmt.Sprintf("%s/.well-known/openid-configuration", c.Auth.Openid.Server)
+	fmt.Println(configPath)
+	req, err := http.NewRequest("GET", configPath, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("Error getting OpenID server configuration: %s", err.Error())
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Non 200 response while getting OpenID server configuration")
+	}
+
+	var discoResp openIDDiscoveryConfResp
+	decoder := json.NewDecoder(resp.Body)
+	if err := decoder.Decode(&discoResp); err != nil {
+		return fmt.Errorf("Error decoding OpenID server configuration: %s", err.Error())
+	}
+
+	if !StringInSlice("profile", discoResp.ScopesSupported) {
+		return errors.New("OpenID server doesn't support the profile scope")
+	}
+
+	if !StringInSlice("email", discoResp.ScopesSupported) {
+		return errors.New("OpenID server doesn't support the email scope")
+	}
+
+	fmt.Printf("OpenID discovered auth endpoint: %s\n", discoResp.AuthorizationEndpoint)
+	fmt.Printf("OpenID discovered token endpoint: %s\n", discoResp.TokenEndpoint)
+	fmt.Printf("OpenID discovered userinfo endpoint: %s\n", discoResp.UserinfoEndpoint)
+
+	c.Auth.Openid.AuthorizeEndoint = discoResp.AuthorizationEndpoint
+	c.Auth.Openid.TokenEndoint = discoResp.TokenEndpoint
+	c.Auth.Openid.UserinfoEndpoint = discoResp.UserinfoEndpoint
+	return nil
+}
+
 // Given string s, if it is empty, return v else return s.
 func setStringOrDefault(s, v string) string {
 	if s == "" {
@@ -290,4 +400,12 @@ func setIntOrDefault(s, v int) int {
 		return v
 	}
 	return s
+}
+
+func validateURL(path, description string) (string, error) {
+	path = strings.TrimRight(path, "/")
+	if _, err := url.Parse(path); err != nil {
+		return "", fmt.Errorf("Invalid %s URL", description)
+	}
+	return path, nil
 }

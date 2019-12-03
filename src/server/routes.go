@@ -46,6 +46,12 @@ func LoadRoutes(e *common.Environment, stores stores.StoreCollection) http.Handl
 	r.Handler("POST", "/login", midStack(e, stores, http.HandlerFunc(authController.LoginHandler)))
 	r.Handler("GET", "/logout", midStack(e, stores, http.HandlerFunc(authController.LogoutHandler)))
 
+	openIDController := controllers.NewOpenIDController(e, stores.Users)
+	r.Handler("GET", "/openid", midStack(e, stores, http.HandlerFunc(openIDController.OpenIDHandler)))
+
+	casController := controllers.NewCASController(e, stores.Users)
+	r.Handler("GET", "/cas", midStack(e, stores, http.HandlerFunc(casController.CASHandler)))
+
 	manageController := controllers.NewManagerController(e, stores.Devices, stores.Leases)
 	r.Handler("GET", "/register", midStack(e, stores, http.HandlerFunc(manageController.RegistrationHandler)))
 	r.Handler("GET", "/manage", midStack(e, stores, mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler))))
@@ -71,6 +77,9 @@ func LoadRoutes(e *common.Environment, stores stores.StoreCollection) http.Handl
 		r.Handler("GET", "/debug/*a", midStack(e, stores, debugRouter(e)))
 		e.Log.Debug("Profiling enabled")
 	}
+	r.HandlerFunc("GET", "/reload-templates", func(w http.ResponseWriter, r *http.Request) {
+		e.Views.Reload()
+	})
 
 	h := mid.Logging(r, e) // Logging
 	h = mid.Panic(h, e)    // Panic catcher

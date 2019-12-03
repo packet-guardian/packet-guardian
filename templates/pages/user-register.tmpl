@@ -1,0 +1,80 @@
+{{define "pageTitle"}}Register{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "register")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" dict "main" . "js" (list "register")}}
+{{end}}
+
+{{define "content"}}
+<div id="suc-msg-auto" class="success-message start-hidden">
+    <p class="instructions">
+        Please disconnect your computer and reconnect to the network
+    </p>
+</div>
+
+<div id="suc-msg-manual" class="success-message start-hidden">
+    <p class="instructions">
+        Redirecting to management page...
+    </p>
+</div>
+
+<div class="register-box">
+    <form>
+        {{if ne .type "man-not-allowed"}}
+        <fieldset>
+            {{if eq .type "na-auto"}}
+                {{template "reg-non-admin-auto" .}}
+            {{else if eq .type "na-man"}}
+                {{template "reg-non-admin-man" .}}
+            {{else if eq .type "na-man-nologin"}}
+                {{template "reg-non-admin-nologin-man" .}}
+            {{else if eq .type "admin"}}
+                {{template "reg-admin-man" .}}
+            {{end}}
+
+            {{if and (ne .type "na-auto") (gt (len .config.Registration.ManualRegPlatforms) 0)}}
+            <p>
+                <label for="platform">Type of Device:</label>
+                <select name="platform">
+                    {{range .config.Registration.ManualRegPlatforms}}
+                    <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
+            </p>
+            {{end}}
+
+            <p>
+                <label for="dev-desc">Device Description (optional)
+                <i class="fa fa-question-circle info-mark" title="Use this to help you remember which device this is"></i>:</label>
+                <input type="text" name="dev-desc">
+            </p>
+            {{if .config.Guest.Enabled}}
+            <p class="guest-btn">
+                <a href="/register/guest" class="btn">Register as Guest</a>
+            </p>
+            {{end}}
+        </fieldset>
+
+        <div class="reg-policy">
+            <p class="instructions">
+                Please read the policy below and click "Register":
+            </p>
+            {{range .policy}}
+            <p>{{.}}</p>
+            {{end}}
+        </div>
+
+        <p class="reg-btn">
+            <button id="register-btn" type="button">Register</button>
+        </p>
+        {{else}}
+        <h2 style="text-align: center;">
+            Manual registrations are not allowed
+        </h2>
+        {{end}}
+    </form>
+</div>
+{{end}}

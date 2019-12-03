@@ -7,8 +7,8 @@ body {
     padding: 5px 10px;
     color: white;
     border: 0;
-    background-color: #0083A8;
-    background: linear-gradient(to bottom, #0083A8, #007899);
+    background-color: #0083a8;
+    background: linear-gradient(to bottom, #0083a8, #007899);
 }
 
 .register-box input {
@@ -33,7 +33,10 @@ label {
     font-size: 1.2em;
 }
 
-.reg-policy, .reg-btn, .success-message, .failure-message {
+.reg-policy,
+.reg-btn,
+.success-message,
+.failure-message {
     padding-left: 10px;
     padding-right: 10px;
     margin: 0 auto;
@@ -55,8 +58,14 @@ label {
 }
 
 @media handheld {
-    .reg-policy, .reg-btn, .success-message {
+    .reg-policy,
+    .reg-btn,
+    .success-message {
         padding-left: 5px;
         padding-right: 5px;
     }
+}
+
+.info-mark {
+    cursor: pointer;
 }

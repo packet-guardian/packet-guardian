@@ -1,0 +1,28 @@
+{{define "layout-css"}}
+{{template "render-css" dict "main" . "css" (list "admin-main")}}
+{{end}}
+
+{{define "base"}}
+{{template "header" .}}
+<main>
+    <nav>
+        <span>Admin Console</span>
+
+        <a href="/">Dashboard</a>
+        <a href="/admin/reports">Reports</a>
+
+        {{if .canViewUsers}}
+        <a href="/admin/users">Manage Users</a>
+        {{end}}
+    </nav>
+
+    <section class="admin-main">
+        <div id="flashDiv" class="flash">
+            <div id="flashText">{{.flashMessage}}</div>
+        </div>
+
+        {{template "content" .}}
+    </section>
+</main>
+{{template "footer" .}}
+{{end}}

@@ -1,0 +1,64 @@
+{{define "pageTitle"}}Admin - User Management{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "admin-users")}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" dict "main" . "js" (list "admin-users")}}
+{{end}}
+
+{{define "content"}}
+<div class="admin-users">
+    <h2>Administration Users</h2>
+
+    <div class="controls">
+        {{if .canCreateUser}}
+        <div class="new-user">
+            <form id="new-user-form">
+                <input type="text" name="username" placeholder="Username">
+                <button class="ok-btn" type="submit">Create</button>
+            </form>
+        </div>
+        {{end}}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Device Limit</th>
+                <th>Valid</th>
+                <th>Default Expiration</th>
+                <th>Can Manage</th>
+                <th>Can Autoreg</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .users}}
+            <tr>
+                <td>
+                    {{if $.canEditUser}}
+                    <a class="fa fa-pencil edit-user-pencil" tabindex="0" aria-role="button" href="/admin/users/{{.Username}}" title="Edit"></a>
+                    {{end}}
+                    <a href="/admin/manage/user/{{.Username}}">{{.Username}}</a>
+                </td>
+                <td>{{if eq .DeviceLimit 0}}Unlimited
+                    {{else if eq .DeviceLimit -1}}Global
+                    {{else}}{{.DeviceLimit}}
+                    {{end}}</td>
+                {{if .ValidForever}}
+                <td>Forever</td>
+                {{else}}
+                <td>{{.ValidStart.Format "2006-01-02 15:04"}} to {{.ValidEnd.Format "2006-01-02 15:04"}}</td>
+                {{end}}
+
+                <td>{{.DeviceExpiration.String}}</td>
+                <td>{{if .CanManage}}Yes{{else}}No{{end}}</td>
+                <td>{{if .CanAutoreg}}Yes{{else}}No{{end}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

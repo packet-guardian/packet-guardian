@@ -10,20 +10,6 @@
     font-size: 1.5em;
 }
 
-button {
-    font-weight: bold;
-    padding: 5px 10px;
-    color: white;
-    border: 0;
-    background-color: #0083A8;
-    background: linear-gradient(to bottom, #0083A8, #007899);
-}
-
-.admin-btn {
-    background-color: #FF3131;
-    background: linear-gradient(to bottom, #FF3131, #EA2F2F);
-}
-
 .blacklist-icon {
     margin-right: 2px;
     color: red;
@@ -35,16 +21,16 @@ select {
     padding: 4px 10px;
     color: white;
     border: 0;
-    background-color: #FF3131;
-    background: linear-gradient(to bottom, #FF3131, #EA2F2F);
+    background-color: #ff3131;
+    background: linear-gradient(to bottom, #ff3131, #ea2f2f);
 }
 
 select:nth-child(1n) {
-    background-color: #0083A8;
+    background-color: #0083a8;
 }
 
 select > .placeholder {
-  display: none;
+    display: none;
 }
 
 .user-info {
@@ -67,6 +53,10 @@ select > .placeholder {
 .header-metadata {
     display: flex;
     justify-content: space-between;
+}
+
+.header-metadata-user {
+    text-align: right;
 }
 
 @media (min-width: 875px) {

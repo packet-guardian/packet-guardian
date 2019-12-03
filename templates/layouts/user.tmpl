@@ -1,0 +1,8 @@
+{{define "base"}}
+{{template "header" .}}
+<div id="flashDiv" class="flash">
+    <div id="flashText">{{.flashMessage}}</div>
+</div>
+{{template "content" .}}
+{{template "footer" .}}
+{{end}}

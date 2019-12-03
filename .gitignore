@@ -4,7 +4,8 @@ private
 database.sqlite3
 logs/
 bin/
-dist/
+dist/js
+/dist
 .vscode/
 codeclimate.html
 node_modules/

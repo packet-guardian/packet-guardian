@@ -1,0 +1,11 @@
+{
+  "extends": "stylelint-config-standard",
+  "rules": {
+      "indentation": 4,
+      "declaration-block-no-shorthand-property-overrides": null
+  },
+  "ignoreFiles": [
+      "**/font-awesome.css",
+      "**/normalize.css"
+    ]
+}
