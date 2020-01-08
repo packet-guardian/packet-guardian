@@ -76,10 +76,11 @@ func LoadRoutes(e *common.Environment, stores stores.StoreCollection) http.Handl
 	if e.IsDev() {
 		r.Handler("GET", "/debug/*a", midStack(e, stores, debugRouter(e)))
 		e.Log.Debug("Profiling enabled")
+
+		r.HandlerFunc("GET", "/reload-templates", func(w http.ResponseWriter, r *http.Request) {
+			e.Views.Reload()
+		})
 	}
-	r.HandlerFunc("GET", "/reload-templates", func(w http.ResponseWriter, r *http.Request) {
-		e.Views.Reload()
-	})
 
 	h := mid.Logging(r, e) // Logging
 	h = mid.Panic(h, e)    // Panic catcher
