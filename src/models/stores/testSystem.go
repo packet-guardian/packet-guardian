@@ -143,13 +143,13 @@ func (s *TestDeviceStore) GetDevicesForUserPage(u *models.User, page int) ([]*mo
 	return devices, nil
 }
 func (s *TestDeviceStore) GetDeviceCountForUser(u *models.User) (int, error) {
-	devices := make([]*models.Device, 0, 5)
+	count := 0
 	for _, d := range s.Devices {
 		if d.Username == u.Username {
-			devices = append(devices, d)
+			count++
 		}
 	}
-	return len(devices), nil
+	return count, nil
 }
 func (s *TestDeviceStore) GetAllDevices(e *common.Environment) ([]*models.Device, error) {
 	return s.Devices, nil
