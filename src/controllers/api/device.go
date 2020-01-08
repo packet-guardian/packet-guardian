@@ -37,58 +37,16 @@ func NewDeviceController(e *common.Environment, us stores.UserStore, ds stores.D
 
 func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Check authentication and get User models
-	macPost := r.FormValue("mac-address")
-	manual := (macPost != "")
-	var formUser *models.User // The user to whom the device is being registered
-	var err error
-	sessionUser := models.GetUserFromContext(r)
-	formUsername := strings.ToLower(r.FormValue("username"))
-	if formUsername == "" {
-		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
+	macPost := r.FormValue("mac-address")                    // MAC address of new device
+	manual := (macPost != "")                                // The MAC address won't be blank for manual registrations
+	sessionUser := models.GetUserFromContext(r)              // Currently logged in user
+	formUsername := strings.ToLower(r.FormValue("username")) // Username give in form data
+
+	// The user to whom the device is being registered
+	formUser, httpCode, err := d.checkRegisterPermissions(sessionUser, formUsername, manual)
+	if err != nil {
+		common.NewAPIResponse(err.Error(), nil).WriteResponse(w, httpCode)
 		return
-	}
-
-	if sessionUser.Username != formUsername && !sessionUser.Can(models.CreateDevice) {
-		d.e.Log.WithFields(verbose.Fields{
-			"package":    "controllers:api:device",
-			"username":   formUser,
-			"changed-by": sessionUser.Username,
-		}).Notice("Admin register action attempted`")
-		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
-		return
-	}
-
-	if formUsername == sessionUser.Username {
-		if manual && !sessionUser.Can(models.CreateOwn) {
-			common.NewAPIResponse("Cannot manually register device - Permission denied", nil).WriteResponse(w, http.StatusForbidden)
-			return
-		}
-		if !manual && !sessionUser.Can(models.AutoRegOwn) {
-			common.NewAPIResponse("Cannot automatically register device - Permission denied", nil).WriteResponse(w, http.StatusForbidden)
-			return
-		}
-		formUser = sessionUser
-	} else {
-		var err error
-		formUser, err = d.users.GetUserByUsername(formUsername)
-		if err != nil {
-			d.e.Log.WithFields(verbose.Fields{
-				"error":    err,
-				"package":  "controllers:api:device",
-				"username": formUsername,
-			}).Error("Error getting user")
-			common.NewAPIResponse("Error registering device", nil).WriteResponse(w, http.StatusInternalServerError)
-			return
-		}
-	}
-
-	// CreateDevice is the administrative permision
-	if !sessionUser.Can(models.CreateDevice) {
-		httpCode, err := d.checkCanRegister(formUser)
-		if err != nil {
-			common.NewAPIResponse(err.Error(), nil).WriteResponse(w, httpCode)
-			return
-		}
 	}
 
 	// Get MAC address
@@ -173,15 +131,65 @@ func (d *Device) RegistrationHandler(w http.ResponseWriter, r *http.Request, _ h
 	common.NewAPIResponse("Registration successful", resp).WriteResponse(w, http.StatusOK)
 }
 
-func (d *Device) checkCanRegister(formUser *models.User) (int, error) {
-	if formUser.IsBlacklisted() {
-		d.e.Log.WithFields(verbose.Fields{
-			"package":  "controllers:api:device",
-			"username": formUser.Username,
-		}).Error("Attempted registration by blacklisted user")
-		return http.StatusForbidden, errors.New("Username blacklisted")
+func (d *Device) checkRegisterPermissions(sessionUser *models.User, username string, manual bool) (*models.User, int, error) {
+	// Username is required
+	if username == "" {
+		return nil, http.StatusBadRequest, errors.New("No username given")
 	}
 
+	var formUser *models.User // User object representing the user from give form data
+
+	// Form username matches session user
+	if username == sessionUser.Username {
+		if manual && !sessionUser.Can(models.CreateOwn) {
+			return nil, http.StatusForbidden, errors.New("Cannot manually register device - Permission denied")
+		}
+		if !manual && !sessionUser.Can(models.AutoRegOwn) {
+			return nil, http.StatusForbidden, errors.New("Cannot automatically register device - Permission denied")
+		}
+		formUser = sessionUser
+
+		if formUser.IsBlacklisted() {
+			d.e.Log.WithFields(verbose.Fields{
+				"package":  "controllers:api:device",
+				"username": formUser.Username,
+			}).Error("Attempted registration by blacklisted user")
+			return nil, http.StatusForbidden, errors.New("Username blacklisted")
+		}
+
+		httpCode, err := d.checkDeviceLimitRegister(formUser)
+		if err != nil {
+			return nil, httpCode, err
+		}
+		return formUser, 0, nil
+	}
+
+	// Session user is global Admin
+	if sessionUser.Can(models.CreateDevice) {
+		var err error
+		formUser, err = d.users.GetUserByUsername(username)
+		if err != nil {
+			d.e.Log.WithFields(verbose.Fields{
+				"error":    err,
+				"package":  "controllers:api:device",
+				"username": username,
+			}).Error("Error getting user")
+			return nil, http.StatusInternalServerError, errors.New("Error registering device")
+		}
+
+		return formUser, 0, nil
+	}
+
+	// Session user is NOT global admin and usernames don't match
+	d.e.Log.WithFields(verbose.Fields{
+		"package":    "controllers:api:device",
+		"username":   username,
+		"changed-by": sessionUser.Username,
+	}).Notice("Admin register action attempted`")
+	return nil, http.StatusForbidden, errors.New("Permission denied")
+}
+
+func (d *Device) checkDeviceLimitRegister(formUser *models.User) (int, error) {
 	// Get and enforce the device limit
 	limit := models.UserDeviceLimit(d.e.Config.Registration.DefaultDeviceLimit)
 	if formUser.DeviceLimit != models.UserDeviceLimitGlobal {
