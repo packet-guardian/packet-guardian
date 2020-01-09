@@ -5,7 +5,9 @@
 package stores
 
 import (
+	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -49,7 +51,7 @@ func (s *userStore) GetUserByUsername(username string) (*models.User, error) {
 	username = strings.ToLower(username)
 
 	sql := `WHERE "username" = ?`
-	users, err := s.getUsersFromDatabase(sql, username)
+	users, err := s.getUsersFromDatabase(sql, "", username)
 	if len(users) == 0 {
 		u := models.NewUser(s.e, s, NewBlacklistItem(GetBlacklistStore(s.e)), username)
 		return u, err
@@ -63,17 +65,24 @@ func (s *userStore) GetAllUsers() ([]*models.User, error) {
 		sql += " COLLATE NOCASE"
 	}
 	sql += " ASC"
-	return s.getUsersFromDatabase(sql)
+	return s.getUsersFromDatabase("", sql)
 }
 
 func (s *userStore) SearchUsersByField(field, pattern string) ([]*models.User, error) {
 	sql := `WHERE "` + field + `" LIKE ?`
-	return s.getUsersFromDatabase(sql, pattern)
+	return s.getUsersFromDatabase(sql, "", pattern)
 }
 
-func (s *userStore) getUsersFromDatabase(where string, values ...interface{}) ([]*models.User, error) {
-	sql := `SELECT "id", "username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end", "ui_group", "api_group", "allow_status_api" FROM "user" ` + where
-	rows, err := s.e.DB.Query(sql, values...)
+func (s *userStore) getUsersFromDatabase(where string, order string, values ...interface{}) ([]*models.User, error) {
+	sqlstmt := `SELECT u."id", u."username", u."password", u."device_limit", u."default_expiration",
+				u."expiration_type", u."can_manage", u."can_autoreg", u."valid_forever", u."valid_start",
+				u."valid_end", u."ui_group", u."api_group", u."allow_status_api",
+				GROUP_CONCAT(d."delegate") AS delegate_names, GROUP_CONCAT(d."permissions") AS delegate_permissions
+				FROM "user" AS u
+				LEFT JOIN account_delegate AS d
+				ON u."id" = d."user_id" ` + where + ` GROUP BY u."id" ` + order
+
+	rows, err := s.e.DB.Query(sqlstmt, values...)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +104,8 @@ func (s *userStore) getUsersFromDatabase(where string, values ...interface{}) ([
 		var uiGroup string
 		var apiGroup string
 		var allowStatusAPI bool
+		var delegateNames sql.NullString
+		var delegatePermissions sql.NullString
 
 		err := rows.Scan(
 			&id,
@@ -111,9 +122,11 @@ func (s *userStore) getUsersFromDatabase(where string, values ...interface{}) ([
 			&uiGroup,
 			&apiGroup,
 			&allowStatusAPI,
+			&delegateNames,
+			&delegatePermissions,
 		)
 		if err != nil {
-			continue
+			fmt.Println(err.Error())
 		}
 
 		user := models.NewUser(s.e, s, NewBlacklistItem(GetBlacklistStore(s.e)), username)
@@ -141,6 +154,22 @@ func (s *userStore) getUsersFromDatabase(where string, values ...interface{}) ([
 			Value: defaultExpiration,
 		}
 		user.LoadRights() // Above, all rights are overriden so we need to reapply admin and configured rights
+
+		if delegateNames.Valid && delegatePermissions.Valid {
+			names := strings.Split(delegateNames.String, ",")
+			permissions := strings.Split(delegatePermissions.String, ",")
+
+			if len(names) == len(permissions) {
+				for i, name := range names {
+					permission, exists := models.DelegatePermissions[permissions[i]]
+					if !exists {
+						continue
+					}
+					user.Delegates[name] = models.Permission(permission)
+				}
+			}
+		}
+
 		results = append(results, user)
 	}
 	return results, nil
@@ -204,7 +233,11 @@ func (s *userStore) updateExisting(u *models.User) error {
 			u.ID,
 		)
 	}
-	return err
+	if err != nil {
+		return err
+	}
+
+	return s.saveDelegates(u)
 }
 
 func (s *userStore) saveNew(u *models.User) error {
@@ -235,7 +268,7 @@ func (s *userStore) saveNew(u *models.User) error {
 	}
 	id, _ := result.LastInsertId()
 	u.ID = int(id)
-	return nil
+	return s.saveDelegates(u)
 }
 
 func (s *userStore) Delete(u *models.User) error {
@@ -245,5 +278,30 @@ func (s *userStore) Delete(u *models.User) error {
 
 	sql := `DELETE FROM "user" WHERE "id" = ?`
 	_, err := s.e.DB.Exec(sql, u.ID)
+	return err
+}
+
+func (s *userStore) saveDelegates(u *models.User) error {
+	if len(u.Delegates) == 0 {
+		return nil
+	}
+
+	sqlstmt := `INSERT IGNORE INTO account_delegate
+				("user_id", "delegate", "permissions") VALUES `
+
+	args := make([]interface{}, 0, len(u.Delegates)*3)
+	for delegate, perms := range u.Delegates {
+		sqlstmt += `(?,?,?),`
+		args = append(args, u.ID)
+		args = append(args, delegate)
+
+		if perms == models.ViewDevices {
+			args = append(args, "RO")
+		} else {
+			args = append(args, "RW")
+		}
+	}
+
+	_, err := s.e.DB.Exec(sqlstmt[:len(sqlstmt)-2], args...)
 	return err
 }

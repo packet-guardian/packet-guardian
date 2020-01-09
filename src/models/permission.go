@@ -103,3 +103,17 @@ var apiPermissions = map[string]Permission{
 	"readwrite-api": APIRead.With(APIWrite),
 	"status-api":    ViewDebugInfo,
 }
+
+// DelegatePermissions maps a permissions string to the Permission model
+var DelegatePermissions = map[string]Permission{
+	"RW": ViewDevices | CreateDevice | EditDevice | DeleteDevice,
+	"RO": ViewDevices,
+}
+
+// DelegateName returns the name of a delegate permission
+func (p Permission) DelegateName() string {
+	if p == ViewDevices {
+		return "RO"
+	}
+	return "RW"
+}

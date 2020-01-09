@@ -6,6 +6,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -137,8 +138,6 @@ func (d *Device) checkRegisterPermissions(sessionUser *models.User, username str
 		return nil, http.StatusBadRequest, errors.New("No username given")
 	}
 
-	var formUser *models.User // User object representing the user from give form data
-
 	// Form username matches session user
 	if username == sessionUser.Username {
 		if manual && !sessionUser.Can(models.CreateOwn) {
@@ -147,36 +146,35 @@ func (d *Device) checkRegisterPermissions(sessionUser *models.User, username str
 		if !manual && !sessionUser.Can(models.AutoRegOwn) {
 			return nil, http.StatusForbidden, errors.New("Cannot automatically register device - Permission denied")
 		}
-		formUser = sessionUser
 
-		if formUser.IsBlacklisted() {
+		if sessionUser.IsBlacklisted() {
 			d.e.Log.WithFields(verbose.Fields{
 				"package":  "controllers:api:device",
-				"username": formUser.Username,
+				"username": sessionUser.Username,
 			}).Error("Attempted registration by blacklisted user")
 			return nil, http.StatusForbidden, errors.New("Username blacklisted")
 		}
 
-		httpCode, err := d.checkDeviceLimitRegister(formUser)
+		httpCode, err := d.checkDeviceLimitRegister(sessionUser)
 		if err != nil {
 			return nil, httpCode, err
 		}
-		return formUser, 0, nil
+		return sessionUser, 0, nil
 	}
 
-	// Session user is global Admin
-	if sessionUser.Can(models.CreateDevice) {
-		var err error
-		formUser, err = d.users.GetUserByUsername(username)
-		if err != nil {
-			d.e.Log.WithFields(verbose.Fields{
-				"error":    err,
-				"package":  "controllers:api:device",
-				"username": username,
-			}).Error("Error getting user")
-			return nil, http.StatusInternalServerError, errors.New("Error registering device")
-		}
+	formUser, err := d.users.GetUserByUsername(username)
+	if err != nil {
+		d.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:api:device",
+			"username": username,
+		}).Error("Error getting user")
+		return nil, http.StatusInternalServerError, errors.New("Error registering device")
+	}
 
+	// Session user is global Admin or a RW delegate
+	fmt.Printf("%s: %s: %#v\n", sessionUser.Username, formUser.Username, formUser.Delegates)
+	if sessionUser.Can(models.CreateDevice) || formUser.DelegateCan(sessionUser.Username, models.CreateDevice) {
 		return formUser, 0, nil
 	}
 

@@ -39,9 +39,10 @@ type User struct {
 	blacklist        BlacklistItem
 	Rights           Permission `json:"-"`
 
-	UIGroup        string `json:"-"`
-	APIGroup       string `json:"-"`
-	AllowStatusAPI bool   `json:"-"`
+	UIGroup        string                `json:"-"`
+	APIGroup       string                `json:"-"`
+	AllowStatusAPI bool                  `json:"-"`
+	Delegates      map[string]Permission `json:"delegates"`
 }
 
 // NewUser creates a new base user
@@ -66,6 +67,7 @@ func NewUser(e *common.Environment, us UserStore, b BlacklistItem, username stri
 		Rights:           ViewOwn | ManageOwnRights,
 		UIGroup:          "default",
 		APIGroup:         "disabled",
+		Delegates:        make(map[string]Permission),
 	}
 	// Load extra rights as set in the configuration
 	u.LoadRights()
@@ -109,6 +111,14 @@ func (u *User) Can(p Permission) bool {
 
 func (u *User) CanEither(p Permission) bool {
 	return u.Rights.CanEither(p)
+}
+
+func (u *User) DelegateCan(username string, p Permission) bool {
+	return u.Delegates[username].Can(p)
+}
+
+func (u *User) DelegateCanEither(username string, p Permission) bool {
+	return u.Delegates[username].CanEither(p)
 }
 
 func (u *User) NeedToSavePassword() bool {

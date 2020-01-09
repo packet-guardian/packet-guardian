@@ -149,7 +149,14 @@ func TestDeviceEditDescriptionHandlerDifferentUserAdmin(t *testing.T) {
 	}
 }
 
-func registrationTestSetup(sessionuser string, userPermissions models.Permission, withLease bool, blacklisted bool) (*Device, *stores.TestDeviceStore, *http.Request) {
+type registerTestUser struct {
+	username    string
+	permissions models.Permission
+	blacklisted bool
+	delegates   map[string]models.Permission
+}
+
+func registrationTestSetup(sessionUser *registerTestUser, otherUsers []*registerTestUser, withLease bool) (*Device, *stores.TestDeviceStore, *http.Request) {
 	e := common.NewTestEnvironment()
 	e.Config.Registration.AllowManualRegistrations = true
 
@@ -176,14 +183,31 @@ func registrationTestSetup(sessionuser string, userPermissions models.Permission
 	}
 
 	testUserStore := &stores.TestUserStore{}
-	testuser := models.NewUser(
+	storeUsers := make([]*models.User, 0, len(otherUsers)+1)
+
+	sessionuser := models.NewUser(
 		e,
 		testUserStore,
-		&stores.TestBlacklistItem{Val: blacklisted},
-		sessionuser,
+		&stores.TestBlacklistItem{Val: sessionUser.blacklisted},
+		sessionUser.username,
 	)
-	testuser.Rights = userPermissions
-	testUserStore.Users = []*models.User{testuser}
+	sessionuser.Rights = sessionUser.permissions
+	sessionuser.Delegates = sessionUser.delegates
+	storeUsers = append(storeUsers, sessionuser)
+
+	for _, user := range otherUsers {
+		testuser := models.NewUser(
+			e,
+			testUserStore,
+			&stores.TestBlacklistItem{Val: user.blacklisted},
+			user.username,
+		)
+		testuser.Rights = user.permissions
+		testuser.Delegates = user.delegates
+		storeUsers = append(storeUsers, testuser)
+	}
+
+	testUserStore.Users = storeUsers
 
 	session := common.NewTestSession()
 
@@ -191,7 +215,7 @@ func registrationTestSetup(sessionuser string, userPermissions models.Permission
 	req.RemoteAddr = "10.0.0.1:8234"
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
-	req = models.SetUserToContext(req, testuser)
+	req = models.SetUserToContext(req, sessionuser)
 	req = common.SetIPToContext(req)
 
 	return NewDeviceController(e, testUserStore, testDeviceStore, testLeaseStore), testDeviceStore, req
@@ -199,97 +223,154 @@ func registrationTestSetup(sessionuser string, userPermissions models.Permission
 
 type registrationTestCase struct {
 	testCaseName                                    string
-	sessionUser                                     string
-	sessionUserRights                               models.Permission
-	blacklisted                                     bool
+	sessionUser                                     *registerTestUser
 	withLease                                       bool
 	macAddress                                      string
 	formMACAddress, username, platform, description string
 	respHTTPCode                                    int
 	deviceStoreLen                                  int
 	makeDevice                                      bool
+	otherUsers                                      []*registerTestUser
 }
 
 var registrationTests []registrationTestCase = []registrationTestCase{
 	{
-		testCaseName:      "TestDeviceRegistrationManual",
-		sessionUser:       "testuser",
-		sessionUserRights: models.ManageOwnRights,
-		macAddress:        "12:34:56:ab:cd:ef",
-		formMACAddress:    "12:34:56:ab:cd:ef",
-		username:          "testuser",
-		platform:          "tester",
-		description:       "this is a test",
-		respHTTPCode:      200,
-		deviceStoreLen:    1,
+		testCaseName: "TestDeviceRegistrationManual",
+		sessionUser: &registerTestUser{
+			username:    "testuser",
+			permissions: models.ManageOwnRights,
+		},
+		macAddress:     "12:34:56:ab:cd:ef",
+		formMACAddress: "12:34:56:ab:cd:ef",
+		username:       "testuser",
+		platform:       "tester",
+		description:    "this is a test",
+		respHTTPCode:   200,
+		deviceStoreLen: 1,
 	},
 	{
-		testCaseName:      "TestDeviceRegistrationManualBlacklisted",
-		sessionUser:       "testuser",
-		sessionUserRights: models.ViewOwn,
-		blacklisted:       true,
-		macAddress:        "12:34:56:ab:cd:ef",
-		formMACAddress:    "12:34:56:ab:cd:ef",
-		username:          "testuser",
-		platform:          "tester",
-		description:       "this is a test",
-		respHTTPCode:      403,
+		testCaseName: "TestDeviceRegistrationManualBlacklisted",
+		sessionUser: &registerTestUser{
+			username:    "testuser",
+			permissions: models.ManageOwnRights,
+			blacklisted: true,
+		},
+		macAddress:     "12:34:56:ab:cd:ef",
+		formMACAddress: "12:34:56:ab:cd:ef",
+		username:       "testuser",
+		platform:       "tester",
+		description:    "this is a test",
+		respHTTPCode:   403,
 	},
 	{
-		testCaseName:      "TestDeviceRegistrationAutomatic",
-		sessionUser:       "testuser",
-		sessionUserRights: models.ManageOwnRights,
-		withLease:         true,
-		macAddress:        "12:34:56:ab:cd:ef",
-		formMACAddress:    "",
-		username:          "testuser",
-		platform:          "tester",
-		description:       "this is a test",
-		respHTTPCode:      200,
-		deviceStoreLen:    1,
+		testCaseName: "TestDeviceRegistrationAutomatic",
+		sessionUser: &registerTestUser{
+			username:    "testuser",
+			permissions: models.ManageOwnRights,
+		},
+		withLease:      true,
+		macAddress:     "12:34:56:ab:cd:ef",
+		formMACAddress: "",
+		username:       "testuser",
+		platform:       "tester",
+		description:    "this is a test",
+		respHTTPCode:   200,
+		deviceStoreLen: 1,
 	},
 	{
-		testCaseName:      "TestDeviceRegistrationManualOtherUserNonAdmin",
-		sessionUser:       "testuser2",
-		sessionUserRights: models.ManageOwnRights,
-		macAddress:        "12:34:56:ab:cd:ef",
-		formMACAddress:    "12:34:56:ab:cd:ef",
-		username:          "testuser",
-		platform:          "tester",
-		description:       "this is a test",
-		respHTTPCode:      403,
+		testCaseName: "TestDeviceRegistrationManualOtherUserNonAdmin",
+		sessionUser: &registerTestUser{
+			username:    "testuser2",
+			permissions: models.ManageOwnRights,
+		},
+		macAddress:     "12:34:56:ab:cd:ef",
+		formMACAddress: "12:34:56:ab:cd:ef",
+		username:       "testuser",
+		platform:       "tester",
+		description:    "this is a test",
+		respHTTPCode:   403,
 	},
 	{
-		testCaseName:      "TestDeviceRegistrationManualOtherUserGlobalAdmin",
-		sessionUser:       "testuser2",
-		sessionUserRights: models.AdminRights,
-		macAddress:        "12:34:56:ab:cd:ef",
-		formMACAddress:    "12:34:56:ab:cd:ef",
-		username:          "testuser",
-		platform:          "tester",
-		description:       "this is a test",
-		respHTTPCode:      200,
-		deviceStoreLen:    1,
+		testCaseName: "TestDeviceRegistrationManualOtherUserGlobalAdmin",
+		sessionUser: &registerTestUser{
+			username:    "testuser2",
+			permissions: models.AdminRights,
+		},
+		macAddress:     "12:34:56:ab:cd:ef",
+		formMACAddress: "12:34:56:ab:cd:ef",
+		username:       "testuser",
+		platform:       "tester",
+		description:    "this is a test",
+		respHTTPCode:   200,
+		deviceStoreLen: 1,
 	},
 	{
-		testCaseName:      "TestDeviceRegistrationManualAlreadyRegistered",
-		sessionUser:       "testuser",
-		sessionUserRights: models.ManageOwnRights,
-		macAddress:        "12:34:56:ab:cd:ef",
-		formMACAddress:    "12:34:56:ab:cd:ef",
-		username:          "testuser",
-		platform:          "tester",
-		description:       "this is a test",
-		respHTTPCode:      409,
-		deviceStoreLen:    1,
-		makeDevice:        true,
+		testCaseName: "TestDeviceRegistrationManualAlreadyRegistered",
+		sessionUser: &registerTestUser{
+			username:    "testuser",
+			permissions: models.ManageOwnRights,
+		},
+		macAddress:     "12:34:56:ab:cd:ef",
+		formMACAddress: "12:34:56:ab:cd:ef",
+		username:       "testuser",
+		platform:       "tester",
+		description:    "this is a test",
+		respHTTPCode:   409,
+		deviceStoreLen: 1,
+		makeDevice:     true,
+	},
+	{
+		testCaseName: "TestDeviceRegistrationManualDelegateRW",
+		sessionUser: &registerTestUser{
+			username:    "delegate",
+			permissions: models.ManageOwnRights,
+		},
+		macAddress:     "12:34:56:ab:cd:ef",
+		formMACAddress: "12:34:56:ab:cd:ef",
+		username:       "testuser2",
+		platform:       "tester",
+		description:    "this is a test",
+		respHTTPCode:   200,
+		deviceStoreLen: 1,
+		otherUsers: []*registerTestUser{
+			{
+				username:    "testuser2",
+				permissions: models.ManageOwnRights,
+				delegates: map[string]models.Permission{
+					"delegate": models.DelegatePermissions["RW"],
+				},
+			},
+		},
+	},
+	{
+		testCaseName: "TestDeviceRegistrationManualDelegateRO",
+		sessionUser: &registerTestUser{
+			username:    "delegate",
+			permissions: models.ManageOwnRights,
+		},
+		macAddress:     "12:34:56:ab:cd:ef",
+		formMACAddress: "12:34:56:ab:cd:ef",
+		username:       "testuser2",
+		platform:       "tester",
+		description:    "this is a test",
+		respHTTPCode:   403,
+		deviceStoreLen: 0,
+		otherUsers: []*registerTestUser{
+			{
+				username:    "testuser2",
+				permissions: models.ManageOwnRights,
+				delegates: map[string]models.Permission{
+					"delegate": models.DelegatePermissions["RO"],
+				},
+			},
+		},
 	},
 }
 
 func TestRegistrationHandler(t *testing.T) {
 	for _, testCase := range registrationTests {
 		t.Run(testCase.testCaseName, func(t *testing.T) {
-			testHandler, devStore, req := registrationTestSetup(testCase.sessionUser, testCase.sessionUserRights, testCase.withLease, testCase.blacklisted)
+			testHandler, devStore, req := registrationTestSetup(testCase.sessionUser, testCase.otherUsers, testCase.withLease)
 
 			if testCase.makeDevice {
 				testDevice := models.NewDevice(devStore, nil, &stores.TestBlacklistItem{Val: false})
@@ -319,7 +400,7 @@ func TestRegistrationHandler(t *testing.T) {
 				t.Errorf("Device stores doesn't have the right number of devices: %d, expected %d", len(devStore.Devices), testCase.deviceStoreLen)
 			}
 
-			if testCase.deviceStoreLen > 0 {
+			if testCase.deviceStoreLen > 0 && len(devStore.Devices) == testCase.deviceStoreLen {
 				device := devStore.Devices[0]
 				if device.MAC.String() != testCase.macAddress {
 					t.Errorf("Device MAC address incorrect: %s, expected %s", device.MAC.String(), testCase.macAddress)

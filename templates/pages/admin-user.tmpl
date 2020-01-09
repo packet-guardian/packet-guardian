@@ -143,6 +143,7 @@
 
         <fieldset>
             <h3>Permissions</h3>
+
             <p>
                 <label for="user-ui-group"><span title="The group this user belongs to">UI Group:</span></label>
                 <select name="user-ui-group">
@@ -170,6 +171,22 @@
                 <input type="checkbox" name="user-api-status">
                 {{end}}
             </p>
+        </fieldset>
+
+        <hr class="user-edit-separator">
+
+        <fieldset>
+            <h3>Delegates</h3>
+
+            {{range $dname, $dpermission := .user.Delegates}}
+            <p data-delegate="1">
+                <label for="{{$dname}}-permissions">{{$dname}}</label>
+                <select name="{{$dname}}-permissions">
+                    <option value="RO"{{if eq $dpermission.DelegateName "RO"}}selected{{end}}>RO</option>
+                    <option value="RW"{{if eq $dpermission.DelegateName "RW"}}selected{{end}}>RW</option>
+                </select>
+            </p>
+            {{end}}
         </fieldset>
     </form>
 </div>
