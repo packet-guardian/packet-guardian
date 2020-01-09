@@ -17,6 +17,7 @@ type UserStore interface {
 	Save(*User) error
 	Delete(*User) error
 	GetPassword(string) (string, error)
+	GetDelegatedUsers(*User) (map[string]Permission, error)
 }
 
 // User it's a user
@@ -114,10 +115,16 @@ func (u *User) CanEither(p Permission) bool {
 }
 
 func (u *User) DelegateCan(username string, p Permission) bool {
+	if username == u.Username {
+		return u.Can(p)
+	}
 	return u.Delegates[username].Can(p)
 }
 
 func (u *User) DelegateCanEither(username string, p Permission) bool {
+	if username == u.Username {
+		return u.CanEither(p)
+	}
 	return u.Delegates[username].CanEither(p)
 }
 
@@ -184,4 +191,9 @@ func (u *User) Save() error {
 
 func (u *User) Delete() error {
 	return u.store.Delete(u)
+}
+
+func (u *User) Delegated() map[string]Permission {
+	d, _ := u.store.GetDelegatedUsers(u)
+	return d
 }

@@ -11,15 +11,25 @@
 {{define "content"}}
 <div class="manager">
     <form class="header-metadata-user">
-        <input type="hidden" name="username" value="{{.user.Username}}">
+        <input type="hidden" name="username" value="{{.currentUser}}">
+
+        {{if gt (len .delegated) 0}}
+        Account:
+        <select name="delegated-accounts">
+            <option value="{{.currentUser}}" {{if eq .user.Username .currentUser}}selected{{end}}>{{.currentUser}}</option>
+            {{range $key, $value := .delegated}}
+            <option value="{{$key}}" {{if eq $.currentUser $key}}selected{{end}}>{{$key}}</option>
+            {{end}}
+        </select>
+        {{end}}
 
         <div class="controls">
             <section>
                 {{if .showAddBtn}}
-                <a class="btn ok-btn" href="/register?manual=1">Add Device</a>
+                <a class="btn ok-btn" href="/register?manual=1&username={{.currentUser}}">Add Device</a>
                 {{end}}
                 {{if and .canDeleteDevice (gt (len .devices) 0)}}
-                <button type="button" name="del-selected-btn" class="danger-btn">Delete Selected</button>
+                <button type="button" name="del-selected-btn" class="danger-btn">Delete</button>
                 {{end}}
             </section>
         </div>

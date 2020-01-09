@@ -175,16 +175,19 @@
 
         <hr class="user-edit-separator">
 
-        <fieldset>
+        <fieldset name="delegate-list">
             <h3>Delegates</h3>
 
+            <button type="button" id="add-delegate-btn" class="ok-btn">Add Delegate</button>
+
             {{range $dname, $dpermission := .user.Delegates}}
-            <p data-delegate="1">
+            <p data-delegate="{{$dname}}">
                 <label for="{{$dname}}-permissions">{{$dname}}</label>
                 <select name="{{$dname}}-permissions">
                     <option value="RO"{{if eq $dpermission.DelegateName "RO"}}selected{{end}}>RO</option>
                     <option value="RW"{{if eq $dpermission.DelegateName "RW"}}selected{{end}}>RW</option>
                 </select>
+                <i class="fa fa-times delete-icon" aria-role="button" data-delegate="{{$dname}}" title="Delete delegate"></i>
             </p>
             {{end}}
         </fieldset>

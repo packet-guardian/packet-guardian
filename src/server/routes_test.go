@@ -27,7 +27,7 @@ func TestRootHandlerLoggedInNormal(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 
-	sessionUser := models.NewUser(e, &models.TestUserStore{}, &models.TestBlacklistItem{}, "testUser")
+	sessionUser := models.NewUser(e, &stores.TestUserStore{}, &stores.TestBlacklistItem{}, "testUser")
 	req = models.SetUserToContext(req, sessionUser)
 
 	w := httptest.NewRecorder()
@@ -51,7 +51,7 @@ func TestRootHandlerLoggedInAdmin(t *testing.T) {
 	req = common.SetEnvironmentToContext(req, e)
 	req = common.SetSessionToContext(req, session)
 
-	sessionUser := models.NewUser(e, &models.TestUserStore{}, &models.TestBlacklistItem{}, "testUser")
+	sessionUser := models.NewUser(e, &stores.TestUserStore{}, &stores.TestBlacklistItem{}, "testUser")
 	sessionUser.UIGroup = "admin"
 	sessionUser.LoadRights()
 

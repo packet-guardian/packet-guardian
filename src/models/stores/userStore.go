@@ -24,6 +24,8 @@ type UserStore interface {
 	GetPassword(username string) (string, error)
 	Save(u *models.User) error
 	Delete(u *models.User) error
+	DeleteDelegate(u *models.User, delegate string) error
+	GetDelegatedUsers(u *models.User) (map[string]models.Permission, error)
 }
 
 type userStore struct {
@@ -286,7 +288,7 @@ func (s *userStore) saveDelegates(u *models.User) error {
 		return nil
 	}
 
-	sqlstmt := `INSERT IGNORE INTO account_delegate
+	sqlstmt := `INSERT INTO account_delegate
 				("user_id", "delegate", "permissions") VALUES `
 
 	args := make([]interface{}, 0, len(u.Delegates)*3)
@@ -302,6 +304,50 @@ func (s *userStore) saveDelegates(u *models.User) error {
 		}
 	}
 
-	_, err := s.e.DB.Exec(sqlstmt[:len(sqlstmt)-2], args...)
+	_, err := s.e.DB.Exec(sqlstmt[:len(sqlstmt)-1]+` ON DUPLICATE KEY UPDATE "permissions" = VALUES("permissions")`, args...)
 	return err
+}
+
+func (s *userStore) DeleteDelegate(u *models.User, delegate string) error {
+	if delegate == "" {
+		return nil
+	}
+
+	sqlstmt := `DELETE FROM account_delegate WHERE "user_id" = ? AND "delegate" = ?`
+	_, err := s.e.DB.Exec(sqlstmt, u.ID, delegate)
+	return err
+}
+
+func (s *userStore) GetDelegatedUsers(u *models.User) (map[string]models.Permission, error) {
+	sqlstmt := `SELECT username, permissions
+				FROM account_delegate
+				LEFT JOIN user ON user_id = user.id
+				WHERE delegate = ?`
+
+	rows, err := s.e.DB.Query(sqlstmt, u.Username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results := map[string]models.Permission{}
+	for rows.Next() {
+		var username string
+		var permissionName string
+
+		err := rows.Scan(
+			&username,
+			&permissionName,
+		)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+		permission, exists := models.DelegatePermissions[permissionName]
+		if !exists {
+			continue
+		}
+		results[username] = permission
+	}
+	return results, nil
 }

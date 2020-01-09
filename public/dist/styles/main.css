@@ -223,3 +223,13 @@ thead tr {
     background-color: lightgray;
     border-bottom: 2px solid black;
 }
+
+.delete-icon {
+    color: red;
+    text-decoration: none;
+}
+
+.delete-icon:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}

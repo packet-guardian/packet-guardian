@@ -84,8 +84,12 @@ func (s *TestUserStore) GetPassword(username string) (string, error) {
 	}
 	return "", nil
 }
-func (s *TestUserStore) Save(u *models.User) error   { return nil }
-func (s *TestUserStore) Delete(u *models.User) error { return nil }
+func (s *TestUserStore) Save(u *models.User) error                            { return nil }
+func (s *TestUserStore) Delete(u *models.User) error                          { return nil }
+func (s *TestUserStore) DeleteDelegate(u *models.User, delegate string) error { return nil }
+func (s *TestUserStore) GetDelegatedUsers(u *models.User) (map[string]models.Permission, error) {
+	return nil, nil
+}
 
 type TestDeviceStore struct {
 	Devices []*models.Device
