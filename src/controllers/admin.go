@@ -24,7 +24,7 @@ import (
 
 var (
 	ipStartRegex  = regexp.MustCompile(`^[0-9]{1,3}\.`)
-	macStartRegex = regexp.MustCompile(`^[0-f]{2}\:`)
+	macStartRegex = regexp.MustCompile(`^([0-9a-fA-F]{2}[\:\-]|[0-9a-fA-F]{4}\.)`)
 )
 
 type Admin struct {
@@ -244,8 +244,10 @@ func (a *Admin) search(query string) ([]*searchResults, string, error) {
 }
 
 func (a *Admin) macSearch(query string) ([]*searchResults, string, error) {
+	mac, _ := common.FormatMacAddress(query)
+
 	var results []*searchResults
-	devices, err := a.stores.Devices.SearchDevicesByField("mac", "%"+query+"%")
+	devices, err := a.stores.Devices.SearchDevicesByField("mac", "%"+mac.String()+"%")
 	for _, d := range devices {
 		results = append(results, &searchResults{
 			D: d,
