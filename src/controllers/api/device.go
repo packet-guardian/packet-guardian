@@ -139,6 +139,22 @@ func (d *Device) checkRegisterPermissions(sessionUser *models.User, username str
 
 	var formUser *models.User // User object representing the user from give form data
 
+	// Session user is global Admin
+	if sessionUser.Can(models.CreateDevice) {
+		var err error
+		formUser, err = d.users.GetUserByUsername(username)
+		if err != nil {
+			d.e.Log.WithFields(verbose.Fields{
+				"error":    err,
+				"package":  "controllers:api:device",
+				"username": username,
+			}).Error("Error getting user")
+			return nil, http.StatusInternalServerError, errors.New("Error registering device")
+		}
+
+		return formUser, 0, nil
+	}
+
 	// Form username matches session user
 	if username == sessionUser.Username {
 		if manual && !sessionUser.Can(models.CreateOwn) {
@@ -161,22 +177,6 @@ func (d *Device) checkRegisterPermissions(sessionUser *models.User, username str
 		if err != nil {
 			return nil, httpCode, err
 		}
-		return formUser, 0, nil
-	}
-
-	// Session user is global Admin
-	if sessionUser.Can(models.CreateDevice) {
-		var err error
-		formUser, err = d.users.GetUserByUsername(username)
-		if err != nil {
-			d.e.Log.WithFields(verbose.Fields{
-				"error":    err,
-				"package":  "controllers:api:device",
-				"username": username,
-			}).Error("Error getting user")
-			return nil, http.StatusInternalServerError, errors.New("Error registering device")
-		}
-
 		return formUser, 0, nil
 	}
 

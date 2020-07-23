@@ -303,10 +303,10 @@ func TestRegistrationHandler(t *testing.T) {
 			}
 
 			req.PostForm = map[string][]string{
-				"mac-address": []string{testCase.formMACAddress},
-				"username":    []string{testCase.username},
-				"platform":    []string{testCase.platform},
-				"description": []string{testCase.description},
+				"mac-address": {testCase.formMACAddress},
+				"username":    {testCase.username},
+				"platform":    {testCase.platform},
+				"description": {testCase.description},
 			}
 
 			w := httptest.NewRecorder()
