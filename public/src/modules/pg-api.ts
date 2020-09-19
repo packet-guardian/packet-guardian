@@ -24,6 +24,7 @@ export interface SaveUserInput {
     valid_end: string;
     can_manage: number;
     can_autoreg: number;
+    delegates: string; // Comma separated list of colon separated username:permission pairs
 }
 
 export interface RegisterDeviceInput {

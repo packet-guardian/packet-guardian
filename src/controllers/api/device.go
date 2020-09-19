@@ -163,20 +163,34 @@ func (d *Device) checkRegisterPermissions(sessionUser *models.User, username str
 		if !manual && !sessionUser.Can(models.AutoRegOwn) {
 			return nil, http.StatusForbidden, errors.New("Cannot automatically register device - Permission denied")
 		}
-		formUser = sessionUser
 
-		if formUser.IsBlacklisted() {
+		if sessionUser.IsBlacklisted() {
 			d.e.Log.WithFields(verbose.Fields{
 				"package":  "controllers:api:device",
-				"username": formUser.Username,
+				"username": sessionUser.Username,
 			}).Error("Attempted registration by blacklisted user")
 			return nil, http.StatusForbidden, errors.New("Username blacklisted")
 		}
 
-		httpCode, err := d.checkDeviceLimitRegister(formUser)
+		httpCode, err := d.checkDeviceLimitRegister(sessionUser)
 		if err != nil {
 			return nil, httpCode, err
 		}
+		return sessionUser, 0, nil
+	}
+
+	formUser, err := d.users.GetUserByUsername(username)
+	if err != nil {
+		d.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:api:device",
+			"username": username,
+		}).Error("Error getting user")
+		return nil, http.StatusInternalServerError, errors.New("Error registering device")
+	}
+
+	// Session user is a RW delegate
+	if formUser.DelegateCan(sessionUser.Username, models.CreateDevice) {
 		return formUser, 0, nil
 	}
 
