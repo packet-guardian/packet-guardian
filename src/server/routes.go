@@ -68,6 +68,8 @@ func LoadRoutes(e *common.Environment, stores stores.StoreCollection) http.Handl
 		http.HandlerFunc(guestController.VerificationHandler), e, stores.Leases)))
 
 	r.Handler("GET", "/admin/*a", midStack(e, stores, adminRouter(e, stores)))
+	r.Handler("POST", "/admin/*a", midStack(e, stores, adminRouter(e, stores)))
+
 	r.Handler("GET", "/api/*a", midStack(e, stores, apiRouter(e, stores)))
 	r.Handler("POST", "/api/*a", midStack(e, stores, apiRouter(e, stores)))
 	r.Handler("DELETE", "/api/*a", midStack(e, stores, apiRouter(e, stores)))
@@ -144,6 +146,9 @@ func adminRouter(e *common.Environment, stores stores.StoreCollection) http.Hand
 	r.GET("/admin/users/:username", adminController.AdminUserHandler)
 	r.GET("/admin/reports", adminController.ReportHandler)
 	r.GET("/admin/reports/:report", adminController.ReportHandler)
+
+	r.GET("/admin/import-export", adminController.RenderImportExportPage)
+	r.POST("/admin/import/:resource", adminController.Import)
 
 	h := mid.CheckAdmin(r)
 	h = mid.CheckAuth(h)

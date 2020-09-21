@@ -119,3 +119,17 @@ func LoadPolicyText(file string) []template.HTML {
 	policyText = append(policy, template.HTML(currentParagraph))
 	return policyText
 }
+
+func StringSliceEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, v := range a {
+		if b[i] != v {
+			return false
+		}
+	}
+
+	return true
+}

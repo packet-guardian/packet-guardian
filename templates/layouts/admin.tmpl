@@ -14,11 +14,13 @@
         {{if .canViewUsers}}
         <a href="/admin/users">Manage Users</a>
         {{end}}
+
+        <a href="/admin/import-export">Import/Export</a>
     </nav>
 
     <section class="admin-main">
         <div id="flashDiv" class="flash">
-            <div id="flashText">{{.flashMessage}}</div>
+            <div id="flashText" data-flashtype="{{.flashMessageType}}">{{.flashMessage}}</div>
         </div>
 
         {{template "content" .}}

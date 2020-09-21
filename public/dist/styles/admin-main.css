@@ -36,3 +36,10 @@ nav a:hover {
     padding-top: 0;
     padding-bottom: 0;
 }
+
+@media (min-width: 600px) {
+    .admin-dash {
+        width: 60%;
+        margin: 0 auto;
+    }
+}

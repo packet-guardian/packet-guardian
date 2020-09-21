@@ -5,12 +5,17 @@
 package controllers
 
 import (
+	"encoding/csv"
+	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose/v4"
@@ -385,4 +390,142 @@ func (a *Admin) ReportHandler(w http.ResponseWriter, r *http.Request, p httprout
 	}
 
 	a.e.Views.NewView("admin-reports", r).Render(w, data)
+}
+
+func (a *Admin) RenderImportExportPage(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	a.e.Views.NewView("admin-import-export", r).Render(w, nil)
+}
+
+func (a *Admin) Import(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	resource := p.ByName("resource")
+
+	switch resource {
+	case "devices":
+		a.importDevices(w, r)
+	default:
+		common.NewAPIResponse("", nil).WriteResponse(w, http.StatusNotFound)
+	}
+}
+
+func (a *Admin) importDevices(w http.ResponseWriter, r *http.Request) {
+	session := common.GetSessionFromContext(r)
+	sessionUser := models.GetUserFromContext(r)
+	ip := common.GetIPFromContext(r)
+
+	csvr := csv.NewReader(strings.NewReader(r.PostFormValue("import-data")))
+	csvr.Comment = '#'
+	csvr.ReuseRecord = true
+	csvr.TrimLeadingSpace = true
+	csvr.FieldsPerRecord = 4
+
+	var record []string
+	var err error
+	userCache := make(map[string]*models.User)
+
+	errors := make([]string, 0, 5)
+
+	record, err = csvr.Read() // header
+	if !common.StringSliceEqual(record, []string{"username", "mac", "description", "platform"}) {
+		session.AddFlash(common.FlashMessage{
+			Message: "Import data missing CSV headers",
+			Type:    common.FlashMessageError,
+		})
+		a.e.Views.NewView("admin-import-export", r).Render(w, nil)
+		return
+	}
+
+	record, err = csvr.Read()
+	for err != io.EOF {
+		var username string
+		var description string
+		var platform string
+		var mac net.HardwareAddr
+		var device *models.Device
+		var deviceUser *models.User
+
+		if err != nil {
+			errors = append(errors, err.Error())
+			a.e.Log.Error(err.Error())
+			goto next
+		}
+
+		username = record[0]
+		description = record[2]
+		platform = record[3]
+		mac, err = common.FormatMacAddress(record[1])
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("Invalid MAC address '%s'", record[1]))
+			a.e.Log.Errorf("Invalid MAC address '%s'", record[1])
+			goto next
+		}
+
+		device, err = a.stores.Devices.GetDeviceByMAC(mac)
+		if err != nil {
+			a.e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "controllers:admin:importDevices",
+				"mac":     mac.String(),
+			}).Error("Error getting device")
+			goto next
+		}
+
+		if device.ID != 0 {
+			errors = append(errors, fmt.Sprintf("Device already registered '%s'", record[1]))
+			goto next
+		}
+
+		deviceUser = userCache[username]
+		if deviceUser == nil {
+			deviceUser, err = a.stores.Users.GetUserByUsername(username)
+			if err != nil {
+				errors = append(errors, fmt.Sprintf("Error getting user '%s'", username))
+				a.e.Log.WithFields(verbose.Fields{
+					"error":    err,
+					"package":  "controllers:admin:importDevices",
+					"username": username,
+				}).Error("Error getting user")
+				goto next
+			}
+			userCache[username] = deviceUser
+		}
+
+		device.Username = username
+		device.Description = description
+		device.RegisteredFrom = ip
+		device.Platform = platform
+		device.Expires = deviceUser.DeviceExpiration.NextExpiration(a.e, time.Now())
+		device.DateRegistered = time.Now()
+		device.LastSeen = time.Now()
+		device.UserAgent = "Manual"
+
+		if err = device.Save(); err != nil {
+			errors = append(errors, fmt.Sprintf("Error saving device '%s'", record[1]))
+			a.e.Log.WithFields(verbose.Fields{
+				"error":   err,
+				"package": "controllers:admin:importDevices",
+			}).Error("Error saving device")
+			goto next
+		}
+		a.e.Log.WithFields(verbose.Fields{
+			"package":    "controllers:admin:importDevices",
+			"mac":        mac.String(),
+			"changed-by": sessionUser.Username,
+			"username":   username,
+			"action":     "register_device",
+			"manual":     true,
+		}).Info("Device registered")
+
+	next:
+		record, err = csvr.Read()
+	}
+
+	if len(errors) != 0 {
+		session.AddFlash(common.FlashMessage{
+			Message: "Error: " + strings.Join(errors, "<br>"),
+			Type:    common.FlashMessageError,
+		})
+	} else {
+		session.AddFlash(common.FlashMessage{Message: "Import Successful"})
+	}
+	a.e.Views.NewView("admin-import-export", r).Render(w, nil)
 }
