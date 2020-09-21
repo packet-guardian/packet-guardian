@@ -65,7 +65,9 @@
                 </td>
                 <td>
                     <span id="device-{{.ID}}-desc">{{.Description}}</span>
+                    {{if $.canEditDevice}}
                     <a class="fa fa-pencil edit-dev-desc" tabindex="0" aria-role="button" data-device="{{.ID}}" href="#" title="Edit description"></a>
+                    {{end}}
                 </td>
                 <td>{{.LastSeen.Format "2006-01-02 15:04"}}</td>
                 <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>

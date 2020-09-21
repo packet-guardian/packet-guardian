@@ -16,7 +16,7 @@
         {{if gt (len .delegated) 0}}
         Account:
         <select name="delegated-accounts">
-            <option value="{{.currentUser}}" {{if eq .user.Username .currentUser}}selected{{end}}>{{.currentUser}}</option>
+            <option value="{{.user.Username}}" {{if eq .user.Username .currentUser}}selected{{end}}>{{.user.Username}}</option>
             {{range $key, $value := .delegated}}
             <option value="{{$key}}" {{if eq $.currentUser $key}}selected{{end}}>{{$key}}</option>
             {{end}}
