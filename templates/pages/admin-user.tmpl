@@ -182,12 +182,20 @@
 
             {{range $dname, $dpermission := .user.Delegates}}
             <p data-delegate="{{$dname}}">
-                <label for="{{$dname}}-permissions">{{$dname}}</label>
+                <label for="{{$dname}}-permissions"><a href="/admin/users/{{$dname}}">{{$dname}}</a></label>
                 <select name="{{$dname}}-permissions">
                     <option value="RO"{{if eq $dpermission.DelegateName "RO"}}selected{{end}}>RO</option>
                     <option value="RW"{{if eq $dpermission.DelegateName "RW"}}selected{{end}}>RW</option>
                 </select>
                 <i class="fa fa-times delete-icon" aria-role="button" data-delegate="{{$dname}}" title="Delete delegate"></i>
+            </p>
+            {{end}}
+
+            <h3>Delegate For</h3>
+
+            {{range $dname, $dpermission := .delegateFor}}
+            <p>
+                <a href="/admin/users/{{$dname}}">{{$dname}}</a>: {{$dpermission.DelegateName}}
             </p>
             {{end}}
         </fieldset>

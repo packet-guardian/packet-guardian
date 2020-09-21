@@ -350,7 +350,8 @@ func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request, p httpr
 	}
 
 	data := map[string]interface{}{
-		"user": user,
+		"user":        user,
+		"delegateFor": user.Delegated(),
 	}
 
 	a.e.Views.NewView("admin-user", r).Render(w, data)
