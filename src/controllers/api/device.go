@@ -495,17 +495,10 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	if device.Username != sessionUser.Username {
-		// Check admin privileges
-		if !sessionUser.Can(models.EditDevice) {
-			common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
-			return
-		}
-	} else {
-		if !sessionUser.Can(models.EditOwn) {
-			common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusUnauthorized)
-			return
-		}
+	httpCode, err := d.editDescriptionPermissions(sessionUser, device)
+	if err != nil {
+		common.NewAPIResponse(err.Error(), nil).WriteResponse(w, httpCode)
+		return
 	}
 
 	device.Description = r.FormValue("description")
@@ -526,6 +519,45 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 		"action":     "edit_desc_device",
 	}).Info("Device description changed")
 	common.NewAPIResponse("Device saved successfully", nil).WriteResponse(w, http.StatusOK)
+}
+
+func (d *Device) editDescriptionPermissions(sessionUser *models.User, device *models.Device) (int, error) {
+	// Session user is global Admin
+	if sessionUser.Can(models.DeleteDevice) {
+		return 0, nil
+	}
+
+	// Device username matches session user
+	if device.Username == sessionUser.Username {
+		if !sessionUser.Can(models.EditOwn) {
+			return http.StatusForbidden, errors.New("Cannot edit device - Permission denied")
+		}
+
+		return 0, nil
+	}
+
+	deviceUser, err := d.users.GetUserByUsername(device.Username)
+	if err != nil {
+		d.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:api:device",
+			"username": device.Username,
+		}).Error("Error getting user")
+		return http.StatusInternalServerError, errors.New("Error editing device")
+	}
+
+	// Session user is a RW delegate
+	if deviceUser.DelegateCan(sessionUser.Username, models.EditDevice) {
+		return 0, nil
+	}
+
+	// Session user is NOT global admin and usernames don't match
+	d.e.Log.WithFields(verbose.Fields{
+		"package":    "controllers:api:device",
+		"username":   device.Username,
+		"changed-by": sessionUser.Username,
+	}).Notice("Admin edit device action attempted`")
+	return http.StatusForbidden, errors.New("Permission denied")
 }
 
 func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

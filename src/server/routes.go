@@ -79,6 +79,7 @@ func LoadRoutes(e *common.Environment, stores stores.StoreCollection) http.Handl
 		e.Log.Debug("Profiling enabled")
 
 		r.HandlerFunc("GET", "/reload-templates", func(w http.ResponseWriter, r *http.Request) {
+			e.Log.Debug("Reloading templates")
 			e.Views.Reload()
 		})
 	}
@@ -158,15 +159,14 @@ func apiRouter(e *common.Environment, stores stores.StoreCollection) http.Handle
 	r.POST("/api/device/reassign",
 		mid.CheckPermissions(deviceAPIController.ReassignHandler,
 			mid.PermsCanAny(models.ReassignDevice)))
-	// handles permission checks
-	r.POST("/api/device/mac/:mac/description", deviceAPIController.EditDescriptionHandler)
+	r.POST("/api/device/mac/:mac/description", deviceAPIController.EditDescriptionHandler) // handles permission checks
 	r.POST("/api/device/mac/:mac/expiration",
 		mid.CheckPermissions(deviceAPIController.EditExpirationHandler,
 			mid.PermsCanAny(models.EditDevice)))
 	r.POST("/api/device/mac/:mac/flag",
 		mid.CheckPermissions(deviceAPIController.EditFlaggedHandler,
 			mid.PermsCanAny(models.EditDevice)))
-	r.GET("/api/device/:mac", deviceAPIController.GetDeviceHandler)
+	r.GET("/api/device/:mac", deviceAPIController.GetDeviceHandler) // handles permission checks
 
 	blacklistController := api.NewBlacklistController(e, stores.Users, stores.Devices)
 	r.POST("/api/blacklist/user/:username",
