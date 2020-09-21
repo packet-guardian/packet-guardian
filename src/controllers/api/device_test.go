@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
+	"strings"
 	"testing"
 	"time"
 
@@ -405,6 +406,214 @@ func TestRegistrationHandler(t *testing.T) {
 				if device.MAC.String() != testCase.macAddress {
 					t.Errorf("Device MAC address incorrect: %s, expected %s", device.MAC.String(), testCase.macAddress)
 				}
+			}
+
+			if t.Failed() {
+				resp, _ := httputil.DumpResponse(w.Result(), true)
+				t.Log(string(resp))
+			}
+		})
+	}
+}
+
+/// Delete Device Tests
+func deleteDeviceTestSetup(sessionUser *registerTestUser, otherUsers []*registerTestUser) (*Device, *stores.TestDeviceStore, *http.Request) {
+	e := common.NewTestEnvironment()
+	e.Config.Registration.AllowManualRegistrations = true
+
+	testDeviceStore := &stores.TestDeviceStore{
+		Devices: make([]*models.Device, 0, 1),
+	}
+
+	testLeaseStore := &stores.TestLeaseStore{
+		Leases: make([]*dhcp.Lease, 0, 1),
+	}
+
+	testUserStore := &stores.TestUserStore{}
+	storeUsers := make([]*models.User, 0, len(otherUsers)+1)
+
+	sessionuser := models.NewUser(
+		e,
+		testUserStore,
+		&stores.TestBlacklistItem{Val: sessionUser.blacklisted},
+		sessionUser.username,
+	)
+	sessionuser.Rights = sessionUser.permissions
+	sessionuser.Delegates = sessionUser.delegates
+	storeUsers = append(storeUsers, sessionuser)
+
+	for _, user := range otherUsers {
+		testuser := models.NewUser(
+			e,
+			testUserStore,
+			&stores.TestBlacklistItem{Val: user.blacklisted},
+			user.username,
+		)
+		testuser.Rights = user.permissions
+		testuser.Delegates = user.delegates
+		storeUsers = append(storeUsers, testuser)
+	}
+
+	testUserStore.Users = storeUsers
+
+	session := common.NewTestSession()
+
+	req, _ := http.NewRequest("", "", nil)
+	req.RemoteAddr = "10.0.0.1:8234"
+	req = common.SetEnvironmentToContext(req, e)
+	req = common.SetSessionToContext(req, session)
+	req = models.SetUserToContext(req, sessionuser)
+	req = common.SetIPToContext(req)
+
+	return NewDeviceController(e, testUserStore, testDeviceStore, testLeaseStore), testDeviceStore, req
+}
+
+type deleteDeviceTestCase struct {
+	testCaseName   string
+	sessionUser    *registerTestUser
+	macs           []string
+	username       string
+	devicesToMake  []string
+	respHTTPCode   int
+	deviceStoreLen int
+	otherUsers     []*registerTestUser
+}
+
+var deleteDeviceTests []deleteDeviceTestCase = []deleteDeviceTestCase{
+	{
+		testCaseName: "TestDeleteOwnDevice",
+		sessionUser: &registerTestUser{
+			username:    "testuser",
+			permissions: models.ManageOwnRights,
+		},
+		macs:           []string{"12:34:56:ab:cd:ef"},
+		devicesToMake:  []string{"12:34:56:ab:cd:ef", "22:34:56:ab:cd:ef"},
+		username:       "testuser",
+		respHTTPCode:   204,
+		deviceStoreLen: 1,
+	},
+	{
+		testCaseName: "TestDeleteOwnDeviceBlacklisted",
+		sessionUser: &registerTestUser{
+			username:    "testuser",
+			permissions: models.ManageOwnRights,
+			blacklisted: true,
+		},
+		macs:           []string{"12:34:56:ab:cd:ef"},
+		devicesToMake:  []string{"12:34:56:ab:cd:ef", "22:34:56:ab:cd:ef"},
+		username:       "testuser",
+		respHTTPCode:   403,
+		deviceStoreLen: 2,
+	},
+	{
+		testCaseName: "TestDeleteMultipleOwnDevice",
+		sessionUser: &registerTestUser{
+			username:    "testuser",
+			permissions: models.ManageOwnRights,
+		},
+		macs:           []string{"12:34:56:ab:cd:ef", "22:34:56:ab:cd:ef"},
+		devicesToMake:  []string{"12:34:56:ab:cd:ef", "22:34:56:ab:cd:ef"},
+		username:       "testuser",
+		respHTTPCode:   204,
+		deviceStoreLen: 0,
+	},
+	{
+		testCaseName: "TestDeleteOtherUserDeviceNonAdmin",
+		sessionUser: &registerTestUser{
+			username:    "testuser",
+			permissions: models.ManageOwnRights,
+		},
+		macs:           []string{"12:34:56:ab:cd:ef"},
+		devicesToMake:  []string{"12:34:56:ab:cd:ef", "22:34:56:ab:cd:ef"},
+		username:       "otheruser",
+		respHTTPCode:   403,
+		deviceStoreLen: 2,
+	},
+	{
+		testCaseName: "TestDeleteOtherUserDeviceGlobalAdmin",
+		sessionUser: &registerTestUser{
+			username:    "testuser",
+			permissions: models.AdminRights,
+		},
+		macs:           []string{"12:34:56:ab:cd:ef"},
+		devicesToMake:  []string{"12:34:56:ab:cd:ef", "22:34:56:ab:cd:ef"},
+		username:       "otheruser",
+		respHTTPCode:   204,
+		deviceStoreLen: 1,
+	},
+	{
+		testCaseName: "TestDeleteOtherUserDeviceDelegateRW",
+		sessionUser: &registerTestUser{
+			username:    "delegate",
+			permissions: models.ManageOwnRights,
+		},
+		macs:           []string{"12:34:56:ab:cd:ef"},
+		devicesToMake:  []string{"12:34:56:ab:cd:ef", "22:34:56:ab:cd:ef"},
+		username:       "otheruser",
+		respHTTPCode:   204,
+		deviceStoreLen: 1,
+		otherUsers: []*registerTestUser{
+			{
+				username:    "otheruser",
+				permissions: models.ManageOwnRights,
+				delegates: map[string]models.Permission{
+					"delegate": models.DelegatePermissions["RW"],
+				},
+			},
+		},
+	},
+	{
+		testCaseName: "TestDeleteOtherUserDeviceDelegateRO",
+		sessionUser: &registerTestUser{
+			username:    "delegate",
+			permissions: models.ManageOwnRights,
+		},
+		macs:           []string{"12:34:56:ab:cd:ef"},
+		devicesToMake:  []string{"12:34:56:ab:cd:ef", "22:34:56:ab:cd:ef"},
+		username:       "otheruser",
+		respHTTPCode:   403,
+		deviceStoreLen: 2,
+		otherUsers: []*registerTestUser{
+			{
+				username:    "otheruser",
+				permissions: models.ManageOwnRights,
+				delegates: map[string]models.Permission{
+					"delegate": models.DelegatePermissions["RO"],
+				},
+			},
+		},
+	},
+}
+
+func TestDeleteDeviceHandler(t *testing.T) {
+	for _, testCase := range deleteDeviceTests {
+		t.Run(testCase.testCaseName, func(t *testing.T) {
+			testHandler, devStore, req := deleteDeviceTestSetup(testCase.sessionUser, testCase.otherUsers)
+
+			id := 1
+			for _, deviceMAC := range testCase.devicesToMake {
+				testDevice := models.NewDevice(devStore, nil, &stores.TestBlacklistItem{Val: false})
+				devMAC, _ := net.ParseMAC(deviceMAC)
+				testDevice.ID = id
+				testDevice.MAC = devMAC
+				testDevice.Username = testCase.username
+				devStore.Save(testDevice)
+				id++
+			}
+
+			req.PostForm = map[string][]string{
+				"username": {testCase.username},
+				"mac":      {strings.Join(testCase.macs, ",")},
+			}
+
+			w := httptest.NewRecorder()
+			testHandler.DeleteHandler(w, req, nil)
+			if w.Code != testCase.respHTTPCode {
+				t.Errorf("Wrong HTTP code. Expected %d, got %d", testCase.respHTTPCode, w.Code)
+			}
+
+			if len(devStore.Devices) != testCase.deviceStoreLen {
+				t.Errorf("Device stores doesn't have the right number of devices: %d, expected %d", len(devStore.Devices), testCase.deviceStoreLen)
 			}
 
 			if t.Failed() {

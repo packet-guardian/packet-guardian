@@ -262,33 +262,13 @@ func (d *Device) getRegMACAddress(manual bool, ip net.IP, macPost string, sessio
 }
 
 func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	sessionUser := models.GetUserFromContext(r)
-	formUser := sessionUser
-	username := p.ByName("username")
-	if username == "" {
-		common.NewAPIResponse("No username given", nil).WriteResponse(w, http.StatusBadRequest)
-		return
-	}
-	if username != sessionUser.Username {
-		if !sessionUser.Can(models.DeleteDevice) {
-			common.NewAPIResponse("Admin Error", nil).WriteResponse(w, http.StatusForbidden)
-			return
-		}
-		var err error
-		formUser, err = d.users.GetUserByUsername(username)
-		if err != nil {
-			d.e.Log.WithFields(verbose.Fields{
-				"error":    err,
-				"package":  "controllers:api:device",
-				"username": username,
-			}).Error("Error getting user")
-			common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
-			return
-		}
-	}
+	sessionUser := models.GetUserFromContext(r)           // Current session user
+	formUsername := strings.ToLower(p.ByName("username")) // Username give in form data
 
-	if !sessionUser.Can(models.DeleteOwn) {
-		common.NewAPIResponse("Permission denied", nil).WriteResponse(w, http.StatusForbidden)
+	// The user from whom the device is being deleted
+	formUser, httpCode, err := d.checkDeletePermissions(sessionUser, formUsername)
+	if err != nil {
+		common.NewAPIResponse(err.Error(), nil).WriteResponse(w, httpCode)
 		return
 	}
 
@@ -346,6 +326,68 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 	}
 
 	common.NewAPIResponse("Devices deleted successful", nil).WriteResponse(w, http.StatusNoContent)
+}
+
+func (d *Device) checkDeletePermissions(sessionUser *models.User, username string) (*models.User, int, error) {
+	// Username is required
+	if username == "" {
+		return nil, http.StatusBadRequest, errors.New("No username given")
+	}
+
+	// Session user is global Admin
+	if sessionUser.Can(models.DeleteDevice) {
+		formUser, err := d.users.GetUserByUsername(username)
+		if err != nil {
+			d.e.Log.WithFields(verbose.Fields{
+				"error":    err,
+				"package":  "controllers:api:device",
+				"username": username,
+			}).Error("Error getting user")
+			return nil, http.StatusInternalServerError, errors.New("Error deleting device")
+		}
+
+		return formUser, 0, nil
+	}
+
+	// Form username matches session user
+	if username == sessionUser.Username {
+		if sessionUser.IsBlacklisted() {
+			d.e.Log.WithFields(verbose.Fields{
+				"package":  "controllers:api:device",
+				"username": sessionUser.Username,
+			}).Error("Attempted deleted user by blocked user")
+			return nil, http.StatusForbidden, errors.New("Username blocked")
+		}
+
+		if !sessionUser.Can(models.DeleteOwn) {
+			return nil, http.StatusForbidden, errors.New("Cannot delete device - Permission denied")
+		}
+
+		return sessionUser, 0, nil
+	}
+
+	formUser, err := d.users.GetUserByUsername(username)
+	if err != nil {
+		d.e.Log.WithFields(verbose.Fields{
+			"error":    err,
+			"package":  "controllers:api:device",
+			"username": username,
+		}).Error("Error getting user")
+		return nil, http.StatusInternalServerError, errors.New("Error deleting device")
+	}
+
+	// Session user is a RW delegate
+	if formUser.DelegateCan(sessionUser.Username, models.DeleteDevice) {
+		return formUser, 0, nil
+	}
+
+	// Session user is NOT global admin and usernames don't match
+	d.e.Log.WithFields(verbose.Fields{
+		"package":    "controllers:api:device",
+		"username":   username,
+		"changed-by": sessionUser.Username,
+	}).Notice("Admin delete action attempted`")
+	return nil, http.StatusForbidden, errors.New("Permission denied")
 }
 
 func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

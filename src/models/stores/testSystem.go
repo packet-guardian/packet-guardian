@@ -178,8 +178,26 @@ func (s *TestDeviceStore) Save(d *models.Device) error {
 
 	return nil
 }
-func (s *TestDeviceStore) Delete(d *models.Device) error               { return nil }
-func (s *TestDeviceStore) DeleteAllDeviceForUser(u *models.User) error { return nil }
+func (s *TestDeviceStore) Delete(d *models.Device) error {
+	devs := make([]*models.Device, 0, len(s.Devices)-1)
+	for _, device := range s.Devices {
+		if !bytes.Equal(device.MAC, d.MAC) {
+			devs = append(devs, device)
+		}
+	}
+	s.Devices = devs
+	return nil
+}
+func (s *TestDeviceStore) DeleteAllDeviceForUser(u *models.User) error {
+	devs := make([]*models.Device, 0, len(s.Devices)-1)
+	for _, device := range s.Devices {
+		if device.Username != u.Username {
+			devs = append(devs, device)
+		}
+	}
+	s.Devices = devs
+	return nil
+}
 
 type TestBlacklistStore struct {
 	items map[string]bool

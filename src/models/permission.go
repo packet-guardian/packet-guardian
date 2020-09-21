@@ -4,6 +4,8 @@
 
 package models
 
+import "bytes"
+
 // Permission is an unsigned int where each bit represents an individual permission.
 type Permission uint64
 
@@ -116,4 +118,80 @@ func (p Permission) DelegateName() string {
 		return "RO"
 	}
 	return "RW"
+}
+
+func (p Permission) String() string {
+	buf := bytes.Buffer{}
+
+	if p.Can(ViewUsers) {
+		buf.WriteString("models.ViewUsers\n")
+	}
+	if p.Can(CreateUser) {
+		buf.WriteString("models.CreateUser\n")
+	}
+	if p.Can(EditUser) {
+		buf.WriteString("models.EditUser\n")
+	}
+	if p.Can(DeleteUser) {
+		buf.WriteString("models.DeleteUser\n")
+	}
+	if p.Can(EditUserPermissions) {
+		buf.WriteString("models.EditUserPermissions\n")
+	}
+	if p.Can(ViewDevices) {
+		buf.WriteString("models.ViewDevices\n")
+	}
+	if p.Can(CreateDevice) {
+		buf.WriteString("models.CreateDevice\n")
+	}
+	if p.Can(EditDevice) {
+		buf.WriteString("models.EditDevice\n")
+	}
+	if p.Can(DeleteDevice) {
+		buf.WriteString("models.DeleteDevice\n")
+	}
+	if p.Can(ReassignDevice) {
+		buf.WriteString("models.ReassignDevice\n")
+	}
+	if p.Can(ViewOwn) {
+		buf.WriteString("models.ViewOwn\n")
+	}
+	if p.Can(CreateOwn) {
+		buf.WriteString("models.CreateOwn\n")
+	}
+	if p.Can(AutoRegOwn) {
+		buf.WriteString("models.AutoRegOwn\n")
+	}
+	if p.Can(EditOwn) {
+		buf.WriteString("models.EditOwn\n")
+	}
+	if p.Can(DeleteOwn) {
+		buf.WriteString("models.DeleteOwn\n")
+	}
+	if p.Can(ManageBlacklist) {
+		buf.WriteString("models.ManageBlacklist\n")
+	}
+	if p.Can(BypassBlacklist) {
+		buf.WriteString("models.BypassBlacklist\n")
+	}
+	if p.Can(BypassGuestLogin) {
+		buf.WriteString("models.BypassGuestLogin\n")
+	}
+	if p.Can(ViewAdminPage) {
+		buf.WriteString("models.ViewAdminPage\n")
+	}
+	if p.Can(ViewReports) {
+		buf.WriteString("models.ViewReports\n")
+	}
+	if p.Can(ViewDebugInfo) {
+		buf.WriteString("models.ViewDebugInfo\n")
+	}
+	if p.Can(APIRead) {
+		buf.WriteString("models.APIRead\n")
+	}
+	if p.Can(APIWrite) {
+		buf.WriteString("models.APIWrite\n")
+	}
+
+	return buf.String()
 }
