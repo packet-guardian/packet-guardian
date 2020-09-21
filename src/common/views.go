@@ -220,6 +220,31 @@ type View struct {
 	injectedDataFuncs map[string]DataFunc
 }
 
+type FlashMessageType int
+
+const (
+	FlashMessageSuccess FlashMessageType = iota
+	FlashMessageWarning
+	FlashMessageError
+)
+
+type FlashMessage struct {
+	Message string
+	Type    FlashMessageType
+}
+
+func (f FlashMessageType) String() string {
+	switch f {
+	case FlashMessageSuccess:
+		return "success"
+	case FlashMessageWarning:
+		return "warning"
+	case FlashMessageError:
+		return "error"
+	}
+	return ""
+}
+
 // Render executes the template and writes it to w. This function will also
 // save a web session to the client if "username" is set in the current session.
 func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
@@ -236,9 +261,9 @@ func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
 	}
 	session := GetSessionFromContext(v.r)
 	flashes := session.Flashes()
-	flash := ""
+	var flashMessage FlashMessage
 	if len(flashes) > 0 {
-		flash = flashes[0].(string)
+		flashMessage = flashes[0].(FlashMessage)
 	}
 
 	if session.GetString("username") != "" {
@@ -247,7 +272,8 @@ func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
 		}
 	}
 
-	data["flashMessage"] = flash
+	data["flashMessage"] = template.HTML(flashMessage.Message)
+	data["flashMessageType"] = flashMessage.Type.String()
 	data["layout"] = strings.SplitN(v.name, "-", 2)[0]
 
 	for key, val := range v.injectedData {
