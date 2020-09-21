@@ -523,14 +523,14 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 
 func (d *Device) editDescriptionPermissions(sessionUser *models.User, device *models.Device) (int, error) {
 	// Session user is global Admin
-	if sessionUser.Can(models.DeleteDevice) {
+	if sessionUser.Can(models.EditDevice) {
 		return 0, nil
 	}
 
 	// Device username matches session user
 	if device.Username == sessionUser.Username {
 		if !sessionUser.Can(models.EditOwn) {
-			return http.StatusForbidden, errors.New("Cannot edit device - Permission denied")
+			return http.StatusUnauthorized, errors.New("Cannot edit device - Permission denied")
 		}
 
 		return 0, nil
@@ -557,7 +557,7 @@ func (d *Device) editDescriptionPermissions(sessionUser *models.User, device *mo
 		"username":   device.Username,
 		"changed-by": sessionUser.Username,
 	}).Notice("Admin edit device action attempted`")
-	return http.StatusForbidden, errors.New("Permission denied")
+	return http.StatusUnauthorized, errors.New("Permission denied")
 }
 
 func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

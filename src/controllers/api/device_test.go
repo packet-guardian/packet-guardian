@@ -602,12 +602,16 @@ func TestDeleteDeviceHandler(t *testing.T) {
 			}
 
 			req.PostForm = map[string][]string{
-				"username": {testCase.username},
-				"mac":      {strings.Join(testCase.macs, ",")},
+				"mac": {strings.Join(testCase.macs, ",")},
 			}
 
 			w := httptest.NewRecorder()
-			testHandler.DeleteHandler(w, req, nil)
+			testHandler.DeleteHandler(w, req, httprouter.Params{
+				{
+					Key:   "username",
+					Value: testCase.username,
+				},
+			})
 			if w.Code != testCase.respHTTPCode {
 				t.Errorf("Wrong HTTP code. Expected %d, got %d", testCase.respHTTPCode, w.Code)
 			}
