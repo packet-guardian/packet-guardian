@@ -65,7 +65,7 @@
                 </td>
                 <td>
                     <span id="device-{{.ID}}-desc">{{.Description}}</span>
-                    {{if $.canEditDevice}}
+                    {{if $.main.canEditDevice}}
                     <a class="fa fa-pencil edit-dev-desc" tabindex="0" aria-role="button" data-device="{{.ID}}" href="#" title="Edit description"></a>
                     {{end}}
                 </td>
