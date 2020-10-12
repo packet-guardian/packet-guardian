@@ -5,6 +5,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/lfkeitel/verbose/v4"
+	"github.com/packet-guardian/dhcp-lib"
 	"github.com/packet-guardian/packet-guardian/src/common"
 	"github.com/packet-guardian/packet-guardian/src/models"
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
@@ -705,4 +707,19 @@ func (d *Device) EditFlaggedHandler(w http.ResponseWriter, r *http.Request, p ht
 		"action":     "edit_flagged_device",
 	}).Info("Device flagged status changed")
 	common.NewAPIResponse("Device saved successfully", nil).WriteResponse(w, http.StatusOK)
+}
+
+func (d *Device) GetSelfStatusHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	ip := common.GetIPFromContext(r)
+	reg, _ := dhcp.IsRegisteredByIP(d.leases, ip)
+
+	w.Header().Add("Content-Type", "application/captive+json")
+
+	data := map[string]interface{}{
+		"captive":         !reg, // Registered is not captive, not registered is captive
+		"user-portal-url": d.e.Config.Core.SiteDomainName + "/register",
+	}
+
+	resp, _ := json.Marshal(data)
+	w.Write(resp)
 }

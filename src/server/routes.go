@@ -171,7 +171,8 @@ func apiRouter(e *common.Environment, stores stores.StoreCollection) http.Handle
 	r.POST("/api/device/mac/:mac/flag",
 		mid.CheckPermissions(deviceAPIController.EditFlaggedHandler,
 			mid.PermsCanAny(models.EditDevice)))
-	r.GET("/api/device/:mac", deviceAPIController.GetDeviceHandler) // handles permission checks
+	r.GET("/api/device/:mac", deviceAPIController.GetDeviceHandler)        // handles permission checks
+	r.GET("/api/captive-status", deviceAPIController.GetSelfStatusHandler) // no permission checks, device self-check
 
 	blacklistController := api.NewBlacklistController(e, stores.Users, stores.Devices)
 	r.POST("/api/blacklist/user/:username",
