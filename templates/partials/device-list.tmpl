@@ -9,8 +9,10 @@
         {{if ne .main.page 1}}
         {{if .main.adminManage}}
         <a href="/admin/manage/user/{{.main.user.Username}}?page={{sub1 .main.page}}">< Prev</a>
+        {{else if ne .main.user.Username .main.currentUser}}
+        <a href="/manage/{{.main.currentUser}}?page={{sub1 .main.page}}">< Prev</a>
         {{else}}
-        <a href="/manage/?page={{sub1 .main.page}}">< Prev</a>
+        <a href="/manage?page={{sub1 .main.page}}">< Prev</a>
         {{end}}
         {{end}}
         </span>
@@ -21,6 +23,8 @@
         {{if .main.hasNextPage}}
         {{if .main.adminManage}}
         <a href="/admin/manage/user/{{.main.user.Username}}?page={{plus1 .main.page}}">Next ></a>
+        {{else if ne .main.user.Username .main.currentUser}}
+        <a href="/manage/{{.main.currentUser}}?page={{plus1 .main.page}}">Next ></a>
         {{else}}
         <a href="/manage?page={{plus1 .main.page}}">Next ></a>
         {{end}}
