@@ -58,7 +58,8 @@ const (
 		ViewUsers |
 		CreateDevice |
 		EditDevice |
-		DeleteDevice
+		DeleteDevice |
+		ReassignDevice
 	// ReadOnlyRights represents a read-only admin user
 	ReadOnlyRights Permission = ViewOwn |
 		ManageOwnRights |
