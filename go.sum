@@ -39,6 +39,8 @@ github.com/packet-guardian/cas-auth v1.0.3 h1:3fySAiuInjyb9vZLfE56+MEYujXWEJvetr
 github.com/packet-guardian/cas-auth v1.0.3/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
 github.com/packet-guardian/dhcp-lib v1.3.1-0.20190104170538-6e6243d987ae h1:cBIaCcEMih4VkZxlCOJGx9Xo8lRNQ19vlayn9nqo3Kc=
 github.com/packet-guardian/dhcp-lib v1.3.1-0.20190104170538-6e6243d987ae/go.mod h1:BO0VKz6xu7ztoqLk4DEyHbiDWIMjyPs5uzWPrLlGcWg=
+github.com/packet-guardian/dhcp-lib v1.3.2 h1:PS0/MWhhVu2rrN+baej/yGIVMlifxfGam1TvvEt8WmM=
+github.com/packet-guardian/dhcp-lib v1.3.2/go.mod h1:BO0VKz6xu7ztoqLk4DEyHbiDWIMjyPs5uzWPrLlGcWg=
 github.com/packet-guardian/pg-dhcp v2.0.0+incompatible h1:xNMJMhUfpztrah0ySt9eWcoGz+1vDd66F6TPF6RhL2I=
 github.com/packet-guardian/pg-dhcp v2.0.0+incompatible/go.mod h1:WZMFVhKythUpKiS/PcO4GpbL2Vop0hDSt5APZQTOs4k=
 github.com/packet-guardian/sessions v1.1.2 h1:8dJ9WaVoqtJa1lEjr/txPuHxGi9Gfyme1MNwQpAAaZc=

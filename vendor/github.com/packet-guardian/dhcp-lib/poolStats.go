@@ -17,8 +17,8 @@ type PoolStat struct {
 func (h *Handler) GetPoolStats() []*PoolStat {
 	stats := make([]*PoolStat, 0)
 	now := time.Now()
-	regFreeTime := time.Duration(c.global.registeredSettings.freeLeaseAfter) * time.Second
-	unRegFreeTime := time.Duration(c.global.unregisteredSettings.freeLeaseAfter) * time.Second
+	regFreeTime := c.global.registeredSettings.freeLeaseAfter
+	unRegFreeTime := c.global.unregisteredSettings.freeLeaseAfter
 
 	for _, n := range c.networks {
 		for _, s := range n.subnets {
