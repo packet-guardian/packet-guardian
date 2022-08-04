@@ -8,13 +8,17 @@
 </div>
 {{if eq .searchType "user"}}
 <div class="no-devices no-devices-register">
-    <a href="/register?manual=1&username={{.query}}" class="btn">Register new device for {{.query}}</a>
+    <a href="/register?manual=1&username={{.query}}" class="btn">Register device for {{.query}}</a>
 </div>
 {{end}}
 {{end}}
 {{else}}
 <div class="expired-sample-block">
     <div class="expired-sample expired"></div> = Expired IP Lease
+    {{if isUsername .query}}
+    <br>
+    <a href="/register?manual=1&username={{.query}}" class="btn">Register device for {{.query}}</a>
+    {{end}}
 </div>
 <div class="clearfix devices-list">
     <table>

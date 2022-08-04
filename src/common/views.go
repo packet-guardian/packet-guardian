@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/lfkeitel/verbose/v4"
@@ -18,6 +19,8 @@ import (
 type DataFunc func(*http.Request) interface{}
 
 const mainTmpl = `{{define "main" }} {{ template "base" . }} {{ end }}`
+
+var usernameRegex = regexp.MustCompile(`[a-zA-z\-_0-9]+`)
 
 // Views is a collection of templates
 type Views struct {
@@ -91,6 +94,9 @@ func customTemplateFuncs() template.FuncMap {
 		},
 		"title": func(s string) string {
 			return strings.Title(s)
+		},
+		"isUsername": func(s string) bool {
+			return usernameRegex.Match([]byte(s))
 		},
 	}
 }
