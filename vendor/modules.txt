@@ -1,56 +1,83 @@
 # bitbucket.org/ckvist/twilio v0.0.0-20170512072134-13c593a1721b
+## explicit
 bitbucket.org/ckvist/twilio/twirest
 # github.com/BurntSushi/toml v0.3.1
+## explicit
 github.com/BurntSushi/toml
 # github.com/DATA-DOG/go-sqlmock v1.3.0
+## explicit
 github.com/DATA-DOG/go-sqlmock
 # github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364
+## explicit
 github.com/dchest/captcha
 # github.com/elazarl/go-bindata-assetfs v1.0.0
+## explicit
 github.com/elazarl/go-bindata-assetfs
 # github.com/go-sql-driver/mysql v1.4.1
+## explicit
 github.com/go-sql-driver/mysql
 # github.com/gofrs/uuid v3.2.0+incompatible
+## explicit
 github.com/gofrs/uuid
 # github.com/gorilla/context v1.1.1
+## explicit
 github.com/gorilla/context
 # github.com/gorilla/securecookie v1.1.1
+## explicit
 github.com/gorilla/securecookie
 # github.com/gorilla/sessions v1.1.3 => github.com/packet-guardian/sessions v1.1.2
+## explicit
 github.com/gorilla/sessions
 # github.com/julienschmidt/httprouter v1.2.0
+## explicit
 github.com/julienschmidt/httprouter
 # github.com/lfkeitel/go-ldap-client v1.0.0
+## explicit
 github.com/lfkeitel/go-ldap-client
 # github.com/lfkeitel/verbose/v4 v4.0.1
+## explicit
 github.com/lfkeitel/verbose/v4
 # github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a
+## explicit
 github.com/oec/goradius
 # github.com/packet-guardian/cas-auth v1.0.3
+## explicit
 github.com/packet-guardian/cas-auth
 # github.com/packet-guardian/dhcp-lib v1.3.2
+## explicit
 github.com/packet-guardian/dhcp-lib
 # github.com/packet-guardian/pg-dhcp v2.0.0+incompatible
+## explicit
 github.com/packet-guardian/pg-dhcp/dhcp
 # github.com/packet-guardian/useragent v0.0.0-20181215171402-b01a15b7aeb8
+## explicit
 github.com/packet-guardian/useragent
 # golang.org/x/crypto v0.0.0-20190102171810-8d7daa0c54b3
+## explicit
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 # golang.org/x/net v0.0.0-20180824152047-4bcd98cce591
+## explicit
 golang.org/x/net/html
 golang.org/x/net/html/atom
 # google.golang.org/appengine v1.4.0
+## explicit
 google.golang.org/appengine/cloudsql
 # gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc
+## explicit
 gopkg.in/alexcesaro/quotedprintable.v3
 # gopkg.in/asn1-ber.v1 v1.0.0-20170511165959-379148ca0225
+## explicit
 gopkg.in/asn1-ber.v1
 # gopkg.in/ldap.v2 v2.5.1
+## explicit
 gopkg.in/ldap.v2
 # gopkg.in/mail.v2 v2.3.1
+## explicit
 gopkg.in/mail.v2
 # gopkg.in/tylerb/graceful.v1 v1.2.15
+## explicit
 gopkg.in/tylerb/graceful.v1
 # gopkg.in/yaml.v2 v2.2.1
+## explicit
 gopkg.in/yaml.v2

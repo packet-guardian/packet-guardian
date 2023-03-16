@@ -8,8 +8,6 @@ github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364 h1:U+BMqUt8LFgyrF0/
 github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364/go.mod h1:QGrK8vMWWHQYQ3QU9bw9Y9OPNfxccGzfb41qjvVeXtY=
 github.com/elazarl/go-bindata-assetfs v1.0.0 h1:G/bYguwHIzWq9ZoyUQqrjTmJbbYn3j3CKKpKinvZLFk=
 github.com/elazarl/go-bindata-assetfs v1.0.0/go.mod h1:v+YaWX3bdea5J/mo8dSETolEo7R71Vk1u8bnjau5yw4=
-github.com/go-bindata/go-bindata v3.1.2+incompatible h1:5vjJMVhowQdPzjE1LdxyFF7YFTXg5IgGVW4gBr5IbvE=
-github.com/go-bindata/go-bindata v3.1.2+incompatible/go.mod h1:xK8Dsgwmeed+BBsSy2XTopBn/8uK2HWuGSnA11C3Joo=
 github.com/go-sql-driver/mysql v1.4.1 h1:g24URVg0OFbNUTx9qqY1IRZ9D9z3iPyi5zKhQZpNwpA=
 github.com/go-sql-driver/mysql v1.4.1/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
 github.com/gofrs/uuid v3.2.0+incompatible h1:y12jRkkFxsd7GpqdSZ+/KCs/fJbqpEXSGd4+jfEaewE=
@@ -19,8 +17,6 @@ github.com/gorilla/context v1.1.1 h1:AWwleXJkX/nhcU9bZSnZoi3h/qGYqQAGhq6zZe/aQW8
 github.com/gorilla/context v1.1.1/go.mod h1:kBGZzfjB9CEq2AlWe17Uuf7NDRt0dE0s8S51q0aT7Yg=
 github.com/gorilla/securecookie v1.1.1 h1:miw7JPhV+b/lAHSXz4qd/nN9jRiAFV5FwjeKyCS8BvQ=
 github.com/gorilla/securecookie v1.1.1/go.mod h1:ra0sb63/xPlUeL+yeDciTfxMRAA+MP+HVt/4epWDjd4=
-github.com/gorilla/sessions v1.1.3 h1:uXoZdcdA5XdXF3QzuSlheVRUvjl+1rKY7zBXL68L9RU=
-github.com/gorilla/sessions v1.1.3/go.mod h1:8KCfur6+4Mqcc6S0FEfKuN15Vl5MgXW92AE8ovaJD0w=
 github.com/jtblin/go-ldap-client v0.0.0-20170223121919-b73f66626b33 h1:XDpFOMOZq0u0Ar4F0p/wklqQXp/AMV1pTF5T5bDoUfQ=
 github.com/jtblin/go-ldap-client v0.0.0-20170223121919-b73f66626b33/go.mod h1:+0BcLY5d54TVv6irFzHoiFvwAHR6T0g9B+by/UaS9T0=
 github.com/julienschmidt/httprouter v1.2.0 h1:TDTW5Yz1mjftljbcKqRcrYhd4XeOoI98t+9HbQbYf7g=
@@ -31,14 +27,8 @@ github.com/lfkeitel/verbose/v4 v4.0.1 h1:RW7t5dE23gCYmJVlvGOKEqINDworT9kG6NScBRy
 github.com/lfkeitel/verbose/v4 v4.0.1/go.mod h1:MKq3/hGAuJiUsMKAerPAMzde5ZWp3rEqJav0b3AI3mM=
 github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a h1:bMgpqSCUAcZfjNucx+KNMqPo2gBwxpFY78/V2wETvBk=
 github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a/go.mod h1:YzcHXKcQBjEjtgbVXioLzxVHMAYkDgoRjfb6JuVA1pA=
-github.com/packet-guardian/cas-auth v1.0.1 h1:BtgXhEa8iSmCkjzziROWUy23kZiNQcUBKjVq/up1rTk=
-github.com/packet-guardian/cas-auth v1.0.1/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
-github.com/packet-guardian/cas-auth v1.0.2 h1:0Za1dOrvwaSlcRiqCB47KYinUw8HcqZh/F9jIlZs3b0=
-github.com/packet-guardian/cas-auth v1.0.2/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
 github.com/packet-guardian/cas-auth v1.0.3 h1:3fySAiuInjyb9vZLfE56+MEYujXWEJvetrz9aWmsghY=
 github.com/packet-guardian/cas-auth v1.0.3/go.mod h1:clCfgE8/SqvEyYJJACxq+B5um/ZPu6/xfU8OjfukGP8=
-github.com/packet-guardian/dhcp-lib v1.3.1-0.20190104170538-6e6243d987ae h1:cBIaCcEMih4VkZxlCOJGx9Xo8lRNQ19vlayn9nqo3Kc=
-github.com/packet-guardian/dhcp-lib v1.3.1-0.20190104170538-6e6243d987ae/go.mod h1:BO0VKz6xu7ztoqLk4DEyHbiDWIMjyPs5uzWPrLlGcWg=
 github.com/packet-guardian/dhcp-lib v1.3.2 h1:PS0/MWhhVu2rrN+baej/yGIVMlifxfGam1TvvEt8WmM=
 github.com/packet-guardian/dhcp-lib v1.3.2/go.mod h1:BO0VKz6xu7ztoqLk4DEyHbiDWIMjyPs5uzWPrLlGcWg=
 github.com/packet-guardian/pg-dhcp v2.0.0+incompatible h1:xNMJMhUfpztrah0ySt9eWcoGz+1vDd66F6TPF6RhL2I=
