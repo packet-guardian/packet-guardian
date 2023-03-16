@@ -1,11 +1,16 @@
 {
   "extends": "stylelint-config-standard",
   "rules": {
-      "indentation": 4,
-      "declaration-block-no-shorthand-property-overrides": null
+    "declaration-block-no-shorthand-property-overrides": null,
+    "property-no-vendor-prefix": [
+      true,
+      {
+        "ignoreProperties": ["user-select"]
+      }
+    ]
   },
   "ignoreFiles": [
-      "**/font-awesome.css",
-      "**/normalize.css"
-    ]
+    "**/font-awesome.css",
+    "**/normalize.css"
+  ]
 }

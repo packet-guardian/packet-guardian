@@ -4,7 +4,7 @@ import {
     post,
     SuccessCallback,
     ErrorCallback,
-    HTTPMethod
+    HTTPMethod,
 } from "@/reckit";
 
 export interface LoginInput {
@@ -70,7 +70,7 @@ class API {
             url: "/api/user",
             params: { username },
             success: apiRespWrapper(success),
-            error
+            error,
         });
     }
 
@@ -98,7 +98,7 @@ class API {
             method: HTTPMethod.Delete,
             url: `/api/blacklist/user/${username}`,
             success: apiRespWrapper(success),
-            error
+            error,
         });
     }
 
@@ -130,7 +130,7 @@ class API {
             `/api/device/mac/${mac}/expiration`,
             {
                 type,
-                value
+                value,
             },
             apiRespWrapper(success),
             error
@@ -166,7 +166,7 @@ class API {
             url: `/api/device/user/${username}`,
             params: { mac: macs.join(",") },
             success: apiRespWrapper(success),
-            error
+            error,
         });
     }
 
@@ -209,7 +209,7 @@ class API {
             url: "/api/blacklist/device",
             params: { mac: macs.join(",") },
             success: apiRespWrapper(success),
-            error
+            error,
         });
     }
 
@@ -224,7 +224,7 @@ class API {
             url: "/api/blacklist/device",
             params: { username },
             success: apiRespWrapper(success),
-            error
+            error,
         });
     }
 
@@ -254,7 +254,7 @@ class API {
                 username: data.username,
                 "mac-address": data["mac-address"],
                 description: data.description,
-                platform: data.platform ?? ""
+                platform: data.platform ?? "",
             },
             apiRespWrapper(success),
             error

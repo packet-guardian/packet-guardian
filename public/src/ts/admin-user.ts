@@ -10,7 +10,7 @@ const devExpirationTypes = {
     specific: 2,
     duration: 3,
     daily: 4,
-    rolling: 5
+    rolling: 5,
 };
 
 // Device limit select box init
@@ -81,13 +81,13 @@ function checkExpires() {
 checkExpires();
 
 // Select boxes change events
-$("[name=special-limit]").change(e => {
+$("[name=special-limit]").change((e) => {
     const devLimit = $("[name=device-limit]");
     devLimit.value("");
     devLimit.prop("disabled", $(e.target).value() !== "specific");
 });
 
-$("[name=dev-exp-sel]").change(e => {
+$("[name=dev-exp-sel]").change((e) => {
     const self = $(e.target);
     // Enable/disable appropiate textboxes
     $("[name=device-expiration]").prop(
@@ -119,7 +119,7 @@ $("[name=dev-exp-sel]").change(e => {
     }
 });
 
-$("[name=val-bef-sel]").change(e => {
+$("[name=val-bef-sel]").change((e) => {
     const self = $(e.target);
     $("[name=valid-before]").prop("disabled", self.value() === "forever");
     $("[name=valid-after]").prop("disabled", self.value() === "forever");
@@ -152,7 +152,7 @@ $("[name=delete-btn]").click(() => {
 function getDelegatesList(): string {
     return Array.from(document.querySelectorAll("p[data-delegate]"))
         .map(
-            item =>
+            (item) =>
                 `${item.querySelector("label")?.innerText}:${
                     item.querySelector("select")?.value
                 }`
@@ -161,7 +161,7 @@ function getDelegatesList(): string {
 }
 
 // Form submittion
-$("#user-form").submit(e => {
+$("#user-form").submit((e) => {
     e.preventDefault();
     const formData = {
         username: $("[name=username]").value(),
@@ -176,7 +176,7 @@ $("#user-form").submit(e => {
         allow_status_api: $("[name=user-api-status]").prop("checked") ? 1 : 0,
         ui_group: $("[name=user-ui-group]").value(),
         api_group: $("[name=user-api-group]").value(),
-        delegates: getDelegatesList()
+        delegates: getDelegatesList(),
     };
 
     if ($("[name=clear-pass]").prop("checked")) {
@@ -221,7 +221,7 @@ $("#user-form").submit(e => {
             }
             $("#submit-btn").text("Save");
         },
-        req => {
+        (req) => {
             const resp = JSON.parse(req.responseText);
             flashMessage(resp.Message);
         }
@@ -239,7 +239,7 @@ function setUserExpirationToolTip(tip: string) {
 
 $("#add-delegate-btn").click(() => {
     const pmodal = new ModalPrompt();
-    pmodal.show("Delegate username:", newUser => {
+    pmodal.show("Delegate username:", (newUser) => {
         const newDelegate = document.createElement("p");
         newDelegate.dataset["delegate"] = newUser;
 
@@ -253,13 +253,13 @@ $("#add-delegate-btn").click(() => {
                 {
                     value: "RO",
                     text: "RO",
-                    selected: false
+                    selected: false,
                 },
                 {
                     value: "RW",
                     text: "RW",
-                    selected: false
-                }
+                    selected: false,
+                },
             ])
         );
 
@@ -287,7 +287,7 @@ function makeSelect(name: string, options: SelectOption[]): HTMLSelectElement {
     const select = document.createElement("select");
     select.setAttribute("name", name);
 
-    options.forEach(option => {
+    options.forEach((option) => {
         const opt = document.createElement("option");
         opt.value = option.value;
         opt.text = option.text;

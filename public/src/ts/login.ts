@@ -5,7 +5,7 @@ import flashMessage from "@/flash";
 function login() {
     const data = {
         username: $("[name=username]").value(),
-        password: $("[name=password]").value()
+        password: $("[name=password]").value(),
     };
 
     if (data.username === "" || data.password === "") {

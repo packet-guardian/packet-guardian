@@ -13,22 +13,22 @@ function initManage() {
         );
     });
 
-    $(".device-checkbox-target").click(e => {
+    $(".device-checkbox-target").click((e) => {
         $("#select-all-checkbox").prop("checked", false);
     });
 
-    $(".edit-dev-desc").click(e => {
+    $(".edit-dev-desc").click((e) => {
         e.stopPropagation();
         const id = $(e.target).data("device") ?? "";
         const pmodal = new ModalPrompt();
         pmodal.show(
             "Device Description:",
             $(`#device-${id}-desc`).text(),
-            desc => editDeviceDescription(id, desc)
+            (desc) => editDeviceDescription(id, desc)
         );
     });
 
-    $("#select-all").click(e => {
+    $("#select-all").click((e) => {
         const state = !$("#select-all-checkbox").prop("checked");
         $(".device-checkbox").prop("checked", state);
     });
@@ -36,9 +36,7 @@ function initManage() {
 
 // Event callbacks
 function editDeviceDescription(id: string, desc: string) {
-    const mac = $(`#device-${id}-mac`)
-        .text()
-        .trim();
+    const mac = $(`#device-${id}-mac`).text().trim();
     api.saveDeviceDescription(
         mac,
         desc,
@@ -46,7 +44,7 @@ function editDeviceDescription(id: string, desc: string) {
             $(`#device-${id}-desc`).text(desc);
             flashMessage("Device description saved", "success");
         },
-        req => {
+        (req) => {
             const resp = JSON.parse(req.responseText);
             switch (req.status) {
                 case 500:
@@ -63,7 +61,7 @@ function editDeviceDescription(id: string, desc: string) {
 // Delete buttons
 function deleteSelectedDevices() {
     const devicesToRemove = $(".device-checkbox:checked").map(
-        elem => (elem as HTMLInputElement).value
+        (elem) => (elem as HTMLInputElement).value
     );
     if (devicesToRemove.length === 0) {
         return;

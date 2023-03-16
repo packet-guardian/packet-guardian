@@ -104,13 +104,13 @@ export class jlib2 {
 
     // Event handlers
     on(eventName: string, fn: EventListenerOrEventListenerObject) {
-        return this.forEach(el => {
+        return this.forEach((el) => {
             el.addEventListener(eventName, fn, false);
         });
     }
 
     off(eventName: string, fn: EventListenerOrEventListenerObject) {
-        return this.forEach(el => {
+        return this.forEach((el) => {
             el.removeEventListener(eventName, fn, false);
         });
     }
@@ -136,31 +136,31 @@ export class jlib2 {
     }
 
     focus() {
-        this.mapOne(el => el.focus());
+        this.mapOne((el) => el.focus());
     }
 
     // Element property functions
     text(text?: string): string {
         if (text !== undefined) {
-            this.forEach(el => (el.textContent = text));
+            this.forEach((el) => (el.textContent = text));
         }
-        return this.mapOne(el => el.textContent) ?? "";
+        return this.mapOne((el) => el.textContent) ?? "";
     }
     html(html?: string): string {
         if (html !== undefined) {
-            this.forEach(el => (el.innerHTML = html));
+            this.forEach((el) => (el.innerHTML = html));
         }
-        return this.mapOne(el => el.innerHTML) ?? "";
+        return this.mapOne((el) => el.innerHTML) ?? "";
     }
     value(value?: string): string {
         if (value !== undefined) {
-            this.forEach(el => ((el as HTMLInputElement).value = value));
+            this.forEach((el) => ((el as HTMLInputElement).value = value));
         }
-        return this.mapOne(el => (el as HTMLInputElement).value) ?? "";
+        return this.mapOne((el) => (el as HTMLInputElement).value) ?? "";
     }
     data(dk: string, dv?: string): string | null {
         if (dv !== undefined) {
-            this.forEach(el => {
+            this.forEach((el) => {
                 if (el.dataset === undefined) {
                     el.setAttribute(`data-${dk}`, dv);
                     return;
@@ -169,7 +169,7 @@ export class jlib2 {
             });
         }
         return (
-            this.mapOne(el => {
+            this.mapOne((el) => {
                 if (el.dataset === undefined) {
                     return el.getAttribute(`data-${dk}`);
                 }
@@ -179,20 +179,20 @@ export class jlib2 {
     }
     attr(attr: string, val?: string): string {
         if (val !== undefined) {
-            this.forEach(el => el.setAttribute(attr, val));
+            this.forEach((el) => el.setAttribute(attr, val));
         }
-        return this.mapOne(el => el.getAttribute(attr)) ?? "";
+        return this.mapOne((el) => el.getAttribute(attr)) ?? "";
     }
     prop(prop: string, val?: any): any {
         if (val !== undefined) {
-            this.forEach(el => ((el as any)[prop] = val));
+            this.forEach((el) => ((el as any)[prop] = val));
         }
-        return this.mapOne(el => (el as any)[prop]);
+        return this.mapOne((el) => (el as any)[prop]);
     }
 
     // Class manipulation
     addClass(className: string) {
-        return this.forEach(el => {
+        return this.forEach((el) => {
             if (!hasClass(el, className)) {
                 addClass(el, className);
             }
@@ -201,17 +201,17 @@ export class jlib2 {
 
     removeClass(className?: string) {
         if (className === undefined) {
-            return this.forEach(el => el.removeAttribute("class"));
+            return this.forEach((el) => el.removeAttribute("class"));
         }
-        return this.forEach(el => removeClass(el, className));
+        return this.forEach((el) => removeClass(el, className));
     }
 
     hasClass(className: string) {
-        return this.mapOne(el => hasClass(el, className));
+        return this.mapOne((el) => hasClass(el, className));
     }
 
     toggleClass(className: string) {
-        return this.forEach(el => {
+        return this.forEach((el) => {
             if (el.classList) {
                 el.classList.toggle(className);
             } else {
@@ -226,18 +226,18 @@ export class jlib2 {
 
     // Fading/Display
     show() {
-        return this.forEach(el => (el.style.display = "block"));
+        return this.forEach((el) => (el.style.display = "block"));
     }
 
     hide() {
-        return this.forEach(el => (el.style.display = "none"));
+        return this.forEach((el) => (el.style.display = "none"));
     }
 
     style(s: string, v?: any) {
         if (v !== undefined) {
-            return this.forEach(el => (el.style[<any>s] = v));
+            return this.forEach((el) => (el.style[<any>s] = v));
         }
-        return this.mapOne(el => el.style[<any>s]);
+        return this.mapOne((el) => el.style[<any>s]);
     }
 
     fadeIn(speed: number, callback?: () => void) {
@@ -256,7 +256,7 @@ export class jlib2 {
 
         let opacity = inOut === "in" ? 0 : 1;
 
-        this.forEach(el => {
+        this.forEach((el) => {
             el.style.opacity = opacity.toString();
             el.style.filter = "";
         });
@@ -270,7 +270,7 @@ export class jlib2 {
                 opacity -= (new Date().getTime() - last) / speed;
             }
 
-            self.forEach(el => {
+            self.forEach((el) => {
                 el.style.opacity = opacity.toString();
                 el.style.filter = `alpha(opacity=${(100 * opacity) | 0})`;
             });

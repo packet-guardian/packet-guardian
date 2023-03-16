@@ -5,7 +5,7 @@ import "@/manage";
 import { ModalPrompt, ModalConfirm } from "@/modals";
 
 // Event handlers
-$("[name=blacklist-sel]").change(e => {
+$("[name=blacklist-sel]").change((e) => {
     const self = $(e.target);
     const cmodal = new ModalConfirm();
 
@@ -62,7 +62,9 @@ const addUsernameBlacklist = () =>
     );
 
 const getCheckedDevices = () =>
-    $(".device-checkbox:checked").map(elem => (elem as HTMLInputElement).value);
+    $(".device-checkbox:checked").map(
+        (elem) => (elem as HTMLInputElement).value
+    );
 
 function addToBlacklist() {
     const devicesToRemove = getCheckedDevices();

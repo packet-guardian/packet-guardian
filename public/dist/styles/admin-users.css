@@ -2,11 +2,6 @@ h2 {
     margin-top: 0;
 }
 
-.userLimit {
-    color: blue;
-    font-size: 1.2em;
-}
-
 .controls {
     margin-left: 5px;
     display: flex;

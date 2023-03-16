@@ -55,8 +55,8 @@ $("#blacklist-btn").click(() => {
 
 $("#reassign-btn").click(() => {
     const pmodal = new ModalPrompt();
-    pmodal.show("New owner's username:", newUser =>
-        api.reassignDevices(newUser, [getMacAddress()], reloadPage, req =>
+    pmodal.show("New owner's username:", (newUser) =>
+        api.reassignDevices(newUser, [getMacAddress()], reloadPage, (req) =>
             flashMessage(JSON.parse(req.responseText).Message)
         )
     );
@@ -74,13 +74,13 @@ function getDescription() {
     return $("#device-desc").text();
 }
 
-$("#edit-dev-desc").click(e => {
+$("#edit-dev-desc").click((e) => {
     e.stopPropagation();
     const pmodal = new ModalPrompt();
     pmodal.show("Device Description:", getDescription(), editDeviceDescription);
 });
 
-$("#edit-dev-expiration").click(e => {
+$("#edit-dev-expiration").click((e) => {
     e.stopPropagation();
     oldExpiration = $("#device-expiration").text();
     $("#device-expiration").text("");
@@ -98,7 +98,7 @@ $("#edit-dev-expiration").click(e => {
     $("#confirmation-icons").style("display", "inline");
 });
 
-$("#dev-exp-sel").change(e => {
+$("#dev-exp-sel").change((e) => {
     if ($(e.target).value() !== "specific") {
         $("#dev-exp-val").style("display", "none");
     } else {
@@ -107,12 +107,12 @@ $("#dev-exp-sel").change(e => {
     }
 });
 
-$("#dev-expiration-cancel").click(e => {
+$("#dev-expiration-cancel").click((e) => {
     e.stopPropagation();
     clearExpirationControls(oldExpiration);
 });
 
-$("#dev-expiration-ok").click(e => {
+$("#dev-expiration-ok").click((e) => {
     e.stopPropagation();
     editDeviceExpiration($("#dev-exp-sel").value(), $("#dev-exp-val").value());
 });

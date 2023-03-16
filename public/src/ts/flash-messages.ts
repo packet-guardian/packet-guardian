@@ -14,6 +14,6 @@ function checkAndFlash(element: string) {
     }
 }
 
-const defaultFlashElem = "#flashText";
+const defaultFlashElem = "#flash-text";
 
 checkAndFlash(defaultFlashElem);

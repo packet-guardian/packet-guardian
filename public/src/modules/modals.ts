@@ -186,8 +186,8 @@ class ModalPrompt {
         if (okkCallback) {
             this._okCallback = okkCallback;
         }
-        this._okCallback = okkCallback || function() {};
-        this._cancelCallback = cnlCallback || function() {};
+        this._okCallback = okkCallback || function () {};
+        this._cancelCallback = cnlCallback || function () {};
         const winW = window.innerWidth;
         const winH = window.innerHeight;
 
@@ -280,7 +280,7 @@ class ModalPrompt {
 
 function bindMouseMove(binderID: string, movediv: string) {
     const binder = $(binderID);
-    binder.on("mousedown", function(e) {
+    binder.on("mousedown", function (e) {
         if ((<MouseEvent>e).which !== 1) {
             return;
         }
@@ -288,7 +288,7 @@ function bindMouseMove(binderID: string, movediv: string) {
         const mover = $(movediv);
         self.style("position", "relative");
 
-        document.onmousemove = function(e) {
+        document.onmousemove = function (e) {
             mover.style("left", e.pageX - 250 + "px");
             mover.style("top", e.pageY - 10 + "px");
         };
