@@ -54,7 +54,7 @@ build:
 		-e "VERSION=$(VERSION)" \
 		-e "BUILDTIME=$(BUILDTIME)" \
 		-e "CGO_ENABLED=$(CGO_ENABLED)" \
-		golang:1.17 \
+		golang:1.20 \
 		make build-cmd
 
 build-cmd:
