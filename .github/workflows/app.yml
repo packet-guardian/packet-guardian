@@ -39,4 +39,4 @@ jobs:
         run: env GO111MODULE=off go get -u -v github.com/go-bindata/go-bindata/...
 
       - name: Test and Build Server
-        run: env PATH="$HOME/go/bin:$PATH" make bindata test build
+        run: env PATH="$HOME/go/bin:$PATH" make bindata test build-cmd
