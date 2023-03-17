@@ -12,6 +12,10 @@ var customDir = "custom"
 // SetCustomDir sets the directory that contains files to override
 // builtin templates or other static assets.
 func SetCustomDir(dir string) error {
+	if dir == "" {
+		return nil
+	}
+
 	stat, err := os.Stat(dir)
 	if err != nil {
 		return err
@@ -29,9 +33,11 @@ func SetCustomDir(dir string) error {
 // be loaded and used instead of the builtin asset. Otherwise, the
 // builtin asset will be returned.
 func GetAsset(name string) ([]byte, error) {
-	full, err := ioutil.ReadFile(filepath.Join(customDir, name))
-	if err == nil { // File exists in custom directory, use it
-		return full, nil
+	if customDir != "" {
+		full, err := ioutil.ReadFile(filepath.Join(customDir, name))
+		if err == nil { // File exists in custom directory, use it
+			return full, nil
+		}
 	}
 
 	return Asset(name)
@@ -42,9 +48,11 @@ func GetAsset(name string) ([]byte, error) {
 // If a custom file exists, it will be stat-ed instead. If it doesn't
 // exist, the default AssetInfo function is called and returned.
 func GetAssetInfo(name string) (os.FileInfo, error) {
-	stat, err := os.Stat(filepath.Join(customDir, name))
-	if err == nil {
-		return stat, nil
+	if customDir != "" {
+		stat, err := os.Stat(filepath.Join(customDir, name))
+		if err == nil {
+			return stat, nil
+		}
 	}
 
 	return AssetInfo(name)
