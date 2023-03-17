@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"text/template"
 	"time"
 
 	"github.com/lfkeitel/verbose/v4"
@@ -123,7 +124,11 @@ func setupEnvironment() *common.Environment {
 		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
 	}
 
-	e.Views, err = common.NewViews(e, "templates")
+	e.Views, err = common.NewViews(e, "templates", template.FuncMap{
+		"userCan": func(user *models.User, perm string) bool {
+			return user.Can(models.StrToPermission(perm))
+		},
+	})
 	if err != nil {
 		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
 	}

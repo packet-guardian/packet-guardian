@@ -13,7 +13,7 @@
     <h2>Administration Users</h2>
 
     <div class="controls">
-        {{if .canCreateUser}}
+        {{if (userCan $.sessionUser "CreateUser")}}
         <div class="new-user">
             <form id="new-user-form">
                 <input type="text" name="username" placeholder="Username">
@@ -38,7 +38,7 @@
             {{range .users}}
             <tr>
                 <td>
-                    {{if $.canEditUser}}
+                    {{if (userCan $.sessionUser "EditUser")}}
                     <a class="fa fa-pencil edit-user-pencil" tabindex="0" aria-role="button" href="/admin/users/{{.Username}}" title="Edit"></a>
                     {{end}}
                     <a href="/admin/manage/user/{{.Username}}">{{.Username}}</a>

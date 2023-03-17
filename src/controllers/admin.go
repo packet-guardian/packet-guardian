@@ -116,21 +116,16 @@ func (a *Admin) ManageHandler(w http.ResponseWriter, r *http.Request, p httprout
 	}
 
 	data := map[string]interface{}{
-		"user":               user,
-		"devices":            results,
-		"deviceCnt":          deviceCnt,
-		"usePages":           deviceCnt > common.PageSize,
-		"page":               pageNum,
-		"hasNextPage":        pageNum*common.PageSize < deviceCnt,
-		"adminManage":        true,
-		"pageStart":          ((pageNum - 1) * common.PageSize) + 1,
-		"pageEnd":            pageEnd,
-		"canCreateDevice":    sessionUser.Can(models.CreateDevice),
-		"canEditDevice":      sessionUser.Can(models.EditDevice),
-		"canDeleteDevice":    sessionUser.Can(models.DeleteDevice),
-		"canReassignDevice":  sessionUser.Can(models.ReassignDevice),
-		"canManageBlacklist": sessionUser.Can(models.ManageBlacklist),
-		"canEditUser":        sessionUser.Can(models.EditUser),
+		"user":          user,
+		"devices":       results,
+		"deviceCnt":     deviceCnt,
+		"usePages":      deviceCnt > common.PageSize,
+		"page":          pageNum,
+		"hasNextPage":   pageNum*common.PageSize < deviceCnt,
+		"adminManage":   true,
+		"pageStart":     ((pageNum - 1) * common.PageSize) + 1,
+		"pageEnd":       pageEnd,
+		"canEditDevice": sessionUser.Can(models.EditDevice),
 	}
 
 	a.e.Views.NewView("admin-manage", r).Render(w, data)
@@ -174,13 +169,8 @@ func (a *Admin) ShowDeviceHandler(w http.ResponseWriter, r *http.Request, p http
 	}
 
 	data := map[string]interface{}{
-		"user":               user,
-		"device":             device,
-		"canEditDevice":      sessionUser.Can(models.EditDevice),
-		"canDeleteDevice":    sessionUser.Can(models.DeleteDevice),
-		"canReassignDevice":  sessionUser.Can(models.ReassignDevice),
-		"canManageBlacklist": sessionUser.Can(models.ManageBlacklist),
-		"canEditUser":        sessionUser.Can(models.EditUser),
+		"user":   user,
+		"device": device,
 	}
 
 	a.e.Views.NewView("admin-manage-device", r).Render(w, data)
@@ -231,9 +221,10 @@ func (a *Admin) SearchHandler(w http.ResponseWriter, r *http.Request, _ httprout
 	}
 
 	data := map[string]interface{}{
-		"query":      query,
-		"results":    results,
-		"searchType": searchType,
+		"query":         query,
+		"results":       results,
+		"searchType":    searchType,
+		"canEditDevice": sessionUser.Can(models.EditDevice),
 	}
 
 	a.e.Views.NewView("admin-search", r).Render(w, data)
@@ -329,9 +320,7 @@ func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request, _ h
 	}
 
 	data := map[string]interface{}{
-		"users":         users,
-		"canEditUser":   sessionUser.Can(models.EditUser),
-		"canCreateUser": sessionUser.Can(models.CreateUser),
+		"users": users,
 	}
 
 	a.e.Views.NewView("admin-user-list", r).Render(w, data)

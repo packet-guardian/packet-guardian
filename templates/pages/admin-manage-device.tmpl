@@ -20,7 +20,7 @@
                 {{else}}
                 <span class="username">
                     <a href="/admin/manage/user/{{.user.Username}}" class="no-color-link">{{.user.Username}}</a>
-                    {{if .canEditUser}}
+                    {{if (userCan .sessionUser "EditUser")}}
                     <a href="/admin/users/{{.user.Username}}" class="no-color-link"><span class="fa fa-pencil edit-property"></span></a>
                     {{end}}
                 </span>
@@ -32,7 +32,7 @@
             <section>
             </section>
             <section>
-                {{if .canManageBlacklist}}
+                {{if (userCan .sessionUser "ManageBlacklist")}}
                 {{if .device.IsBlacklisted}}
                 <button type="button" class="danger-btn" id="unblacklist-btn">Remove From Blacklist</button>
                 {{else}}
@@ -41,7 +41,7 @@
                 {{end}}
 
                 {{if ne .device.ID 0}}
-                {{if .canEditDevice}}
+                {{if (userCan .sessionUser "EditDevice")}}
                 {{if .device.Flagged}}
                 <button type="button" class="danger-btn" id="unflag-dev-btn">Unflag</button>
                 {{else}}
@@ -49,11 +49,11 @@
                 {{end}}
                 {{end}}
 
-                {{if .canReassignDevice}}
+                {{if (userCan .sessionUser "ReassignDevice")}}
                 <button type="button" id="reassign-btn" class="danger-btn">Reassign</button>
                 {{end}}
 
-                {{if .canDeleteDevice}}
+                {{if (userCan .sessionUser "DeleteDevice")}}
                 <button type="button" id="delete-btn" class="danger-btn">Delete</button>
                 {{end}}
                 {{end}}

@@ -25,6 +25,7 @@ var usernameRegex = regexp.MustCompile(`[a-zA-z\-_0-9]+`)
 // Views is a collection of templates
 type Views struct {
 	source            string
+	additionalFuncs   template.FuncMap
 	e                 *Environment
 	injectedData      map[string]interface{}
 	injectedDataFuncs map[string]DataFunc
@@ -34,7 +35,7 @@ type Views struct {
 
 // NewViews reads a set of templates from a directory and loads them
 // into a Views. Custom functions are injected into the templates.
-func NewViews(e *Environment, basepath string) (v *Views, err error) {
+func NewViews(e *Environment, basepath string, m template.FuncMap) (v *Views, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch x := r.(type) {
@@ -55,7 +56,7 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 		injectedDataFuncs: make(map[string]DataFunc),
 		templates:         make(map[string]*template.Template),
 	}
-	if err := v.loadTemplates(); err != nil {
+	if err := v.loadTemplates(m); err != nil {
 		return nil, err
 	}
 	return v, nil
@@ -101,7 +102,7 @@ func customTemplateFuncs() template.FuncMap {
 	}
 }
 
-func (v *Views) loadTemplates() error {
+func (v *Views) loadTemplates(m template.FuncMap) error {
 	dir := v.source
 
 	mainTemplate, err := template.New("main").Parse(mainTmpl)
@@ -109,6 +110,8 @@ func (v *Views) loadTemplates() error {
 		return err
 	}
 	mainTemplate.Funcs(customTemplateFuncs())
+	mainTemplate.Funcs(m)
+	v.additionalFuncs = m
 
 	partialFiles, err := bindata.AssetDir(dir + "/partials")
 	if err != nil {
@@ -197,7 +200,7 @@ func (v *Views) InjectDataFunc(key string, fn DataFunc) {
 // only be called in a development environment. This functions is very
 // susceptible to race conditions.
 func (v *Views) Reload() error {
-	views, err := NewViews(v.e, v.source)
+	views, err := NewViews(v.e, v.source, v.additionalFuncs)
 	if err != nil {
 		return err
 	}

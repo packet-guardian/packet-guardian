@@ -18,7 +18,7 @@
                 <span class="text-label">Username:</span>
                 <span class="username">
                     {{.user.Username}}
-                    {{if .canEditUser}}
+                    {{if (userCan .sessionUser "EditUser")}}
                     <a href="/admin/users/{{.user.Username}}" class="no-color-link"><span class="fa fa-pencil edit-property"></span></a>
                     {{end}}
                 </span>
@@ -32,15 +32,15 @@
 
         <div class="controls">
             <section>
-                {{if .canCreateDevice}}
+                {{if (userCan .sessionUser "CreateDevice")}}
                 <a class="btn ok-btn" href="/register?manual=1&username={{.user.Username}}">Add Device</a>
                 {{end}}
-                {{if and .canDeleteDevice (gt (len .devices) 0)}}
+                {{if and (userCan .sessionUser "DeleteDevice") (gt (len .devices) 0)}}
                 <button type="button" name="del-selected-btn" class="danger-btn">Delete Selected</button>
                 {{end}}
             </section>
             <section>
-                {{if .canManageBlacklist}}
+                {{if (userCan .sessionUser "ManageBlacklist")}}
                 <select name="blacklist-sel" data-blacklisted="{{.user.IsBlacklisted}}" required>
                     <option  class="placeholder" selected disabled value="">Blacklist</option>
                     <option value="username" name="black-user-option">Add User</option>
@@ -48,7 +48,7 @@
                     <option value="unblack-sel">Remove Devices</option>
                 </select>
                 {{end}}
-                {{if .canReassignDevice}}
+                {{if (userCan .sessionUser "ReassignDevice")}}
                 <button type="button" name="reassign-selected-btn">Reassign</button>
                 {{end}}
             </section>
