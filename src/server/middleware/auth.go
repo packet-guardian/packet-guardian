@@ -5,6 +5,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -20,11 +21,11 @@ import (
 func CheckAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !auth.IsLoggedIn(r) {
-			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+			redirectURL := fmt.Sprintf("/login?redirect=%s", r.URL.String())
+			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 			return
 		}
 		next.ServeHTTP(w, r)
-		return
 	})
 }
 
@@ -78,7 +79,6 @@ func CheckAuthAPI(next http.Handler, users stores.UserStore) http.Handler {
 
 		// Continue
 		next.ServeHTTP(w, r)
-		return
 	})
 }
 
