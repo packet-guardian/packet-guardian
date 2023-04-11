@@ -48,6 +48,9 @@ const (
 
 	APIRead
 	APIWrite
+
+	ViewDHCP
+	AdminDHCP
 )
 
 const (
@@ -66,13 +69,46 @@ const (
 		ViewDevices |
 		ViewAdminPage |
 		ViewReports |
-		BypassGuestLogin
+		BypassGuestLogin |
+		ViewDHCP
 	// ManageOwnRights is a convenience Permission combining CreateOwn, EditOwn and DeleteOwn.
 	ManageOwnRights Permission = CreateOwn |
 		AutoRegOwn |
 		EditOwn |
 		DeleteOwn
 )
+
+var permLookupMap = map[string]Permission{
+	"ViewUsers":           ViewUsers,
+	"CreateUser":          CreateUser,
+	"EditUser":            EditUser,
+	"DeleteUser":          DeleteUser,
+	"EditUserPermissions": EditUserPermissions,
+	"ViewDevices":         ViewDevices,
+	"CreateDevice":        CreateDevice,
+	"EditDevice":          EditDevice,
+	"DeleteDevice":        DeleteDevice,
+	"ReassignDevice":      ReassignDevice,
+	"ViewOwn":             ViewOwn,
+	"CreateOwn":           CreateOwn,
+	"AutoRegOwn":          AutoRegOwn,
+	"EditOwn":             EditOwn,
+	"DeleteOwn":           DeleteOwn,
+	"ManageBlacklist":     ManageBlacklist,
+	"BypassBlacklist":     BypassBlacklist,
+	"BypassGuestLogin":    BypassGuestLogin,
+	"ViewAdminPage":       ViewAdminPage,
+	"ViewReports":         ViewReports,
+	"ViewDebugInfo":       ViewDebugInfo,
+	"APIRead":             APIRead,
+	"APIWrite":            APIWrite,
+	"ViewDHCP":            ViewDHCP,
+	"AdminDHCP":           AdminDHCP,
+}
+
+func StrToPermission(p string) Permission {
+	return permLookupMap[p]
+}
 
 // With returns a new Permission where p now has permission(s) new.
 func (p Permission) With(new Permission) Permission {
@@ -192,6 +228,12 @@ func (p Permission) String() string {
 	}
 	if p.Can(APIWrite) {
 		buf.WriteString("models.APIWrite\n")
+	}
+	if p.Can(ViewDHCP) {
+		buf.WriteString("models.ViewDHCP\n")
+	}
+	if p.Can(AdminDHCP) {
+		buf.WriteString("models.AdminDHCP\n")
 	}
 
 	return buf.String()
