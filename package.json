@@ -8,7 +8,7 @@
         "clean-webpack-plugin": "^0.1.17",
         "prettier": "^1.19.1",
         "remark": "^11.0.2",
-        "stylelint": "^12.0.0",
+        "stylelint": "^15.10.1",
         "stylelint-config-standard": "^19.0.0",
         "tslint": "^5.20.1",
         "tslint-config-prettier": "^1.18.0",
