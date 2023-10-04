@@ -127,6 +127,7 @@ type Config struct {
 			Server           string
 			ClientID         string
 			ClientSecret     string
+			StripDomain      bool
 			AuthorizeEndoint string `toml:"-"`
 			TokenEndoint     string `toml:"-"`
 			UserinfoEndpoint string `toml:"-"`

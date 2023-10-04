@@ -103,6 +103,10 @@ func (a *OpenID) OpenIDHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if a.e.Config.Auth.Openid.StripDomain {
+		username = strings.SplitN(username, "@", 2)[0]
+	}
+
 	if !a.e.Config.Guest.GuestOnly {
 		auth.SetLoginUser(w, r, username, "openid")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
