@@ -47,6 +47,7 @@
                 <th>Last Seen</th>
                 <th>Registered</th>
                 <th>Current Lease</th>
+                {{if .main.adminManage}}<th>Last Lease</th>{{end}}
             </tr>
         </thead>
         <tbody>
@@ -84,6 +85,17 @@
                     N/A
                     {{end -}}
                 </td>
+                {{if $.main.adminManage -}}
+                <td>
+                    {{with .GetLastLease -}}
+                    <span title="{{.Start.Format "2006-01-02 15:04"}} - {{.End.Format "2006-01-02 15:04"}}">
+                        {{.IP.String}} ({{.Network}})
+                    </span>
+                    {{else -}}
+                    N/A
+                    {{end -}}
+                </td>
+                {{end -}}
             </tr>
         {{end}}
         </tbody>
