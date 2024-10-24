@@ -36,7 +36,7 @@ jobs:
         run: yarn run build:prod
 
       - name: Download go-bindata tool
-        run: env GO111MODULE=off go get -u -v github.com/go-bindata/go-bindata/...
+        run: go install github.com/go-bindata/go-bindata/go-bindata@latest
 
       - name: Test and Build Server
         run: env PATH="$HOME/go/bin:$PATH" make bindata test build-cmd
