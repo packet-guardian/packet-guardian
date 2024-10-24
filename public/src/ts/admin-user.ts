@@ -177,7 +177,7 @@ $("#user-form").submit((e) => {
         ui_group: $("[name=user-ui-group]").value(),
         api_group: $("[name=user-api-group]").value(),
         delegates: getDelegatesList(),
-        notes: $("[name=notes]").value()
+        notes: $("[name=notes]").value(),
     };
 
     if ($("[name=clear-pass]").prop("checked")) {
