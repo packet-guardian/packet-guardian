@@ -44,6 +44,7 @@ type User struct {
 	APIGroup       string                `json:"-"`
 	AllowStatusAPI bool                  `json:"-"`
 	Delegates      map[string]Permission `json:"delegates"`
+	Notes          string                `json:"notes"`
 }
 
 // NewUser creates a new base user

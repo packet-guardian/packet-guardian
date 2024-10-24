@@ -165,6 +165,7 @@ func apiRouter(e *common.Environment, stores stores.StoreCollection) http.Handle
 		mid.CheckPermissions(deviceAPIController.ReassignHandler,
 			mid.PermsCanAny(models.ReassignDevice)))
 	r.POST("/api/device/mac/:mac/description", deviceAPIController.EditDescriptionHandler) // handles permission checks
+	r.POST("/api/device/mac/:mac/notes", deviceAPIController.EditNotesHandler)             // handles permission checks
 	r.POST("/api/device/mac/:mac/expiration",
 		mid.CheckPermissions(deviceAPIController.EditExpirationHandler,
 			mid.PermsCanAny(models.EditDevice)))

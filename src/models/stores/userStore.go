@@ -78,7 +78,7 @@ func (s *userStore) SearchUsersByField(field, pattern string) ([]*models.User, e
 func (s *userStore) getUsersFromDatabase(where string, order string, values ...interface{}) ([]*models.User, error) {
 	sqlstmt := `SELECT u."id", u."username", u."password", u."device_limit", u."default_expiration",
 				u."expiration_type", u."can_manage", u."can_autoreg", u."valid_forever", u."valid_start",
-				u."valid_end", u."ui_group", u."api_group", u."allow_status_api",
+				u."valid_end", u."ui_group", u."api_group", u."allow_status_api", u."notes",
 				GROUP_CONCAT(d."delegate") AS delegate_names, GROUP_CONCAT(d."permissions") AS delegate_permissions
 				FROM "user" AS u
 				LEFT JOIN account_delegate AS d
@@ -106,6 +106,7 @@ func (s *userStore) getUsersFromDatabase(where string, order string, values ...i
 		var uiGroup string
 		var apiGroup string
 		var allowStatusAPI bool
+		var notes sql.NullString
 		var delegateNames sql.NullString
 		var delegatePermissions sql.NullString
 
@@ -124,6 +125,7 @@ func (s *userStore) getUsersFromDatabase(where string, order string, values ...i
 			&uiGroup,
 			&apiGroup,
 			&allowStatusAPI,
+			&notes,
 			&delegateNames,
 			&delegatePermissions,
 		)
@@ -144,6 +146,9 @@ func (s *userStore) getUsersFromDatabase(where string, order string, values ...i
 		user.UIGroup = uiGroup
 		user.APIGroup = apiGroup
 		user.AllowStatusAPI = allowStatusAPI
+		if notes.Valid {
+			user.Notes = notes.String
+		}
 
 		if canManage {
 			user.Rights = user.Rights.With(models.ManageOwnRights)
@@ -192,7 +197,7 @@ func (s *userStore) Save(u *models.User) error {
 }
 
 func (s *userStore) updateExisting(u *models.User) error {
-	sql := `UPDATE "user" SET "device_limit"=?, "default_expiration"=?, "expiration_type"=?, "can_manage"=?, "can_autoreg"=?, "valid_forever"=?, "valid_start"=?, "valid_end"=?, "ui_group"=?, "api_group"=?, "allow_status_api"=?`
+	sql := `UPDATE "user" SET "device_limit"=?, "default_expiration"=?, "expiration_type"=?, "can_manage"=?, "can_autoreg"=?, "valid_forever"=?, "valid_start"=?, "valid_end"=?, "ui_group"=?, "api_group"=?, "allow_status_api"=?, "notes"=?`
 
 	if u.NeedToSavePassword() {
 		sql += ", \"password\" = ?"
@@ -215,6 +220,7 @@ func (s *userStore) updateExisting(u *models.User) error {
 			u.UIGroup,
 			u.APIGroup,
 			u.AllowStatusAPI,
+			u.Notes,
 			u.Password,
 			u.ID,
 		)
@@ -232,6 +238,7 @@ func (s *userStore) updateExisting(u *models.User) error {
 			u.UIGroup,
 			u.APIGroup,
 			u.AllowStatusAPI,
+			u.Notes,
 			u.ID,
 		)
 	}
@@ -247,7 +254,7 @@ func (s *userStore) saveNew(u *models.User) error {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := `INSERT INTO "user" ("username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end", "ui_group", "api_group", "allow_status_api") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
+	sql := `INSERT INTO "user" ("username", "password", "device_limit", "default_expiration", "expiration_type", "can_manage", "can_autoreg", "valid_forever", "valid_start", "valid_end", "ui_group", "api_group", "allow_status_api", "notes") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 
 	result, err := s.e.DB.Exec(
 		sql,
@@ -264,6 +271,7 @@ func (s *userStore) saveNew(u *models.User) error {
 		u.UIGroup,
 		u.APIGroup,
 		u.AllowStatusAPI,
+		u.Notes,
 	)
 	if err != nil {
 		return err

@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
+//go:build dbmysql || dball
 // +build dbmysql dball
 
 package db
@@ -45,6 +46,7 @@ func newmySQLDBInit() *mySQLDB {
 		2: m.migrateFrom2,
 		3: m.migrateFrom3,
 		4: m.migrateFrom4,
+		5: m.migrateFrom5,
 	}
 
 	return m
@@ -125,15 +127,18 @@ func (m *mySQLDB) migrateTables(d *common.DatabaseAccessor, c *common.Config) er
 	}
 	verRow.Scan(&currDBVer)
 
-	common.SystemLogger.WithFields(verbose.Fields{
-		"current-version": currDBVer,
-		"active-version":  DBVersion,
-	}).Debug("Database Versions")
-
 	// No migration needed
 	if currDBVer == DBVersion {
+		common.SystemLogger.WithFields(verbose.Fields{
+			"current-database-version": currDBVer,
+		}).Debug("Database schema is up-to-date")
 		return nil
 	}
+
+	common.SystemLogger.WithFields(verbose.Fields{
+		"current-database-version":     currDBVer,
+		"application-database-version": DBVersion,
+	}).Debug("Applying database migrations...")
 
 	if currDBVer > DBVersion {
 		return errors.New("Database is too new, can't rollback")
@@ -150,6 +155,10 @@ func (m *mySQLDB) migrateTables(d *common.DatabaseAccessor, c *common.Config) er
 	}
 
 	_, err := d.DB.Exec(`UPDATE "settings" SET "value" = ? WHERE "id" = 'db_version'`, DBVersion)
+
+	common.SystemLogger.WithFields(verbose.Fields{
+		"current-database-version": DBVersion,
+	}).Debug("Database migrations applied successfully")
 	return err
 }
 
@@ -189,7 +198,8 @@ func (m *mySQLDB) createDeviceTable(d *common.DatabaseAccessor) error {
 		"user_agent" TEXT,
 		"description" TEXT,
 		"last_seen" INTEGER NOT NULL,
-		"flagged" TINYINT DEFAULT 0
+		"flagged" TINYINT DEFAULT 0,
+		"notes" TEXT
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1`
 
 	_, err := d.DB.Exec(sql)
@@ -242,7 +252,8 @@ func (m *mySQLDB) createUserTable(d *common.DatabaseAccessor) error {
 		"valid_forever" TINYINT DEFAULT 1,
 		"ui_group" VARCHAR(20) NOT NULL DEFAULT 'default',
 		"api_group" VARCHAR(20) NOT NULL DEFAULT 'disable',
-		"allow_status_api" TINYINT DEFAULT 0
+		"allow_status_api" TINYINT DEFAULT 0,
+		"notes" TEXT
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=4;`
 
 	if _, err := d.DB.Exec(sql); err != nil {
@@ -374,6 +385,21 @@ func (m *mySQLDB) migrateFrom3(d *common.DatabaseAccessor, c *common.Config) err
 func (m *mySQLDB) migrateFrom4(d *common.DatabaseAccessor, c *common.Config) error {
 	sql := `ALTER TABLE "device" ADD COLUMN (
 		"flagged" TINYINT DEFAULT 0
+	);`
+	_, err := d.DB.Exec(sql)
+	return err
+}
+
+func (m *mySQLDB) migrateFrom5(d *common.DatabaseAccessor, c *common.Config) error {
+	sql := `ALTER TABLE "user" ADD COLUMN (
+		"notes" TEXT
+	);`
+	if _, err := d.DB.Exec(sql); err != nil {
+		return err
+	}
+
+	sql = `ALTER TABLE "device" ADD COLUMN (
+		"notes" TEXT
 	);`
 	_, err := d.DB.Exec(sql)
 	return err

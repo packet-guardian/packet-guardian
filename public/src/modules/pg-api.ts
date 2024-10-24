@@ -25,6 +25,7 @@ export interface SaveUserInput {
     can_manage: number;
     can_autoreg: number;
     delegates: string; // Comma separated list of colon separated username:permission pairs
+    notes: string;
 }
 
 export interface RegisterDeviceInput {
@@ -132,6 +133,21 @@ class API {
                 type,
                 value,
             },
+            apiRespWrapper(success),
+            error
+        );
+    }
+
+    saveDeviceNotes(
+        mac: string,
+        notes: string,
+        success?: APISuccessCallback<EmptyResp>,
+        error?: ErrorCallback
+    ) {
+        mac = encodeURIComponent(mac);
+        post(
+            `/api/device/mac/${mac}/notes`,
+            { notes },
             apiRespWrapper(success),
             error
         );

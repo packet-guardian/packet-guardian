@@ -1,5 +1,5 @@
 import $ from "@/jlib2";
-import api from "@/pg-api";
+import api, { SaveUserInput } from "@/pg-api";
 import flashMessage from "@/flash";
 import { setTextboxToToday } from "@/utils";
 import { ModalPrompt } from "@/modals";
@@ -163,7 +163,7 @@ function getDelegatesList(): string {
 // Form submittion
 $("#user-form").submit((e) => {
     e.preventDefault();
-    const formData = {
+    const formData: SaveUserInput = {
         username: $("[name=username]").value(),
         password: $("[name=password]").value(),
         device_limit: -1,
@@ -177,6 +177,7 @@ $("#user-form").submit((e) => {
         ui_group: $("[name=user-ui-group]").value(),
         api_group: $("[name=user-api-group]").value(),
         delegates: getDelegatesList(),
+        notes: $("[name=notes]").value()
     };
 
     if ($("[name=clear-pass]").prop("checked")) {

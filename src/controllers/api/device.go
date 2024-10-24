@@ -497,7 +497,7 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	httpCode, err := d.editDescriptionPermissions(sessionUser, device)
+	httpCode, err := d.editDevicePermissionCheck(sessionUser, device)
 	if err != nil {
 		common.NewAPIResponse(err.Error(), nil).WriteResponse(w, httpCode)
 		return
@@ -523,7 +523,7 @@ func (d *Device) EditDescriptionHandler(w http.ResponseWriter, r *http.Request, 
 	common.NewAPIResponse("Device saved successfully", nil).WriteResponse(w, http.StatusOK)
 }
 
-func (d *Device) editDescriptionPermissions(sessionUser *models.User, device *models.Device) (int, error) {
+func (d *Device) editDevicePermissionCheck(sessionUser *models.User, device *models.Device) (int, error) {
 	// Session user is global Admin
 	if sessionUser.Can(models.EditDevice) {
 		return 0, nil
@@ -722,4 +722,48 @@ func (d *Device) GetSelfStatusHandler(w http.ResponseWriter, r *http.Request, _ 
 
 	resp, _ := json.Marshal(data)
 	w.Write(resp)
+}
+
+func (d *Device) EditNotesHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	sessionUser := models.GetUserFromContext(r)
+	mac, err := net.ParseMAC(p.ByName("mac"))
+	if err != nil {
+		common.NewAPIResponse("Invalid MAC address", nil).WriteResponse(w, http.StatusBadRequest)
+	}
+
+	device, err := d.devices.GetDeviceByMAC(mac)
+	if err != nil {
+		d.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:api:device",
+			"mac":     mac.String(),
+		}).Error("Error getting device")
+		common.NewAPIResponse("Server error", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
+	}
+
+	httpCode, err := d.editDevicePermissionCheck(sessionUser, device)
+	if err != nil {
+		common.NewAPIResponse(err.Error(), nil).WriteResponse(w, httpCode)
+		return
+	}
+
+	device.Notes = r.FormValue("notes")
+	if err := device.Save(); err != nil {
+		d.e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "controllers:api:device",
+		}).Error("Error saving device")
+		common.NewAPIResponse("Error saving device", nil).WriteResponse(w, http.StatusInternalServerError)
+		return
+	}
+
+	d.e.Log.WithFields(verbose.Fields{
+		"mac":        device.MAC.String(),
+		"username":   device.Username,
+		"changed-by": sessionUser.Username,
+		"package":    "controllers:api:device",
+		"action":     "edit_notes_device",
+	}).Info("Device notes changed")
+	common.NewAPIResponse("Device saved successfully", nil).WriteResponse(w, http.StatusOK)
 }

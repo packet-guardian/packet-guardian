@@ -236,6 +236,8 @@ func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request,
 
 	isNewUser := user.IsNew() // This will always be false after a call to Save()
 
+	user.Notes = r.FormValue("notes")
+
 	if err := user.Save(); err != nil {
 		u.e.Log.WithFields(verbose.Fields{
 			"error":   err,

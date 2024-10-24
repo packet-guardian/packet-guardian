@@ -38,10 +38,10 @@
             {{range .users}}
             <tr>
                 <td>
+                    <a href="/admin/manage/user/{{.Username}}">{{.Username}}</a>
                     {{if (userCan $.sessionUser "EditUser")}}
                     <a class="fa fa-pencil edit-user-pencil" tabindex="0" aria-role="button" href="/admin/users/{{.Username}}" title="Edit"></a>
                     {{end}}
-                    <a href="/admin/manage/user/{{.Username}}">{{.Username}}</a>
                 </td>
                 <td>{{if eq .DeviceLimit 0}}Unlimited
                     {{else if eq .DeviceLimit -1}}Global

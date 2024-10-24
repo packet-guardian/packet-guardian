@@ -117,6 +117,27 @@ $("#dev-expiration-ok").click((e) => {
     editDeviceExpiration($("#dev-exp-sel").value(), $("#dev-exp-val").value());
 });
 
+$("#edit-notes").click((e) => {
+    e.stopPropagation();
+    $("#notes-textarea").value($("#notes-text").text());
+
+    $("#edit-notes").style("display", "none");
+    $("#notes-text").style("display", "none");
+
+    $("#notes-text-edit").style("display", "inline");
+    $("#notes-confirmation-icons").style("display", "inline");
+});
+
+$("#notes-edit-cancel").click((e) => {
+    e.stopPropagation();
+    clearNotesEdit();
+});
+
+$("#notes-edit-ok").click((e) => {
+    e.stopPropagation();
+    editDeviceNotes($("#notes-textarea").value());
+});
+
 // Event callbacks
 function clearExpirationControls(value: string) {
     $("#edit-expire-controls").style("display", "none");
@@ -124,6 +145,14 @@ function clearExpirationControls(value: string) {
     $("#device-expiration").text(value);
     $("#dev-exp-val").value("");
     $("#edit-dev-expiration").style("display", "inline");
+}
+
+function clearNotesEdit() {
+    $("#edit-notes").style("display", "inline");
+    $("#notes-text").style("display", "inline");
+
+    $("#notes-text-edit").style("display", "none");
+    $("#notes-confirmation-icons").style("display", "none");
 }
 
 function editDeviceDescription(desc: string) {
@@ -146,6 +175,19 @@ function editDeviceExpiration(type: string, value: string) {
         (resp, req) => {
             clearExpirationControls(resp.Data.newExpiration);
             flashMessage("Device expiration saved", "success");
+        },
+        apiResponseCheck
+    );
+}
+
+function editDeviceNotes(notes: string) {
+    api.saveDeviceNotes(
+        getMacAddress(),
+        notes,
+        () => {
+            $("#notes-text").text(notes);
+            clearNotesEdit();
+            flashMessage("Device notes saved", "success");
         },
         apiResponseCheck
     );
