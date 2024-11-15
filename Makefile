@@ -54,7 +54,7 @@ build:
 		-e "VERSION=$(VERSION)" \
 		-e "BUILDTIME=$(BUILDTIME)" \
 		-e "CGO_ENABLED=$(CGO_ENABLED)" \
-		docker.io/library/golang:1.22 \
+		docker.io/library/golang:1.23 \
 		make build-cmd
 
 build-cmd:
