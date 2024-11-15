@@ -24,7 +24,7 @@
                     <a href="/admin/users/{{.user.Username}}" class="no-color-link"><span class="fa fa-pencil edit-property"></span></a>
                     {{end}}
                 </span>
-                {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
+                {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blocked</span>{{end}}
                 {{end}}
             </section>
         </div>
@@ -34,9 +34,9 @@
             <section>
                 {{if (userCan .sessionUser "ManageBlacklist")}}
                 {{if .device.IsBlacklisted}}
-                <button type="button" class="danger-btn" id="unblacklist-btn">Remove From Blacklist</button>
+                <button type="button" class="danger-btn" id="unblacklist-btn">Unblock</button>
                 {{else}}
-                <button type="button" class="danger-btn" id="blacklist-btn">Blacklist</button>
+                <button type="button" class="danger-btn" id="blacklist-btn">Block</button>
                 {{end}}
                 {{end}}
 
@@ -56,6 +56,10 @@
                 {{if (userCan .sessionUser "DeleteDevice")}}
                 <button type="button" id="delete-btn" class="danger-btn">Delete</button>
                 {{end}}
+                {{else}}
+                {{if (userCan .sessionUser "CreateDevice")}}
+                <button type="button" id="register-btn" class="ok-btn">Register</button>
+                {{end}}
                 {{end}}
             </section>
         </div>
@@ -64,7 +68,7 @@
     <div class="clearfix device-info">
         {{with .device}}
             <p>
-                <span class="label">Blacklisted</span>:
+                <span class="label">Blocked</span>:
                 <span class="data">{{titleBool .IsBlacklisted}}</span>
             </p>
             <p>

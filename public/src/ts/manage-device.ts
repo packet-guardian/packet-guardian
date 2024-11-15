@@ -36,19 +36,19 @@ $("#flag-dev-btn").click(() => {
 $("#unblacklist-btn").click(() => {
     const cmodal = new ModalConfirm();
     cmodal.show(
-        "Are you sure you want to remove this device from the blacklist?",
+        "Are you sure you want to remove this device from the block list?",
         () =>
             api.unblacklistDevices([getMacAddress()], reloadPage, () =>
-                flashMessage("Error removing device from blacklist")
+                flashMessage("Error removing device from block list")
             )
     );
 });
 
 $("#blacklist-btn").click(() => {
     const cmodal = new ModalConfirm();
-    cmodal.show("Are you sure you want to blacklist this device?", () =>
+    cmodal.show("Are you sure you want to block this device?", () =>
         api.blacklistDevices([getMacAddress()], reloadPage, () =>
-            flashMessage("Error blacklisting device")
+            flashMessage("Error blocking device")
         )
     );
 });
@@ -58,6 +58,22 @@ $("#reassign-btn").click(() => {
     pmodal.show("New owner's username:", (newUser) =>
         api.reassignDevices(newUser, [getMacAddress()], reloadPage, (req) =>
             flashMessage(JSON.parse(req.responseText).Message)
+        )
+    );
+});
+
+$("#register-btn").click(() => {
+    const pmodal = new ModalPrompt();
+    pmodal.show("Username:", (newUser) =>
+        api.registerDevice(
+            {
+                username: newUser,
+                "mac-address": getMacAddress(),
+                description: "",
+                platform: "",
+            },
+            reloadPage,
+            (req) => flashMessage(JSON.parse(req.responseText).Message)
         )
     );
 });
