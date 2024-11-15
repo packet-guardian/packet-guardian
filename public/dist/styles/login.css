@@ -23,7 +23,7 @@ label {
     background: linear-gradient(to bottom, #0083a8, #007899);
 }
 
-@media (min-width: 600px) and (min-height: 430px) {
+@media (width >= 600px) and (height >= 430px) {
     body {
         background-color: #ededed;
         background: radial-gradient(circle, #fff, #ededed);
@@ -36,9 +36,8 @@ label {
 
     .main {
         display: flex;
-        justify-content: center;
         flex-direction: column;
-        align-content: space-around;
+        place-content: space-around center;
         align-items: center;
     }
 

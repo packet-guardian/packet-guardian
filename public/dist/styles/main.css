@@ -37,7 +37,7 @@ header img {
     vertical-align: middle;
 }
 
-@media (min-width: 900px) {
+@media (width >= 900px) {
     header {
         height: 100px;
         padding-bottom: 0;
@@ -156,7 +156,7 @@ button:focus {
     background-color: #c72a2a;
 }
 
-@media (max-width: 600px) {
+@media (width < 600px) {
     .btn,
     button {
         margin-top: 5px;
@@ -215,7 +215,7 @@ footer .copyright {
     color: white;
 }
 
-@media (min-width: 600px) {
+@media (width >= 600px) {
     .main-content {
         width: 60%;
         margin: 0 auto;

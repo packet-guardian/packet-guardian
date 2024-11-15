@@ -69,7 +69,7 @@ button {
     color: black;
 }
 
-@media (min-width: 850px) {
+@media (width >= 850px) {
     .admin-search {
         width: 75%;
         margin: 0 auto;
