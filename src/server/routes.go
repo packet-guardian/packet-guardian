@@ -76,11 +76,13 @@ func LoadRoutes(e *common.Environment, stores stores.StoreCollection) http.Handl
 
 	r.Handler("GET", "/captcha/*a", captcha.Server(captcha.StdWidth, captcha.StdHeight))
 
-	if e.IsDev() {
+	if e.IsDev() || e.Config.Core.Debug {
 		r.Handler("GET", "/debug/*a", midStack(e, stores, debugRouter(e)))
 		e.Log.Debug("Profiling enabled")
+	}
 
-		r.HandlerFunc("GET", "/reload-templates", func(w http.ResponseWriter, r *http.Request) {
+	if e.IsDev() {
+		r.HandlerFunc("GET", "/dev/reload-templates", func(w http.ResponseWriter, r *http.Request) {
 			e.Log.Debug("Reloading templates")
 			e.Views.Reload()
 		})
@@ -99,7 +101,7 @@ func midStack(e *common.Environment, stores stores.StoreCollection, h http.Handl
 	return h
 }
 
-func debugRouter(e *common.Environment) http.Handler {
+func debugRouter(_ *common.Environment) http.Handler {
 	r := httprouter.New()
 	r.NotFound = http.HandlerFunc(notFoundHandler)
 

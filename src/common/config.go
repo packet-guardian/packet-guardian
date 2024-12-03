@@ -30,6 +30,7 @@ type Config struct {
 		SiteFooterText     string
 		JobSchedulerWakeUp string
 		PageSize           int
+		Debug              bool
 	}
 	Logging struct {
 		Enabled    bool
