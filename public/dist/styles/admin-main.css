@@ -29,10 +29,11 @@ nav a:hover {
     background-color: #006885;
 }
 
-@media (width >= 1000) {
+@media (width >= 1000px) {
     main {
         display: grid;
         grid-template-columns: 10% auto;
+        grid-template-rows: auto;
         height: 100%;
     }
 
@@ -41,6 +42,7 @@ nav a:hover {
         height: 100%;
         text-align: center;
         font-weight: bold;
+        width: auto;
     }
 
     nav span {
