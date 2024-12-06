@@ -17,6 +17,12 @@ header {
     background: linear-gradient(to bottom, #454545, #303030);
     display: flex;
     justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
+}
+
+.header-title {
+    display: none;
 }
 
 header .header-title {
@@ -35,16 +41,6 @@ header img {
     padding: 10px;
     height: 80px;
     vertical-align: middle;
-}
-
-.header-title {
-    display: none;
-}
-
-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
 .header-search-box {
