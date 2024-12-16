@@ -25,6 +25,7 @@ type DeviceStore interface {
 	GetDeviceCountForUser(u *models.User) (int, error)
 	GetAllDevices(e *common.Environment) ([]*models.Device, error)
 	SearchDevicesByField(field, pattern string) ([]*models.Device, error)
+	Search(where string, vals ...interface{}) ([]*models.Device, error)
 	Save(d *models.Device) error
 	Delete(d *models.Device) error
 	DeleteAllDeviceForUser(u *models.User) error
@@ -94,6 +95,10 @@ func (s *deviceStore) GetDeviceCountForUser(u *models.User) (int, error) {
 
 func (s *deviceStore) GetAllDevices(e *common.Environment) ([]*models.Device, error) {
 	return s.getDevicesFromDatabase("")
+}
+
+func (s *deviceStore) Search(where string, vals ...interface{}) ([]*models.Device, error) {
+	return s.getDevicesFromDatabase("WHERE "+where, vals...)
 }
 
 func (s *deviceStore) SearchDevicesByField(field, pattern string) ([]*models.Device, error) {

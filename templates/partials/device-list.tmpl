@@ -36,12 +36,14 @@
     <table>
         <thead>
             <tr>
+                {{if not .disableSelect}}
                 <th>
                     <label class="device-check">
                         <input type="checkbox" id="select-all-checkbox">
                         <span class="checkmark device-checkbox" id="select-all"></span>
                     </label>
                 </th>
+                {{end}}
                 <th>MAC Address</th>
                 <th>Description</th>
                 <th>Last Seen</th>
@@ -53,12 +55,14 @@
         <tbody>
         {{range .main.devices}}
             <tr class="{{if .IsBlacklisted}}blacklisted{{end}}">
+                {{if not $.disableSelect}}
                 <td class="cell-check-select">
                     <label class="device-check">
                         <input type="checkbox" class="device-checkbox" value="{{.MAC}}">
                         <span class="checkmark device-checkbox-target"></span>
                     </label>
                 </td>
+                {{end}}
                 <td>
                     <span id="device-{{.ID}}-mac">
                     {{if $.linkMac}}

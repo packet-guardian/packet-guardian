@@ -1,0 +1,43 @@
+{{define "pageTitle"}}Report - Device Last Seen{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" . "css" (list "reports/leases")}}
+{{end}}
+
+{{define "content"}}
+<div class="content">
+    <h2>Device Last Seen Report</h2>
+    <div class="info">
+        <p>
+            <span class="label">Results:</span> {{.resultCnt}}
+        </p>
+
+        <form>
+            <span class="label">Last Seen On:</span> <input name="since" type="date" value="{{.since}}">
+            <button type="submit">Search</button>
+        </form>
+
+        <p>
+            <a href="/admin/reports/device-last-seen?op=download-report&since={{.since}}" download="report.csv">Download Report</a>
+        </p>
+    </div>
+
+    <div class="device-pager device-pager-top">
+        <span class="pager-direction">
+        {{if ne .page 1}}
+        <a href="/admin/reports/device-last-seen?since={{.since}}&page={{sub1 .page}}">&lt; Prev</a>
+        {{end}}
+        </span>
+
+        <span class="pager-start-end">{{.pageStart}} - {{.pageEnd}}</span>
+
+        <span class="pager-direction">
+        {{if .hasNextPage}}
+        <a href="/admin/reports/device-last-seen?since={{.since}}&page={{plus1 .page}}">Next &gt;</a>
+        {{end}}
+        </span>
+    </div>
+
+    {{template "device-list" dict "main" $ "linkMac" true "disableSelect" true}}
+</div>
+{{end}}

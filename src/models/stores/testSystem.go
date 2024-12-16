@@ -161,6 +161,9 @@ func (s *TestDeviceStore) GetAllDevices(e *common.Environment) ([]*models.Device
 func (s *TestDeviceStore) SearchDevicesByField(field, pattern string) ([]*models.Device, error) {
 	return nil, nil
 }
+func (s *TestDeviceStore) Search(where string, vals ...interface{}) ([]*models.Device, error) {
+	return nil, nil
+}
 func (s *TestDeviceStore) Save(d *models.Device) error {
 	var dev *models.Device
 	for _, device := range s.Devices {
