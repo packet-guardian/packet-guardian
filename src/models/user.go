@@ -45,6 +45,7 @@ type User struct {
 	AllowStatusAPI bool                  `json:"-"`
 	Delegates      map[string]Permission `json:"delegates"`
 	Notes          string                `json:"notes"`
+	DeviceCnt      int                   `json:"-"`
 }
 
 // NewUser creates a new base user

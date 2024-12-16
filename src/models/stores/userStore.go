@@ -79,7 +79,9 @@ func (s *userStore) getUsersFromDatabase(where string, order string, values ...i
 	sqlstmt := `SELECT u."id", u."username", u."password", u."device_limit", u."default_expiration",
 				u."expiration_type", u."can_manage", u."can_autoreg", u."valid_forever", u."valid_start",
 				u."valid_end", u."ui_group", u."api_group", u."allow_status_api", u."notes",
-				GROUP_CONCAT(d."delegate") AS delegate_names, GROUP_CONCAT(d."permissions") AS delegate_permissions
+				GROUP_CONCAT(d."delegate") AS delegate_names,
+				GROUP_CONCAT(d."permissions") AS delegate_permissions,
+				(SELECT COUNT(*) FROM "device" WHERE "username" = u."username") as device_count
 				FROM "user" AS u
 				LEFT JOIN account_delegate AS d
 				ON u."id" = d."user_id" ` + where + ` GROUP BY u."id" ` + order
@@ -109,6 +111,7 @@ func (s *userStore) getUsersFromDatabase(where string, order string, values ...i
 		var notes sql.NullString
 		var delegateNames sql.NullString
 		var delegatePermissions sql.NullString
+		var deviceCnt int
 
 		err := rows.Scan(
 			&id,
@@ -128,6 +131,7 @@ func (s *userStore) getUsersFromDatabase(where string, order string, values ...i
 			&notes,
 			&delegateNames,
 			&delegatePermissions,
+			&deviceCnt,
 		)
 		if err != nil {
 			fmt.Println(err.Error())
@@ -146,6 +150,7 @@ func (s *userStore) getUsersFromDatabase(where string, order string, values ...i
 		user.UIGroup = uiGroup
 		user.APIGroup = apiGroup
 		user.AllowStatusAPI = allowStatusAPI
+		user.DeviceCnt = deviceCnt
 		if notes.Valid {
 			user.Notes = notes.String
 		}
