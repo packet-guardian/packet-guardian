@@ -31,6 +31,7 @@ func (l *ldapAuthenticator) checkLogin(username, password string, r *http.Reques
 		SkipTLS:            e.Config.Auth.LDAP.SkipTLS,
 		InsecureSkipVerify: e.Config.Auth.LDAP.InsecureSkipVerify,
 		ADDomainName:       e.Config.Auth.LDAP.DomainName,
+		ServerName:         e.Config.Auth.LDAP.Server,
 	}
 	defer client.Close()
 

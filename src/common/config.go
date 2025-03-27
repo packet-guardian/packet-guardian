@@ -283,6 +283,9 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	c.Auth.LDAP.Server = setStringOrDefault(c.Auth.LDAP.Server, "127.0.0.1")
 	c.Auth.LDAP.Port = setIntOrDefault(c.Auth.LDAP.Port, 389)
+	if c.Auth.LDAP.Port == 636 {
+		c.Auth.LDAP.UseSSL = true
+	}
 
 	c.Auth.CAS.Server, err = validateURL(c.Auth.CAS.Server, "CAS server")
 	if err != nil {
