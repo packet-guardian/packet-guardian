@@ -170,8 +170,8 @@ func (d *Device) checkRegisterPermissions(sessionUser *models.User, username str
 			d.e.Log.WithFields(verbose.Fields{
 				"package":  "controllers:api:device",
 				"username": sessionUser.Username,
-			}).Error("Attempted registration by blacklisted user")
-			return nil, http.StatusForbidden, errors.New("Username blacklisted")
+			}).Error("Attempted registration by blocked user")
+			return nil, http.StatusForbidden, errors.New("Username blocked")
 		}
 
 		httpCode, err := d.checkDeviceLimitRegister(sessionUser)
@@ -299,7 +299,7 @@ func (d *Device) DeleteHandler(w http.ResponseWriter, r *http.Request, p httprou
 				"mac":        device.MAC.String(),
 				"changed-by": sessionUser.Username,
 				"username":   formUser.Username,
-			}).Notice("Attempted deleting a blacklisted device")
+			}).Notice("Attempted deleting a blocked device")
 			continue
 		}
 
@@ -452,7 +452,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 				"package":    "controllers:api:device",
 				"changed-by": sessionUser.Username,
 				"mac":        dev.MAC.String(),
-			}).Error("Attempted reassigning a blacklisted device")
+			}).Error("Attempted reassigning a blocked device")
 			continue
 		}
 		originalUser := dev.Username

@@ -47,7 +47,7 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 			"error":    err,
 			"package":  "controllers:api:blacklist",
 		}).Error("Error getting user")
-		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
+		common.NewAPIResponse("Error blocking user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -62,8 +62,8 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 			"username": user.Username,
 			"error":    err,
 			"package":  "controllers:api:blacklist",
-		}).Error("Error blacklisting user")
-		common.NewAPIResponse("Error blacklisting user", nil).WriteResponse(w, http.StatusInternalServerError)
+		}).Error("Error blocking user")
+		common.NewAPIResponse("Error blocking user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 			"action":     "blacklist",
 			"changed-by": models.GetUserFromContext(r).Username,
 			"username":   user.Username,
-		}).Info("User added to blacklisted")
+		}).Info("User added to block list")
 		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusNoContent)
 	} else if r.Method == "DELETE" {
 		b.e.Log.WithFields(verbose.Fields{
@@ -81,7 +81,7 @@ func (b *Blacklist) BlacklistUserHandler(w http.ResponseWriter, r *http.Request,
 			"action":     "unblacklist",
 			"changed-by": models.GetUserFromContext(r).Username,
 			"username":   user.Username,
-		}).Info("User removed from blacklist")
+		}).Info("User removed from block list")
 		common.NewEmptyAPIResponse().WriteResponse(w, http.StatusNoContent)
 	}
 }
@@ -107,7 +107,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 				"error":   err,
 				"mac":     device.MAC.String(),
 				"package": "controllers:api:blacklist",
-			}).Error("Error blacklisting device")
+			}).Error("Error blocking device")
 			finishedWithErrors = true
 			continue
 		}
@@ -119,7 +119,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 				"mac":        device.MAC.String(),
 				"changed-by": sessionUser.Username,
 				"username":   device.GetUsername(),
-			}).Info("Device added to blacklist")
+			}).Info("Device added to block list")
 		} else {
 			b.e.Log.WithFields(verbose.Fields{
 				"package":    "controllers:api:blacklist",
@@ -127,7 +127,7 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 				"mac":        device.MAC.String(),
 				"changed-by": sessionUser.Username,
 				"username":   device.GetUsername(),
-			}).Info("Device removed from blacklist")
+			}).Info("Device removed from block list")
 		}
 	}
 
@@ -137,11 +137,11 @@ func (b *Blacklist) BlacklistDeviceHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	if addToBlacklist {
-		common.NewAPIResponse("Devices blacklisted successful", nil).WriteResponse(w, http.StatusNoContent)
+		common.NewAPIResponse("Devices blocked successful", nil).WriteResponse(w, http.StatusNoContent)
 		return
 	}
 
-	common.NewAPIResponse("Devices removed from blacklist successful", nil).WriteResponse(w, http.StatusNoContent)
+	common.NewAPIResponse("Devices removed from block list successful", nil).WriteResponse(w, http.StatusNoContent)
 }
 
 func (b *Blacklist) buildDeviceList(w http.ResponseWriter, r *http.Request, macStr string, addToBlacklist bool) []*models.Device {
@@ -155,8 +155,8 @@ func (b *Blacklist) buildDeviceList(w http.ResponseWriter, r *http.Request, macS
 			b.e.Log.WithFields(verbose.Fields{
 				"error":   err,
 				"package": "controllers:api:blacklist",
-			}).Error("Error blacklisting devices")
-			common.NewAPIResponse("Error blacklisting devices", nil).WriteResponse(w, http.StatusInternalServerError)
+			}).Error("Error blocking devices")
+			common.NewAPIResponse("Error blocking devices", nil).WriteResponse(w, http.StatusInternalServerError)
 			return nil
 		}
 		return devices
@@ -174,8 +174,8 @@ func (b *Blacklist) buildDeviceList(w http.ResponseWriter, r *http.Request, macS
 		b.e.Log.WithFields(verbose.Fields{
 			"error":   err,
 			"package": "controllers:api:blacklist",
-		}).Error("Error blacklisting devices")
-		common.NewAPIResponse("Error blacklisting devices", nil).WriteResponse(w, http.StatusInternalServerError)
+		}).Error("Error blocking devices")
+		common.NewAPIResponse("Error blocking devices", nil).WriteResponse(w, http.StatusInternalServerError)
 		return nil
 	}
 
@@ -184,8 +184,8 @@ func (b *Blacklist) buildDeviceList(w http.ResponseWriter, r *http.Request, macS
 		b.e.Log.WithFields(verbose.Fields{
 			"error":   err,
 			"package": "controllers:api:blacklist",
-		}).Error("Error blacklisting devices")
-		common.NewAPIResponse("Error blacklisting devices", nil).WriteResponse(w, http.StatusInternalServerError)
+		}).Error("Error blocking devices")
+		common.NewAPIResponse("Error blocking devices", nil).WriteResponse(w, http.StatusInternalServerError)
 		return nil
 	}
 	return devices

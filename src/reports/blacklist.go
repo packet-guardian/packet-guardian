@@ -13,8 +13,8 @@ import (
 )
 
 func init() {
-	RegisterReport("blackisted-users", "Blacklisted Users", blacklistedUsersReport)
-	RegisterReport("blackisted-devices", "Blacklisted Devices", blacklistedDevicesReport)
+	RegisterReport("blackisted-users", "Blocked Users", blacklistedUsersReport)
+	RegisterReport("blackisted-devices", "Blocked Devices", blacklistedDevicesReport)
 }
 
 func blacklistedUsersReport(e *common.Environment, w http.ResponseWriter, r *http.Request, stores stores.StoreCollection) error {

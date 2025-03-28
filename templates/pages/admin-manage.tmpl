@@ -22,7 +22,7 @@
                     <a href="/admin/users/{{.user.Username}}" class="no-color-link"><span class="fa fa-pencil edit-property"></span></a>
                     {{end}}
                 </span>
-                {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
+                {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blocked</span>{{end}}
             </section>
             <section>
                 <span class="text-label">Total Devices:</span>
@@ -42,7 +42,7 @@
             <section>
                 {{if (userCan .sessionUser "ManageBlacklist")}}
                 <select name="blacklist-sel" data-blacklisted="{{.user.IsBlacklisted}}" required>
-                    <option  class="placeholder" selected disabled value="">Blacklist</option>
+                    <option  class="placeholder" selected disabled value="">Block list</option>
                     <option value="username" name="black-user-option">Add User</option>
                     <option value="black-sel">Add Devices</option>
                     <option value="unblack-sel">Remove Devices</option>
