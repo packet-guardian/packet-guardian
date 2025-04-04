@@ -181,21 +181,23 @@
 
         <hr class="user-edit-separator">
 
-        <fieldset name="delegate-list">
+        <fieldset>
             <h3>Delegates</h3>
 
             <button type="button" id="add-delegate-btn" class="ok-btn">Add Delegate</button>
 
-            {{range $dname, $dpermission := .user.Delegates}}
-            <p data-delegate="{{$dname}}">
-                <label for="{{$dname}}-permissions"><a href="/admin/users/{{$dname}}">{{$dname}}</a></label>
-                <select name="{{$dname}}-permissions">
-                    <option value="RO"{{if eq $dpermission.DelegateName "RO"}}selected{{end}}>RO</option>
-                    <option value="RW"{{if eq $dpermission.DelegateName "RW"}}selected{{end}}>RW</option>
-                </select>
-                <i class="fa fa-times delete-icon" aria-role="button" data-delegate="{{$dname}}" title="Delete delegate"></i>
-            </p>
-            {{end}}
+            <div name="delegate-list">
+                {{range $dname, $dpermission := .user.Delegates}}
+                <p data-delegate="{{$dname}}">
+                    <label for="{{$dname}}-permissions"><a href="/admin/users/{{$dname}}">{{$dname}}</a></label>
+                    <select name="{{$dname}}-permissions">
+                        <option value="RO"{{if eq $dpermission.DelegateName "RO"}}selected{{end}}>RO</option>
+                        <option value="RW"{{if eq $dpermission.DelegateName "RW"}}selected{{end}}>RW</option>
+                    </select>
+                    <i class="fa fa-times delete-icon" aria-role="button" data-delegate="{{$dname}}" title="Delete delegate"></i>
+                </p>
+                {{end}}
+            </div>
 
             <h3>Delegate For</h3>
 

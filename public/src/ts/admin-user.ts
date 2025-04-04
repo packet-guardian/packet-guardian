@@ -240,7 +240,7 @@ function setUserExpirationToolTip(tip: string) {
 
 $("#add-delegate-btn").click(() => {
     const pmodal = new ModalPrompt();
-    pmodal.show("Delegate username:", (newUser) => {
+    pmodal.show("Username of delegate:", (newUser) => {
         const newDelegate = document.createElement("p");
         newDelegate.dataset["delegate"] = newUser;
 
