@@ -1,12 +1,3 @@
-#login-btn {
-    font-weight: bold;
-    padding: 5px 10px;
-    color: white;
-    border: 0;
-    background-color: #0083a8;
-    background: linear-gradient(to bottom, #0083a8, #007899);
-}
-
 .login-box input {
     color: black;
     font-size: 1.25em;
@@ -23,27 +14,43 @@ label {
     margin-bottom: 5px;
 }
 
-@media (min-width: 600px) and (min-height: 430px) {
+#login-btn {
+    font-weight: bold;
+    padding: 5px 10px;
+    color: white;
+    border: 0;
+    background-color: #0083a8;
+    background: linear-gradient(to bottom, #0083a8, #007899);
+}
+
+@media (width >= 600px) and (height >= 430px) {
     body {
         background-color: #ededed;
         background: radial-gradient(circle, #fff, #ededed);
         color: white;
     }
 
+    fieldset {
+        width: 400px;
+    }
+
+    .main {
+        display: flex;
+        flex-direction: column;
+        place-content: space-around center;
+        align-items: center;
+    }
+
     .login-box {
-        position: absolute;
-        width: 550px;
-        height: 230px;
-        top: 50%;
-        left: 50%;
-        margin-top: -100px;
-        margin-left: -290px;
         border-radius: 15px;
         background-color: #303030;
         background: linear-gradient(to bottom, #454545, #303030);
+        display: flex;
+        justify-content: center;
+        padding: 0 2em;
     }
 
-    fieldset {
-        width: 400px;
+    .flash {
+        padding: 0 1em;
     }
 }

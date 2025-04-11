@@ -13,7 +13,7 @@
     <h2>Administration Users</h2>
 
     <div class="controls">
-        {{if .canCreateUser}}
+        {{if (userCan $.sessionUser "CreateUser")}}
         <div class="new-user">
             <form id="new-user-form">
                 <input type="text" name="username" placeholder="Username">
@@ -27,6 +27,7 @@
         <thead>
             <tr>
                 <th>Username</th>
+                <th>Devices</th>
                 <th>Device Limit</th>
                 <th>Valid</th>
                 <th>Default Expiration</th>
@@ -38,11 +39,12 @@
             {{range .users}}
             <tr>
                 <td>
-                    {{if $.canEditUser}}
+                    {{.Username}}
+                    {{if (userCan $.sessionUser "EditUser")}}
                     <a class="fa fa-pencil edit-user-pencil" tabindex="0" aria-role="button" href="/admin/users/{{.Username}}" title="Edit"></a>
                     {{end}}
-                    <a href="/admin/manage/user/{{.Username}}">{{.Username}}</a>
                 </td>
+                <td><a href="/admin/manage/user/{{.Username}}">{{.DeviceCnt}}</a></td>
                 <td>{{if eq .DeviceLimit 0}}Unlimited
                     {{else if eq .DeviceLimit -1}}Global
                     {{else}}{{.DeviceLimit}}

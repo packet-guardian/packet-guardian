@@ -13,9 +13,9 @@ function setTextboxToToday(el: string) {
         ":" +
         ("0" + date.getMinutes()).slice(-2);
 
-    (document.querySelector(
-        el
-    ) as HTMLInputElement).value = `${dateStr} ${timeStr}`;
+    (
+        document.querySelector(el) as HTMLInputElement
+    ).value = `${dateStr} ${timeStr}`;
 }
 
 export { setTextboxToToday };

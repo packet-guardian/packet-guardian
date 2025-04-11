@@ -8,7 +8,7 @@ function register() {
         username: "",
         "mac-address": "",
         description: $("[name=dev-desc]").value(),
-        platform: ""
+        platform: "",
     };
 
     // It's not guaranteed that all fields will be shown
@@ -58,7 +58,7 @@ function register() {
         api.login(
             { username: data.username, password },
             () => registerDevice(data, true),
-            req => {
+            (req) => {
                 window.scrollTo(0, 0);
                 enableRegBtn();
                 if (req.status === 401) {
@@ -86,7 +86,7 @@ function enableRegBtn() {
 function registerDevice(data: RegisterDeviceInput, logout: boolean) {
     api.registerDevice(
         data,
-        resp => {
+        (resp) => {
             window.scrollTo(0, 0);
             flashMessage("Registration successful", "success");
             $(".register-box").hide();
@@ -105,7 +105,7 @@ function registerDevice(data: RegisterDeviceInput, logout: boolean) {
 
             location.href = resp.Data.Location;
         },
-        req => {
+        (req) => {
             window.scrollTo(0, 0);
             enableRegBtn();
             const resp = JSON.parse(req.responseText);

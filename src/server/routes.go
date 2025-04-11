@@ -52,9 +52,10 @@ func LoadRoutes(e *common.Environment, stores stores.StoreCollection) http.Handl
 	casController := controllers.NewCASController(e, stores.Users)
 	r.Handler("GET", "/cas", midStack(e, stores, http.HandlerFunc(casController.CASHandler)))
 
-	manageController := controllers.NewManagerController(e, stores.Devices, stores.Leases)
+	manageController := controllers.NewManagerController(e, stores.Devices, stores.Leases, stores.Users)
 	r.Handler("GET", "/register", midStack(e, stores, http.HandlerFunc(manageController.RegistrationHandler)))
 	r.Handler("GET", "/manage", midStack(e, stores, mid.CheckAuth(http.HandlerFunc(manageController.ManageHandler))))
+	r.Handler("GET", "/manage/*user", midStack(e, stores, mid.CheckAuth(http.HandlerFunc(manageController.DelegateManageHandler))))
 
 	guestController := controllers.NewGuestController(e, stores.Users, stores.Devices, stores.Leases)
 	r.Handler("GET", "/register/guest", midStack(e, stores, mid.CheckGuestReg(
@@ -67,19 +68,25 @@ func LoadRoutes(e *common.Environment, stores stores.StoreCollection) http.Handl
 		http.HandlerFunc(guestController.VerificationHandler), e, stores.Leases)))
 
 	r.Handler("GET", "/admin/*a", midStack(e, stores, adminRouter(e, stores)))
+	r.Handler("POST", "/admin/*a", midStack(e, stores, adminRouter(e, stores)))
+
 	r.Handler("GET", "/api/*a", midStack(e, stores, apiRouter(e, stores)))
 	r.Handler("POST", "/api/*a", midStack(e, stores, apiRouter(e, stores)))
 	r.Handler("DELETE", "/api/*a", midStack(e, stores, apiRouter(e, stores)))
 
 	r.Handler("GET", "/captcha/*a", captcha.Server(captcha.StdWidth, captcha.StdHeight))
 
-	if e.IsDev() {
+	if e.IsDev() || e.Config.Core.Debug {
 		r.Handler("GET", "/debug/*a", midStack(e, stores, debugRouter(e)))
 		e.Log.Debug("Profiling enabled")
 	}
-	r.HandlerFunc("GET", "/reload-templates", func(w http.ResponseWriter, r *http.Request) {
-		e.Views.Reload()
-	})
+
+	if e.IsDev() {
+		r.HandlerFunc("GET", "/dev/reload-templates", func(w http.ResponseWriter, r *http.Request) {
+			e.Log.Debug("Reloading templates")
+			e.Views.Reload()
+		})
+	}
 
 	h := mid.Logging(r, e) // Logging
 	h = mid.Panic(h, e)    // Panic catcher
@@ -94,7 +101,7 @@ func midStack(e *common.Environment, stores stores.StoreCollection, h http.Handl
 	return h
 }
 
-func debugRouter(e *common.Environment) http.Handler {
+func debugRouter(_ *common.Environment) http.Handler {
 	r := httprouter.New()
 	r.NotFound = http.HandlerFunc(notFoundHandler)
 
@@ -142,6 +149,9 @@ func adminRouter(e *common.Environment, stores stores.StoreCollection) http.Hand
 	r.GET("/admin/reports", adminController.ReportHandler)
 	r.GET("/admin/reports/:report", adminController.ReportHandler)
 
+	r.GET("/admin/import-export", adminController.RenderImportExportPage)
+	r.POST("/admin/import/:resource", adminController.Import)
+
 	h := mid.CheckAdmin(r)
 	h = mid.CheckAuth(h)
 	return h
@@ -156,15 +166,16 @@ func apiRouter(e *common.Environment, stores stores.StoreCollection) http.Handle
 	r.POST("/api/device/reassign",
 		mid.CheckPermissions(deviceAPIController.ReassignHandler,
 			mid.PermsCanAny(models.ReassignDevice)))
-	// handles permission checks
-	r.POST("/api/device/mac/:mac/description", deviceAPIController.EditDescriptionHandler)
+	r.POST("/api/device/mac/:mac/description", deviceAPIController.EditDescriptionHandler) // handles permission checks
+	r.POST("/api/device/mac/:mac/notes", deviceAPIController.EditNotesHandler)             // handles permission checks
 	r.POST("/api/device/mac/:mac/expiration",
 		mid.CheckPermissions(deviceAPIController.EditExpirationHandler,
 			mid.PermsCanAny(models.EditDevice)))
 	r.POST("/api/device/mac/:mac/flag",
 		mid.CheckPermissions(deviceAPIController.EditFlaggedHandler,
 			mid.PermsCanAny(models.EditDevice)))
-	r.GET("/api/device/:mac", deviceAPIController.GetDeviceHandler)
+	r.GET("/api/device/:mac", deviceAPIController.GetDeviceHandler)        // handles permission checks
+	r.GET("/api/captive-status", deviceAPIController.GetSelfStatusHandler) // no permission checks, device self-check
 
 	blacklistController := api.NewBlacklistController(e, stores.Users, stores.Devices)
 	r.POST("/api/blacklist/user/:username",

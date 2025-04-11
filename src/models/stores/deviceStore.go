@@ -5,6 +5,7 @@
 package stores
 
 import (
+	"database/sql"
 	"errors"
 	"net"
 	"time"
@@ -24,6 +25,7 @@ type DeviceStore interface {
 	GetDeviceCountForUser(u *models.User) (int, error)
 	GetAllDevices(e *common.Environment) ([]*models.Device, error)
 	SearchDevicesByField(field, pattern string) ([]*models.Device, error)
+	Search(where string, vals ...interface{}) ([]*models.Device, error)
 	Save(d *models.Device) error
 	Delete(d *models.Device) error
 	DeleteAllDeviceForUser(u *models.User) error
@@ -95,15 +97,19 @@ func (s *deviceStore) GetAllDevices(e *common.Environment) ([]*models.Device, er
 	return s.getDevicesFromDatabase("")
 }
 
+func (s *deviceStore) Search(where string, vals ...interface{}) ([]*models.Device, error) {
+	return s.getDevicesFromDatabase("WHERE "+where, vals...)
+}
+
 func (s *deviceStore) SearchDevicesByField(field, pattern string) ([]*models.Device, error) {
 	sql := `WHERE "` + field + `" LIKE ?`
 	return s.getDevicesFromDatabase(sql, pattern)
 }
 
 func (s *deviceStore) getDevicesFromDatabase(where string, values ...interface{}) ([]*models.Device, error) {
-	sql := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen", "flagged" FROM "device" ` + where
+	sqlstmt := `SELECT "id", "mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen", "flagged", "notes" FROM "device" ` + where
 
-	rows, err := s.e.DB.Query(sql, values...)
+	rows, err := s.e.DB.Query(sqlstmt, values...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +128,7 @@ func (s *deviceStore) getDevicesFromDatabase(where string, values ...interface{}
 		var description string
 		var lastSeen int64
 		var flagged bool
+		var notes sql.NullString
 
 		err := rows.Scan(
 			&id,
@@ -135,6 +142,7 @@ func (s *deviceStore) getDevicesFromDatabase(where string, values ...interface{}
 			&description,
 			&lastSeen,
 			&flagged,
+			&notes,
 		)
 		if err != nil {
 			continue
@@ -154,6 +162,9 @@ func (s *deviceStore) getDevicesFromDatabase(where string, values ...interface{}
 		device.UserAgent = ua
 		device.LastSeen = time.Unix(lastSeen, 0)
 		device.Flagged = flagged
+		if notes.Valid {
+			device.Notes = notes.String
+		}
 
 		results = append(results, device)
 	}
@@ -168,7 +179,7 @@ func (s *deviceStore) Save(d *models.Device) error {
 }
 
 func (s *deviceStore) updateExisting(d *models.Device) error {
-	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "description" = ?, "last_seen" = ?, "flagged" = ? WHERE "id" = ?`
+	sql := `UPDATE "device" SET "mac" = ?, "username" = ?, "registered_from" = ?, "platform" = ?, "expires" = ?, "date_registered" = ?, "user_agent" = ?, "description" = ?, "last_seen" = ?, "flagged" = ?, "notes" = ? WHERE "id" = ?`
 
 	_, err := s.e.DB.Exec(
 		sql,
@@ -182,6 +193,7 @@ func (s *deviceStore) updateExisting(d *models.Device) error {
 		d.Description,
 		d.LastSeen.Unix(),
 		d.Flagged,
+		d.Notes,
 		d.ID,
 	)
 	if err != nil {
@@ -195,7 +207,7 @@ func (s *deviceStore) saveNew(d *models.Device) error {
 		return errors.New("Username cannot be empty")
 	}
 
-	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen", "flagged") VALUES (?,?,?,?,?,?,?,?,?,?)`
+	sql := `INSERT INTO "device" ("mac", "username", "registered_from", "platform", "expires", "date_registered", "user_agent", "description", "last_seen", "flagged", "notes") VALUES (?,?,?,?,?,?,?,?,?,?,?)`
 
 	result, err := s.e.DB.Exec(
 		sql,
@@ -209,6 +221,7 @@ func (s *deviceStore) saveNew(d *models.Device) error {
 		d.Description,
 		d.LastSeen.Unix(),
 		d.Flagged,
+		d.Notes,
 	)
 	if err != nil {
 		return err

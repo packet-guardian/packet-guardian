@@ -59,7 +59,7 @@ select > .placeholder {
     text-align: right;
 }
 
-@media (min-width: 875px) {
+@media (width >= 875px) {
     .user-info {
         margin-left: 10px;
     }

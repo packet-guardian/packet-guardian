@@ -2,11 +2,6 @@ h2 {
     margin-top: 0;
 }
 
-.userLimit {
-    color: blue;
-    font-size: 1.2em;
-}
-
 .controls {
     margin-left: 5px;
     display: flex;
@@ -53,7 +48,7 @@ fieldset p {
     width: 60%;
 }
 
-@media (min-width: 700px) {
+@media (width >= 700px) {
     .admin-users,
     .admin-user {
         width: 70%;
@@ -65,7 +60,7 @@ fieldset p {
     }
 }
 
-@media (min-width: 850px) {
+@media (width >= 850px) {
     table {
         margin: 20px auto;
     }

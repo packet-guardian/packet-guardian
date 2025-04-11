@@ -5,7 +5,7 @@ import flashMessage from "@/flash";
 function login() {
     const data = {
         username: $("[name=username]").value(),
-        password: $("[name=password]").value()
+        password: $("[name=password]").value(),
     };
 
     if (data.username === "" || data.password === "") {
@@ -17,7 +17,15 @@ function login() {
 
     api.login(
         data,
-        () => (location.href = "/"),
+        () => {
+            const url = new URL(window.location.href);
+            const getParam = url.searchParams.get("redirect");
+            if (getParam !== "") {
+                location.href = getParam as string;
+            } else {
+                location.href = "/";
+            }
+        },
         (req: any) => {
             $("#login-btn").text("Login");
             $("#login-btn").prop("disabled", "false");

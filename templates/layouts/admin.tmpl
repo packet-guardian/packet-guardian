@@ -11,14 +11,16 @@
         <a href="/">Dashboard</a>
         <a href="/admin/reports">Reports</a>
 
-        {{if .canViewUsers}}
+        {{if (userCan .sessionUser "ViewUsers")}}
         <a href="/admin/users">Manage Users</a>
         {{end}}
+
+        <a href="/admin/import-export">Import</a>
     </nav>
 
     <section class="admin-main">
         <div id="flashDiv" class="flash">
-            <div id="flashText">{{.flashMessage}}</div>
+            <div id="flash-text" data-flashtype="{{.flashMessageType}}">{{.flashMessage}}</div>
         </div>
 
         {{template "content" .}}

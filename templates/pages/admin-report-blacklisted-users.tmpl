@@ -1,4 +1,4 @@
-{{define "pageTitle"}}Report - Blacklisted Users{{end}}
+{{define "pageTitle"}}Report - Blocked Users{{end}}
 
 {{define "css"}}
 {{template "render-css" dict "main" . "css" (list "reports/blk-user")}}
@@ -6,7 +6,7 @@
 
 {{define "content"}}
 <div class="content">
-    <h2>Report - Blacklisted Users</h2>
+    <h2>Report - Blocked Users</h2>
     <div class="report">
         <table>
             <tr>
@@ -14,7 +14,7 @@
             </tr>
             {{if eq (len .users) 0}}
             <tr>
-                <td>No users blacklisted</td>
+                <td>No users blocked</td>
             </tr>
             {{else}}
             {{range .users}}

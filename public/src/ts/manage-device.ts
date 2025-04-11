@@ -36,28 +36,44 @@ $("#flag-dev-btn").click(() => {
 $("#unblacklist-btn").click(() => {
     const cmodal = new ModalConfirm();
     cmodal.show(
-        "Are you sure you want to remove this device from the blacklist?",
+        "Are you sure you want to remove this device from the block list?",
         () =>
             api.unblacklistDevices([getMacAddress()], reloadPage, () =>
-                flashMessage("Error removing device from blacklist")
+                flashMessage("Error removing device from block list")
             )
     );
 });
 
 $("#blacklist-btn").click(() => {
     const cmodal = new ModalConfirm();
-    cmodal.show("Are you sure you want to blacklist this device?", () =>
+    cmodal.show("Are you sure you want to block this device?", () =>
         api.blacklistDevices([getMacAddress()], reloadPage, () =>
-            flashMessage("Error blacklisting device")
+            flashMessage("Error blocking device")
         )
     );
 });
 
 $("#reassign-btn").click(() => {
     const pmodal = new ModalPrompt();
-    pmodal.show("New owner's username:", newUser =>
-        api.reassignDevices(newUser, [getMacAddress()], reloadPage, req =>
+    pmodal.show("New owner's username:", (newUser) =>
+        api.reassignDevices(newUser, [getMacAddress()], reloadPage, (req) =>
             flashMessage(JSON.parse(req.responseText).Message)
+        )
+    );
+});
+
+$("#register-btn").click(() => {
+    const pmodal = new ModalPrompt();
+    pmodal.show("Username:", (newUser) =>
+        api.registerDevice(
+            {
+                username: newUser,
+                "mac-address": getMacAddress(),
+                description: "",
+                platform: "",
+            },
+            reloadPage,
+            (req) => flashMessage(JSON.parse(req.responseText).Message)
         )
     );
 });
@@ -74,13 +90,13 @@ function getDescription() {
     return $("#device-desc").text();
 }
 
-$("#edit-dev-desc").click(e => {
+$("#edit-dev-desc").click((e) => {
     e.stopPropagation();
     const pmodal = new ModalPrompt();
     pmodal.show("Device Description:", getDescription(), editDeviceDescription);
 });
 
-$("#edit-dev-expiration").click(e => {
+$("#edit-dev-expiration").click((e) => {
     e.stopPropagation();
     oldExpiration = $("#device-expiration").text();
     $("#device-expiration").text("");
@@ -98,7 +114,7 @@ $("#edit-dev-expiration").click(e => {
     $("#confirmation-icons").style("display", "inline");
 });
 
-$("#dev-exp-sel").change(e => {
+$("#dev-exp-sel").change((e) => {
     if ($(e.target).value() !== "specific") {
         $("#dev-exp-val").style("display", "none");
     } else {
@@ -107,14 +123,35 @@ $("#dev-exp-sel").change(e => {
     }
 });
 
-$("#dev-expiration-cancel").click(e => {
+$("#dev-expiration-cancel").click((e) => {
     e.stopPropagation();
     clearExpirationControls(oldExpiration);
 });
 
-$("#dev-expiration-ok").click(e => {
+$("#dev-expiration-ok").click((e) => {
     e.stopPropagation();
     editDeviceExpiration($("#dev-exp-sel").value(), $("#dev-exp-val").value());
+});
+
+$("#edit-notes").click((e) => {
+    e.stopPropagation();
+    $("#notes-textarea").value($("#notes-text").text());
+
+    $("#edit-notes").style("display", "none");
+    $("#notes-text").style("display", "none");
+
+    $("#notes-text-edit").style("display", "inline");
+    $("#notes-confirmation-icons").style("display", "inline");
+});
+
+$("#notes-edit-cancel").click((e) => {
+    e.stopPropagation();
+    clearNotesEdit();
+});
+
+$("#notes-edit-ok").click((e) => {
+    e.stopPropagation();
+    editDeviceNotes($("#notes-textarea").value());
 });
 
 // Event callbacks
@@ -124,6 +161,14 @@ function clearExpirationControls(value: string) {
     $("#device-expiration").text(value);
     $("#dev-exp-val").value("");
     $("#edit-dev-expiration").style("display", "inline");
+}
+
+function clearNotesEdit() {
+    $("#edit-notes").style("display", "inline");
+    $("#notes-text").style("display", "inline");
+
+    $("#notes-text-edit").style("display", "none");
+    $("#notes-confirmation-icons").style("display", "none");
 }
 
 function editDeviceDescription(desc: string) {
@@ -146,6 +191,19 @@ function editDeviceExpiration(type: string, value: string) {
         (resp, req) => {
             clearExpirationControls(resp.Data.newExpiration);
             flashMessage("Device expiration saved", "success");
+        },
+        apiResponseCheck
+    );
+}
+
+function editDeviceNotes(notes: string) {
+    api.saveDeviceNotes(
+        getMacAddress(),
+        notes,
+        () => {
+            $("#notes-text").text(notes);
+            clearNotesEdit();
+            flashMessage("Device notes saved", "success");
         },
         apiResponseCheck
     );

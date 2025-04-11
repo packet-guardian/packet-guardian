@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
+//go:build dbmysql || dball
 // +build dbmysql dball
 
 package db
@@ -32,11 +33,12 @@ func newmySQLDBInit() *mySQLDB {
 	m := &mySQLDB{}
 
 	m.createFuncs = map[string]func(*common.DatabaseAccessor) error{
-		"blacklist": m.createBlacklistTable,
-		"device":    m.createDeviceTable,
-		"lease":     m.createLeaseTable,
-		"settings":  m.createSettingTable,
-		"user":      m.createUserTable,
+		"blacklist":        m.createBlacklistTable,
+		"device":           m.createDeviceTable,
+		"lease":            m.createLeaseTable,
+		"settings":         m.createSettingTable,
+		"user":             m.createUserTable,
+		"account_delegate": m.createDelegateTable,
 	}
 
 	m.migrateFuncs = []migrateFunc{
@@ -44,6 +46,7 @@ func newmySQLDBInit() *mySQLDB {
 		2: m.migrateFrom2,
 		3: m.migrateFrom3,
 		4: m.migrateFrom4,
+		5: m.migrateFrom5,
 	}
 
 	return m
@@ -124,15 +127,18 @@ func (m *mySQLDB) migrateTables(d *common.DatabaseAccessor, c *common.Config) er
 	}
 	verRow.Scan(&currDBVer)
 
-	common.SystemLogger.WithFields(verbose.Fields{
-		"current-version": currDBVer,
-		"active-version":  DBVersion,
-	}).Debug("Database Versions")
-
 	// No migration needed
 	if currDBVer == DBVersion {
+		common.SystemLogger.WithFields(verbose.Fields{
+			"current-database-version": currDBVer,
+		}).Debug("Database schema is up-to-date")
 		return nil
 	}
+
+	common.SystemLogger.WithFields(verbose.Fields{
+		"current-database-version":     currDBVer,
+		"application-database-version": DBVersion,
+	}).Debug("Applying database migrations...")
 
 	if currDBVer > DBVersion {
 		return errors.New("Database is too new, can't rollback")
@@ -149,6 +155,10 @@ func (m *mySQLDB) migrateTables(d *common.DatabaseAccessor, c *common.Config) er
 	}
 
 	_, err := d.DB.Exec(`UPDATE "settings" SET "value" = ? WHERE "id" = 'db_version'`, DBVersion)
+
+	common.SystemLogger.WithFields(verbose.Fields{
+		"current-database-version": DBVersion,
+	}).Debug("Database migrations applied successfully")
 	return err
 }
 
@@ -167,9 +177,9 @@ func (m *mySQLDB) init(d *common.DatabaseAccessor, c *common.Config) error {
 
 func (m *mySQLDB) createBlacklistTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "blacklist" (
-	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
-	    "value" VARCHAR(255) NOT NULL UNIQUE KEY,
-	    "comment" TEXT
+		"id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
+		"value" VARCHAR(255) NOT NULL UNIQUE KEY,
+		"comment" TEXT
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1`
 
 	_, err := d.DB.Exec(sql)
@@ -178,17 +188,18 @@ func (m *mySQLDB) createBlacklistTable(d *common.DatabaseAccessor) error {
 
 func (m *mySQLDB) createDeviceTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "device" (
-	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT,
-	    "mac" VARCHAR(17) NOT NULL UNIQUE KEY,
-	    "username" VARCHAR(255) NOT NULL,
-	    "registered_from" VARCHAR(15),
-	    "platform" TEXT,
-	    "expires" INTEGER DEFAULT 0,
-	    "date_registered" INTEGER NOT NULL,
-	    "user_agent" TEXT,
-	    "description" TEXT,
-	    "last_seen" INTEGER NOT NULL,
-	    "flagged" TINYINT DEFAULT 0
+		"id" INTEGER PRIMARY KEY AUTO_INCREMENT,
+		"mac" VARCHAR(17) NOT NULL UNIQUE KEY,
+		"username" VARCHAR(255) NOT NULL,
+		"registered_from" VARCHAR(15),
+		"platform" TEXT,
+		"expires" INTEGER DEFAULT 0,
+		"date_registered" INTEGER NOT NULL,
+		"user_agent" TEXT,
+		"description" TEXT,
+		"last_seen" INTEGER NOT NULL,
+		"flagged" TINYINT DEFAULT 0,
+		"notes" TEXT
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1`
 
 	_, err := d.DB.Exec(sql)
@@ -197,15 +208,15 @@ func (m *mySQLDB) createDeviceTable(d *common.DatabaseAccessor) error {
 
 func (m *mySQLDB) createLeaseTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "lease" (
-	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
-	    "ip" VARCHAR(15) NOT NULL UNIQUE KEY,
-	    "mac" VARCHAR(17) NOT NULL,
-	    "network" TEXT NOT NULL,
-	    "start" INTEGER NOT NULL,
-	    "end" INTEGER NOT NULL,
-	    "hostname" TEXT NOT NULL,
-	    "abandoned" TINYINT DEFAULT 0,
-	    "registered" TINYINT DEFAULT 0
+		"id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
+		"ip" VARCHAR(15) NOT NULL UNIQUE KEY,
+		"mac" VARCHAR(17) NOT NULL,
+		"network" TEXT NOT NULL,
+		"start" INTEGER NOT NULL,
+		"end" INTEGER NOT NULL,
+		"hostname" TEXT NOT NULL,
+		"abandoned" TINYINT DEFAULT 0,
+		"registered" TINYINT DEFAULT 0
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1`
 
 	_, err := d.DB.Exec(sql)
@@ -214,8 +225,8 @@ func (m *mySQLDB) createLeaseTable(d *common.DatabaseAccessor) error {
 
 func (m *mySQLDB) createSettingTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "settings" (
-	    "id" VARCHAR(255) PRIMARY KEY NOT NULL,
-	    "value" TEXT
+		"id" VARCHAR(255) PRIMARY KEY NOT NULL,
+		"value" TEXT
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8`
 
 	if _, err := d.DB.Exec(sql); err != nil {
@@ -228,20 +239,21 @@ func (m *mySQLDB) createSettingTable(d *common.DatabaseAccessor) error {
 
 func (m *mySQLDB) createUserTable(d *common.DatabaseAccessor) error {
 	sql := `CREATE TABLE "user" (
-	    "id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
-	    "username" VARCHAR(255) NOT NULL UNIQUE KEY,
-	    "password" TEXT,
-	    "device_limit" INTEGER DEFAULT -1,
-	    "default_expiration" INTEGER DEFAULT 0,
-	    "expiration_type" TINYINT DEFAULT 1,
-	    "can_manage" TINYINT DEFAULT 1,
-	    "can_autoreg" TINYINT DEFAULT 1,
-	    "valid_start" INTEGER DEFAULT 0,
-	    "valid_end" INTEGER DEFAULT 0,
-	    "valid_forever" TINYINT DEFAULT 1,
-	    "ui_group" VARCHAR(20) NOT NULL DEFAULT 'default',
-	    "api_group" VARCHAR(20) NOT NULL DEFAULT 'disable',
-	    "allow_status_api" TINYINT DEFAULT 0
+		"id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
+		"username" VARCHAR(255) NOT NULL UNIQUE KEY,
+		"password" TEXT,
+		"device_limit" INTEGER DEFAULT -1,
+		"default_expiration" INTEGER DEFAULT 0,
+		"expiration_type" TINYINT DEFAULT 1,
+		"can_manage" TINYINT DEFAULT 1,
+		"can_autoreg" TINYINT DEFAULT 1,
+		"valid_start" INTEGER DEFAULT 0,
+		"valid_end" INTEGER DEFAULT 0,
+		"valid_forever" TINYINT DEFAULT 1,
+		"ui_group" VARCHAR(20) NOT NULL DEFAULT 'default',
+		"api_group" VARCHAR(20) NOT NULL DEFAULT 'disable',
+		"allow_status_api" TINYINT DEFAULT 0,
+		"notes" TEXT
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=4;`
 
 	if _, err := d.DB.Exec(sql); err != nil {
@@ -253,6 +265,19 @@ func (m *mySQLDB) createUserTable(d *common.DatabaseAccessor) error {
 			(1, 'admin', '$2a$10$rZfN/gdXZdGYyLtUb6LF.eHOraDes3ibBECmWic2I3SocMC0L2Lxa', 'admin'),
 			(2, 'helpdesk', '$2a$10$ICCdq/OyZBBoNPTRmfgntOnujD6INGv7ZAtA/Xq6JIdRMO65xCuNC', 'helpdesk'),
 			(3, 'readonly', '$2a$10$02NG6kQV.4UicpCnz8hyeefBD4JHKAlZToL2K0EN1HV.u6sXpP1Xy', 'readonly')`)
+	return err
+}
+
+func (m *mySQLDB) createDelegateTable(d *common.DatabaseAccessor) error {
+	sql := `CREATE TABLE "account_delegate" (
+		"id" INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL,
+		"user_id" INTEGER NOT NULL,
+		"delegate" VARCHAR(255) NOT NULL,
+		"permissions" CHAR(2) NOT NULL DEFAULT 0,
+		CONSTRAINT user_delegates UNIQUE ("user_id", "delegate")
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8;`
+
+	_, err := d.DB.Exec(sql)
 	return err
 }
 
@@ -360,6 +385,21 @@ func (m *mySQLDB) migrateFrom3(d *common.DatabaseAccessor, c *common.Config) err
 func (m *mySQLDB) migrateFrom4(d *common.DatabaseAccessor, c *common.Config) error {
 	sql := `ALTER TABLE "device" ADD COLUMN (
 		"flagged" TINYINT DEFAULT 0
+	);`
+	_, err := d.DB.Exec(sql)
+	return err
+}
+
+func (m *mySQLDB) migrateFrom5(d *common.DatabaseAccessor, c *common.Config) error {
+	sql := `ALTER TABLE "user" ADD COLUMN (
+		"notes" TEXT
+	);`
+	if _, err := d.DB.Exec(sql); err != nil {
+		return err
+	}
+
+	sql = `ALTER TABLE "device" ADD COLUMN (
+		"notes" TEXT
 	);`
 	_, err := d.DB.Exec(sql)
 	return err

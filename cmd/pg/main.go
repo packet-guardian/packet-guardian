@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"text/template"
 	"time"
 
 	"github.com/lfkeitel/verbose/v4"
@@ -70,10 +71,6 @@ func main() {
 	e := setupEnvironment()
 	startShutdownWatcher(e)
 
-	if err := bindata.SetCustomDir(e.Config.Webserver.CustomDataDir); err != nil {
-		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
-	}
-
 	if err := common.RunSystemInits(e); err != nil {
 		e.Log.WithField("error", err).Fatal("System initialization failed")
 	}
@@ -122,7 +119,16 @@ func setupEnvironment() *common.Environment {
 		e.Log.WithField("error", err).Fatal("Error loading session store")
 	}
 
-	e.Views, err = common.NewViews(e, "templates")
+	e.Log.WithField("path", e.Config.Webserver.CustomDataDir).Debug("Setting custom static directory")
+	if err := bindata.SetCustomDir(e.Config.Webserver.CustomDataDir); err != nil {
+		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
+	}
+
+	e.Views, err = common.NewViews(e, "templates", template.FuncMap{
+		"userCan": func(user *models.User, perm string) bool {
+			return user.Can(models.StrToPermission(perm))
+		},
+	})
 	if err != nil {
 		e.Log.WithField("error", err).Fatal("Error loading frontend templates")
 	}

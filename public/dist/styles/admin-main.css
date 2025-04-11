@@ -1,6 +1,6 @@
 main {
     display: grid;
-    grid-template-columns: 10% auto;
+    grid-template-rows: 10% auto;
     height: 100%;
 }
 
@@ -9,10 +9,11 @@ nav {
     height: 100%;
     text-align: center;
     font-weight: bold;
+    width: 100vw;
 }
 
 nav span {
-    display: block;
+    display: none;
     padding: 0.75rem;
 }
 
@@ -28,6 +29,40 @@ nav a:hover {
     background-color: #006885;
 }
 
+@media (width >= 1000px) {
+    main {
+        display: grid;
+        grid-template-columns: 10% auto;
+        grid-template-rows: auto;
+        height: 100%;
+    }
+
+    nav {
+        background-color: lightgray;
+        height: 100%;
+        text-align: center;
+        font-weight: bold;
+        width: auto;
+    }
+
+    nav span {
+        display: block;
+        padding: 0.75rem;
+    }
+
+    nav a {
+        display: block;
+        background-color: #0083a8;
+        padding: 0.75rem;
+        text-decoration: none;
+        color: white;
+    }
+
+    nav a:hover {
+        background-color: #006885;
+    }
+}
+
 .admin-main {
     margin-bottom: 1rem;
 }
@@ -35,4 +70,11 @@ nav a:hover {
 .main {
     padding-top: 0;
     padding-bottom: 0;
+}
+
+@media (width >= 600px) {
+    .admin-dash {
+        width: 60%;
+        margin: 0 auto;
+    }
 }

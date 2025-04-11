@@ -55,10 +55,12 @@ func RegisterDevice(e *common.Environment, name, credential string, r *http.Requ
 	guest.DeviceExpiration = &models.UserDeviceExpiration{}
 
 	guest.DeviceExpiration.Mode, guest.DeviceExpiration.Value, err = calcDeviceExpirationModeValue(e.Config.Guest.DeviceExpirationType, e.Config.Guest.DeviceExpiration)
-	e.Log.WithFields(verbose.Fields{
-		"error":   err,
-		"package": "guest",
-	}).Error("Error parsing device expiration")
+	if err != nil {
+		e.Log.WithFields(verbose.Fields{
+			"error":   err,
+			"package": "guest",
+		}).Error("Error parsing device expiration")
+	}
 
 	// Get and enforce the device limit
 	deviceCount, err := devices.GetDeviceCountForUser(guest)

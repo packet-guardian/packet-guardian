@@ -20,11 +20,11 @@
                 {{else}}
                 <span class="username">
                     <a href="/admin/manage/user/{{.user.Username}}" class="no-color-link">{{.user.Username}}</a>
-                    {{if .canEditUser}}
+                    {{if (userCan .sessionUser "EditUser")}}
                     <a href="/admin/users/{{.user.Username}}" class="no-color-link"><span class="fa fa-pencil edit-property"></span></a>
                     {{end}}
                 </span>
-                {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blacklisted</span>{{end}}
+                {{if .user.IsBlacklisted}}<span class="blacklist-icon">Blocked</span>{{end}}
                 {{end}}
             </section>
         </div>
@@ -32,16 +32,16 @@
             <section>
             </section>
             <section>
-                {{if .canManageBlacklist}}
+                {{if (userCan .sessionUser "ManageBlacklist")}}
                 {{if .device.IsBlacklisted}}
-                <button type="button" class="danger-btn" id="unblacklist-btn">Remove From Blacklist</button>
+                <button type="button" class="danger-btn" id="unblacklist-btn">Unblock</button>
                 {{else}}
-                <button type="button" class="danger-btn" id="blacklist-btn">Blacklist</button>
+                <button type="button" class="danger-btn" id="blacklist-btn">Block</button>
                 {{end}}
                 {{end}}
 
                 {{if ne .device.ID 0}}
-                {{if .canEditDevice}}
+                {{if (userCan .sessionUser "EditDevice")}}
                 {{if .device.Flagged}}
                 <button type="button" class="danger-btn" id="unflag-dev-btn">Unflag</button>
                 {{else}}
@@ -49,12 +49,16 @@
                 {{end}}
                 {{end}}
 
-                {{if .canReassignDevice}}
+                {{if (userCan .sessionUser "ReassignDevice")}}
                 <button type="button" id="reassign-btn" class="danger-btn">Reassign</button>
                 {{end}}
 
-                {{if .canDeleteDevice}}
+                {{if (userCan .sessionUser "DeleteDevice")}}
                 <button type="button" id="delete-btn" class="danger-btn">Delete</button>
+                {{end}}
+                {{else}}
+                {{if (userCan .sessionUser "CreateDevice")}}
+                <button type="button" id="register-btn" class="ok-btn">Register</button>
                 {{end}}
                 {{end}}
             </section>
@@ -64,7 +68,7 @@
     <div class="clearfix device-info">
         {{with .device}}
             <p>
-                <span class="label">Blacklisted</span>:
+                <span class="label">Blocked</span>:
                 <span class="data">{{titleBool .IsBlacklisted}}</span>
             </p>
             <p>
@@ -136,6 +140,22 @@
                 {{else}}
                 <span class="data">N/A</span>
                 {{end}}
+            </p>
+            <p>
+                <span class="label">Notes</span>:
+                <span class="data" id="notes-text">{{.Notes}}</span>
+
+                <i class="fa fa-pencil edit-property" id="edit-notes" aria-hidden="true"></i>
+
+                <span id="notes-confirmation-icons">
+                    <i class="fa fa-check edit-property" id="notes-edit-ok" aria-hidden="true"></i>
+                    <i class="fa fa-times edit-property" id="notes-edit-cancel" aria-hidden="true"></i>
+                </span>
+
+                <span class="data" id="notes-text-edit">
+                    <br>
+                    <textarea cols="40" rows="7" id="notes-textarea">{{.Notes}}</textarea>
+                </span>
             </p>
             <br>
             <h3>Previous Leases</h3>

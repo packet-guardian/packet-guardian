@@ -1,5 +1,5 @@
 const path = require("path");
-const CleanWebpackPlugin = require("clean-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = {
   entry: {
@@ -14,7 +14,7 @@ module.exports = {
     captcha: "./public/src/ts/captcha.ts"
   },
 
-  plugins: [new CleanWebpackPlugin(["public/dist/js"])],
+  plugins: [new CleanWebpackPlugin()],
 
   output: {
     filename: "[name].min.js",
@@ -35,7 +35,7 @@ module.exports = {
         test: /\.ts$/,
         exclude: /node_modules/,
         use: {
-          loader: "awesome-typescript-loader"
+          loader: "ts-loader"
         }
       }
     ]

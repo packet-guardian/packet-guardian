@@ -13,18 +13,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.13.x
-        uses: actions/setup-go@v1
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.13.x"
+          go-version: "1.23"
 
-      - name: Use Node.js 12.x
-        uses: actions/setup-node@v1
+      - name: Use Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 12.x
+          node-version: "22"
 
       - name: Checkout project
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
       - name: Install NPM deps
         run: yarn install
@@ -36,7 +36,7 @@ jobs:
         run: yarn run build:prod
 
       - name: Download go-bindata tool
-        run: env GO111MODULE=off go get -u -v github.com/go-bindata/go-bindata/...
+        run: go install github.com/go-bindata/go-bindata/go-bindata@latest
 
       - name: Test and Build Server
-        run: env PATH="$HOME/go/bin:$PATH" make bindata test build
+        run: env PATH="$HOME/go/bin:$PATH" make bindata test build-cmd

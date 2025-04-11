@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"net"
 	"time"
+
+	"github.com/packet-guardian/dhcp-lib"
 )
 
 type DeviceStore interface {
@@ -19,6 +21,7 @@ type DeviceStore interface {
 type LeaseStore interface {
 	GetLeaseHistory(net.HardwareAddr) ([]LeaseHistory, error)
 	GetLatestLease(net.HardwareAddr) LeaseHistory
+	GetRecentLeaseByMAC(net.HardwareAddr) (*dhcp.Lease, error)
 }
 
 type LeaseHistory interface {
@@ -53,6 +56,7 @@ type Device struct {
 	LastSeen       time.Time      `json:"-"`
 	Leases         []LeaseHistory `json:"-"`
 	Flagged        bool           `json:"flagged"`
+	Notes          string         `json:"notes"`
 }
 
 func NewDevice(s DeviceStore, l LeaseStore, b BlacklistItem) *Device {
@@ -132,6 +136,14 @@ func (d *Device) LoadLeaseHistory() error {
 // with the newest start date. If no current lease is found, returns nil.
 func (d *Device) GetCurrentLease() LeaseHistory {
 	return d.leaseStore.GetLatestLease(d.MAC)
+}
+
+func (d *Device) GetLastLease() *dhcp.Lease {
+	l, _ := d.leaseStore.GetRecentLeaseByMAC(d.MAC)
+	if l.ID == 0 {
+		return nil
+	}
+	return l
 }
 
 func (d *Device) IsExpired() bool {

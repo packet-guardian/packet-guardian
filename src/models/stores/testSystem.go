@@ -84,8 +84,12 @@ func (s *TestUserStore) GetPassword(username string) (string, error) {
 	}
 	return "", nil
 }
-func (s *TestUserStore) Save(u *models.User) error   { return nil }
-func (s *TestUserStore) Delete(u *models.User) error { return nil }
+func (s *TestUserStore) Save(u *models.User) error                            { return nil }
+func (s *TestUserStore) Delete(u *models.User) error                          { return nil }
+func (s *TestUserStore) DeleteDelegate(u *models.User, delegate string) error { return nil }
+func (s *TestUserStore) GetDelegatedUsers(u *models.User) (map[string]models.Permission, error) {
+	return nil, nil
+}
 
 type TestDeviceStore struct {
 	Devices []*models.Device
@@ -143,18 +147,21 @@ func (s *TestDeviceStore) GetDevicesForUserPage(u *models.User, page int) ([]*mo
 	return devices, nil
 }
 func (s *TestDeviceStore) GetDeviceCountForUser(u *models.User) (int, error) {
-	devices := make([]*models.Device, 0, 5)
+	count := 0
 	for _, d := range s.Devices {
 		if d.Username == u.Username {
-			devices = append(devices, d)
+			count++
 		}
 	}
-	return len(devices), nil
+	return count, nil
 }
 func (s *TestDeviceStore) GetAllDevices(e *common.Environment) ([]*models.Device, error) {
 	return s.Devices, nil
 }
 func (s *TestDeviceStore) SearchDevicesByField(field, pattern string) ([]*models.Device, error) {
+	return nil, nil
+}
+func (s *TestDeviceStore) Search(where string, vals ...interface{}) ([]*models.Device, error) {
 	return nil, nil
 }
 func (s *TestDeviceStore) Save(d *models.Device) error {
@@ -174,8 +181,26 @@ func (s *TestDeviceStore) Save(d *models.Device) error {
 
 	return nil
 }
-func (s *TestDeviceStore) Delete(d *models.Device) error               { return nil }
-func (s *TestDeviceStore) DeleteAllDeviceForUser(u *models.User) error { return nil }
+func (s *TestDeviceStore) Delete(d *models.Device) error {
+	devs := make([]*models.Device, 0, len(s.Devices)-1)
+	for _, device := range s.Devices {
+		if !bytes.Equal(device.MAC, d.MAC) {
+			devs = append(devs, device)
+		}
+	}
+	s.Devices = devs
+	return nil
+}
+func (s *TestDeviceStore) DeleteAllDeviceForUser(u *models.User) error {
+	devs := make([]*models.Device, 0, len(s.Devices)-1)
+	for _, device := range s.Devices {
+		if device.Username != u.Username {
+			devs = append(devs, device)
+		}
+	}
+	s.Devices = devs
+	return nil
+}
 
 type TestBlacklistStore struct {
 	items map[string]bool

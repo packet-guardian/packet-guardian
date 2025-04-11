@@ -51,7 +51,7 @@ label {
     text-align: right;
 }
 
-@media (min-width: 400px) {
+@media (width >= 400px) {
     fieldset {
         width: 400px;
     }

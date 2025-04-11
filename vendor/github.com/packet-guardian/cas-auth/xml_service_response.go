@@ -2,6 +2,8 @@ package cas
 
 import (
 	"encoding/xml"
+	"errors"
+	"strings"
 	"time"
 )
 
@@ -37,13 +39,40 @@ func (p *xmlProxies) AddProxy(proxy string) {
 }
 
 type xmlAttributes struct {
-	XMLName                                xml.Name  `xml:"attributes"`
-	AuthenticationDate                     time.Time `xml:"authenticationDate"`
-	LongTermAuthenticationRequestTokenUsed bool      `xml:"longTermAuthenticationRequestTokenUsed"`
-	IsFromNewLogin                         bool      `xml:"isFromNewLogin"`
-	MemberOf                               []string  `xml:"memberOf"`
+	XMLName                                xml.Name   `xml:"attributes"`
+	AuthenticationDate                     *fixedTime `xml:"authenticationDate"`
+	LongTermAuthenticationRequestTokenUsed bool       `xml:"longTermAuthenticationRequestTokenUsed"`
+	IsFromNewLogin                         bool       `xml:"isFromNewLogin"`
+	MemberOf                               []string   `xml:"memberOf"`
 	UserAttributes                         *xmlUserAttributes
 	ExtraAttributes                        []*xmlAnyAttribute `xml:",any"`
+}
+
+type fixedTime struct {
+	time.Time
+}
+
+func (t *fixedTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	dataToken, err := d.Token()
+	if err != nil {
+		return err
+	}
+
+	charData, ok := dataToken.(xml.CharData)
+	if !ok {
+		return errors.New("Expected chardata")
+	}
+
+	timeStr := strings.SplitN(string(charData), "[", 2)[0]
+	timeD, err := time.Parse(time.RFC3339, timeStr)
+	if err != nil {
+		return err
+	}
+
+	*t = fixedTime{timeD}
+
+	_, err = d.Token()
+	return err
 }
 
 type xmlUserAttributes struct {

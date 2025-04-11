@@ -4,20 +4,20 @@
         "doc": "docs"
     },
     "devDependencies": {
-        "awesome-typescript-loader": "^5.2.1",
-        "clean-webpack-plugin": "^0.1.17",
-        "prettier": "^1.19.1",
-        "remark": "^11.0.2",
-        "stylelint": "^12.0.0",
-        "stylelint-config-standard": "^19.0.0",
+        "clean-webpack-plugin": "^4.0.0",
+        "prettier": "^2.8.8",
+        "remark": "^15.0.1",
+        "stylelint": "^16.10.0",
+        "stylelint-config-standard": "^36.0.1",
+        "terser-webpack-plugin": "^5.3.10",
+        "ts-loader": "^9.5.1",
         "tslint": "^5.20.1",
         "tslint-config-prettier": "^1.18.0",
-        "tslint-plugin-prettier": "^2.0.1",
-        "typescript": "^3.7.2",
-        "uglifyjs-webpack-plugin": "^1.1.6",
-        "webpack": "^4.41.2",
-        "webpack-cli": "^3.3.10",
-        "webpack-merge": "^4.2.2"
+        "tslint-plugin-prettier": "^2.3.0",
+        "typescript": "^5.0.2",
+        "webpack": "^5.76.2",
+        "webpack-cli": "^5.0.1",
+        "webpack-merge": "^6.0.1"
     },
     "scripts": {
         "lint": "yarn run lint:ts && yarn run lint:css",
@@ -36,5 +36,6 @@
     "bugs": {
         "url": "https://github.com/packet-guardian/packet-guardian/issues"
     },
-    "homepage": "https://github.com/packet-guardian/packet-guardian#readme"
+    "homepage": "https://github.com/packet-guardian/packet-guardian#readme",
+    "packageManager": "yarn@3.4.1"
 }

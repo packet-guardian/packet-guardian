@@ -1,0 +1,28 @@
+{{define "pageTitle"}}Admin - Import/Export{{end}}
+
+{{define "css"}}
+{{template "render-css" dict "main" .}}
+{{end}}
+
+{{define "js"}}
+{{template "render-js" dict "main" . "js" (list "admin-import")}}
+{{end}}
+
+{{define "content"}}
+<div class="admin-dash">
+    <h2>Import Devices</h2>
+
+    <form method="POST" action="/admin/import/devices">
+        <p>
+            Import Data:
+            <textarea name="import-data" cols="40" rows="10" class="form-control" required="" placeholder="">username,mac,description,platform</textarea>
+
+            <span class="help-block">Enter the list of column headers followed by one line per record to be imported, using commas to separate values. Multi-line data and values containing commas may be wrapped in double quotes.</span>
+        </p>
+
+        <p>
+            <button type="submit" id="import-btn">Import</button>
+        </p>
+    </form>
+</div>
+{{end}}

@@ -92,7 +92,7 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 
 	if !g.e.Config.Guest.DisableCaptcha &&
 		!captcha.VerifyString(r.FormValue("captchaId"), r.FormValue("captchaSolution")) {
-		session.AddFlash("Incorrect Captcha answer")
+		session.AddFlash(common.FlashMessage{Message: "Incorrect Captcha answer", Type: common.FlashMessageError})
 		g.showGuestRegPage(w, r)
 		return
 	}
@@ -101,7 +101,7 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 	guestName := r.FormValue("guest-name")
 
 	if guestCred == "" || guestName == "" {
-		session.AddFlash("Please fill in all required fields")
+		session.AddFlash(common.FlashMessage{Message: "Please fill in all required fields", Type: common.FlashMessageError})
 		g.showGuestRegPage(w, r)
 		return
 	}
@@ -118,7 +118,7 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if guestUser.IsBlacklisted() {
-		session.AddFlash("Permission Denied")
+		session.AddFlash(common.FlashMessage{Message: "Permission Denied", Type: common.FlashMessageError})
 		g.showGuestRegPage(w, r)
 		return
 	}
@@ -130,7 +130,7 @@ func (g *Guest) checkGuestInfo(w http.ResponseWriter, r *http.Request) {
 	session.Set("_guest-name", guestName)
 	session.Save(r, w)
 	if err := guest.SendGuestCode(g.e, guestCred, verifyCode); err != nil {
-		session.AddFlash(err.Error())
+		session.AddFlash(common.FlashMessage{Message: err.Error(), Type: common.FlashMessageError})
 		g.showGuestRegPage(w, r)
 		return
 	}
@@ -180,14 +180,14 @@ func (g *Guest) showGuestVerifyPage(w http.ResponseWriter, r *http.Request) {
 func (g *Guest) verifyGuestRegistration(w http.ResponseWriter, r *http.Request) {
 	session := common.GetSessionFromContext(r)
 	if session.GetInt64("_expires") < time.Now().Unix() {
-		session.AddFlash("Verification code has expired")
+		session.AddFlash(common.FlashMessage{Message: "Verification code has expired", Type: common.FlashMessageError})
 		session.Save(r, w)
 		http.Redirect(w, r, "/register/guest", http.StatusSeeOther)
 		return
 	}
 
 	if session.GetString("_verify-code") != strings.ToUpper(r.FormValue("verify-code")) {
-		session.AddFlash("Incorrect verification code")
+		session.AddFlash(common.FlashMessage{Message: "Incorrect verification code", Type: common.FlashMessageError})
 		g.showGuestVerifyPage(w, r)
 		return
 	}

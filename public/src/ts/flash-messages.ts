@@ -8,11 +8,12 @@ function checkAndFlash(element: string) {
     }
 
     const flashMsg = flashElm.html() ?? "";
+    const flashType = flashElm.data("flashtype") ?? "";
     if (flashMsg !== "") {
-        flashMessage(flashMsg);
+        flashMessage(flashMsg, flashType);
     }
 }
 
-const defaultFlashElem = "#flashText";
+const defaultFlashElem = "#flash-text";
 
 checkAndFlash(defaultFlashElem);

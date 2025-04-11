@@ -1,7 +1,8 @@
 import $ from "@/jlib2";
-import api from "@/pg-api";
+import api, { SaveUserInput } from "@/pg-api";
 import flashMessage from "@/flash";
 import { setTextboxToToday } from "@/utils";
+import { ModalPrompt } from "@/modals";
 
 const devExpirationTypes = {
     never: 0,
@@ -9,7 +10,7 @@ const devExpirationTypes = {
     specific: 2,
     duration: 3,
     daily: 4,
-    rolling: 5
+    rolling: 5,
 };
 
 // Device limit select box init
@@ -80,13 +81,13 @@ function checkExpires() {
 checkExpires();
 
 // Select boxes change events
-$("[name=special-limit]").change(e => {
+$("[name=special-limit]").change((e) => {
     const devLimit = $("[name=device-limit]");
     devLimit.value("");
     devLimit.prop("disabled", $(e.target).value() !== "specific");
 });
 
-$("[name=dev-exp-sel]").change(e => {
+$("[name=dev-exp-sel]").change((e) => {
     const self = $(e.target);
     // Enable/disable appropiate textboxes
     $("[name=device-expiration]").prop(
@@ -118,7 +119,7 @@ $("[name=dev-exp-sel]").change(e => {
     }
 });
 
-$("[name=val-bef-sel]").change(e => {
+$("[name=val-bef-sel]").change((e) => {
     const self = $(e.target);
     $("[name=valid-before]").prop("disabled", self.value() === "forever");
     $("[name=valid-after]").prop("disabled", self.value() === "forever");
@@ -148,10 +149,21 @@ $("[name=delete-btn]").click(() => {
     );
 });
 
+function getDelegatesList(): string {
+    return Array.from(document.querySelectorAll("p[data-delegate]"))
+        .map(
+            (item) =>
+                `${item.querySelector("label")?.innerText}:${
+                    item.querySelector("select")?.value
+                }`
+        )
+        .join(",");
+}
+
 // Form submittion
-$("#user-form").submit(e => {
+$("#user-form").submit((e) => {
     e.preventDefault();
-    const formData = {
+    const formData: SaveUserInput = {
         username: $("[name=username]").value(),
         password: $("[name=password]").value(),
         device_limit: -1,
@@ -163,7 +175,9 @@ $("#user-form").submit(e => {
         can_autoreg: $("[name=can-autoreg]").prop("checked") ? 1 : 0,
         allow_status_api: $("[name=user-api-status]").prop("checked") ? 1 : 0,
         ui_group: $("[name=user-ui-group]").value(),
-        api_group: $("[name=user-api-group]").value()
+        api_group: $("[name=user-api-group]").value(),
+        delegates: getDelegatesList(),
+        notes: $("[name=notes]").value(),
     };
 
     if ($("[name=clear-pass]").prop("checked")) {
@@ -208,7 +222,7 @@ $("#user-form").submit(e => {
             }
             $("#submit-btn").text("Save");
         },
-        req => {
+        (req) => {
             const resp = JSON.parse(req.responseText);
             flashMessage(resp.Message);
         }
@@ -222,4 +236,81 @@ function setExpirationToolTop(tip: string) {
 
 function setUserExpirationToolTip(tip: string) {
     $("#user-exp-tooltip").text(tip);
+}
+
+$("#add-delegate-btn").click(() => {
+    const pmodal = new ModalPrompt();
+    pmodal.show("Username of delegate:", (newUser) => {
+        const newDelegate = document.createElement("p");
+        newDelegate.dataset["delegate"] = newUser;
+
+        const newDelegateLabel = document.createElement("label");
+        newDelegateLabel.innerText = newUser;
+        newDelegateLabel.setAttribute("for", `${newUser}-permissions`);
+        newDelegate.append(newDelegateLabel);
+        newDelegate.appendChild(document.createTextNode(" "));
+        newDelegate.appendChild(
+            makeSelect(`${newUser}-permissions`, [
+                {
+                    value: "RO",
+                    text: "RO",
+                    selected: false,
+                },
+                {
+                    value: "RW",
+                    text: "RW",
+                    selected: false,
+                },
+            ])
+        );
+
+        const delegateDelete = createElementFromHTML(
+            `<i class="fa fa-times delete-icon" aria-role="button" data-delegate="${newUser}"title="Delete delegate"></i>`
+        );
+        $(delegateDelete).click(removeDelegate);
+
+        newDelegate.appendChild(document.createTextNode(" "));
+        newDelegate.appendChild(delegateDelete);
+
+        document
+            .querySelector("[name='delegate-list']")
+            ?.appendChild(newDelegate);
+    });
+});
+
+interface SelectOption {
+    value: string;
+    selected: boolean;
+    text: string;
+}
+
+function makeSelect(name: string, options: SelectOption[]): HTMLSelectElement {
+    const select = document.createElement("select");
+    select.setAttribute("name", name);
+
+    options.forEach((option) => {
+        const opt = document.createElement("option");
+        opt.value = option.value;
+        opt.text = option.text;
+        opt.selected = option.selected;
+        select.appendChild(opt);
+    });
+
+    return select;
+}
+
+function createElementFromHTML(htmlString: string): HTMLElement {
+    var div = document.createElement("div");
+    div.innerHTML = htmlString.trim();
+
+    // Change this to div.childNodes to support multiple top-level nodes
+    return div.firstChild as HTMLElement;
+}
+
+$("i[data-delegate]").click(removeDelegate);
+
+function removeDelegate(e: Event) {
+    const target = e.target as HTMLElement;
+    const delegateName = target?.dataset["delegate"];
+    document.querySelector(`p[data-delegate=${delegateName}]`)?.remove();
 }

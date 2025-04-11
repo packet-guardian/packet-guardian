@@ -50,6 +50,12 @@
                 <input type="password" name="password">
                 <input type="checkbox" name="clear-pass"> Clear Password
             </p>
+
+            <p>
+                <label for="notes">Notes:</label>
+                <br>
+                <textarea cols="40" rows="7" name="notes">{{.user.Notes}}</textarea>
+            </p>
         </fieldset>
 
         <hr class="user-edit-separator">
@@ -143,6 +149,7 @@
 
         <fieldset>
             <h3>Permissions</h3>
+
             <p>
                 <label for="user-ui-group"><span title="The group this user belongs to">UI Group:</span></label>
                 <select name="user-ui-group">
@@ -170,6 +177,35 @@
                 <input type="checkbox" name="user-api-status">
                 {{end}}
             </p>
+        </fieldset>
+
+        <hr class="user-edit-separator">
+
+        <fieldset>
+            <h3>Delegates</h3>
+
+            <button type="button" id="add-delegate-btn" class="ok-btn">Add Delegate</button>
+
+            <div name="delegate-list">
+                {{range $dname, $dpermission := .user.Delegates}}
+                <p data-delegate="{{$dname}}">
+                    <label for="{{$dname}}-permissions"><a href="/admin/users/{{$dname}}">{{$dname}}</a></label>
+                    <select name="{{$dname}}-permissions">
+                        <option value="RO"{{if eq $dpermission.DelegateName "RO"}}selected{{end}}>RO</option>
+                        <option value="RW"{{if eq $dpermission.DelegateName "RW"}}selected{{end}}>RW</option>
+                    </select>
+                    <i class="fa fa-times delete-icon" aria-role="button" data-delegate="{{$dname}}" title="Delete delegate"></i>
+                </p>
+                {{end}}
+            </div>
+
+            <h3>Delegate For</h3>
+
+            {{range $dname, $dpermission := .delegateFor}}
+            <p>
+                <a href="/admin/users/{{$dname}}">{{$dname}}</a>: {{$dpermission.DelegateName}}
+            </p>
+            {{end}}
         </fieldset>
     </form>
 </div>

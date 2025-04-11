@@ -26,10 +26,3 @@ h2 {
 .report a:hover {
     background-color: #729a72;
 }
-
-@media (min-width: 600px) {
-    .admin-dash {
-        width: 60%;
-        margin: 0 auto;
-    }
-}

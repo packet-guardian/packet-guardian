@@ -30,6 +30,7 @@ type Config struct {
 		SiteFooterText     string
 		JobSchedulerWakeUp string
 		PageSize           int
+		Debug              bool
 	}
 	Logging struct {
 		Enabled    bool
@@ -127,6 +128,7 @@ type Config struct {
 			Server           string
 			ClientID         string
 			ClientSecret     string
+			StripDomain      bool
 			AuthorizeEndoint string `toml:"-"`
 			TokenEndoint     string `toml:"-"`
 			UserinfoEndpoint string `toml:"-"`
@@ -253,7 +255,7 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 	c.Webserver.SessionName = setStringOrDefault(c.Webserver.SessionName, "packet-guardian")
 	c.Webserver.SessionsDir = setStringOrDefault(c.Webserver.SessionsDir, "sessions")
 	c.Webserver.SessionStore = setStringOrDefault(c.Webserver.SessionStore, "filesystem")
-	c.Webserver.CustomDataDir = setStringOrDefault(c.Webserver.CustomDataDir, "custom")
+	c.Webserver.CustomDataDir = setStringOrDefault(c.Webserver.CustomDataDir, "")
 
 	// Authentication
 	if len(c.Auth.AuthMethod) == 0 {
@@ -281,6 +283,9 @@ func setSensibleDefaults(c *Config) (*Config, error) {
 
 	c.Auth.LDAP.Server = setStringOrDefault(c.Auth.LDAP.Server, "127.0.0.1")
 	c.Auth.LDAP.Port = setIntOrDefault(c.Auth.LDAP.Port, 389)
+	if c.Auth.LDAP.Port == 636 {
+		c.Auth.LDAP.UseSSL = true
+	}
 
 	c.Auth.CAS.Server, err = validateURL(c.Auth.CAS.Server, "CAS server")
 	if err != nil {

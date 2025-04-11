@@ -1,4 +1,4 @@
-{{define "pageTitle"}}Report - Blacklisted Devices{{end}}
+{{define "pageTitle"}}Report - Blocked Devices{{end}}
 
 {{define "css"}}
 {{template "render-css" dict "main" . "css" (list "reports/blk-user")}}
@@ -6,7 +6,7 @@
 
 {{define "content"}}
 <div class="content">
-    <h2>Report - Blacklisted Devices</h2>
+    <h2>Report - Blocked Devices</h2>
     <div class="report">
         <table>
             <tr>
@@ -15,7 +15,7 @@
             </tr>
             {{if eq (len .devices) 0}}
             <tr>
-                <td>No devices blacklisted</td>
+                <td>No devices blocked</td>
                 <td>&nbsp;</td>
             </tr>
             {{else}}

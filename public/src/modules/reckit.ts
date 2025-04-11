@@ -4,7 +4,7 @@ export const enum HTTPMethod {
     Put = "PUT",
     Delete = "DELETE",
     Options = "OPTIONS",
-    Head = "HEAD"
+    Head = "HEAD",
 }
 
 export interface SuccessCallback {
@@ -57,7 +57,7 @@ export const ajax = (options: AjaxOptions) => {
         }
     }
 
-    xhr.onreadystatechange = function() {
+    xhr.onreadystatechange = function () {
         if (this.readyState === 4) {
             if (this.status >= 200 && this.status < 400) {
                 options.success?.(this.responseText, this);
@@ -75,8 +75,6 @@ export const formatParams = (data: string | ParamMap): string => {
         return data;
     }
 
-    let dataStr = "";
-
     let dataParts = [];
 
     for (const key in data) {
@@ -85,9 +83,7 @@ export const formatParams = (data: string | ParamMap): string => {
         );
     }
 
-    dataStr = dataParts.join("&");
-
-    return dataStr;
+    return dataParts.join("&");
 };
 
 export const get = (
@@ -101,7 +97,7 @@ export const get = (
         url: url,
         params,
         success,
-        error
+        error,
     });
 };
 
@@ -116,6 +112,6 @@ export const post = (
         url: url,
         data,
         success,
-        error
+        error,
     });
 };

@@ -12,3 +12,10 @@ node_modules/
 custom/
 src/bindata/bindata.go
 public/dist/js
+
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions

@@ -9,8 +9,10 @@
         {{if ne .main.page 1}}
         {{if .main.adminManage}}
         <a href="/admin/manage/user/{{.main.user.Username}}?page={{sub1 .main.page}}">< Prev</a>
+        {{else if ne .main.user.Username .main.currentUser}}
+        <a href="/manage/{{.main.currentUser}}?page={{sub1 .main.page}}">< Prev</a>
         {{else}}
-        <a href="/manage/?page={{sub1 .main.page}}">< Prev</a>
+        <a href="/manage?page={{sub1 .main.page}}">< Prev</a>
         {{end}}
         {{end}}
         </span>
@@ -21,6 +23,8 @@
         {{if .main.hasNextPage}}
         {{if .main.adminManage}}
         <a href="/admin/manage/user/{{.main.user.Username}}?page={{plus1 .main.page}}">Next ></a>
+        {{else if ne .main.user.Username .main.currentUser}}
+        <a href="/manage/{{.main.currentUser}}?page={{plus1 .main.page}}">Next ></a>
         {{else}}
         <a href="/manage?page={{plus1 .main.page}}">Next ></a>
         {{end}}
@@ -32,28 +36,33 @@
     <table>
         <thead>
             <tr>
+                {{if not .disableSelect}}
                 <th>
                     <label class="device-check">
                         <input type="checkbox" id="select-all-checkbox">
                         <span class="checkmark device-checkbox" id="select-all"></span>
                     </label>
                 </th>
+                {{end}}
                 <th>MAC Address</th>
                 <th>Description</th>
                 <th>Last Seen</th>
                 <th>Registered</th>
                 <th>Current Lease</th>
+                {{if .main.adminManage}}<th>Last Lease</th>{{end}}
             </tr>
         </thead>
         <tbody>
         {{range .main.devices}}
             <tr class="{{if .IsBlacklisted}}blacklisted{{end}}">
+                {{if not $.disableSelect}}
                 <td class="cell-check-select">
                     <label class="device-check">
                         <input type="checkbox" class="device-checkbox" value="{{.MAC}}">
                         <span class="checkmark device-checkbox-target"></span>
                     </label>
                 </td>
+                {{end}}
                 <td>
                     <span id="device-{{.ID}}-mac">
                     {{if $.linkMac}}
@@ -65,7 +74,9 @@
                 </td>
                 <td>
                     <span id="device-{{.ID}}-desc">{{.Description}}</span>
+                    {{if $.main.canEditDevice}}
                     <a class="fa fa-pencil edit-dev-desc" tabindex="0" aria-role="button" data-device="{{.ID}}" href="#" title="Edit description"></a>
+                    {{end}}
                 </td>
                 <td>{{.LastSeen.Format "2006-01-02 15:04"}}</td>
                 <td>{{.DateRegistered.Format "2006-01-02 15:04"}}</td>
@@ -78,6 +89,17 @@
                     N/A
                     {{end -}}
                 </td>
+                {{if $.main.adminManage -}}
+                <td>
+                    {{with .GetLastLease -}}
+                    <span title="{{.Start.Format "2006-01-02 15:04"}} - {{.End.Format "2006-01-02 15:04"}}">
+                        {{.IP.String}} ({{.Network}})
+                    </span>
+                    {{else -}}
+                    N/A
+                    {{end -}}
+                </td>
+                {{end -}}
             </tr>
         {{end}}
         </tbody>

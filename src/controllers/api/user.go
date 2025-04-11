@@ -203,7 +203,40 @@ func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request,
 		user.CanAutoreg = (canAutoreg == "1")
 	}
 
+	// Delegates
+	oldDelegates := make([]string, 0, len(user.Delegates))
+	for d := range user.Delegates {
+		oldDelegates = append(oldDelegates, d)
+	}
+
+	delegates := strings.Split(r.FormValue("delegates"), ",")
+	newDelegates := make([]string, 0, len(delegates))
+	for _, delegate := range delegates {
+		if delegate == "" {
+			continue
+		}
+
+		dsplit := strings.Split(delegate, ":")
+		name := dsplit[0]
+		permissions, exists := models.DelegatePermissions[dsplit[1]]
+		if !exists {
+			continue
+		}
+
+		user.Delegates[name] = permissions
+		newDelegates = append(newDelegates, name)
+	}
+
+	deleteDelegates := make([]string, 1)
+	for _, old := range oldDelegates {
+		if !common.StringInSlice(old, newDelegates) {
+			deleteDelegates = append(deleteDelegates, old)
+		}
+	}
+
 	isNewUser := user.IsNew() // This will always be false after a call to Save()
+
+	user.Notes = r.FormValue("notes")
 
 	if err := user.Save(); err != nil {
 		u.e.Log.WithFields(verbose.Fields{
@@ -212,6 +245,10 @@ func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request,
 		}).Error("Error saving user")
 		common.NewAPIResponse("Error saving user", nil).WriteResponse(w, http.StatusInternalServerError)
 		return
+	}
+
+	for _, d := range deleteDelegates {
+		u.users.DeleteDelegate(user, d)
 	}
 
 	if isNewUser {

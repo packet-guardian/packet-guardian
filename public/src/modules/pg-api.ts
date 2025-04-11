@@ -4,7 +4,7 @@ import {
     post,
     SuccessCallback,
     ErrorCallback,
-    HTTPMethod
+    HTTPMethod,
 } from "@/reckit";
 
 export interface LoginInput {
@@ -24,6 +24,8 @@ export interface SaveUserInput {
     valid_end: string;
     can_manage: number;
     can_autoreg: number;
+    delegates: string; // Comma separated list of colon separated username:permission pairs
+    notes: string;
 }
 
 export interface RegisterDeviceInput {
@@ -69,7 +71,7 @@ class API {
             url: "/api/user",
             params: { username },
             success: apiRespWrapper(success),
-            error
+            error,
         });
     }
 
@@ -97,7 +99,7 @@ class API {
             method: HTTPMethod.Delete,
             url: `/api/blacklist/user/${username}`,
             success: apiRespWrapper(success),
-            error
+            error,
         });
     }
 
@@ -129,8 +131,23 @@ class API {
             `/api/device/mac/${mac}/expiration`,
             {
                 type,
-                value
+                value,
             },
+            apiRespWrapper(success),
+            error
+        );
+    }
+
+    saveDeviceNotes(
+        mac: string,
+        notes: string,
+        success?: APISuccessCallback<EmptyResp>,
+        error?: ErrorCallback
+    ) {
+        mac = encodeURIComponent(mac);
+        post(
+            `/api/device/mac/${mac}/notes`,
+            { notes },
             apiRespWrapper(success),
             error
         );
@@ -165,7 +182,7 @@ class API {
             url: `/api/device/user/${username}`,
             params: { mac: macs.join(",") },
             success: apiRespWrapper(success),
-            error
+            error,
         });
     }
 
@@ -208,7 +225,7 @@ class API {
             url: "/api/blacklist/device",
             params: { mac: macs.join(",") },
             success: apiRespWrapper(success),
-            error
+            error,
         });
     }
 
@@ -223,7 +240,7 @@ class API {
             url: "/api/blacklist/device",
             params: { username },
             success: apiRespWrapper(success),
-            error
+            error,
         });
     }
 
@@ -253,7 +270,7 @@ class API {
                 username: data.username,
                 "mac-address": data["mac-address"],
                 description: data.description,
-                platform: data.platform ?? ""
+                platform: data.platform ?? "",
             },
             apiRespWrapper(success),
             error

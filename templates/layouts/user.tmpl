@@ -1,7 +1,7 @@
 {{define "base"}}
 {{template "header" .}}
 <div id="flashDiv" class="flash">
-    <div id="flashText">{{.flashMessage}}</div>
+    <div id="flash-text" data-flashtype="{{.flashMessageType}}">{{.flashMessage}}</div>
 </div>
 {{template "content" .}}
 {{template "footer" .}}

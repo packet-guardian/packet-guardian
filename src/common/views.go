@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/lfkeitel/verbose/v4"
@@ -19,9 +20,12 @@ type DataFunc func(*http.Request) interface{}
 
 const mainTmpl = `{{define "main" }} {{ template "base" . }} {{ end }}`
 
+var usernameRegex = regexp.MustCompile(`[a-zA-z\-_0-9]+`)
+
 // Views is a collection of templates
 type Views struct {
 	source            string
+	additionalFuncs   template.FuncMap
 	e                 *Environment
 	injectedData      map[string]interface{}
 	injectedDataFuncs map[string]DataFunc
@@ -31,7 +35,7 @@ type Views struct {
 
 // NewViews reads a set of templates from a directory and loads them
 // into a Views. Custom functions are injected into the templates.
-func NewViews(e *Environment, basepath string) (v *Views, err error) {
+func NewViews(e *Environment, basepath string, m template.FuncMap) (v *Views, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch x := r.(type) {
@@ -52,7 +56,7 @@ func NewViews(e *Environment, basepath string) (v *Views, err error) {
 		injectedDataFuncs: make(map[string]DataFunc),
 		templates:         make(map[string]*template.Template),
 	}
-	if err := v.loadTemplates(); err != nil {
+	if err := v.loadTemplates(m); err != nil {
 		return nil, err
 	}
 	return v, nil
@@ -92,10 +96,13 @@ func customTemplateFuncs() template.FuncMap {
 		"title": func(s string) string {
 			return strings.Title(s)
 		},
+		"isUsername": func(s string) bool {
+			return usernameRegex.Match([]byte(s))
+		},
 	}
 }
 
-func (v *Views) loadTemplates() error {
+func (v *Views) loadTemplates(m template.FuncMap) error {
 	dir := v.source
 
 	mainTemplate, err := template.New("main").Parse(mainTmpl)
@@ -103,6 +110,8 @@ func (v *Views) loadTemplates() error {
 		return err
 	}
 	mainTemplate.Funcs(customTemplateFuncs())
+	mainTemplate.Funcs(m)
+	v.additionalFuncs = m
 
 	partialFiles, err := bindata.AssetDir(dir + "/partials")
 	if err != nil {
@@ -191,7 +200,7 @@ func (v *Views) InjectDataFunc(key string, fn DataFunc) {
 // only be called in a development environment. This functions is very
 // susceptible to race conditions.
 func (v *Views) Reload() error {
-	views, err := NewViews(v.e, v.source)
+	views, err := NewViews(v.e, v.source, v.additionalFuncs)
 	if err != nil {
 		return err
 	}
@@ -220,6 +229,31 @@ type View struct {
 	injectedDataFuncs map[string]DataFunc
 }
 
+type FlashMessageType int
+
+const (
+	FlashMessageSuccess FlashMessageType = iota
+	FlashMessageWarning
+	FlashMessageError
+)
+
+type FlashMessage struct {
+	Message string
+	Type    FlashMessageType
+}
+
+func (f FlashMessageType) String() string {
+	switch f {
+	case FlashMessageSuccess:
+		return "success"
+	case FlashMessageWarning:
+		return "warning"
+	case FlashMessageError:
+		return "error"
+	}
+	return ""
+}
+
 // Render executes the template and writes it to w. This function will also
 // save a web session to the client if "username" is set in the current session.
 func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
@@ -236,9 +270,9 @@ func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
 	}
 	session := GetSessionFromContext(v.r)
 	flashes := session.Flashes()
-	flash := ""
+	var flashMessage FlashMessage
 	if len(flashes) > 0 {
-		flash = flashes[0].(string)
+		flashMessage = flashes[0].(FlashMessage)
 	}
 
 	if session.GetString("username") != "" {
@@ -247,7 +281,8 @@ func (v *View) Render(w http.ResponseWriter, data map[string]interface{}) {
 		}
 	}
 
-	data["flashMessage"] = flash
+	data["flashMessage"] = template.HTML(flashMessage.Message)
+	data["flashMessageType"] = flashMessage.Type.String()
 	data["layout"] = strings.SplitN(v.name, "-", 2)[0]
 
 	for key, val := range v.injectedData {

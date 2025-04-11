@@ -88,10 +88,16 @@ func ParseTime(time string) (int64, error) {
 	return int64((hours * secondsInHour) + (minutes * secondsInMinute)), nil
 }
 
+var policyText []template.HTML
+
 // LoadPolicyText loads a file and wraps it in a template type to ensure
 // custom HTML is allowed. The file should be secured so unauthorized
 // HTML/JS isn't allowed.
 func LoadPolicyText(file string) []template.HTML {
+	if policyText != nil {
+		return policyText
+	}
+
 	f, err := os.Open(file)
 	if err != nil {
 		return nil
@@ -110,6 +116,20 @@ func LoadPolicyText(file string) []template.HTML {
 		}
 		currentParagraph += " " + t
 	}
-	policy = append(policy, template.HTML(currentParagraph))
-	return policy
+	policyText = append(policy, template.HTML(currentParagraph))
+	return policyText
+}
+
+func StringSliceEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, v := range a {
+		if b[i] != v {
+			return false
+		}
+	}
+
+	return true
 }

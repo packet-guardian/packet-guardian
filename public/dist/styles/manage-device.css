@@ -28,6 +28,8 @@
 
 #edit-expire-controls,
 #confirmation-icons,
-#dev-exp-val {
+#dev-exp-val,
+#notes-text-edit,
+#notes-confirmation-icons {
     display: none;
 }
