@@ -52,12 +52,12 @@ github.com/packet-guardian/pg-dhcp/dhcp
 # github.com/packet-guardian/useragent v0.0.0-20181215171402-b01a15b7aeb8
 ## explicit
 github.com/packet-guardian/useragent
-# golang.org/x/crypto v0.0.0-20190102171810-8d7daa0c54b3
-## explicit
+# golang.org/x/crypto v0.36.0
+## explicit; go 1.23.0
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
-# golang.org/x/net v0.0.0-20180824152047-4bcd98cce591
-## explicit
+# golang.org/x/net v0.38.0
+## explicit; go 1.23.0
 golang.org/x/net/html
 golang.org/x/net/html/atom
 # google.golang.org/appengine v1.4.0
