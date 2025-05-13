@@ -141,11 +141,11 @@
                 <span class="data">N/A</span>
                 {{end}}
             </p>
+            {{if ne .ID 0}}
             <p>
                 <span class="label">Notes</span>:
                 <span class="data" id="notes-text">{{.Notes}}</span>
 
-                {{if ne .device.ID 0}}
                 <i class="fa fa-pencil edit-property" id="edit-notes" aria-hidden="true"></i>
 
                 <span id="notes-confirmation-icons">
@@ -157,8 +157,8 @@
                     <br>
                     <textarea cols="40" rows="7" id="notes-textarea">{{.Notes}}</textarea>
                 </span>
-                {{end}}
             </p>
+            {{end}}
             <br>
             <h3>Previous Leases</h3>
             <div class="leases">
