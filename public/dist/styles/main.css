@@ -43,10 +43,6 @@ header img {
     vertical-align: middle;
 }
 
-.header-search-box {
-    /* margin-top: 20px; */
-}
-
 .header-search-box input {
     background-color: #6b6b6b;
     color: white;
@@ -91,7 +87,6 @@ header img {
 header .header-user-profile {
     color: white;
     margin-right: 2rem;
-    /* padding-top: 35px; */
 }
 
 header .header-user-profile a {
