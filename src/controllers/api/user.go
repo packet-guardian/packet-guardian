@@ -119,11 +119,10 @@ func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request,
 			user.DeviceExpiration.Mode = models.UserExpiration(expType)
 			updateDeviceExpirations = true
 		}
-		if user.DeviceExpiration.Mode == models.UserDeviceExpirationGlobal ||
-			user.DeviceExpiration.Mode == models.UserDeviceExpirationNever ||
-			user.DeviceExpiration.Mode == models.UserDeviceExpirationRolling {
+		switch user.DeviceExpiration.Mode {
+		case models.UserDeviceExpirationGlobal, models.UserDeviceExpirationNever, models.UserDeviceExpirationRolling:
 			user.DeviceExpiration.Value = 0
-		} else if user.DeviceExpiration.Mode == models.UserDeviceExpirationSpecific {
+		case models.UserDeviceExpirationSpecific:
 			t, err := time.ParseInLocation(common.TimeFormat, devExpiration, time.Local)
 			if err != nil {
 				common.NewAPIResponse("Invalid time format", nil).WriteResponse(w, http.StatusBadRequest)
@@ -133,7 +132,7 @@ func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request,
 				user.DeviceExpiration.Value = t.Unix()
 				updateDeviceExpirations = true
 			}
-		} else if user.DeviceExpiration.Mode == models.UserDeviceExpirationDaily {
+		case models.UserDeviceExpirationDaily:
 			secs, err := common.ParseTime(devExpiration)
 			if err != nil {
 				common.NewAPIResponse("Invalid time format", nil).WriteResponse(w, http.StatusBadRequest)
@@ -143,7 +142,7 @@ func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request,
 				user.DeviceExpiration.Value = secs
 				updateDeviceExpirations = true
 			}
-		} else if user.DeviceExpiration.Mode == models.UserDeviceExpirationDuration {
+		case models.UserDeviceExpirationDuration:
 			d, err := time.ParseDuration(devExpiration)
 			if err != nil {
 				common.NewAPIResponse("Invalid duration", nil).WriteResponse(w, http.StatusBadRequest)
@@ -156,7 +155,7 @@ func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request,
 				user.DeviceExpiration.Value = dur
 				updateDeviceExpirations = true
 			}
-		} else {
+		default:
 			common.NewAPIResponse("Invalid device expiration type", nil).WriteResponse(w, http.StatusBadRequest)
 			return
 		}
