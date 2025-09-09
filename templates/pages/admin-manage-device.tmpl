@@ -77,7 +77,7 @@
             </p>
             <p>
                 <span class="label">MAC Address</span>:
-                <span class="data" id="mac-address">{{.MAC}}</span>
+                <span class="data" id="mac-address">{{.MAC}} {{if .HasLAAMAC}}(private){{end}}</span>
             </p>
             {{if ne .ID 0}}
             <p>

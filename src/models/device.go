@@ -94,6 +94,14 @@ func (d *Device) GetMAC() net.HardwareAddr {
 	return d.MAC
 }
 
+func (d *Device) HasLAAMAC() bool {
+	if d.MAC == nil {
+		return false
+	}
+	c := d.MAC[0]
+	return (c & 3) == 2
+}
+
 func (d *Device) GetUsername() string {
 	return d.Username
 }

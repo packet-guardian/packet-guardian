@@ -66,7 +66,7 @@
                 <td>
                     <span id="device-{{.ID}}-mac">
                     {{if $.linkMac}}
-                    <a href="/admin/manage/device/{{urlquery .MAC}}">{{.MAC}}</a>
+                    <a href="/admin/manage/device/{{urlquery .MAC}}">{{.MAC}}</a>{{if .HasLAAMAC}}<span title="Private MAC address">*</span>{{end}}
                     {{else}}
                     {{.MAC}}
                     {{end}}
