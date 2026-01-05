@@ -34,9 +34,17 @@ function initManage() {
     });
 }
 
+function getMacAddress(id: string): string {
+    const mac = $(`#device-${id}-mac`).text().trim();
+    if (mac.endsWith("*")) {
+        return mac.substring(0, mac.length - 1);
+    }
+    return mac;
+}
+
 // Event callbacks
 function editDeviceDescription(id: string, desc: string) {
-    const mac = $(`#device-${id}-mac`).text().trim();
+    const mac = getMacAddress(id);
     api.saveDeviceDescription(
         mac,
         desc,
