@@ -20,7 +20,7 @@ require (
 	github.com/packet-guardian/cas-auth v1.0.3
 	github.com/packet-guardian/dhcp-lib v1.3.2
 	github.com/packet-guardian/useragent v0.0.0-20181215171402-b01a15b7aeb8
-	golang.org/x/crypto v0.40.0
+	golang.org/x/crypto v0.47.0
 	gopkg.in/ldap.v2 v2.5.1
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/tylerb/graceful.v1 v1.2.15
@@ -29,12 +29,12 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/packet-guardian/pg-dhcp v2.0.0+incompatible // indirect
-	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20170511165959-379148ca0225 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.4
