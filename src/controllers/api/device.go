@@ -418,8 +418,7 @@ func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 
-	devicesToReassign := strings.Split(devices, ",")
-	for _, devMacStr := range devicesToReassign {
+	for devMacStr := range strings.SplitSeq(devices, ",") {
 		devMacStr = strings.TrimSpace(devMacStr)
 		mac, err := common.FormatMacAddress(devMacStr)
 		if err != nil {
