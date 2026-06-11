@@ -161,6 +161,8 @@ mainLoop:
 			continue
 		case IGNORE_REGISTRATION:
 			netBlock.ignoreRegistration = true
+		case ENFORCE_BLOCKLIST:
+			netBlock.enforceBlocklist = true
 		case SUBNET:
 			shortSyntax := false
 			if mode == 0 {

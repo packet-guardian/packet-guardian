@@ -45,6 +45,7 @@ const (
 	INCLUDE
 	LOCAL
 	IGNORE_REGISTRATION
+	ENFORCE_BLOCKLIST
 	DECL_OPTION
 	CODE
 	OPTION_TYPE
@@ -80,6 +81,7 @@ var tokens = [...]string{
 	INCLUDE:             "include",
 	LOCAL:               "local",
 	IGNORE_REGISTRATION: "ignore-registration",
+	ENFORCE_BLOCKLIST:   "enforce-blocklist",
 	DECL_OPTION:         "decloption",
 	CODE:                "code",
 	OPTION_TYPE:         "type",

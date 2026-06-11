@@ -21,6 +21,7 @@ type network struct {
 	subnets              []*subnet
 	local                bool
 	ignoreRegistration   bool
+	enforceBlocklist     bool
 }
 
 func newNetwork(name string) *network {

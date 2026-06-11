@@ -18,7 +18,7 @@ require (
 	github.com/lfkeitel/verbose/v4 v4.0.1
 	github.com/oec/goradius v0.0.0-20151001122308-dce7f6ef2e5a
 	github.com/packet-guardian/cas-auth v1.0.3
-	github.com/packet-guardian/dhcp-lib v1.3.2
+	github.com/packet-guardian/dhcp-lib v1.4.0
 	github.com/packet-guardian/useragent v0.0.0-20181215171402-b01a15b7aeb8
 	golang.org/x/crypto v0.47.0
 	gopkg.in/ldap.v2 v2.5.1
