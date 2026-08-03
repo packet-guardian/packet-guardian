@@ -17,6 +17,13 @@ import (
 	"github.com/packet-guardian/packet-guardian/src/models/stores"
 )
 
+type dayAnchor int
+
+const (
+	startOfDay dayAnchor = 0
+	endOfDay   dayAnchor = 1
+)
+
 type UserController struct {
 	e       *common.Environment
 	users   stores.UserStore
@@ -123,7 +130,7 @@ func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request,
 		case models.UserDeviceExpirationGlobal, models.UserDeviceExpirationNever, models.UserDeviceExpirationRolling:
 			user.DeviceExpiration.Value = 0
 		case models.UserDeviceExpirationSpecific:
-			t, err := time.ParseInLocation(common.TimeFormat, devExpiration, time.Local)
+			t, err := parseUserSaveDateItem(devExpiration, endOfDay)
 			if err != nil {
 				common.NewAPIResponse("Invalid time format", nil).WriteResponse(w, http.StatusBadRequest)
 				return
@@ -171,7 +178,7 @@ func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request,
 	} else {
 		user.ValidForever = false
 		if validStart != "" {
-			t, err := time.ParseInLocation(common.TimeFormat, validStart, time.Local)
+			t, err := parseUserSaveDateItem(validStart, startOfDay)
 			if err != nil {
 				common.NewAPIResponse("Invalid time format: valid_start", nil).WriteResponse(w, http.StatusBadRequest)
 				return
@@ -179,7 +186,7 @@ func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request,
 			user.ValidStart = t
 		}
 		if validEnd != "" {
-			t, err := time.ParseInLocation(common.TimeFormat, validEnd, time.Local)
+			t, err := parseUserSaveDateItem(validEnd, endOfDay)
 			if err != nil {
 				common.NewAPIResponse("Invalid time format: valid_end", nil).WriteResponse(w, http.StatusBadRequest)
 				return
@@ -299,6 +306,20 @@ func (u *UserController) SaveUserHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 	common.NewAPIResponse("User saved successfully", nil).WriteResponse(w, http.StatusNoContent)
+}
+
+func parseUserSaveDateItem(str string, anchor dayAnchor) (time.Time, error) {
+	var t time.Time
+	var err error
+	if strings.Contains(str, " ") {
+		t, err = time.ParseInLocation(common.TimeFormat, str, time.Local)
+	} else {
+		t, err = time.ParseInLocation(common.TimeFormatDateOnly, str, time.Local)
+		if anchor == endOfDay {
+			t = t.Add((23 * time.Hour) + (59 * time.Minute))
+		}
+	}
+	return t, err
 }
 
 func (u *UserController) DeleteUserHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

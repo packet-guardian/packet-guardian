@@ -592,7 +592,7 @@ func (d *Device) EditExpirationHandler(w http.ResponseWriter, r *http.Request, p
 		newExpire.Mode = models.UserDeviceExpirationRolling
 	case "specific":
 		newExpire.Mode = models.UserDeviceExpirationSpecific
-		expTime, err := time.ParseInLocation(common.TimeFormat, expValue, time.Local)
+		expTime, err := parseUserSaveDateItem(expValue, endOfDay)
 		if err != nil {
 			d.e.Log.WithFields(verbose.Fields{
 				"error":   err,

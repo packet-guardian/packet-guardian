@@ -16,7 +16,8 @@ import (
 
 const (
 	// TimeFormat standard for the application
-	TimeFormat string = "2006-01-02 15:04"
+	TimeFormat         string = "2006-01-02 15:04"
+	TimeFormatDateOnly string = "2006-01-02"
 
 	secondsInMinute int = 60
 	secondsInHour   int = 60 * 60

@@ -18,4 +18,18 @@ function setTextboxToToday(el: string) {
     ).value = `${dateStr} ${timeStr}`;
 }
 
-export { setTextboxToToday };
+function setTextboxToTodayDate(el: string) {
+    const date = new Date();
+
+    const dateStr =
+        date.getFullYear() +
+        "-" +
+        ("0" + (date.getMonth() + 1)).slice(-2) +
+        "-" +
+        ("0" + date.getDate()).slice(-2);
+
+    (
+        document.querySelector(el) as HTMLInputElement
+    ).value = dateStr;
+}
+export { setTextboxToToday, setTextboxToTodayDate };

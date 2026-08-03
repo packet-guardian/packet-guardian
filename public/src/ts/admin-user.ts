@@ -1,7 +1,7 @@
 import $ from "@/jlib2";
 import api, { SaveUserInput } from "@/pg-api";
 import flashMessage from "@/flash";
-import { setTextboxToToday } from "@/utils";
+import { setTextboxToTodayDate } from "@/utils";
 import { ModalPrompt } from "@/modals";
 
 const devExpirationTypes = {
@@ -105,8 +105,8 @@ $("[name=dev-exp-sel]").change((e) => {
     // Fill in textbox and tooltip as needed
     switch (self.value()) {
         case "specific":
-            setTextboxToToday("[name=device-expiration]");
-            setExpirationToolTop("(YYYY-MM-DD HH:mm)");
+            setTextboxToTodayDate("[name=device-expiration]");
+            setExpirationToolTop("Format: YYYY-MM-DD HH:mm (time optional, defaults to end of day)");
             break;
         case "duration":
             setExpirationToolTop("(5h30m = 5 hours and 30 minutes)");
@@ -125,9 +125,9 @@ $("[name=val-bef-sel]").change((e) => {
     $("[name=valid-after]").prop("disabled", self.value() === "forever");
 
     if (self.value() === "specific") {
-        setTextboxToToday("[name=valid-before]");
-        setTextboxToToday("[name=valid-after]");
-        setUserExpirationToolTip("(YYYY-MM-DD HH:mm)");
+        setTextboxToTodayDate("[name=valid-before]");
+        setTextboxToTodayDate("[name=valid-after]");
+        setUserExpirationToolTip("Format: YYYY-MM-DD HH:mm (time optional, defaults to start and end of day)");
     } else {
         $("[name=valid-before]").value("");
         $("[name=valid-after]").value("");
