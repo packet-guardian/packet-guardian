@@ -28,6 +28,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request, users stores.UserStore) b
 
 	e := common.GetEnvironmentFromContext(r)
 	username := strings.ToLower(r.FormValue("username"))
+	if e.Config.Auth.StripDomain {
+		username = strings.SplitN(username, "@", 2)[0]
+	}
+
 	for _, method := range e.Config.Auth.AuthMethod {
 		if authMethod, ok := authFunctions[method]; ok {
 			if authMethod.checkLogin(username, r.FormValue("password"), r, users) {
@@ -77,6 +81,10 @@ func CheckLogin(username, password string, r *http.Request, users stores.UserSto
 
 	e := common.GetEnvironmentFromContext(r)
 	username = strings.ToLower(username)
+	if e.Config.Auth.StripDomain {
+		username = strings.SplitN(username, "@", 2)[0]
+	}
+
 	for _, method := range e.Config.Auth.AuthMethod {
 		if authMethod, ok := authFunctions[method]; ok {
 			if authMethod.checkLogin(username, password, r, users) {

@@ -107,6 +107,7 @@ type Config struct {
 		APIReadOnlyUsers  []string
 		APIReadWriteUsers []string
 		APIStatusUsers    []string
+		StripDomain       bool
 
 		LDAP struct {
 			Server             string

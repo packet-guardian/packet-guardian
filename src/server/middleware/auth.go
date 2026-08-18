@@ -52,6 +52,10 @@ func CheckAuthAPI(next http.Handler, users stores.UserStore) http.Handler {
 
 		// Get user model
 		e := common.GetEnvironmentFromContext(r)
+		// The auth module may change the username (strip domain)
+		// This ensures we're using the correct username
+		session := common.GetSessionFromContext(r)
+		username = session.GetString("username")
 		sessionUser, err := users.GetUserByUsername(username)
 		if err != nil {
 			e.Log.WithFields(verbose.Fields{

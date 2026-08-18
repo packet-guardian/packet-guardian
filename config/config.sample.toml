@@ -185,6 +185,11 @@ sessionsAuthKey = "change me please"
 ## Valid values: local, ldap, radius, cas
 authMethod = ["local"]
 
+# Remove the domain part of a username.
+# user@domain.com becomes user for authentication and the session
+# This effectivly ignores any domain added to a username
+stripDomain = false
+
 ## LDAP authentication settings
 [auth.ldap]
 ## Active Directory domain name
