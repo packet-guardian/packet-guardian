@@ -28,8 +28,6 @@ function setTextboxToTodayDate(el: string) {
         "-" +
         ("0" + date.getDate()).slice(-2);
 
-    (
-        document.querySelector(el) as HTMLInputElement
-    ).value = dateStr;
+    (document.querySelector(el) as HTMLInputElement).value = dateStr;
 }
 export { setTextboxToToday, setTextboxToTodayDate };

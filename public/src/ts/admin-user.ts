@@ -106,7 +106,9 @@ $("[name=dev-exp-sel]").change((e) => {
     switch (self.value()) {
         case "specific":
             setTextboxToTodayDate("[name=device-expiration]");
-            setExpirationToolTop("Format: YYYY-MM-DD HH:mm (time optional, defaults to end of day)");
+            setExpirationToolTop(
+                "Format: YYYY-MM-DD HH:mm (time optional, defaults to end of day)"
+            );
             break;
         case "duration":
             setExpirationToolTop("(5h30m = 5 hours and 30 minutes)");
@@ -127,7 +129,9 @@ $("[name=val-bef-sel]").change((e) => {
     if (self.value() === "specific") {
         setTextboxToTodayDate("[name=valid-before]");
         setTextboxToTodayDate("[name=valid-after]");
-        setUserExpirationToolTip("Format: YYYY-MM-DD HH:mm (time optional, defaults to start and end of day)");
+        setUserExpirationToolTip(
+            "Format: YYYY-MM-DD HH:mm (time optional, defaults to start and end of day)"
+        );
     } else {
         $("[name=valid-before]").value("");
         $("[name=valid-after]").value("");
