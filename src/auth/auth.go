@@ -74,9 +74,9 @@ func SetLoginUser(w http.ResponseWriter, r *http.Request, username, method strin
 // will setup a server-side session for the request. CheckLogin doesn't
 // change anything about the session, it's up to the caller for perform any
 // state change.
-func CheckLogin(username, password string, r *http.Request, users stores.UserStore) bool {
+func CheckLogin(username, password string, r *http.Request, users stores.UserStore) (string, bool) {
 	if password == "" || username == "" {
-		return false
+		return "", false
 	}
 
 	e := common.GetEnvironmentFromContext(r)
@@ -94,7 +94,7 @@ func CheckLogin(username, password string, r *http.Request, users stores.UserSto
 					"action":   "login",
 					"package":  "auth",
 				}).Info("Logged in user")
-				return true
+				return username, true
 			}
 		}
 	}
@@ -102,7 +102,7 @@ func CheckLogin(username, password string, r *http.Request, users stores.UserSto
 		"username": username,
 		"package":  "auth",
 	}).Info("Failed login")
-	return false
+	return "", false
 }
 
 // IsLoggedIn checks the current session and returns if a user is logged in.
