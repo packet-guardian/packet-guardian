@@ -395,7 +395,7 @@ func (d *Device) checkDeletePermissions(sessionUser *models.User, username strin
 func (d *Device) ReassignHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 
-	username := r.FormValue("username")
+	username := strings.TrimSpace(r.FormValue("username"))
 	if username == "" {
 		common.NewAPIResponse("Username required", nil).WriteResponse(w, http.StatusBadRequest)
 		return
