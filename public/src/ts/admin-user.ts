@@ -167,8 +167,14 @@ function getDelegatesList(): string {
 // Form submittion
 $("#user-form").submit((e) => {
     e.preventDefault();
+    const username = $("[name=username]").value();
+    if (!username) {
+        flashMessage("Username cannot be empty");
+        return;
+    }
+
     const formData: SaveUserInput = {
-        username: $("[name=username]").value(),
+        username: username,
         password: $("[name=password]").value(),
         device_limit: -1,
         expiration_type: devExpirationTypes.global,
@@ -210,21 +216,7 @@ $("#user-form").submit((e) => {
     api.saveUser(
         formData,
         (resp, req) => {
-            window.scroll(0, 0);
-            if (req.status > 204) {
-                flashMessage(resp.Message);
-                return;
-            }
-
-            flashMessage("User saved", "success");
-            $("[name=password]").value("");
-            $("[name=clear-pass]").prop("checked", false);
-            if (formData.password === "" || formData.password === "-1") {
-                $("#has-password").text("No");
-            } else {
-                $("#has-password").text("Yes");
-            }
-            $("#submit-btn").text("Save");
+            window.location.href = `/admin/users/${username}`;
         },
         (req) => {
             const resp = JSON.parse(req.responseText);

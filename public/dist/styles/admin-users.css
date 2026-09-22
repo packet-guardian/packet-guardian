@@ -2,12 +2,6 @@ h2 {
     margin-top: 0;
 }
 
-.controls {
-    margin-left: 5px;
-    display: flex;
-    justify-content: center;
-}
-
 .edit-user-pencil {
     cursor: pointer;
     color: black;
@@ -40,6 +34,10 @@ label,
 
 fieldset p {
     margin-left: 2em;
+}
+
+.user-controls, .user-controls p {
+    margin: 10px 0;
 }
 
 .user-edit-separator {

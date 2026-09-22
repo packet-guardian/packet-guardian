@@ -10,16 +10,11 @@
 
 {{define "content"}}
 <div class="admin-users">
-    <h2>Administration Users</h2>
+    <h2>User Management</h2>
 
     <div class="controls">
         {{if (userCan $.sessionUser "CreateUser")}}
-        <div class="new-user">
-            <form id="new-user-form">
-                <input type="text" name="username" placeholder="Username">
-                <button class="ok-btn" type="submit">Create</button>
-            </form>
-        </div>
+        <a class="btn ok-btn" href="/admin/newuser">New User</a>
         {{end}}
     </div>
 

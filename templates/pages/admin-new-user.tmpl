@@ -1,4 +1,4 @@
-{{define "pageTitle"}}Admin - User Editor{{end}}
+{{define "pageTitle"}}Admin - New User{{end}}
 
 {{define "css"}}
 {{template "render-css" dict "main" . "css" (list "admin-users")}}
@@ -10,20 +10,12 @@
 
 {{define "content"}}
 <div class="admin-user">
-    <h2>User Editor</h2>
+    <h2>Create User</h2>
 
     <form id="user-form">
-        <input type="hidden" name="user-id" value="{{.user.ID}}">
-
-        <fieldset>
+        <fieldset class="user-controls">
             <p>
-                <a href="/admin/manage/user/{{.user.Username}}" class="btn">Device List</a>
-                {{if eq .user.ID 0}}
-                <button type="submit" id="submit-btn" class="ok-btn">Create</button>
-                {{else}}
                 <button type="submit" id="submit-btn" class="ok-btn">Save</button>
-                {{end}}
-                <button type="button" name="delete-btn" class="danger-btn">Delete</button>
             </p>
         </fieldset>
 
@@ -34,15 +26,7 @@
 
             <p>
                 <label for="username">Username:</label>
-                <input type="text" name="username" value="{{.user.Username}}" disabled="disabled">
-            </p>
-
-            <p>
-                {{if .user.HasPassword}}
-                <span class="label">Has Password</span>: <span id="has-password">Yes</span>
-                {{else}}
-                <span class="label">Has Password</span>: <span id="has-password">No</span>
-                {{end}}
+                <input type="text" name="username">
             </p>
 
             <p>
@@ -54,7 +38,7 @@
             <p>
                 <label for="notes">Notes:</label>
                 <br>
-                <textarea cols="40" rows="7" name="notes">{{.user.Notes}}</textarea>
+                <textarea cols="40" rows="7" name="notes"></textarea>
             </p>
         </fieldset>
 
@@ -70,7 +54,7 @@
                     <option value="unlimited">Unlimited</option>
                     <option value="specific">Other:</option>
                 </select>
-                <input type="text" name="device-limit" value="{{.user.DeviceLimit}}">
+                <input type="text" name="device-limit" value="-1">
             </p>
             <!-- <p>
                 <span class="label">Date format</span>: YYYY-MM-DD HH:mm<br>
@@ -79,7 +63,7 @@
             </p> -->
             <p>
                 <label for="dev-exp-sel"><span title="The method use to expire a device automatically">Default Device Expiration Type:</span></label>
-                <select name="dev-exp-sel" data-expires="{{.user.DeviceExpiration.Mode}}">
+                <select name="dev-exp-sel" data-expires="1">
                     <option value="global">Global</option>
                     <option value="never">Never</option>
                     <option value="specific">Specific</option>
@@ -91,7 +75,7 @@
 
             <p>
                 <label for="device-expiration"><span title="When the user's device will expire by default">Default Device Expiration Value:</span></label>
-                <input type="text" name="device-expiration" value="{{.user.DeviceExpiration.String}}">
+                <input type="text" name="device-expiration">
                 <span id="dev-exp-tooltip" class="tooltip"></span>
             </p>
         </fieldset>
@@ -103,7 +87,7 @@
 
             <p>
                 <label for="val-bef-sel">User Valid:</label>
-                <select name="val-bef-sel" data-forever="{{.user.ValidForever}}">
+                <select name="val-bef-sel" data-forever="true">
                     <option value="forever">Forever</option>
                     <option value="specific">Specify</option>
                 </select>
@@ -111,13 +95,13 @@
 
             <p>
                 <label for="valid-after">Start:</label>
-                <input type="text" name="valid-after" value="{{.user.ValidStart.Format "2006-01-02 15:04"}}">
+                <input type="text" name="valid-after">
                 <span id="user-exp-tooltip" class="tooltip"></span>
             </p>
 
             <p>
                 <label for="valid-before">End:</label>
-                <input type="text" name="valid-before" value="{{.user.ValidEnd.Format "2006-01-02 15:04"}}">
+                <input type="text" name="valid-before">
             </p>
         </fieldset>
 
@@ -128,20 +112,12 @@
 
             <p>
                 <label for="can-manage">Can Manage Own Devices:</label>
-                {{if .user.CanManage}}
                 <input type="checkbox" name="can-manage" checked="true">
-                {{else}}
-                <input type="checkbox" name="can-manage">
-                {{end}}
             </p>
 
             <p>
                 <label for="can-autoreg">Can Auto Register Devices:</label>
-                {{if .user.CanAutoreg}}
                 <input type="checkbox" name="can-autoreg" checked="true">
-                {{else}}
-                <input type="checkbox" name="can-autoreg">
-                {{end}}
             </p>
         </fieldset>
 
@@ -154,9 +130,9 @@
                 <label for="user-ui-group"><span title="The group this user belongs to">UI Group:</span></label>
                 <select name="user-ui-group">
                     <option value="default">Default</option>
-                    <option value="admin" {{if eq .user.UIGroup "admin"}}selected{{end}}>Administrator</option>
-                    <option value="helpdesk" {{if eq .user.UIGroup "helpdesk"}}selected{{end}}>Service Desk</option>
-                    <option value="readonly" {{if eq .user.UIGroup "readonly"}}selected{{end}}>Readonly Admin</option>
+                    <option value="admin">Administrator</option>
+                    <option value="helpdesk">Service Desk</option>
+                    <option value="readonly">Readonly Admin</option>
                 </select>
             </p>
 
@@ -164,18 +140,14 @@
                 <label for="user-api-group"><span title="The group this user belongs to">API Group:</span></label>
                 <select name="user-api-group">
                     <option value="disable">Disabled</option>
-                    <option value="readonly-api" {{if eq .user.APIGroup "readonly-api"}}selected{{end}}>Readonly</option>
-                    <option value="readwrite-api" {{if eq .user.APIGroup "readwrite-api"}}selected{{end}}>Readwrite</option>
+                    <option value="readonly-api">Readonly</option>
+                    <option value="readwrite-api">Readwrite</option>
                 </select>
             </p>
 
             <p>
                 <label for="user-api-status">View Status API:</label>
-                {{if .user.AllowStatusAPI}}
-                <input type="checkbox" name="user-api-status" checked="true">
-                {{else}}
                 <input type="checkbox" name="user-api-status">
-                {{end}}
             </p>
         </fieldset>
 
@@ -186,26 +158,15 @@
 
             <button type="button" id="add-delegate-btn" class="ok-btn">Add Delegate</button>
 
-            <div name="delegate-list">
-                {{range $dname, $dpermission := .user.Delegates}}
-                <p data-delegate="{{$dname}}">
-                    <label for="{{$dname}}-permissions"><a href="/admin/users/{{$dname}}">{{$dname}}</a></label>
-                    <select name="{{$dname}}-permissions">
-                        <option value="RO"{{if eq $dpermission.DelegateName "RO"}}selected{{end}}>RO</option>
-                        <option value="RW"{{if eq $dpermission.DelegateName "RW"}}selected{{end}}>RW</option>
-                    </select>
-                    <i class="fa fa-times delete-icon" aria-role="button" data-delegate="{{$dname}}" title="Delete delegate"></i>
-                </p>
-                {{end}}
-            </div>
+            <div name="delegate-list"></div>
+        </fieldset>
 
-            <h3>Delegate For</h3>
+        <hr class="user-edit-separator">
 
-            {{range $dname, $dpermission := .delegateFor}}
+        <fieldset class="user-controls">
             <p>
-                <a href="/admin/users/{{$dname}}">{{$dname}}</a>: {{$dpermission.DelegateName}}
+                <button type="submit" id="submit-btn" class="ok-btn">Save</button>
             </p>
-            {{end}}
         </fieldset>
     </form>
 </div>

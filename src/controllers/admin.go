@@ -326,6 +326,15 @@ func (a *Admin) AdminUserListHandler(w http.ResponseWriter, r *http.Request, _ h
 	a.e.Views.NewView("admin-user-list", r).Render(w, data)
 }
 
+func (a *Admin) AdminNewUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	sessionUser := models.GetUserFromContext(r)
+	if !sessionUser.Can(models.EditUser) {
+		a.redirectToRoot(w, r)
+		return
+	}
+
+	a.e.Views.NewView("admin-new-user", r).Render(w, nil)
+}
 func (a *Admin) AdminUserHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	sessionUser := models.GetUserFromContext(r)
 	if !sessionUser.Can(models.EditUser) {

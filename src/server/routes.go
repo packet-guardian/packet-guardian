@@ -146,6 +146,7 @@ func adminRouter(e *common.Environment, stores stores.StoreCollection) http.Hand
 	r.GET("/admin/manage/device/:mac", adminController.ShowDeviceHandler)
 	r.GET("/admin/users", adminController.AdminUserListHandler)
 	r.GET("/admin/users/:username", adminController.AdminUserHandler)
+	r.GET("/admin/newuser", adminController.AdminNewUserHandler)
 	r.GET("/admin/reports", adminController.ReportHandler)
 	r.GET("/admin/reports/:report", adminController.ReportHandler)
 
